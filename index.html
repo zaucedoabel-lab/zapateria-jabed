@@ -20,32 +20,52 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        window._fb = { db: getFirestore(app), auth: getAuth(app), collection, addDoc, onSnapshot, deleteDoc, doc, signInWithEmailAndPassword, signOut };
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Exportar a window para usar en scripts normales
+        window._fb = { db, auth, collection, addDoc, onSnapshot, deleteDoc, doc, signInWithEmailAndPassword, signOut, onAuthStateChanged };
         window.dispatchEvent(new Event('fb-ready'));
     </script>
 
     <style>
         :root { --bg: #0a0a0f; --s1: #12121a; --accent: #6c63ff; --gold: #fbbf24; --text: #e8e6f0; }
         body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); margin:0; }
+        
+        /* Pantalla de Login */
+        #auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); }
+        .login-card { background: var(--s1); padding: 40px; border-radius: 16px; border: 1px solid #2e2e42; width: 100%; max-width: 350px; text-align: center; }
+        
+        /* Layout Principal */
         .layout { display: flex; min-height: 100vh; }
         .sidebar { width: 260px; background: var(--s1); padding: 25px; border-right: 1px solid #2e2e42; }
         .main { flex: 1; padding: 40px; }
         
-        /* Tablas Estilo Claude */
         .card { background: var(--s1); border-radius: 12px; padding: 20px; border: 1px solid #2e2e42; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { text-align: left; color: #7a7890; font-size: 12px; text-transform: uppercase; padding: 12px; border-bottom: 2px solid #2e2e42; }
         td { padding: 12px; border-bottom: 1px solid #1f1f2e; }
         
         .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .btn-accent { background: var(--accent); color: white; }
+        .btn-accent { background: var(--accent); color: white; width: 100%; margin-top: 10px; }
         .btn-outline { background: transparent; border: 1px solid #2e2e42; color: var(--text); }
         
-        @media print { .sidebar, .btn, .no-print { display: none !important; } .print-only { display: block !important; } }
-        .print-only { display: none; padding: 20px; border: 2px solid black; color: black; background: white; width: 200px; text-align: center; }
+        input { width: 100%; background: #1a1a25; border: 1px solid #2e2e42; padding: 12px; color: white; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; }
+
+        @media print { .sidebar, .btn, .card, h1, .no-print { display: none !important; } .print-only { display: block !important; } }
+        .print-only { display: none; padding: 20px; border: 2px solid black; color: black; background: white; width: 250px; text-align: center; margin: auto; }
     </style>
 </head>
 <body>
+
+<div id="auth-container">
+    <div class="login-card">
+        <h2 style="font-family:'Syne'; color:var(--accent); margin-bottom:20px">JABED LOGIN</h2>
+        <input type="email" id="email" placeholder="Correo electrónico">
+        <input type="password" id="pass" placeholder="Contraseña">
+        <button class="btn btn-accent" onclick="login()">Entrar al Sistema</button>
+    </div>
+</div>
 
 <div id="app" style="display:none">
     <div class="layout">
@@ -53,16 +73,13 @@
             <h2 style="font-family:'Syne'; color:var(--accent); margin-bottom:40px">JABED PRO</h2>
             <div style="display:grid; gap:10px">
                 <button class="btn btn-outline" onclick="exportarExcel()">📊 Exportar Excel</button>
-                <button class="btn btn-outline" style="color:#ff4d4d" onclick="window._fb.signOut(window._fb.auth)">Cerrar Sesión</button>
+                <button class="btn btn-outline" style="color:#ff4d4d; margin-top:20px;" onclick="window._fb.signOut(window._fb.auth)">Cerrar Sesión</button>
             </div>
         </aside>
 
         <main class="main">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px">
                 <h1>Gestión de Inventario</h1>
-                <div style="display:flex; gap:10px">
-                    <input type="text" id="filtro" placeholder="Buscar calzado..." onkeyup="filtrar()" style="padding:10px; border-radius:8px; background:#1a1a25; border:1px solid #2e2e42; color:white">
-                </div>
             </div>
 
             <div class="card">
@@ -73,7 +90,7 @@
                     <input type="number" id="p" placeholder="Precio $">
                     <input type="number" id="s" placeholder="Stock">
                 </div>
-                <button class="btn btn-accent" style="margin-top:15px; width:100%" onclick="guardar()">Guardar Producto</button>
+                <button class="btn btn-accent" onclick="guardar()">Guardar Producto en Firebase</button>
             </div>
 
             <div class="card">
@@ -95,20 +112,25 @@
 </div>
 
 <div id="ticket" class="print-only">
-    <h2 id="t-nombre"></h2>
-    <h1 id="t-precio"></h1>
-    <p>ZAPATERIA JABED</p>
+    <p style="font-size: 12px; margin: 0;">ZAPATERIA JABED</p>
+    <h2 id="t-nombre" style="margin: 5px 0;"></h2>
+    <h1 id="t-precio" style="font-size: 40px; margin: 5px 0;"></h1>
+    <div id="t-fecha" style="font-size: 10px;"></div>
 </div>
 
 <script>
     let productos = [];
 
     window.addEventListener('fb-ready', () => {
-        window._fb.onAuthStateChanged(window._fb.auth, (user) => {
+        const { auth, onAuthStateChanged, db, collection, onSnapshot } = window._fb;
+        
+        onAuthStateChanged(auth, (user) => {
             if(user) {
+                document.getElementById('auth-container').style.display = 'none';
                 document.getElementById('app').style.display = 'block';
-                const col = window._fb.collection(window._fb.db, "inventario");
-                window._fb.onSnapshot(col, (snap) => {
+                
+                // Escuchar cambios en la base de datos
+                onSnapshot(collection(db, "inventario"), (snap) => {
                     productos = [];
                     const tbody = document.getElementById('tabla');
                     tbody.innerHTML = "";
@@ -123,44 +145,69 @@
                                 <td>${d.stock} pzas</td>
                                 <td>
                                     <button class="btn btn-outline" style="padding:5px 10px; font-size:11px" onclick="imprimirEtiqueta('${d.nombre}', '${d.precio}')">🏷️ Etiqueta</button>
-                                    <button class="btn btn-outline" style="padding:5px 10px; font-size:11px; color:red" onclick="eliminar('${doc.id}')">🗑️</button>
+                                    <button class="btn btn-outline" style="padding:5px 10px; font-size:11px; color:#ff4d4d" onclick="eliminar('${doc.id}')">🗑️</button>
                                 </td>
                             </tr>`;
                     });
                 });
-            } else { window.location.href = "/"; }
+            } else {
+                document.getElementById('auth-container').style.display = 'flex';
+                document.getElementById('app').style.display = 'none';
+            }
         });
     });
 
+    async function login() {
+        const email = document.getElementById('email').value;
+        const pass = document.getElementById('pass').value;
+        try {
+            await window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass);
+        } catch(e) {
+            alert("Error al entrar: " + e.message);
+        }
+    }
+
     async function guardar() {
-        const data = {
-            nombre: document.getElementById('n').value,
-            categoria: document.getElementById('c').value,
-            precio: document.getElementById('p').value,
-            stock: document.getElementById('s').value
-        };
-        await window._fb.addDoc(window._fb.collection(window._fb.db, "inventario"), data);
-        alert("¡Guardado!");
+        const n = document.getElementById('n').value;
+        const c = document.getElementById('c').value;
+        const p = document.getElementById('p').value;
+        const s = document.getElementById('s').value;
+
+        if(!n || !p) return alert("Llena al menos nombre y precio");
+
+        try {
+            await window._fb.addDoc(window._fb.collection(window._fb.db, "inventario"), {
+                nombre: n, categoria: c, precio: p, stock: s, fecha: new Date().toLocaleDateString()
+            });
+            document.getElementById('n').value = "";
+            document.getElementById('p').value = "";
+        } catch(e) { alert("Error al guardar: " + e.message); }
     }
 
     function imprimirEtiqueta(nombre, precio) {
         document.getElementById('t-nombre').innerText = nombre;
         document.getElementById('t-precio').innerText = "$" + precio;
+        document.getElementById('t-fecha').innerText = new Date().toLocaleDateString();
         window.print();
     }
 
     function exportarExcel() {
+        if(productos.length === 0) return alert("No hay productos para exportar");
         let csv = "Nombre,Categoria,Precio,Stock\n";
         productos.forEach(p => { csv += `${p.nombre},${p.categoria},${p.precio},${p.stock}\n`; });
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.setAttribute('href', url);
-        a.setAttribute('download', 'Inventario_Jabed_2026.csv');
+        a.href = url;
+        a.download = 'Inventario_Jabed.csv';
         a.click();
     }
 
-    async function eliminar(id) { if(confirm("¿Borrar?")) await window._fb.deleteDoc(window._fb.doc(window._fb.db, "inventario", id)); }
+    async function eliminar(id) { 
+        if(confirm("¿Seguro que quieres eliminar este producto?")) {
+            await window._fb.deleteDoc(window._fb.doc(window._fb.db, "inventario", id)); 
+        }
+    }
 </script>
 </body>
 </html>
