@@ -1,138 +1,43 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZapateriaPro v2.0 - Jabed</title>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, getDocs, onSnapshot, query, orderBy, where, getDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyB-sKJfz-On57bKZpc-mj-mTZC-Y0QnQ9c",
-            authDomain: "zapateria-jabed-df907.firebaseapp.com",
-            projectId: "zapateria-jabed-df907",
-            storageBucket: "zapateria-jabed-df907.firebasestorage.app",
-            messagingSenderId: "556662714804",
-            appId: "1:556662714804:web:1ba06de544b7df92f342e1"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const storage = getStorage(app);
-
-        // Exportamos al objeto global window
-        window._fb = { 
-            db, auth, storage, collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
-            getDocs, onSnapshot, query, orderBy, where, getDoc, writeBatch, serverTimestamp,
-            signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged,
-            ref, uploadString, getDownloadURL, deleteObject 
-        };
-        
-        // Disparamos un evento para avisar que Firebase ya está listo
-        window.dispatchEvent(new Event('firebase-ready'));
-    </script>
-
-    <style>
-        :root {
-            --bg:#0a0a0f; --s1:#12121a; --s2:#1a1a25; --s3:#22222f; --s4:#2a2a3a;
-            --border:#2e2e42; --border2:#3a3a52;
-            --accent:#6c63ff; --accent2:#8b84ff; --accent-dim:#2d2a6e;
-            --gold:#f0b429; --gold-dim:#5a4410;
-            --cream:#e8e6f0; --muted:#7a7890; --faint:#3a3850;
-            --red:#e05252; --green:#52c97a; --blue:#52a8e0; --orange:#e07a52;
-            --radius:10px; --shadow:0 8px 32px rgba(0,0,0,.6);
-            --font:'Outfit',sans-serif; --mono:'JetBrains Mono',monospace; --display:'Syne',sans-serif;
-        }
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:100vh;overflow-x:hidden}
-        #loading{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
-        .spin{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        .load-logo{font-family:var(--display);font-size:26px;color:var(--accent2);letter-spacing:1px}
-        #auth{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px}
-        .auth-card{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.7)}
-        #app{display:none;height:100vh;flex-direction:column}
-        .topbar{height:52px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0}
-        .body-wrap{display:flex;flex:1;overflow:hidden}
-        .sidebar{width:220px;background:var(--s1);border-right:1px solid var(--border);overflow-y:auto}
-        .main{flex:1;overflow-y:auto;background:var(--bg)}
-        .content{padding:20px 24px}
-        .page{display:none}
-        .page.on{display:block}
-        .btn{padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-weight:500;transition:0.2s}
-        .btn-accent{background:var(--accent);color:white}
-        .card{background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px}
-        .fg{margin-bottom:15px}
-        label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;text-transform:uppercase}
-        input{width:100%;background:var(--s2);border:1px solid var(--border);padding:10px;color:white;border-radius:8px}
-        .err-box{background:#2a1515;border:1px solid #5a2020;color:var(--red);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
-    </style>
-</head>
-<body>
-
-    <div id="loading">
-        <div class="spin"></div>
-        <div class="load-logo">🥿 ZapateriaPro</div>
-    </div>
-
-    <div id="auth">
-        <div class="auth-card">
-            <div class="load-logo" style="margin-bottom:20px">Zapatería Jabed</div>
-            <div class="err-box" id="auth-err"></div>
-            <div class="fg"><label>Correo</label><input type="email" id="a-email"></div>
-            <div class="fg"><label>Contraseña</label><input type="password" id="a-pass"></div>
-            <button class="btn btn-accent" style="width:100%" onclick="doAuth()">Entrar al Sistema</button>
+<div id="app">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:var(--s1); border-bottom:1px solid #2e2e42">
+            <h2 style="font-family:'Syne'; font-size:18px">ZapateriaPro <span style="color:var(--accent)">Jabed</span></h2>
+            <button class="btn" style="width:auto; background:#333; color:white; padding:5px 15px" onclick="window._fb.signOut(window._fb.auth)">Cerrar Sesión</button>
         </div>
-    </div>
 
-    <div id="app">
-        <div class="topbar">
-            <div class="load-logo" style="font-size:18px">ZapateriaPro</div>
-            <div style="flex:1"></div>
-            <button class="btn" style="background:var(--s3);color:white" onclick="doSignOut()">Cerrar Sesión</button>
-        </div>
-        <div class="body-wrap">
-            <nav class="sidebar">
-                <div style="padding:20px; color:var(--muted); font-size:12px">MENÚ</div>
-                <div style="padding:10px 20px; cursor:pointer" onclick="go('dashboard')">📊 Dashboard</div>
-                <div style="padding:10px 20px; cursor:pointer" onclick="go('inventario')">📦 Inventario</div>
-                <div style="padding:10px 20px; cursor:pointer" onclick="go('pos')">🛒 Punto de Venta</div>
-            </nav>
-            <main class="main">
-                <div class="content">
-                    <div id="page-dashboard" class="page on">
-                        <h1>Panel de Control</h1>
-                        <p>Bienvenido al sistema de Zapatería Jabed.</p>
-                    </div>
-                    <div id="page-inventario" class="page">
-                        <h1>Inventario</h1>
-                        <div class="card">Aquí aparecerán tus productos.</div>
-                    </div>
-                    <div id="page-pos" class="page">
-                        <h1>Venta</h1>
-                        <div class="card">Módulo de cobro.</div>
-                    </div>
+        <div style="padding:20px; max-width:1000px; margin:auto">
+            <h1 style="margin-bottom:20px">📦 Gestión de Inventario</h1>
+            
+            <div class="auth-card" style="max-width:100%; margin-bottom:30px">
+                <h3 style="margin-bottom:15px; color:var(--accent)">Nuevo Producto</h3>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px">
+                    <div class="fg"><label>Nombre del Zapato</label><input type="text" id="p-nombre" placeholder="Ej. Bota Vaquera Café"></div>
+                    <div class="fg"><label>Categoría</label><input type="text" id="p-cat" placeholder="Ej. Dama, Caballero, Escolar"></div>
+                    <div class="fg"><label>Precio de Venta ($)</label><input type="number" id="p-precio" placeholder="0.00"></div>
+                    <div class="fg"><label>Stock Inicial</label><input type="number" id="p-stock" placeholder="0"></div>
                 </div>
-            </main>
+                <button class="btn btn-accent" style="margin-top:10px" onclick="guardarZapato()">Guardar en Inventario</button>
+            </div>
+
+            <div class="auth-card" style="max-width:100%">
+                <h3 style="margin-bottom:15px">Productos Registrados</h3>
+                <div id="lista-zapatos" style="display:grid; gap:10px">
+                    <p style="color:var(--muted)">Cargando inventario...</p>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Función principal que se ejecuta solo cuando Firebase está listo
+        // --- LOGICA DE AUTENTICACION ---
         window.addEventListener('firebase-ready', () => {
-            const { auth, onAuthStateChanged } = window._fb;
-
+            const { auth, onAuthStateChanged, db, collection, onSnapshot } = window._fb;
+            
             onAuthStateChanged(auth, (user) => {
                 document.getElementById('loading').style.display = 'none';
                 if (user) {
                     document.getElementById('auth').style.display = 'none';
-                    document.getElementById('app').style.display = 'flex';
+                    document.getElementById('app').style.display = 'block';
+                    cargarInventario(); // Empezar a escuchar la base de datos
                 } else {
                     document.getElementById('auth').style.display = 'flex';
                     document.getElementById('app').style.display = 'none';
@@ -140,28 +45,96 @@
             });
         });
 
-        function go(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
-            const target = document.getElementById('page-' + pageId);
-            if(target) target.classList.add('on');
+        // --- FUNCIONES DE NEGOCIO ---
+        async function guardarZapato() {
+            const { db, collection, addDoc } = window._fb;
+            const btn = document.querySelector('button[onclick="guardarZapato()"]');
+            
+            const nombre = document.getElementById('p-nombre').value;
+            const cat = document.getElementById('p-cat').value;
+            const precio = document.getElementById('p-precio').value;
+            const stock = document.getElementById('p-stock').value;
+
+            if(!nombre || !precio) return alert("Por favor llena el nombre y precio");
+
+            btn.innerText = "Guardando...";
+            btn.disabled = true;
+
+            try {
+                await addDoc(collection(db, "inventario"), {
+                    nombre,
+                    categoria: cat,
+                    precio: parseFloat(precio),
+                    stock: parseInt(stock),
+                    fecha: new Date().toISOString()
+                });
+                
+                // Limpiar campos
+                document.getElementById('p-nombre').value = "";
+                document.getElementById('p-precio').value = "";
+                document.getElementById('p-stock').value = "";
+                alert("¡Zapato guardado!");
+            } catch (e) {
+                alert("Error al guardar: " + e.message);
+            } finally {
+                btn.innerText = "Guardar en Inventario";
+                btn.disabled = false;
+            }
         }
 
-        async function doAuth() {
+        function cargarInventario() {
+            const { db, collection, onSnapshot } = window._fb;
+            const contenedor = document.getElementById('lista-zapatos');
+
+            onSnapshot(collection(db, "inventario"), (snapshot) => {
+                contenedor.innerHTML = "";
+                if(snapshot.empty) {
+                    contenedor.innerHTML = "<p style='color:var(--muted)'>No hay productos registrados aún.</p>";
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const card = document.createElement('div');
+                    card.style = "background:var(--s2); padding:15px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; border:1px solid #2e2e42";
+                    card.innerHTML = `
+                        <div>
+                            <strong style="color:var(--accent)">${data.nombre}</strong><br>
+                            <small style="color:var(--muted)">${data.categoria || 'Sin categoría'}</small>
+                        </div>
+                        <div style="text-align:right">
+                            <div style="color:var(--gold); font-weight:600">$${data.precio}</div>
+                            <div style="font-size:12px">${data.stock} disponibles</div>
+                        </div>
+                    `;
+                    contenedor.appendChild(card);
+                });
+            });
+        }
+
+        // --- LOGICA DE LOGIN/REGISTRO (YA EXISTENTE) ---
+        let modoRegistro = false;
+        function cambiarModo() {
+            modoRegistro = !modoRegistro;
+            document.getElementById('auth-title').innerText = modoRegistro ? "Crear Cuenta" : "Zapatería Jabed";
+            document.getElementById('btn-main').innerText = modoRegistro ? "Registrarme" : "Entrar al Sistema";
+            document.getElementById('toggle-text').innerText = modoRegistro ? "Ya tengo cuenta, volver" : "¿No tienes cuenta? Regístrate aquí";
+        }
+
+        async function ejecutarAuth() {
             const email = document.getElementById('a-email').value;
             const pass = document.getElementById('a-pass').value;
             const errBox = document.getElementById('auth-err');
-            
+            errBox.style.display = 'none';
             try {
-                await window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass);
+                if (modoRegistro) {
+                    await window._fb.createUserWithEmailAndPassword(window._fb.auth, email, pass);
+                } else {
+                    await window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass);
+                }
             } catch (err) {
                 errBox.style.display = 'block';
                 errBox.innerText = "Error: " + err.message;
             }
         }
-
-        async function doSignOut() {
-            await window._fb.signOut(window._fb.auth);
-        }
     </script>
-</body>
-</html>
