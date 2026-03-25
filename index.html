@@ -7,8 +7,8 @@
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB-sKJfz-On57bKZpc-mj-mTZC-Y0QnQ9c",
@@ -23,8 +23,10 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Exportar a window para usar en scripts normales
-        window._fb = { db, auth, collection, addDoc, onSnapshot, deleteDoc, doc, signInWithEmailAndPassword, signOut, onAuthStateChanged };
+        window._fb = { 
+            db, auth, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy,
+            signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged 
+        };
         window.dispatchEvent(new Event('fb-ready'));
     </script>
 
@@ -32,38 +34,47 @@
         :root { --bg: #0a0a0f; --s1: #12121a; --accent: #6c63ff; --gold: #fbbf24; --text: #e8e6f0; }
         body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); margin:0; }
         
-        /* Pantalla de Login */
+        /* Pantalla de Login Mejorada */
         #auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); }
-        .login-card { background: var(--s1); padding: 40px; border-radius: 16px; border: 1px solid #2e2e42; width: 100%; max-width: 350px; text-align: center; }
+        .login-card { background: var(--s1); padding: 40px; border-radius: 16px; border: 1px solid #2e2e42; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
         /* Layout Principal */
         .layout { display: flex; min-height: 100vh; }
         .sidebar { width: 260px; background: var(--s1); padding: 25px; border-right: 1px solid #2e2e42; }
         .main { flex: 1; padding: 40px; }
         
-        .card { background: var(--s1); border-radius: 12px; padding: 20px; border: 1px solid #2e2e42; margin-bottom: 20px; }
+        .card { background: var(--s1); border-radius: 12px; padding: 25px; border: 1px solid #2e2e42; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { text-align: left; color: #7a7890; font-size: 12px; text-transform: uppercase; padding: 12px; border-bottom: 2px solid #2e2e42; }
         td { padding: 12px; border-bottom: 1px solid #1f1f2e; }
         
-        .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn { padding: 12px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.3s; font-size: 14px; }
         .btn-accent { background: var(--accent); color: white; width: 100%; margin-top: 10px; }
-        .btn-outline { background: transparent; border: 1px solid #2e2e42; color: var(--text); }
+        .btn-accent:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-outline { background: transparent; border: 1px solid #2e2e42; color: var(--text); width: 100%; margin-top: 10px; }
+        .btn-outline:hover { background: #1a1a25; }
         
-        input { width: 100%; background: #1a1a25; border: 1px solid #2e2e42; padding: 12px; color: white; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; }
+        input { width: 100%; background: #1a1a25; border: 1px solid #2e2e42; padding: 12px; color: white; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; font-family: inherit; }
+        input:focus { border-color: var(--accent); outline: none; }
 
         @media print { .sidebar, .btn, .card, h1, .no-print { display: none !important; } .print-only { display: block !important; } }
-        .print-only { display: none; padding: 20px; border: 2px solid black; color: black; background: white; width: 250px; text-align: center; margin: auto; }
+        .print-only { display: none; padding: 30px; border: 2px dashed #000; color: black; background: white; width: 280px; text-align: center; margin: auto; }
     </style>
 </head>
 <body>
 
 <div id="auth-container">
     <div class="login-card">
-        <h2 style="font-family:'Syne'; color:var(--accent); margin-bottom:20px">JABED LOGIN</h2>
+        <h2 style="font-family:'Syne'; color:var(--accent); margin-bottom:10px">ZAPATERÍA JABED</h2>
+        <p style="color: #7a7890; margin-bottom: 30px; font-size: 14px;">Panel de Control Administrativo</p>
+        
         <input type="email" id="email" placeholder="Correo electrónico">
         <input type="password" id="pass" placeholder="Contraseña">
+        
         <button class="btn btn-accent" onclick="login()">Entrar al Sistema</button>
+        <button class="btn btn-outline" onclick="registro()" style="font-size: 12px; color: #7a7890;">Crear Cuenta Administrador</button>
+        
+        <p id="auth-error" style="color: #ff4d4d; font-size: 12px; margin-top: 15px; display: none;"></p>
     </div>
 </div>
 
@@ -72,25 +83,39 @@
         <aside class="sidebar">
             <h2 style="font-family:'Syne'; color:var(--accent); margin-bottom:40px">JABED PRO</h2>
             <div style="display:grid; gap:10px">
-                <button class="btn btn-outline" onclick="exportarExcel()">📊 Exportar Excel</button>
-                <button class="btn btn-outline" style="color:#ff4d4d; margin-top:20px;" onclick="window._fb.signOut(window._fb.auth)">Cerrar Sesión</button>
+                <button class="btn btn-outline" onclick="exportarExcel()">📊 Exportar Inventario</button>
+                <button class="btn btn-outline" style="color:#ff4d4d; margin-top:40px;" onclick="window._fb.signOut(window._fb.auth)">Cerrar Sesión</button>
             </div>
         </aside>
 
         <main class="main">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px">
-                <h1>Gestión de Inventario</h1>
+                <h1>📦 Gestión de Inventario</h1>
+                <input type="text" id="buscador" placeholder="Buscar por nombre o categoría..." onkeyup="filtrar()" style="max-width: 300px; margin-bottom: 0;">
             </div>
 
             <div class="card">
-                <h3>+ Registrar Nuevo Producto</h3>
+                <h3 style="margin-top:0; color:var(--accent)">+ Nuevo Producto</h3>
                 <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:15px; margin-top:15px">
-                    <input type="text" id="n" placeholder="Nombre (Ej: Bota 302)">
-                    <input type="text" id="c" placeholder="Categoría">
-                    <input type="number" id="p" placeholder="Precio $">
-                    <input type="number" id="s" placeholder="Stock">
+                    <div>
+                        <label style="font-size:12px; color:#7a7890">Nombre del Zapato</label>
+                        <input type="text" id="n" placeholder="Ej: Bota Vaquera Café">
+                    </div>
+                    <div>
+                        <label style="font-size:12px; color:#7a7890">Categoría</label>
+                        <input type="text" id="c" placeholder="Dama / Caballero">
+                    </div>
+                    <div>
+                        <label style="font-size:12px; color:#7a7890">Precio ($)</label>
+                        <input type="number" id="p" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label style="font-size:12px; color:#7a7890">Stock Inicial</label>
+                        <input type="number" id="s" placeholder="0">
+                    </div>
                 </div>
-                <button class="btn btn-accent" onclick="guardar()">Guardar Producto en Firebase</button>
+                <button class="btn btn-accent" style="width: 200px; float: right;" onclick="guardar()">Guardar en Firebase</button>
+                <div style="clear:both"></div>
             </div>
 
             <div class="card">
@@ -104,7 +129,9 @@
                             <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla"></tbody>
+                    <tbody id="tabla">
+                        <tr><td colspan="5" style="text-align:center; padding:40px; color:#7a7890">Cargando inventario...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </main>
@@ -112,42 +139,39 @@
 </div>
 
 <div id="ticket" class="print-only">
-    <p style="font-size: 12px; margin: 0;">ZAPATERIA JABED</p>
-    <h2 id="t-nombre" style="margin: 5px 0;"></h2>
-    <h1 id="t-precio" style="font-size: 40px; margin: 5px 0;"></h1>
-    <div id="t-fecha" style="font-size: 10px;"></div>
+    <p style="font-size: 14px; margin: 0; font-weight: bold;">ZAPATERÍA JABED</p>
+    <hr style="border: 1px dashed black;">
+    <h2 id="t-nombre" style="margin: 10px 0; font-size: 18px;"></h2>
+    <h1 id="t-precio" style="font-size: 48px; margin: 10px 0;"></h1>
+    <p id="t-fecha" style="font-size: 12px; margin-top: 20px;"></p>
 </div>
 
 <script>
     let productos = [];
 
     window.addEventListener('fb-ready', () => {
-        const { auth, onAuthStateChanged, db, collection, onSnapshot } = window._fb;
+        const { auth, onAuthStateChanged, db, collection, onSnapshot, query, orderBy } = window._fb;
         
         onAuthStateChanged(auth, (user) => {
             if(user) {
                 document.getElementById('auth-container').style.display = 'none';
                 document.getElementById('app').style.display = 'block';
                 
-                // Escuchar cambios en la base de datos
-                onSnapshot(collection(db, "inventario"), (snap) => {
+                // Carga de datos real-time ordenada por nombre
+                const q = query(collection(db, "inventario"), orderBy("nombre", "asc"));
+                onSnapshot(q, (snap) => {
                     productos = [];
                     const tbody = document.getElementById('tabla');
                     tbody.innerHTML = "";
+                    
+                    if(snap.empty) {
+                        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; color:#7a7890">No hay productos registrados.</td></tr>`;
+                    }
+
                     snap.forEach(doc => {
                         const d = doc.data();
                         productos.push({id: doc.id, ...d});
-                        tbody.innerHTML += `
-                            <tr>
-                                <td><b>${d.nombre}</b></td>
-                                <td>${d.categoria}</td>
-                                <td style="color:var(--gold)">$${d.precio}</td>
-                                <td>${d.stock} pzas</td>
-                                <td>
-                                    <button class="btn btn-outline" style="padding:5px 10px; font-size:11px" onclick="imprimirEtiqueta('${d.nombre}', '${d.precio}')">🏷️ Etiqueta</button>
-                                    <button class="btn btn-outline" style="padding:5px 10px; font-size:11px; color:#ff4d4d" onclick="eliminar('${doc.id}')">🗑️</button>
-                                </td>
-                            </tr>`;
+                        renderRow(d, doc.id, tbody);
                     });
                 });
             } else {
@@ -157,13 +181,42 @@
         });
     });
 
+    function renderRow(d, id, container) {
+        container.innerHTML += `
+            <tr class="item-row">
+                <td><b>${d.nombre}</b></td>
+                <td><span style="background:#1a1a25; padding:4px 8px; border-radius:4px; font-size:12px">${d.categoria || 'S/C'}</span></td>
+                <td style="color:var(--gold); font-weight:600">$${d.precio}</td>
+                <td><mark style="background:${d.stock < 3 ? '#4a1a1a' : 'transparent'}; color:${d.stock < 3 ? '#ff4d4d' : 'inherit'}; padding:2px 5px; border-radius:3px">${d.stock} pzas</mark></td>
+                <td>
+                    <button class="btn btn-outline" style="padding:5px 10px; width:auto; margin:0; font-size:11px" onclick="imprimirEtiqueta('${d.nombre}', '${d.precio}')">🏷️ Etiqueta</button>
+                    <button class="btn btn-outline" style="padding:5px 10px; width:auto; margin:0; font-size:11px; color:#ff4d4d; border-color:#4a1a1a" onclick="eliminar('${id}')">🗑️</button>
+                </td>
+            </tr>`;
+    }
+
     async function login() {
         const email = document.getElementById('email').value;
         const pass = document.getElementById('pass').value;
+        const errorMsg = document.getElementById('auth-error');
         try {
             await window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass);
         } catch(e) {
-            alert("Error al entrar: " + e.message);
+            errorMsg.innerText = "Acceso denegado: Verifica tus datos.";
+            errorMsg.style.display = 'block';
+        }
+    }
+
+    async function registro() {
+        const email = document.getElementById('email').value;
+        const pass = document.getElementById('pass').value;
+        if(!email || pass.length < 6) return alert("Ingresa un correo y una contraseña de al menos 6 caracteres.");
+        
+        try {
+            await window._fb.createUserWithEmailAndPassword(window._fb.auth, email, pass);
+            alert("¡Cuenta de Administrador creada con éxito!");
+        } catch(e) {
+            alert("Error al registrar: " + e.message);
         }
     }
 
@@ -173,38 +226,57 @@
         const p = document.getElementById('p').value;
         const s = document.getElementById('s').value;
 
-        if(!n || !p) return alert("Llena al menos nombre y precio");
+        if(!n || !p) return alert("Por favor, ingresa nombre y precio del producto.");
 
         try {
             await window._fb.addDoc(window._fb.collection(window._fb.db, "inventario"), {
-                nombre: n, categoria: c, precio: p, stock: s, fecha: new Date().toLocaleDateString()
+                nombre: n, 
+                categoria: c, 
+                precio: parseFloat(p).toFixed(2), 
+                stock: parseInt(s) || 0, 
+                fecha: new Date().toLocaleString()
             });
+            // Limpiar campos
             document.getElementById('n').value = "";
+            document.getElementById('c').value = "";
             document.getElementById('p').value = "";
+            document.getElementById('s').value = "";
         } catch(e) { alert("Error al guardar: " + e.message); }
     }
 
     function imprimirEtiqueta(nombre, precio) {
         document.getElementById('t-nombre').innerText = nombre;
         document.getElementById('t-precio').innerText = "$" + precio;
-        document.getElementById('t-fecha').innerText = new Date().toLocaleDateString();
+        document.getElementById('t-fecha').innerText = "ZAPATERÍA JABED - " + new Date().toLocaleDateString();
         window.print();
     }
 
+    function filtrar() {
+        const busqueda = document.getElementById('buscador').value.toLowerCase();
+        const tbody = document.getElementById('tabla');
+        tbody.innerHTML = "";
+        const filtrados = productos.filter(p => 
+            p.nombre.toLowerCase().includes(busqueda) || 
+            p.categoria.toLowerCase().includes(busqueda)
+        );
+        filtrados.forEach(p => renderRow(p, p.id, tbody));
+    }
+
     function exportarExcel() {
-        if(productos.length === 0) return alert("No hay productos para exportar");
-        let csv = "Nombre,Categoria,Precio,Stock\n";
-        productos.forEach(p => { csv += `${p.nombre},${p.categoria},${p.precio},${p.stock}\n`; });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'Inventario_Jabed.csv';
-        a.click();
+        if(productos.length === 0) return alert("No hay datos para exportar.");
+        let csv = "\ufeffNombre,Categoria,Precio,Stock,Fecha Registro\n";
+        productos.forEach(p => { 
+            csv += `"${p.nombre}","${p.categoria}",${p.precio},${p.stock},"${p.fecha}"\n`; 
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "Inventario_Jabed_2026.csv";
+        link.click();
     }
 
     async function eliminar(id) { 
-        if(confirm("¿Seguro que quieres eliminar este producto?")) {
+        if(confirm("¿Estás seguro de eliminar este producto del inventario?")) {
             await window._fb.deleteDoc(window._fb.doc(window._fb.db, "inventario", id)); 
         }
     }
