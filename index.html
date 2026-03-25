@@ -1124,9 +1124,7 @@ function exportarExcel(){
     const suc=sucursales.find(s=>s.id===p.sucursalId)?.nombre||'—';
     return[p.barcode||'',p.sku||'',p.desc||'',p.cat||'',p.marca||'',p.color||'',p.precio||0,ts,tot,suc];
   });
-  const csv='﻿'+headers.join(',')+'
-'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('
-');
+  const csv='﻿'+headers.join(',')+'\n''+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='inventario_'+new Date().toISOString().split('T')[0]+'.csv';
