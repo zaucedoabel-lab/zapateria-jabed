@@ -12,9 +12,6 @@
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
         import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-        // ══════════════════════════════════════
-        //  🔧 REEMPLAZA ESTO CON TUS DATOS
-        // ══════════════════════════════════════
         const firebaseConfig = {
             apiKey: "AIzaSyB-sKJfz-On57bKZpc-mj-mTZC-Y0QnQ9c",
             authDomain: "zapateria-jabed-df907.firebaseapp.com",
@@ -29,13 +26,16 @@
         const auth = getAuth(app);
         const storage = getStorage(app);
 
-        // Exportar a global para que las funciones del HTML lo vean
+        // Exportamos al objeto global window
         window._fb = { 
             db, auth, storage, collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
             getDocs, onSnapshot, query, orderBy, where, getDoc, writeBatch, serverTimestamp,
             signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged,
             ref, uploadString, getDownloadURL, deleteObject 
         };
+        
+        // Disparamos un evento para avisar que Firebase ya está listo
+        window.dispatchEvent(new Event('firebase-ready'));
     </script>
 
     <style>
@@ -51,20 +51,12 @@
         }
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:100vh;overflow-x:hidden}
-        
-        /* ══ ESTILOS DE CARGA ══ */
         #loading{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
         .spin{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
         .load-logo{font-family:var(--display);font-size:26px;color:var(--accent2);letter-spacing:1px}
-
-        /* ══ AUTH ══ */
-        #auth{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 20% 80%,#1a1040 0%,var(--bg) 55%),radial-gradient(ellipse at 80% 20%,#0a1a30 0%,transparent 55%)}
+        #auth{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px}
         .auth-card{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.7)}
-        .tab-btn.on{background:var(--accent);color:#fff;font-weight:600}
-        .err-box{background:#2a1515;border:1px solid #5a2020;color:var(--red);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
-
-        /* ══ ESTRUCTURA APP ══ */
         #app{display:none;height:100vh;flex-direction:column}
         .topbar{height:52px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0}
         .body-wrap{display:flex;flex:1;overflow:hidden}
@@ -73,14 +65,13 @@
         .content{padding:20px 24px}
         .page{display:none}
         .page.on{display:block}
-
-        /* ══ BOTONES Y OTROS ══ */
         .btn{padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-weight:500;transition:0.2s}
         .btn-accent{background:var(--accent);color:white}
         .card{background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px}
         .fg{margin-bottom:15px}
         label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;text-transform:uppercase}
-        input, select{width:100%;background:var(--s2);border:1px solid var(--border);padding:10px;color:white;border-radius:8px}
+        input{width:100%;background:var(--s2);border:1px solid var(--border);padding:10px;color:white;border-radius:8px}
+        .err-box{background:#2a1515;border:1px solid #5a2020;color:var(--red);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
     </style>
 </head>
 <body>
@@ -133,11 +124,11 @@
     </div>
 
     <script>
-        const { auth, db, onAuthStateChanged, signInWithEmailAndPassword, signOut } = window._fb;
+        // Función principal que se ejecuta solo cuando Firebase está listo
+        window.addEventListener('firebase-ready', () => {
+            const { auth, onAuthStateChanged } = window._fb;
 
-        // 1. Manejo de Sesión
-        window.addEventListener('load', () => {
-            onAuthStateChanged(window._fb.auth, (user) => {
+            onAuthStateChanged(auth, (user) => {
                 document.getElementById('loading').style.display = 'none';
                 if (user) {
                     document.getElementById('auth').style.display = 'none';
@@ -149,20 +140,19 @@
             });
         });
 
-        // 2. Navegación
         function go(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
-            document.getElementById('page-' + pageId).classList.add('on');
+            const target = document.getElementById('page-' + pageId);
+            if(target) target.classList.add('on');
         }
 
-        // 3. Autenticación
         async function doAuth() {
             const email = document.getElementById('a-email').value;
             const pass = document.getElementById('a-pass').value;
             const errBox = document.getElementById('auth-err');
             
             try {
-                await signInWithEmailAndPassword(window._fb.auth, email, pass);
+                await window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass);
             } catch (err) {
                 errBox.style.display = 'block';
                 errBox.innerText = "Error: " + err.message;
@@ -170,7 +160,7 @@
         }
 
         async function doSignOut() {
-            await signOut(window._fb.auth);
+            await window._fb.signOut(window._fb.auth);
         }
     </script>
 </body>
