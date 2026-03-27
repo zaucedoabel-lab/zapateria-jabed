@@ -357,14 +357,16 @@ select option{background:var(--s2)}
         <!-- ══════════ INVENTARIO ══════════ -->
         <div id="page-inventario" class="page">
           <div class="flex-between">
-            <div class="flex-row">
-              <div class="search-wrap" style="width:230px"><span class="search-ico">🔍</span><input type="text" id="inv-q" placeholder="Buscar…" oninput="renderInv()"></div>
-              <select id="inv-cat" onchange="renderInv()" style="width:120px"><option value="">Todas</option><option>Dama</option><option>Caballero</option><option>Niño</option><option>Boutique</option></select>
+            <div class="flex-row" style="flex-wrap:wrap;gap:8px">
+              <div class="search-wrap" style="width:220px"><span class="search-ico">🔍</span><input type="text" id="inv-q" placeholder="Buscar…" oninput="renderInv()"></div>
+              <select id="inv-cat" onchange="renderInv()" style="width:110px"><option value="">Todas Cat.</option><option>Dama</option><option>Caballero</option><option>Niño</option><option>Boutique</option></select>
+              <select id="inv-linea" onchange="renderInv()" style="width:110px"><option value="">Todas Líneas</option><option>Calzado</option><option>Ropa</option><option>Ropa Interior</option><option>Accesorios</option><option>Bolsos</option><option>Otros</option></select>
+              <select id="inv-temp" onchange="renderInv()" style="width:130px"><option value="">Temporadas</option><option>Primavera/Verano</option><option>Otoño/Invierno</option><option>Todo el Año</option><option>Liquidación</option></select>
               <div id="inv-suc-filter" class="flex-row"></div>
             </div>
           </div>
           <div class="tw">
-            <table><thead><tr><th></th><th>Código</th><th>Descripción</th><th>Cat.</th><th>Color</th><th>Tallas/Stock</th><th>Precio</th><th>Sucursal</th><th>Estado</th><th></th></tr></thead>
+            <table><thead><tr><th></th><th>Código</th><th>Descripción</th><th>Cat.</th><th>Línea</th><th>Temporada</th><th>Color</th><th>Tallas/Stock</th><th>Precio</th><th>Sucursal</th><th>Estado</th><th></th></tr></thead>
             <tbody id="inv-tbody"></tbody></table>
           </div>
           <div class="empty" id="inv-empty" style="display:none"><div class="empty-icon">📦</div><div>Sin productos.</div></div>
@@ -610,12 +612,17 @@ select option{background:var(--s2)}
       <div class="fg"><label>Descripción</label><input type="text" id="p-desc" placeholder="Sandalia tacón cuadrado piel café"></div>
       <div class="fr fr3">
         <div class="fg"><label>Categoría</label><select id="p-cat"><option>Dama</option><option>Caballero</option><option>Niño</option><option>Boutique</option></select></div>
+        <div class="fg"><label>Línea</label><select id="p-linea"><option value="">Seleccionar…</option><option>Calzado</option><option>Ropa</option><option>Ropa Interior</option><option>Accesorios</option><option>Bolsos</option><option>Otros</option></select></div>
+        <div class="fg"><label>Temporada</label><select id="p-temporada"><option value="">Seleccionar…</option><option>Primavera/Verano</option><option>Otoño/Invierno</option><option>Todo el Año</option><option>Liquidación</option></select></div>
+      </div>
+      <div class="fr fr3">
         <div class="fg"><label>Marca</label><input type="text" id="p-marca" placeholder="Flexi"></div>
         <div class="fg"><label>Precio de Venta ($)</label><input type="number" id="p-precio" step="0.01" placeholder="0.00"></div>
+        <div class="fg"><label>Color</label><input type="text" id="p-color" placeholder="Negro, Café, Beige…"></div>
       </div>
       <div class="fr fr2">
-        <div class="fg"><label>Color</label><input type="text" id="p-color" placeholder="Negro, Café, Beige…"></div>
-        <div class="fg"><label>Sucursal</label><select id="p-suc"></select></div>
+        <div class="fg"><label>Sucursal</label><select id="p-suc"><option value="">Cargando…</option></select></div>
+        <div class="fg"><label>Precio de Costo ($) <span style="color:var(--faint)">(opcional)</span></label><input type="number" id="p-costo" step="0.01" placeholder="0.00"></div>
       </div>
       <div class="fg"><label>Tallas (selecciona las disponibles)</label><div id="p-tallas-sel"></div></div>
       <div id="p-stock-inputs"></div>
@@ -714,7 +721,9 @@ select option{background:var(--s2)}
 // ══════════════════ CONSTANTS ══════════════════
 const TALLAS_CALZADO=['13','14','15','16','17','18','19','20','21','22','22.5','23','23.5','24','24.5','25','25.5','26','26.5','27','27.5','28','29','30','31','32'];
 const TALLAS_ROPA=['XS','S','M','L','XL','XXL','XXXL'];
-const ALL_TALLAS=[...TALLAS_CALZADO,...TALLAS_ROPA,'Único'];
+const ALL_TALLAS=[...TALLAS_CALZADO,...TALLAS_ROPA,'Único','UNI'];
+const LINEAS=['Calzado','Ropa','Ropa Interior','Accesorios','Bolsos','Otros'];
+const TEMPORADAS=['Primavera/Verano','Otoño/Invierno','Todo el Año','Liquidación'];
 const GASTO_CATS=['Renta','Servicios','Mercancía','Empaques','Sueldos','Publicidad','Transporte','Limpieza','Pago a Proveedores','Internet','Mantenimiento','Comida','Varios'];
 const ROLES={admin:'Admin',vendedor:'Vendedor',bodega:'Bodeguero',lectura:'Lectura'};
 const ROLE_COLORS={admin:'role-admin',vendedor:'role-vendedor',bodega:'role-bodega',lectura:'role-lectura'};
@@ -857,13 +866,12 @@ function startListeners(){
 
 // ══════════════════ SUCURSALES ══════════════════
 function populateSucursalSelects(){
-  const sels=['pos-suc','p-suc','g-suc','u-suc','corte-suc','rep-suc','h-suc','tr-origen','tr-destino'];
+  // Selects outside modals that need auto-population
+  const sels=['pos-suc','g-suc','u-suc','corte-suc','rep-suc','h-suc','tr-origen','tr-destino'];
   sels.forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
     const cur=el.value;
-    const allOpt=id.startsWith('tr-')?'':id==='pos-suc'||id==='p-suc'?'':'';
-    // For selects that need "all" option
     const needsAll=['pos-suc','corte-suc','rep-suc','h-suc'].includes(id);
     el.innerHTML=(needsAll?'<option value="">Todas las sucursales</option>':'')+
       sucursales.map(s=>`<option value="${s.id}">${s.nombre} (${s.tipo})</option>`).join('');
@@ -874,11 +882,6 @@ function populateSucursalSelects(){
   if(invF){
     invF.innerHTML=`<span class="suc-chip ${activeSucId==='all'?'on':''}" onclick="setActiveSuc('all')">Todas</span>`+
       sucursales.map(s=>`<span class="suc-chip ${activeSucId===s.id?'on':''}" onclick="setActiveSuc('${s.id}')">${s.nombre}</span>`).join('');
-  }
-  // corte-suc add all
-  const cs=document.getElementById('corte-suc');
-  if(cs&&!cs.querySelector('[value=""]')){
-    cs.insertAdjacentHTML('afterbegin','<option value="">Todas</option>');
   }
 }
 
@@ -941,20 +944,27 @@ function abrirModalProducto(id){
   document.getElementById('mp-title').textContent=id?'Editar Producto':'Nuevo Producto';
   document.getElementById('photo-preview').style.display='none';
   document.getElementById('photo-placeholder').style.display='block';
-  const fields=['bar','sku','desc','marca','precio','color','notas'];
+  // Populate sucursal select first
+  const sucSel=document.getElementById('p-suc');
+  sucSel.innerHTML=sucursales.map(s=>`<option value="${s.id}">${s.nombre} (${s.tipo})</option>`).join('');
+  const fields=['bar','sku','desc','marca','precio','color','notas','costo'];
   if(id){
     const p=productos.find(x=>x.id===id);
     if(p){
       fields.forEach(f=>{const el=document.getElementById('p-'+f);if(el)el.value=p[f]||'';});
       document.getElementById('p-cat').value=p.cat||'Dama';
-      document.getElementById('p-suc').value=p.sucursalId||'';
+      document.getElementById('p-linea').value=p.linea||'';
+      document.getElementById('p-temporada').value=p.temporada||'';
+      if(p.sucursalId)sucSel.value=p.sucursalId;
       if(p.foto){document.getElementById('photo-preview').src=p.foto;document.getElementById('photo-preview').style.display='block';document.getElementById('photo-placeholder').style.display='none';}
       renderTallasSel(p);
     }
   }else{
     fields.forEach(f=>{const el=document.getElementById('p-'+f);if(el)el.value='';});
     document.getElementById('p-cat').value='Dama';
-    if(sucursales.length>0)document.getElementById('p-suc').value=sucursales[0].id;
+    document.getElementById('p-linea').value='';
+    document.getElementById('p-temporada').value='';
+    if(sucursales.length>0)sucSel.value=sucursales[0].id;
     renderTallasSel(null);
   }
   openM('mo-prod');
@@ -998,18 +1008,17 @@ async function saveProducto(){
   const desc=document.getElementById('p-desc').value.trim();
   const precio=parseFloat(document.getElementById('p-precio').value);
   if(!desc){toast('Falta descripción','err');return;}
-  if(isNaN(precio)||precio<=0){toast('Precio inválido','err');return;}
+  if(isNaN(precio)||precio<=0){toast('Precio inválido — ingresa un número mayor a 0','err');return;}
+  const sucId=document.getElementById('p-suc').value;
+  if(!sucId){toast('Selecciona una sucursal','err');return;}
   const stock=getStockVals();
   let foto=null;
-  // Guardar foto en base64 directamente en Firestore
   if(photoDataUrl){
-    // Comprimir imagen antes de guardar
     try{
       const canvas=document.createElement('canvas');
       const img=new Image();
       await new Promise(resolve=>{img.onload=resolve;img.src=photoDataUrl;});
-      const MAX=400;
-      let w=img.width,h=img.height;
+      const MAX=400;let w=img.width,h=img.height;
       if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
       if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
       canvas.width=w;canvas.height=h;
@@ -1020,11 +1029,35 @@ async function saveProducto(){
     const existing=productos.find(x=>x.id===editProdId);
     if(existing)foto=existing.foto||null;
   }
-  const data={barcode:document.getElementById('p-bar').value.trim(),sku:document.getElementById('p-sku').value.trim(),desc,cat:document.getElementById('p-cat').value,marca:document.getElementById('p-marca').value.trim(),precio,color:document.getElementById('p-color').value.trim(),notas:document.getElementById('p-notas').value.trim(),stock,sucursalId:document.getElementById('p-suc').value,foto,updatedAt:new Date().toISOString()};
+  const data={
+    barcode:document.getElementById('p-bar').value.trim(),
+    sku:document.getElementById('p-sku').value.trim(),
+    desc,
+    cat:document.getElementById('p-cat').value,
+    linea:document.getElementById('p-linea').value||'',
+    temporada:document.getElementById('p-temporada').value||'',
+    marca:document.getElementById('p-marca').value.trim(),
+    precio,
+    costo:parseFloat(document.getElementById('p-costo').value)||0,
+    color:document.getElementById('p-color').value.trim(),
+    notas:document.getElementById('p-notas').value.trim(),
+    stock,
+    sucursalId:sucId,
+    foto,
+    updatedAt:new Date().toISOString()
+  };
   const {setDoc,addDoc}=window._fb;
-  if(editProdId)await setDoc(docRef('productos',editProdId),data,{merge:true});
-  else await addDoc(col('productos'),{...data,createdAt:new Date().toISOString()});
-  closeM('mo-prod');toast(editProdId?'Producto actualizado ✓':'Producto guardado ✓');editProdId=null;
+  try{
+    if(editProdId)await setDoc(docRef('productos',editProdId),data,{merge:true});
+    else await addDoc(col('productos'),{...data,createdAt:new Date().toISOString()});
+    closeM('mo-prod');
+    toast(editProdId?'Producto actualizado ✓':'Producto guardado ✓');
+    editProdId=null;
+    photoDataUrl=null;
+  }catch(e){
+    toast('Error al guardar: '+e.message,'err');
+    console.error(e);
+  }
 }
 
 async function deleteProducto(id){
@@ -1042,7 +1075,20 @@ function renderInv(){
     const ms=activeSucId==='all'||p.sucursalId===activeSucId;
     return mq&&mc&&ms;
   });
-  // AGRUPAR por SKU+sucursal igual que Sizes & Colors
+// ══════════════════ RENDER INVENTARIO ══════════════════
+function renderInv(){
+  const q=(document.getElementById('inv-q')?.value||'').toLowerCase();
+  const cat=document.getElementById('inv-cat')?.value||'';
+  const linea=document.getElementById('inv-linea')?.value||'';
+  const temp=document.getElementById('inv-temp')?.value||'';
+  let lista=productos.filter(p=>{
+    const mq=!q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.color||'').toLowerCase().includes(q);
+    const mc=!cat||p.cat===cat;
+    const ml=!linea||p.linea===linea;
+    const mt=!temp||p.temporada===temp;
+    const ms=activeSucId==='all'||p.sucursalId===activeSucId;
+    return mq&&mc&&ml&&mt&&ms;
+  });
   const grupos={};
   lista.forEach(p=>{
     const key=(p.sku||p.barcode||p.id)+'_'+(p.sucursalId||'');
@@ -1067,6 +1113,8 @@ function renderInv(){
       <td><div class="mono">${p.barcode||'—'}</div><div style="font-size:10px;color:var(--faint)">${p.sku||''}</div></td>
       <td><div style="font-weight:500">${p.desc}</div><div style="font-size:11px;color:var(--muted)">${p.marca||''}</div></td>
       <td><span class="badge b-accent">${p.cat}</span></td>
+      <td style="color:var(--muted);font-size:12px">${p.linea||'—'}</td>
+      <td style="font-size:11px;color:var(--muted)">${p.temporada||'—'}</td>
       <td style="color:var(--muted)">${p.color||'—'}</td>
       <td style="max-width:200px">${ts||'<span style="color:var(--faint)">Sin stock</span>'}</td>
       <td class="mono">${fmt(p.precio)}</td>
@@ -1117,14 +1165,16 @@ function imprimirEtiqueta(id){
 }
 
 function exportarExcel(){
-  const headers=['Codigo','SKU','Descripcion','Categoria','Marca','Color','Precio','Tallas_Stock','Stock_Total','Sucursal'];
+  const headers=['Codigo','SKU','Descripcion','Categoria','Linea','Temporada','Marca','Color','Precio','Costo','Tallas_Stock','Stock_Total','Sucursal'];
   const rows=productos.map(p=>{
     const tot=Object.values(p.stock||{}).reduce((a,b)=>a+b,0);
     const ts=Object.entries(p.stock||{}).filter(([,v])=>v>0).map(([t,c])=>t+':'+c).join(' | ');
     const suc=sucursales.find(s=>s.id===p.sucursalId)?.nombre||'—';
-    return[p.barcode||'',p.sku||'',p.desc||'',p.cat||'',p.marca||'',p.color||'',p.precio||0,ts,tot,suc];
+    return[p.barcode||'',p.sku||'',p.desc||'',p.cat||'',p.linea||'',p.temporada||'',p.marca||'',p.color||'',p.precio||0,p.costo||0,ts,tot,suc];
   });
-  const csv='﻿'+headers.join(',')+'\n'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const csv='﻿'+headers.join(',')+'
+'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('
+');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='inventario_'+new Date().toISOString().split('T')[0]+'.csv';
@@ -1135,21 +1185,26 @@ function exportarExcel(){
 // ══════════════════ CATÁLOGO GENERAL ══════════════════
 function renderCatalogo(){
   const q=(document.getElementById('cat-q')?.value||'').toLowerCase();
-  const lista=productos.filter(p=>!q||(p.desc||'').toLowerCase().includes(q)||(p.cat||'').toLowerCase().includes(q)||(p.marca||'').toLowerCase().includes(q));
+  const lista=productos.filter(p=>!q||(p.desc||'').toLowerCase().includes(q)||(p.cat||'').toLowerCase().includes(q)||(p.marca||'').toLowerCase().includes(q)||(p.linea||'').toLowerCase().includes(q));
   document.getElementById('cat-empty').style.display=lista.length?'none':'block';
   document.getElementById('cat-grid').innerHTML=lista.map(p=>{
     const tot=Object.values(p.stock||{}).reduce((a,b)=>a+b,0);
     const suc=sucursales.find(s=>s.id===p.sucursalId);
     return`<div class="prod-card">
-      <div class="prod-img">${p.foto?`<img src="${p.foto}" alt="${p.desc}">`:'👟'}</div>
+      <div class="prod-img" onclick="abrirModalProducto('${p.id}')">${p.foto?`<img src="${p.foto}" alt="${p.desc}">`:'👟'}</div>
       <div class="prod-info">
         <div style="font-size:10px;color:var(--muted);font-family:var(--mono)">${p.sku||p.barcode||'—'}</div>
         <div style="font-size:13px;font-weight:600;color:var(--cream);margin:3px 0;line-height:1.3">${p.desc}</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${p.cat} · ${p.color||'—'}</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:3px">${p.cat}${p.linea?' · '+p.linea:''} · ${p.color||'—'}</div>
+        ${p.temporada?`<div style="font-size:10px;margin-bottom:3px"><span class="badge b-accent" style="font-size:10px">${p.temporada}</span></div>`:''}
         ${suc?`<div style="font-size:11px;color:var(--muted);margin-bottom:4px">${suc.tipo==='bodega'?'📦':'🏪'} ${suc.nombre}</div>`:''}
-        <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <span style="font-family:var(--mono);color:var(--gold);font-size:14px">${fmt(p.precio)}</span>
           <span class="badge ${tot<=3?'b-gold':'b-green'}">${tot} pzas</span>
+        </div>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-xs" style="flex:1" onclick="abrirModalProducto('${p.id}')">✏️ Editar</button>
+          <button class="btn btn-ghost btn-xs" onclick="imprimirEtiqueta('${p.id}')">🏷️</button>
         </div>
       </div>
     </div>`;
