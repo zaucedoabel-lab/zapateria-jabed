@@ -361,7 +361,7 @@ select option{background:var(--s2)}
               <div class="search-wrap" style="width:220px"><span class="search-ico">🔍</span><input type="text" id="inv-q" placeholder="Buscar…" oninput="renderInv()"></div>
               <select id="inv-cat" onchange="renderInv()" style="width:110px"><option value="">Todas Cat.</option><option>Dama</option><option>Caballero</option><option>Niño</option><option>Boutique</option></select>
               <select id="inv-linea" onchange="renderInv()" style="width:110px"><option value="">Todas Líneas</option><option>Calzado</option><option>Ropa</option><option>Ropa Interior</option><option>Accesorios</option><option>Bolsos</option><option>Otros</option></select>
-              <select id="inv-temp" onchange="renderInv()" style="width:130px"><option value="">Temporadas</option><option>Primavera/Verano</option><option>Otoño/Invierno</option><option>Todo el Año</option><option>Liquidación</option></select>
+              <select id="inv-temp" onchange="renderInv()" style="width:130px"><option value="">Temporadas</option><option>Primavera/Verano</option><option>Otoño/Invierno</option><option>Todo el Año</option><option>Liquidación</option><option>2024</option><option>2025</option><option>2026</option><option>2027</option></select>
               <div id="inv-suc-filter" class="flex-row"></div>
             </div>
           </div>
@@ -613,7 +613,7 @@ select option{background:var(--s2)}
       <div class="fr fr3">
         <div class="fg"><label>Categoría</label><select id="p-cat"><option>Dama</option><option>Caballero</option><option>Niño</option><option>Boutique</option></select></div>
         <div class="fg"><label>Línea</label><select id="p-linea"><option value="">Seleccionar…</option><option>Calzado</option><option>Ropa</option><option>Ropa Interior</option><option>Accesorios</option><option>Bolsos</option><option>Otros</option></select></div>
-        <div class="fg"><label>Temporada</label><select id="p-temporada"><option value="">Seleccionar…</option><option>Primavera/Verano</option><option>Otoño/Invierno</option><option>Todo el Año</option><option>Liquidación</option></select></div>
+        <div class="fg"><label>Temporada</label><select id="p-temporada"><option value="">Seleccionar…</option><option>Primavera/Verano</option><option>Otoño/Invierno</option><option>Todo el Año</option><option>Liquidación</option><option>2024</option><option>2025</option><option>2026</option><option>2027</option></select></div>
       </div>
       <div class="fr fr3">
         <div class="fg"><label>Marca</label><input type="text" id="p-marca" placeholder="Flexi"></div>
@@ -723,7 +723,7 @@ const TALLAS_CALZADO=['13','14','15','16','17','18','19','20','21','22','22.5','
 const TALLAS_ROPA=['XS','S','M','L','XL','XXL','XXXL'];
 const ALL_TALLAS=[...TALLAS_CALZADO,...TALLAS_ROPA,'Único','UNI'];
 const LINEAS=['Calzado','Ropa','Ropa Interior','Accesorios','Bolsos','Otros'];
-const TEMPORADAS=['Primavera/Verano','Otoño/Invierno','Todo el Año','Liquidación'];
+const TEMPORADAS=['Primavera/Verano','Otoño/Invierno','Todo el Año','Liquidación','2024','2025','2026','2027'];
 const GASTO_CATS=['Renta','Servicios','Mercancía','Empaques','Sueldos','Publicidad','Transporte','Limpieza','Pago a Proveedores','Internet','Mantenimiento','Comida','Varios'];
 const ROLES={admin:'Admin',vendedor:'Vendedor',bodega:'Bodeguero',lectura:'Lectura'};
 const ROLE_COLORS={admin:'role-admin',vendedor:'role-vendedor',bodega:'role-bodega',lectura:'role-lectura'};
@@ -930,12 +930,28 @@ function editSucursal(id){abrirModalSucursal(id);}
 
 async function saveSucursal(){
   const nombre=document.getElementById('s-nombre').value.trim();
-  if(!nombre){toast('Ingresa el nombre','err');return;}
-  const data={nombre,tipo:document.getElementById('s-tipo').value,dir:document.getElementById('s-dir').value.trim(),activa:true};
-  const {setDoc,addDoc}=window._fb;
-  if(editSucId)await setDoc(docRef('sucursales',editSucId),data,{merge:true});
-  else await addDoc(col('sucursales'),{...data,createdAt:new Date().toISOString()});
-  closeM('mo-suc');toast('Sucursal guardada ✓');editSucId=null;
+  if(!nombre){toast('Falta el nombre de la sucursal','err');return;}
+  const data={
+    nombre,
+    tipo:document.getElementById('s-tipo').value,
+    dir:document.getElementById('s-dir').value.trim(),
+    activa:true,
+    updatedAt:new Date().toISOString()
+  };
+  try{
+    const {setDoc,addDoc}=window._fb;
+    if(editSucId){
+      await setDoc(docRef('sucursales',editSucId),data,{merge:true});
+    }else{
+      await addDoc(col('sucursales'),{...data,createdAt:new Date().toISOString()});
+    }
+    closeM('mo-suc');
+    toast(editSucId?'Sucursal actualizada':'Sucursal guardada');
+    editSucId=null;
+  }catch(e){
+    toast('Error: '+e.message,'err');
+    console.error(e);
+  }
 }
 
 // ══════════════════ PRODUCTOS ══════════════════
