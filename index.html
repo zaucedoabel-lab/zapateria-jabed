@@ -1069,16 +1069,6 @@ async function deleteProducto(id){
 function renderInv(){
   const q=(document.getElementById('inv-q')?.value||'').toLowerCase();
   const cat=document.getElementById('inv-cat')?.value||'';
-  let lista=productos.filter(p=>{
-    const mq=!q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').includes(q);
-    const mc=!cat||p.cat===cat;
-    const ms=activeSucId==='all'||p.sucursalId===activeSucId;
-    return mq&&mc&&ms;
-  });
-// ══════════════════ RENDER INVENTARIO ══════════════════
-function renderInv(){
-  const q=(document.getElementById('inv-q')?.value||'').toLowerCase();
-  const cat=document.getElementById('inv-cat')?.value||'';
   const linea=document.getElementById('inv-linea')?.value||'';
   const temp=document.getElementById('inv-temp')?.value||'';
   let lista=productos.filter(p=>{
@@ -1172,9 +1162,7 @@ function exportarExcel(){
     const suc=sucursales.find(s=>s.id===p.sucursalId)?.nombre||'—';
     return[p.barcode||'',p.sku||'',p.desc||'',p.cat||'',p.linea||'',p.temporada||'',p.marca||'',p.color||'',p.precio||0,p.costo||0,ts,tot,suc];
   });
-  const csv='﻿'+headers.join(',')+'
-'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('
-');
+  const csv='\uFEFF'+headers.join(',')+'\n'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='inventario_'+new Date().toISOString().split('T')[0]+'.csv';
