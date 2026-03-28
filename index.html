@@ -2119,60 +2119,107 @@ function imprimirEtiqEntrada(){
 
 function abrirVentanaEtiquetas(items){
   const barcodes=items.map(x=>x.p.barcode||x.p.sku||'');
+  // Fecha impresión: YY/MM
+  const now=new Date();
+  const fechaImp=String(now.getFullYear()).slice(2)+'/'+String(now.getMonth()+1).padStart(2,'0');
   const prodData=items.map(x=>({
     sku:x.p.sku||x.p.barcode||'',
-    desc:x.p.desc||'',
-    marca:x.p.marca||'',
-    color:x.p.color||'',
+    desc:(x.p.desc||'').toUpperCase(),
+    marca:(x.p.marca||'SIN MARCA').toUpperCase(),
+    color:(x.p.color||'').toUpperCase(),
     precio:x.p.precio||0,
     talla:x.t,
     bc:x.p.barcode||x.p.sku||''
   }));
-  const win=window.open('','_blank','width=720,height=720');
+  const win=window.open('','_blank','width=800,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:Arial,sans-serif;background:#fff;padding:10px}
-    .etiq-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:4px}
-    .etiq{border:1px solid #999;border-radius:3px;padding:6px 8px;width:190px;min-height:100px;text-align:center;page-break-inside:avoid;background:#fff}
-    .etiq-tienda{font-size:8px;color:#888;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid #ddd;padding-bottom:2px;margin-bottom:3px}
-    .etiq-sku{font-size:13px;font-weight:bold;color:#000;margin-bottom:1px}
-    .etiq-desc{font-size:9px;color:#333;margin-bottom:2px;line-height:1.3;min-height:20px}
-    .etiq-row{font-size:9px;color:#555;margin-bottom:1px}
-    .etiq-talla-precio{display:flex;justify-content:space-between;align-items:center;margin:4px 0 3px;border-top:1px dashed #ccc;padding-top:3px}
-    .etiq-talla{font-size:11px;font-weight:bold;color:#333}
-    .etiq-precio{font-size:16px;font-weight:bold;color:#000}
-    .etiq-bc{margin:2px auto 0}
-    .no-print{padding:10px;margin-bottom:10px;background:#f5f5f5;border-radius:8px;display:flex;gap:8px;align-items:center}
-    @media print{.no-print{display:none!important}.etiq{margin:2px}}
+    body{font-family:'Courier New',monospace;background:#f0f0f0;padding:12px}
+    .no-print{padding:10px;margin-bottom:12px;background:#fff;border-radius:8px;display:flex;gap:8px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+    .etiq-wrap{display:flex;flex-wrap:wrap;gap:4px;padding:4px}
+    /* 51mm x 25mm = 193px x 95px at 96dpi */
+    .etiq{
+      width:193px;height:95px;
+      border:1px solid #888;
+      background:#fff;
+      padding:3px 4px 2px 4px;
+      page-break-inside:avoid;
+      overflow:hidden;
+      position:relative;
+      font-family:'Courier New',monospace;
+    }
+    .row1{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #000;padding-bottom:1px;margin-bottom:2px}
+    .tienda{font-size:7px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase}
+    .fecha-imp{font-size:7px;color:#333}
+    .marca{font-size:8px;font-weight:bold;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .row-desc-precio{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1px}
+    .desc{font-size:7.5px;font-weight:bold;flex:1;line-height:1.2;max-width:120px;overflow:hidden}
+    .precio{font-size:11px;font-weight:bold;white-space:nowrap;margin-left:4px}
+    .color{font-size:7px;color:#333;margin-bottom:1px}
+    .bc-row{display:flex;align-items:center;justify-content:space-between;margin-top:1px}
+    .bc-area{flex:1}
+    .bc-area svg{display:block}
+    .talla-box{
+      width:28px;height:28px;
+      background:#000;color:#fff;
+      font-size:11px;font-weight:bold;
+      display:flex;align-items:center;justify-content:center;
+      margin-left:4px;flex-shrink:0;
+      font-family:'Courier New',monospace;
+    }
+    @media print{
+      body{background:#fff;padding:0;margin:0}
+      .no-print{display:none!important}
+      .etiq-wrap{gap:0;padding:0}
+      .etiq{border:none;margin:0;page-break-inside:avoid}
+      @page{size:51mm 25mm;margin:0}
+    }
   <\/style></head><body>
   <div class="no-print">
-    <button onclick="window.print()" style="padding:8px 18px;background:#6c63ff;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px">🖨️ Imprimir ${items.length} etiqueta(s)</button>
-    <button onclick="window.close()" style="padding:8px 14px;background:#eee;border:none;border-radius:6px;cursor:pointer">✕ Cerrar</button>
+    <button onclick="window.print()" style="padding:8px 18px;background:#222;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:bold">🖨️ Imprimir ${items.length} etiqueta(s)</button>
+    <button onclick="window.close()" style="padding:8px 14px;background:#eee;border:1px solid #ccc;border-radius:6px;cursor:pointer">✕ Cerrar</button>
+    <span style="font-size:12px;color:#666">Tamaño: 51×25mm (Ribetec) · ${items.length} etiqueta(s)</span>
   </div>
   <div class="etiq-wrap">
   ${prodData.map((p,i)=>`<div class="etiq">
-    <div class="etiq-tienda">Zapatería Jabed</div>
-    <div class="etiq-sku">${p.sku||'—'}</div>
-    <div class="etiq-desc">${p.desc}</div>
-    <div class="etiq-row">${p.marca?p.marca+' · ':''} ${p.color||''}</div>
-    <div class="etiq-talla-precio">
-      <span class="etiq-talla">T: ${p.talla}</span>
-      <span class="etiq-precio">$${Number(p.precio).toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
+    <div class="row1">
+      <span class="tienda">ZAPATERIA JABED</span>
+      <span class="fecha-imp">${fechaImp}</span>
     </div>
-    ${p.bc?`<div class="etiq-bc"><svg id="bc${i}" style="max-width:170px"></svg></div>`:''}
+    <div class="marca">${p.marca}</div>
+    <div class="row-desc-precio">
+      <div class="desc">${p.desc}</div>
+      <div class="precio">$${Number(p.precio).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+    </div>
+    <div class="color">${p.color||'&nbsp;'}</div>
+    <div class="bc-row">
+      <div class="bc-area">${p.bc?`<svg id="bc${i}"></svg><div style="font-size:6px;text-align:center;margin-top:0px">${p.bc}</div>`:'<div style="font-size:6px;color:#999">Sin código</div>'}</div>
+      <div class="talla-box">${p.talla}</div>
+    </div>
   </div>`).join('')}
   </div>
   <script>
     var bcs=${JSON.stringify(barcodes)};
     bcs.forEach(function(bc,i){
       if(!bc)return;
-      try{JsBarcode(document.getElementById('bc'+i),bc,{format:'CODE128',width:1.4,height:28,displayValue:true,fontSize:8,margin:1});}catch(e){}
+      var svg=document.getElementById('bc'+i);
+      if(!svg)return;
+      try{JsBarcode(svg,bc,{format:'CODE128',width:1.1,height:18,displayValue:false,margin:0});}catch(e){}
     });
   <\/script></body></html>`);
   win.document.close();
 }
+
+function imprimirEtiqueta(id){
+  const p=productos.find(x=>x.id===id); if(!p) return;
+  const tallas=Object.entries(p.stock||{}).filter(([,v])=>v>0);
+  if(!tallas.length){toast('Sin stock para etiquetar','err');return;}
+  const items=tallas.map(([t])=>({p,t}));
+  abrirVentanaEtiquetas(items);
+}
+
 
 // ══════════════════ APARTADO ══════════════════
 function toggleApartado(){
