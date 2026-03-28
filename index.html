@@ -314,6 +314,7 @@ select option{background:var(--s2)}
         <div class="nav-label">Operaciones</div>
         <div class="nav-item" id="nav-pos" onclick="go('pos',this)"><span class="ni">🛒</span><span class="nt">Punto de Venta</span></div>
         <div class="nav-item" id="nav-hist" onclick="go('historial',this)"><span class="ni">📋</span><span class="nt">Historial Ventas</span></div>
+        <div class="nav-item" id="nav-clientes" onclick="go('clientes',this)"><span class="ni">👤</span><span class="nt">Clientes</span></div>
         <div class="nav-item" id="nav-transfer" onclick="go('transferencias',this)"><span class="ni">↔️</span><span class="nt">Transferencias</span></div>
         <div class="nav-item" id="nav-cuentas" onclick="go('cuentas',this)"><span class="ni">📒</span><span class="nt">Apartados/Créditos</span></div>
         <div class="nav-divider"></div>
@@ -475,8 +476,29 @@ select option{background:var(--s2)}
                 </div>
                 <div class="fg" style="margin-bottom:5px"><label style="font-size:9px">Forma de Pago</label>
                   <select id="c-pago"><option value="efectivo">💵 Efectivo</option><option value="tarjeta">💳 Tarjeta</option><option value="transferencia">📲 Transferencia</option><option value="mixto">🔀 Mixto</option></select></div>
-                <div class="fg" style="margin-bottom:5px"><label style="font-size:9px">Cliente</label><input type="text" id="c-cliente" placeholder="Nombre del cliente"></div>
-                <div class="fg" style="margin-bottom:5px"><label style="font-size:9px">Vendedor</label><input type="text" id="c-vendedor" placeholder="Nombre del vendedor"></div>
+                <div class="fg" style="margin-bottom:5px">
+                  <label style="font-size:9px">Cliente</label>
+                  <select id="c-cliente-sel" onchange="onClienteSelect()" style="width:100%">
+                    <option value="">— Cliente general —</option>
+                  </select>
+                </div>
+                <div id="c-cliente-info" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:8px;margin-bottom:5px;font-size:11px"></div>
+                <div class="fg" style="margin-bottom:5px">
+                  <label style="font-size:9px">Vendedor</label>
+                  <select id="c-vendedor-sel" style="width:100%">
+                    <option value="">— Seleccionar vendedor —</option>
+                  </select>
+                </div>
+                <!-- Nota separo (aparece en apartado/credito) -->
+                <div id="c-nota-section" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:6px">
+                  <div style="font-size:10px;color:var(--gold);font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">📄 Datos para Nota de Separo</div>
+                  <div class="fg" style="margin-bottom:4px"><label style="font-size:9px">Nombre completo</label><input type="text" id="c-nota-nombre" placeholder="Nombre del cliente"></div>
+                  <div class="fg" style="margin-bottom:0"><label style="font-size:9px">Teléfono</label><input type="text" id="c-nota-tel" placeholder="(899) 000-0000"></div>
+                </div>
+                <div id="c-cumple-alert" style="display:none;background:#2a1e08;border:1px solid var(--gold);border-radius:8px;padding:8px;margin-bottom:6px;font-size:12px;color:var(--gold)">
+                  🎂 ¡Este cliente cumple años hoy! Aplica descuento del <span id="c-cumple-pct"></span>%
+                  <button class="btn btn-gold btn-xs" style="margin-left:8px" onclick="aplicarDescCumple()">Aplicar</button>
+                </div>
                 <button class="btn btn-gold btn-full" style="padding:11px;font-size:14px;margin-top:8px;position:sticky;bottom:0" onclick="cobrar()">✅ Cobrar Venta</button>
               </div>
             </div>
@@ -487,35 +509,51 @@ select option{background:var(--s2)}
         <div id="page-cuentas" class="page">
           <div class="flex-between" style="margin-bottom:14px">
             <div class="flex-row" style="gap:8px;flex-wrap:wrap">
-              <div class="search-wrap" style="width:220px"><span class="search-ico">🔍</span><input type="text" id="cta-q" placeholder="Buscar cliente…" oninput="renderCuentas()"></div>
-              <select id="cta-tipo" onchange="renderCuentas()" style="width:140px">
-                <option value="">Todos</option>
-                <option value="apartado">📦 Apartados</option>
-                <option value="credito">💳 Créditos</option>
-              </select>
-              <select id="cta-estado" onchange="renderCuentas()" style="width:140px">
-                <option value="">Todos los estados</option>
-                <option value="pendiente">⏳ Pendiente</option>
-                <option value="liquidado">✅ Liquidado</option>
-              </select>
+              <div class="search-wrap" style="width:200px"><span class="search-ico">🔍</span><input type="text" id="cta-q" placeholder="Buscar cliente…" oninput="renderCuentas()"></div>
+              <div>
+                <select id="cta-tipo" onchange="renderCuentas()" style="width:130px">
+                  <option value="">Todos</option>
+                  <option value="apartado">📦 Apartados</option>
+                  <option value="credito">💳 Créditos</option>
+                </select>
+              </div>
+              <div>
+                <select id="cta-estado" onchange="renderCuentas()" style="width:140px">
+                  <option value="">Todos los estados</option>
+                  <option value="pendiente">⏳ Pendiente</option>
+                  <option value="liquidado">✅ Liquidado</option>
+                </select>
+              </div>
+              <div>
+                <select id="cta-mes" onchange="renderCuentas()" style="width:120px">
+                  <option value="">Todos los meses</option>
+                  <option value="01">Enero</option><option value="02">Febrero</option>
+                  <option value="03">Marzo</option><option value="04">Abril</option>
+                  <option value="05">Mayo</option><option value="06">Junio</option>
+                  <option value="07">Julio</option><option value="08">Agosto</option>
+                  <option value="09">Septiembre</option><option value="10">Octubre</option>
+                  <option value="11">Noviembre</option><option value="12">Diciembre</option>
+                </select>
+              </div>
             </div>
-            <div class="flex-row">
+            <div class="flex-row" style="gap:8px">
               <span class="badge b-gold" id="cta-total-pend">Pendiente: $0</span>
+              <button class="btn btn-ghost btn-sm" onclick="exportarCuentasExcel()">📊 Exportar Excel</button>
             </div>
           </div>
 
           <!-- Stats -->
           <div class="stat-grid sg3" style="margin-bottom:16px">
-            <div class="scard gold"><div class="sl">Total Apartados Activos</div><div class="sv gold" id="cta-stat-apartados">0</div></div>
-            <div class="scard b"><div class="sl">Total Créditos Activos</div><div class="sv b" id="cta-stat-creditos">0</div></div>
+            <div class="scard gold"><div class="sl">Apartados Activos</div><div class="sv gold" id="cta-stat-apartados">0</div></div>
+            <div class="scard b"><div class="sl">Créditos Activos</div><div class="sv b" id="cta-stat-creditos">0</div></div>
             <div class="scard r"><div class="sl">Saldo Total Pendiente</div><div class="sv r" id="cta-stat-saldo">$0</div></div>
           </div>
 
-          <div class="tw">
-            <table><thead><tr>
-              <th>Fecha</th><th>Cliente</th><th>Tipo</th><th>Productos</th>
-              <th>Total</th><th>Anticipo</th><th>Abonado</th><th>Saldo</th>
-              <th>Estado</th><th></th>
+          <div class="tw" style="overflow-x:auto">
+            <table style="min-width:1100px"><thead><tr>
+              <th>Mes</th><th>Semana</th><th>Fecha</th><th>Cliente</th><th>Tipo</th>
+              <th>Productos</th><th>Total</th><th>Anticipo</th><th>Abonado</th>
+              <th>Saldo</th><th>Estado</th><th>Nota Venta</th><th></th>
             </tr></thead>
             <tbody id="cta-tbody"></tbody>
           </table></div>
@@ -540,7 +578,7 @@ select option{background:var(--s2)}
               </div>
               <div>
                 <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Tipo</label>
-                <select id="h-tipo" onchange="renderHist()" style="width:120px"><option value="">Todos</option><option value="venta">Venta</option><option value="apartado">Apartado</option></select>
+                <select id="h-tipo" onchange="renderHist()" style="width:120px"><option value="">Todos</option><option value="venta">Venta</option><option value="apartado">Apartado</option><option value="credito">Crédito</option><option value="abono">Abono</option></select>
               </div>
             </div>
             <div class="flex-row" style="gap:8px">
@@ -583,6 +621,34 @@ select option{background:var(--s2)}
               <div id="tr-historial"></div>
             </div>
           </div>
+        </div>
+
+        <!-- ══════════ CLIENTES ══════════ -->
+        <div id="page-clientes" class="page">
+          <div class="flex-between" style="margin-bottom:14px">
+            <div class="flex-row" style="gap:8px;flex-wrap:wrap">
+              <div class="search-wrap" style="width:220px"><span class="search-ico">🔍</span><input type="text" id="cli-q" placeholder="Buscar cliente…" oninput="renderClientes()"></div>
+            </div>
+            <div class="flex-row" style="gap:8px">
+              <button class="btn btn-ghost btn-sm" onclick="exportarClientesExcel()">📊 Exportar Excel</button>
+              <button class="btn btn-accent btn-sm" onclick="abrirModalCliente()">＋ Nuevo Cliente</button>
+            </div>
+          </div>
+          <!-- Stats monedero -->
+          <div class="stat-grid sg3" style="margin-bottom:14px">
+            <div class="scard a"><div class="sl">Total Clientes</div><div class="sv a" id="cli-stat-total">0</div></div>
+            <div class="scard gold"><div class="sl">Puntos Totales Emitidos</div><div class="sv gold" id="cli-stat-puntos">0</div></div>
+            <div class="scard g"><div class="sl">Cumpleaños Hoy 🎂</div><div class="sv g" id="cli-stat-cumple">0</div></div>
+          </div>
+          <div class="tw">
+            <table><thead><tr>
+              <th>#</th><th>Nombre</th><th>Teléfono</th><th>Celular</th>
+              <th>Cumpleaños</th><th>Límite Crédito</th><th>% Desc.</th>
+              <th>Puntos</th><th>Última Compra</th><th></th>
+            </tr></thead>
+            <tbody id="cli-tbody"></tbody>
+          </table></div>
+          <div class="empty" id="cli-empty" style="display:none"><div class="empty-icon">👤</div><div>Sin clientes registrados.</div></div>
         </div>
 
         <!-- ══════════ GASTOS ══════════ -->
@@ -746,6 +812,39 @@ select option{background:var(--s2)}
             <div class="card">
               <div class="card-title">Proveedores <button class="btn btn-accent btn-xs" onclick="addCatalogItem('proveedores')">＋ Agregar</button></div>
               <div id="cfg-proveedores-list"></div>
+            </div>
+            <!-- Vendedores -->
+            <div class="card">
+              <div class="card-title">Vendedores <button class="btn btn-accent btn-xs" onclick="addCatalogItem('vendedores')">＋ Agregar</button></div>
+              <div id="cfg-vendedores-list"></div>
+            </div>
+          </div>
+
+          <!-- Config Monedero y Cumpleaños -->
+          <div class="sg2 stat-grid" style="gap:16px;margin-top:16px">
+            <div class="card">
+              <div class="card-title">🪙 Monedero Electrónico</div>
+              <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Los clientes acumulan puntos (%) por cada compra. Pueden usarlos como descuento en futuras compras.</p>
+              <div class="fg">
+                <label>% de puntos por compra</label>
+                <div class="flex-row" style="gap:8px">
+                  <input type="number" id="cfg-puntos-pct" placeholder="5" min="0" max="100" step="0.5" style="width:100px">
+                  <span style="font-size:13px;color:var(--muted);align-self:center">% del total de la compra</span>
+                </div>
+              </div>
+              <button class="btn btn-accent" onclick="saveConfigGeneral()">💾 Guardar</button>
+            </div>
+            <div class="card">
+              <div class="card-title">🎂 Descuento Cumpleaños</div>
+              <p style="font-size:13px;color:var(--muted);margin-bottom:14px">El sistema te alertará cuando un cliente cumpla años y aplicará automáticamente un descuento en su compra.</p>
+              <div class="fg">
+                <label>% de descuento en cumpleaños</label>
+                <div class="flex-row" style="gap:8px">
+                  <input type="number" id="cfg-cumple-pct" placeholder="10" min="0" max="100" step="1" style="width:100px">
+                  <span style="font-size:13px;color:var(--muted);align-self:center">% sobre el total</span>
+                </div>
+              </div>
+              <button class="btn btn-accent" onclick="saveConfigGeneral()">💾 Guardar</button>
             </div>
           </div>
         </div>
@@ -956,6 +1055,68 @@ select option{background:var(--s2)}
   </div>
 </div>
 
+<!-- Modal Cliente -->
+<div class="mo" id="mo-cliente">
+  <div class="md" style="max-width:600px">
+    <div class="mh">
+      <div class="mt" id="mc-cliente-title">Nuevo Cliente</div>
+      <button class="xbtn" onclick="closeM('mo-cliente')">✕</button>
+    </div>
+    <div class="mb">
+      <div class="fr fr2">
+        <div class="fg"><label>Nombre *</label><input type="text" id="cli-nombre" placeholder="Nombre(s)"></div>
+        <div class="fg"><label>Apellido Paterno</label><input type="text" id="cli-ap-pat" placeholder="Apellido paterno"></div>
+      </div>
+      <div class="fr fr2">
+        <div class="fg"><label>Apellido Materno</label><input type="text" id="cli-ap-mat" placeholder="Apellido materno"></div>
+        <div class="fg"><label>Celular</label><input type="text" id="cli-celular" placeholder="(899) 000-0000"></div>
+      </div>
+      <div class="fr fr2">
+        <div class="fg"><label>Teléfono</label><input type="text" id="cli-telefono" placeholder="Teléfono fijo"></div>
+        <div class="fg"><label>Cumpleaños</label><input type="date" id="cli-cumple"></div>
+      </div>
+      <div class="fr fr2">
+        <div class="fg"><label>Límite de Crédito ($)</label><input type="number" id="cli-limite-cred" placeholder="0.00" min="0" step="100"></div>
+        <div class="fg"><label>% Descuento Personal</label><input type="number" id="cli-desc-pct" placeholder="0" min="0" max="100" step="1"></div>
+      </div>
+      <div class="fr fr2">
+        <div class="fg"><label>Días para Pagar (crédito)</label><input type="number" id="cli-dias-pagar" placeholder="15" min="0"></div>
+        <div class="fg"><label>Email</label><input type="email" id="cli-email" placeholder="correo@ejemplo.com"></div>
+      </div>
+      <div class="fg"><label>Dirección</label><input type="text" id="cli-direccion" placeholder="Calle, colonia, ciudad"></div>
+      <div class="fr fr2">
+        <div class="fg"><label>Puntos Monedero Actuales</label><input type="number" id="cli-puntos" placeholder="0" min="0"></div>
+        <div class="fg"><label>Estado</label>
+          <select id="cli-bloqueado">
+            <option value="0">✅ Activo</option>
+            <option value="1">🚫 Bloqueado</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>Notas</label><textarea id="cli-notas" rows="2" placeholder="Observaciones del cliente" style="width:100%;resize:vertical"></textarea></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeM('mo-cliente')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveCliente()">💾 Guardar Cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nota de Separo -->
+<div class="mo" id="mo-nota-sep">
+  <div class="md" style="max-width:480px">
+    <div class="mh">
+      <div class="mt">📄 Nota de Separo</div>
+      <button class="xbtn" onclick="closeM('mo-nota-sep')">✕</button>
+    </div>
+    <div class="mb" id="nota-sep-body"></div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeM('mo-nota-sep')">Cerrar</button>
+      <button class="btn btn-accent" onclick="imprimirNotaSeparo()">🖨️ Imprimir Nota</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast" style="position:fixed;bottom:20px;right:20px;z-index:9999;display:none">
   <div id="toast-in" style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-size:13px;box-shadow:var(--shadow);display:flex;align-items:center;gap:8px"></div>
@@ -1057,6 +1218,8 @@ async function initApp(user){
   updateRoleBadge();
   applyRolePermissions();
   startListeners();
+  loadClientes();
+  loadConfigGeneral();
   renderDashboard();
 }
 
@@ -2008,8 +2171,11 @@ const CFG_DEFAULTS = {
   temporadas: ['Primavera/Verano','Otoño/Invierno','Todo el Año','Liquidación','2024','2025','2026','2027'],
   marcas: [],
   colores: [],
-  proveedores: []
+  proveedores: [],
+  vendedores: []
 };
+// Config general (monedero, cumpleaños)
+let configGeneral = {puntoPorcentaje:5, cumpleanosDesc:10};
 let catalogosData = {};
 
 async function loadCatalogos(){
@@ -2087,6 +2253,7 @@ function updateProductoSelects(){
   upd('inv-cat',getCatalogList('categorias'),'Todas');
   upd('inv-linea',getCatalogList('lineas'),'Todas');
   upd('inv-temp',getCatalogList('temporadas'),'Todas');
+  populateVendedoresSelect();
 }
 
 // ══════════════════ ETIQUETAS ══════════════════
@@ -2321,7 +2488,7 @@ function exportarExcel(){
     return[p.barcode||'',p.sku||'',p.desc||'',p.cat||'',p.linea||'',p.temporada||'',p.marca||'',p.color||'',p.precio||0,p.costo||0,ts,tot,suc];
   });
   const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
-  const csv='﻿'+headers.map(esc).join(',')+'\n'+rows.map(r=>r.map(esc).join(',')).join('\n');
+  const csv=''+headers.map(esc).join(',')+'\n'+rows.map(r=>r.map(esc).join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='inventario_'+new Date().toISOString().split('T')[0]+'.csv';
@@ -2341,49 +2508,63 @@ async function cobrar(){
   const dm=dt==='%'?sub*(dv/100):dv;
   const total=Math.max(0,sub-dm);
   const pago=document.getElementById('c-pago')?.value||'efectivo';
-  const cliente=document.getElementById('c-cliente')?.value.trim()||'Cliente general';
-  const vendedor=document.getElementById('c-vendedor')?.value.trim()||currentProfile?.nombre||'—';
   const tipoVenta=document.getElementById('c-tipo-venta')?.value||'venta';
-  // Get sucursal - try multiple selects, fallback to first available
-  let sucId = document.getElementById('c-suc-venta')?.value
-    || document.getElementById('pos-suc')?.value
-    || activeSucId
-    || (sucursales.length>0?sucursales[0].id:'');
-  const anticipo=tipoVenta==='apartado'?parseFloat(document.getElementById('c-anticipo')?.value)||0:0;
-  const fechaAprt=tipoVenta==='apartado'?(document.getElementById('c-fecha-aprt')?.value||''):'';
+  // Cliente desde select
+  const clienteId=document.getElementById('c-cliente-sel')?.value||'';
+  const clienteObj=clientes.find(x=>x.id===clienteId);
+  const clienteNombre=clienteObj?`${clienteObj.nombre||''} ${clienteObj.apPat||''}`.trim():'Cliente general';
+  // Vendedor desde select
+  const vendedor=document.getElementById('c-vendedor-sel')?.value||currentProfile?.nombre||'—';
+  // Sucursal
+  let sucId=document.getElementById('c-suc-venta')?.value||document.getElementById('pos-suc')?.value||activeSucId||(sucursales.length>0?sucursales[0].id:'');
+  // Apartado/credito fields
+  const isAC=tipoVenta==='apartado'||tipoVenta==='credito';
+  const anticipo=isAC?parseFloat(document.getElementById('c-anticipo')?.value)||0:0;
+  const fechaAprt=isAC?document.getElementById('c-fecha-aprt')?.value||'':'';
+  const notaNombre=document.getElementById('c-nota-nombre')?.value.trim()||clienteNombre;
+  const notaTel=document.getElementById('c-nota-tel')?.value.trim()||clienteObj?.celular||'';
   try{
     const {updateDoc}=window._fb;
-    // Descontar stock
     for(const item of carrito){
       const p=productos.find(x=>x.id===item.id);
       if(p&&p.stock&&p.stock[item.talla]!==undefined){
         await updateDoc(docRef('productos',p.id),{[`stock.${item.talla}`]:Math.max(0,p.stock[item.talla]-item.qty)});
       }
     }
-    // Guardar venta
-    await window._fb.addDoc(col('ventas'),{
+    const ventaDoc={
       fecha:hoy(),hora:hora(),
       items:JSON.parse(JSON.stringify(carrito)),
       subtotal:sub,descuento:dm,total,pago,
-      tipoVenta:tipoVenta||'venta',
-      anticipo:anticipo||0,
+      tipoVenta:tipoVenta,anticipo:anticipo||0,
       fechaApartado:fechaAprt||'',
-      cliente:cliente,vendedor:vendedor,
+      cliente:clienteNombre,clienteId:clienteId||'',
+      notaNombre,notaTel,
+      vendedor,
       sucursalId:sucId||'',
       createdAt:new Date().toISOString()
-    });
+    };
+    await window._fb.addDoc(col('ventas'),ventaDoc);
+    // Acumular puntos monedero si es venta normal
+    if(clienteId&&tipoVenta==='venta'){
+      await acumularPuntosCliente(clienteId,total);
+    }
+    // Mostrar nota de separo si es apartado/credito
+    if(isAC){
+      mostrarNotaSeparo({...ventaDoc,items:carrito});
+    }
     // Limpiar carrito
     carrito=[];
-    ['c-desc','c-cliente','c-vendedor','c-anticipo'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el)el.value=id==='c-desc'?'0':'';
+    ['c-desc','c-anticipo','c-nota-nombre','c-nota-tel'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.value=id==='c-desc'?'0':'';
     });
-    const tipoEl=document.getElementById('c-tipo-venta');
-    if(tipoEl)tipoEl.value='venta';
-    const aprtEl=document.getElementById('c-apartado-section');
-    if(aprtEl)aprtEl.style.display='none';
+    const tipoEl=document.getElementById('c-tipo-venta');if(tipoEl)tipoEl.value='venta';
+    const aprtEl=document.getElementById('c-apartado-section');if(aprtEl)aprtEl.style.display='none';
+    const notaEl=document.getElementById('c-nota-section');if(notaEl)notaEl.style.display='none';
+    const cliSel=document.getElementById('c-cliente-sel');if(cliSel)cliSel.value='';
+    const cliInfo=document.getElementById('c-cliente-info');if(cliInfo)cliInfo.style.display='none';
+    const cumpleAl=document.getElementById('c-cumple-alert');if(cumpleAl)cumpleAl.style.display='none';
     renderCart();renderPOS();
-    toast(tipoVenta==='apartado'?'Apartado registrado ✓':'Venta: '+fmt(total)+' ✓');
+    if(!isAC)toast('Venta: '+fmt(total)+' ✓');
   }catch(e){
     toast('Error al cobrar: '+e.message,'err');
     console.error('cobrar error:',e);
@@ -2397,7 +2578,9 @@ function renderHist(){
   const suc=document.getElementById('h-suc')?.value||'';
   const tipo=document.getElementById('h-tipo')?.value||'';
   let lista=ventas.filter(v=>{
-    return(!fecha||v.fecha===fecha)&&(!pago||v.pago===pago)&&(!suc||v.sucursalId===suc)&&(!tipo||(v.tipoVenta||'venta')===tipo);
+    const tipoV=v.tipoVenta||'venta';
+    // Include abonos in historial when tipo filter is 'abono' or empty
+    return(!fecha||v.fecha===fecha)&&(!pago||v.pago===pago)&&(!suc||v.sucursalId===suc)&&(!tipo||tipoV===tipo);
   });
   document.getElementById('h-total').textContent='Total: '+fmt(lista.reduce((a,v)=>a+v.total,0));
   document.getElementById('h-empty').style.display=lista.length?'none':'block';
@@ -2405,6 +2588,8 @@ function renderHist(){
   document.getElementById('h-tbody').innerHTML=lista.map((v,idx)=>{
     const sucObj=sucursales.find(s=>s.id===v.sucursalId);
     const isAprt=(v.tipoVenta||'venta')==='apartado';
+    const isAbono=v.tipoVenta==='abono';
+    const isCredito=v.tipoVenta==='credito';
     const items=v.items||[];
     if(!items.length)return`<tr>
       <td class="mono">#${lista.length-idx}</td><td>${v.fecha}</td><td style="color:var(--muted)">${v.hora||'—'}</td>
@@ -2427,7 +2612,7 @@ function renderHist(){
       <td><span class="badge b-accent" style="font-size:10px">${item.cat||'—'}</span></td>
       <td class="mono" style="text-align:center">${item.qty||1}</td>
       ${ii===0?`<td rowspan="${items.length}">${sucObj?`<span class="badge b-green" style="font-size:10px">${sucObj.nombre}</span>`:'—'}</td>
-      <td rowspan="${items.length}"><span class="badge ${isAprt?'b-gold':'b-green'}" style="font-size:10px">${isAprt?'📦 Apar.':'💵 Venta'}</span></td>
+      <td rowspan="${items.length}"><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apartado':isCredito?'💳 Crédito':'💵 Venta'}</span>${isAbono&&v.saldoDespues!==undefined?`<div style="font-size:9px;color:var(--muted)">Saldo: ${fmt(v.saldoDespues)}</div>`:''}</td>
       <td rowspan="${items.length}">${pi[v.pago]||''} ${v.pago}</td>
       <td rowspan="${items.length}" class="mono" style="color:var(--gold)">${fmt(v.total)}${isAprt&&v.anticipo?`<div style="font-size:10px;color:var(--muted)">Ant: ${fmt(v.anticipo)}</div>`:''}</td>
       <td rowspan="${items.length}"><button class="btn btn-ghost btn-xs" onclick="verVenta('${v.id}')">Ver</button></td>`:''}
@@ -2436,83 +2621,124 @@ function renderHist(){
 }
 
 
+function exportarCuentasExcel(){
+  const tipo=document.getElementById('cta-tipo')?.value||'';
+  const estado=document.getElementById('cta-estado')?.value||'';
+  const mes=document.getElementById('cta-mes')?.value||'';
+  let lista=ventas.filter(v=>{
+    const esCuenta=v.tipoVenta==='apartado'||v.tipoVenta==='credito';
+    if(!esCuenta)return false;
+    const matchTipo=!tipo||v.tipoVenta===tipo;
+    const matchMes=!mes||(v.fecha||'').split('-')[1]===mes;
+    const saldo=getSaldo(v);
+    const estadoActual=saldo<=0?'liquidado':'pendiente';
+    const matchEstado=!estado||estadoActual===estado;
+    return matchTipo&&matchMes&&matchEstado;
+  });
+  const headers=['Mes','Semana','Fecha','Hora','Cliente','Telefono','Tipo','Productos','Total','Anticipo','Abonado','Saldo','Estado','Num_Abonos','Nota_Nombre','Nota_Tel'];
+  const rows=lista.map(v=>{
+    const saldo=getSaldo(v);
+    const abonado=getAbonado(v);
+    return[
+      getNombreMes(v.fecha),getNumSemana(v.fecha),
+      v.fecha,v.hora||'',v.cliente,v.notaTel||'',
+      v.tipoVenta,
+      (v.items||[]).map(x=>x.desc+' T'+x.talla).join(' / '),
+      v.total,v.anticipo||0,abonado,saldo,
+      saldo<=0?'Liquidado':'Pendiente',
+      (v.abonos||[]).length,
+      v.notaNombre||v.cliente,v.notaTel||''
+    ];
+  });
+  const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const nl='\n';
+  const csv='\uFEFF'+headers.map(esc).join(',')+nl+rows.map(r=>r.map(esc).join(',')).join(nl);
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='apartados_creditos_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();toast('Exportado ✓');
+}
+
+
 // ══════════════════ APARTADOS / CRÉDITOS / ABONOS ══════════════════
 let abonoVentaId = null;
 
-function toggleApartado(){
-  const tipo = document.getElementById('c-tipo-venta')?.value || 'venta';
-  const sec = document.getElementById('c-apartado-section');
-  const label = document.getElementById('c-anticipo-label');
-  const fechaLabel = document.getElementById('c-fecha-label');
-  if(sec){
-    sec.style.display = (tipo==='apartado'||tipo==='credito') ? 'block' : 'none';
-  }
-  if(label){
-    label.textContent = tipo==='credito' ? 'Abono inicial ($)' : 'Anticipo ($)';
-  }
-  if(fechaLabel){
-    fechaLabel.textContent = tipo==='credito' ? 'Fecha límite de crédito' : 'Fecha límite de apartado';
-  }
+// toggleApartado defined elsewhere
+
+
+function getNombreMes(fecha){
+  const meses=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const m=parseInt((fecha||'').split('-')[1]||0);
+  return meses[m]||'—';
+}
+
+function getNumSemana(fecha){
+  if(!fecha)return'—';
+  const d=new Date(fecha+'T12:00:00');
+  const startYear=new Date(d.getFullYear(),0,1);
+  const week=Math.ceil(((d-startYear)/86400000+startYear.getDay()+1)/7);
+  return'Sem '+week;
 }
 
 function renderCuentas(){
-  const q = (document.getElementById('cta-q')?.value||'').toLowerCase();
-  const tipo = document.getElementById('cta-tipo')?.value||'';
-  const estado = document.getElementById('cta-estado')?.value||'';
+  const q=(document.getElementById('cta-q')?.value||'').toLowerCase();
+  const tipo=document.getElementById('cta-tipo')?.value||'';
+  const estado=document.getElementById('cta-estado')?.value||'';
+  const mes=document.getElementById('cta-mes')?.value||'';
 
-  // Filter ventas that are apartado or credito
-  let lista = ventas.filter(v=>{
-    const esCuenta = v.tipoVenta==='apartado'||v.tipoVenta==='credito';
-    if(!esCuenta) return false;
-    const matchQ = !q||(v.cliente||'').toLowerCase().includes(q);
-    const matchTipo = !tipo||v.tipoVenta===tipo;
-    // Calculate saldo
-    const abonado = (v.abonos||[]).reduce((a,b)=>a+b.monto,0);
-    const anticipo = v.anticipo||0;
-    const totalAbonado = anticipo+abonado;
-    const saldo = Math.max(0,(v.total||0)-totalAbonado);
-    const estadoActual = saldo<=0?'liquidado':'pendiente';
-    const matchEstado = !estado||estadoActual===estado;
-    return matchQ&&matchTipo&&matchEstado;
-  });
+  let lista=ventas.filter(v=>{
+    const esCuenta=v.tipoVenta==='apartado'||v.tipoVenta==='credito';
+    if(!esCuenta)return false;
+    const matchQ=!q||(v.cliente||'').toLowerCase().includes(q)||(v.notaNombre||'').toLowerCase().includes(q);
+    const matchTipo=!tipo||v.tipoVenta===tipo;
+    const matchMes=!mes||(v.fecha||'').split('-')[1]===mes;
+    const saldo=getSaldo(v);
+    const estadoActual=saldo<=0?'liquidado':'pendiente';
+    const matchEstado=!estado||estadoActual===estado;
+    return matchQ&&matchTipo&&matchMes&&matchEstado;
+  }).sort((a,b)=>b.fecha.localeCompare(a.fecha));
 
-  // Stats
-  const apartadosActivos = lista.filter(v=>v.tipoVenta==='apartado'&&getSaldo(v)>0).length;
-  const creditosActivos = lista.filter(v=>v.tipoVenta==='credito'&&getSaldo(v)>0).length;
-  const saldoTotal = lista.reduce((a,v)=>a+getSaldo(v),0);
-  if(document.getElementById('cta-stat-apartados')) document.getElementById('cta-stat-apartados').textContent=apartadosActivos;
-  if(document.getElementById('cta-stat-creditos')) document.getElementById('cta-stat-creditos').textContent=creditosActivos;
-  if(document.getElementById('cta-stat-saldo')) document.getElementById('cta-stat-saldo').textContent=fmt(saldoTotal);
-  if(document.getElementById('cta-total-pend')) document.getElementById('cta-total-pend').textContent='Pendiente: '+fmt(saldoTotal);
-
+  const apartadosActivos=lista.filter(v=>v.tipoVenta==='apartado'&&getSaldo(v)>0).length;
+  const creditosActivos=lista.filter(v=>v.tipoVenta==='credito'&&getSaldo(v)>0).length;
+  const saldoTotal=lista.reduce((a,v)=>a+getSaldo(v),0);
+  if(document.getElementById('cta-stat-apartados'))document.getElementById('cta-stat-apartados').textContent=apartadosActivos;
+  if(document.getElementById('cta-stat-creditos'))document.getElementById('cta-stat-creditos').textContent=creditosActivos;
+  if(document.getElementById('cta-stat-saldo'))document.getElementById('cta-stat-saldo').textContent=fmt(saldoTotal);
+  if(document.getElementById('cta-total-pend'))document.getElementById('cta-total-pend').textContent='Pendiente: '+fmt(saldoTotal);
   document.getElementById('cta-empty').style.display=lista.length?'none':'block';
 
   document.getElementById('cta-tbody').innerHTML=lista.map(v=>{
-    const saldo = getSaldo(v);
-    const abonado = getAbonado(v);
-    const liquidado = saldo<=0;
-    const sucObj = sucursales.find(s=>s.id===v.sucursalId);
-    const tipoLabel = v.tipoVenta==='credito'?'<span class="badge b-blue">💳 Crédito</span>':'<span class="badge b-gold">📦 Apartado</span>';
-    const estadoBadge = liquidado?'<span class="badge b-green">✅ Liquidado</span>':'<span class="badge b-red">⏳ Pendiente</span>';
+    const saldo=getSaldo(v);
+    const abonado=getAbonado(v);
+    const liquidado=saldo<=0;
+    const tipoLabel=v.tipoVenta==='credito'?'<span class="badge b-blue" style="font-size:10px">💳 Crédito</span>':'<span class="badge b-gold" style="font-size:10px">📦 Apartado</span>';
+    const estadoBadge=liquidado?'<span class="badge b-green" style="font-size:10px">✅ Liquidado</span>':'<span class="badge b-red" style="font-size:10px">⏳ Pendiente</span>'+`<div style="font-size:10px;color:var(--muted);margin-top:2px">${(v.abonos||[]).length} abono(s)</div>`;
+    const mesNombre=getNombreMes(v.fecha);
+    const semana=getNumSemana(v.fecha);
     return`<tr>
-      <td><div>${v.fecha}</div><div style="font-size:11px;color:var(--muted)">${v.hora||''}</div></td>
-      <td><div style="font-weight:500">${v.cliente}</div><div style="font-size:11px;color:var(--muted)">${v.vendedor||'—'}</div></td>
+      <td style="font-size:12px;white-space:nowrap">${mesNombre}</td>
+      <td style="font-size:11px;color:var(--muted);white-space:nowrap">${semana}</td>
+      <td><div style="font-size:12px">${v.fecha}</div><div style="font-size:10px;color:var(--muted)">${v.hora||''}</div></td>
+      <td><div style="font-weight:500;font-size:13px">${v.cliente}</div><div style="font-size:10px;color:var(--muted)">${v.notaTel||v.vendedor||'—'}</div></td>
       <td>${tipoLabel}</td>
-      <td style="font-size:12px;max-width:160px">${(v.items||[]).map(x=>`${x.desc} T${x.talla}`).join(', ')}</td>
+      <td style="font-size:11px;max-width:140px;white-space:normal">${(v.items||[]).map(x=>`${x.desc} T${x.talla}`).join(', ')}</td>
       <td class="mono" style="color:var(--cream)">${fmt(v.total)}</td>
       <td class="mono" style="color:var(--green)">${fmt(v.anticipo||0)}</td>
       <td class="mono" style="color:var(--blue)">${fmt(abonado)}</td>
-      <td class="mono" style="color:${liquidado?'var(--green)':'var(--red)'};font-weight:600">${fmt(saldo)}</td>
+      <td class="mono" style="color:${liquidado?'var(--green)':'var(--red)'};font-weight:700">${fmt(saldo)}</td>
       <td>${estadoBadge}</td>
+      <td style="font-size:11px;color:var(--muted)">${v.notaNombre||v.cliente||'—'}<br>${v.notaTel||''}</td>
       <td>
-        <div class="flex-row" style="gap:4px">
+        <div class="flex-row" style="gap:3px;flex-direction:column">
           ${!liquidado?`<button class="btn btn-green btn-xs" onclick="abrirAbono('${v.id}')">💰 Abonar</button>`:''}
-          <button class="btn btn-ghost btn-xs" onclick="verHistorialAbonos('${v.id}')">📋</button>
+          <button class="btn btn-ghost btn-xs" onclick="verHistorialAbonos('${v.id}')">📋 Abonos</button>
+          <button class="btn btn-ghost btn-xs" onclick="reimprNotaSep('${v.id}')">🖨️ Nota</button>
         </div>
       </td>
     </tr>`;
   }).join('');
 }
+
 
 function getSaldo(v){
   const abonado = (v.abonos||[]).reduce((a,b)=>a+b.monto,0);
@@ -2557,28 +2783,66 @@ async function guardarAbono(){
   const monto = parseFloat(document.getElementById('ab-monto').value)||0;
   const saldo = getSaldo(v);
   if(monto<=0){toast('Ingresa un monto válido','err');return;}
-  if(monto>saldo+0.01){toast(`El monto no puede ser mayor al saldo (${fmt(saldo)})`,'err');return;}
+  if(monto>saldo+0.01){toast('El monto no puede ser mayor al saldo ('+fmt(saldo)+')','err');return;}
+  const pago = document.getElementById('ab-pago').value;
+  const notas = document.getElementById('ab-notas').value.trim();
   const abono = {
-    monto, pago: document.getElementById('ab-pago').value,
-    notas: document.getElementById('ab-notas').value.trim(),
+    monto, pago, notas,
     fecha: hoy(), hora: hora(),
     usuario: currentProfile?.nombre||'—',
     createdAt: new Date().toISOString()
   };
   const nuevosAbonos = [...(v.abonos||[]), abono];
   const nuevoSaldo = Math.max(0, saldo - monto);
+  const totalAbonado = getAbonado(v) + monto;
   try{
+    // 1. Actualizar la venta original con el nuevo abono
     await window._fb.updateDoc(docRef('ventas', abonoVentaId), {
       abonos: nuevosAbonos,
       liquidado: nuevoSaldo<=0
     });
+    // 2. Registrar el abono como entrada en historial de ventas (tipo 'abono')
+    await window._fb.addDoc(col('ventas'),{
+      fecha: hoy(),
+      hora: hora(),
+      tipoVenta: 'abono',
+      ventaOriginalId: abonoVentaId,
+      cliente: v.cliente,
+      clienteId: v.clienteId||'',
+      notaNombre: v.notaNombre||v.cliente,
+      notaTel: v.notaTel||'',
+      vendedor: currentProfile?.nombre||'—',
+      sucursalId: v.sucursalId||'',
+      pago: pago,
+      items: v.items||[],  // mismos productos del apartado
+      subtotal: monto,
+      descuento: 0,
+      total: monto,
+      anticipo: 0,
+      notas: notas||('Abono a '+(v.tipoVenta==='credito'?'crédito':'apartado')+' original'),
+      saldoAntes: saldo,
+      saldoDespues: nuevoSaldo,
+      createdAt: new Date().toISOString()
+    });
+    // 3. Acumular puntos monedero si liquida y tiene cliente registrado
+    if(nuevoSaldo<=0 && v.clienteId){
+      await acumularPuntosCliente(v.clienteId, v.total);
+    }
     closeM('mo-abono');
-    toast(nuevoSaldo<=0 ? '✅ Cuenta liquidada completamente' : `Abono de ${fmt(monto)} registrado ✓`);
     abonoVentaId = null;
+    const msg = nuevoSaldo<=0
+      ? '✅ Cuenta liquidada — Abono registrado en historial'
+      : 'Abono de '+fmt(monto)+' registrado en historial ✓';
+    toast(msg);
   }catch(e){
     toast('Error: '+e.message,'err');
     console.error(e);
   }
+}
+
+function reimprNotaSep(id){
+  const v=ventas.find(x=>x.id===id);if(!v)return;
+  mostrarNotaSeparo({...v,items:v.items||[]});
 }
 
 function verHistorialAbonos(id){
@@ -2614,6 +2878,346 @@ function verHistorialAbonos(id){
   openM('mo-venta');
 }
 
+
+// ══════════════════ CLIENTES ══════════════════
+let clientes = [];
+let editClienteId = null;
+let notaSeparoData = null;
+let folioSeparo = 1000;
+
+async function loadClientes(){
+  try{
+    const {onSnapshot}=window._fb;
+    onSnapshot(col('clientes'), snap=>{
+      clientes = snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderClientes();
+      populateClienteSelect();
+    });
+  }catch(e){ console.error('loadClientes:',e); }
+}
+
+function renderClientes(){
+  const q=(document.getElementById('cli-q')?.value||'').toLowerCase();
+  let lista=clientes.filter(c=>{
+    return !q||(c.nombre||'').toLowerCase().includes(q)
+      ||(c.apPat||'').toLowerCase().includes(q)
+      ||(c.celular||'').includes(q);
+  });
+  const hoyStr=hoy();
+  const hoyMD=hoyStr.slice(5); // MM-DD
+  const cumpleHoy=lista.filter(c=>(c.cumple||'').slice(5)===hoyMD).length;
+  const totalPuntos=lista.reduce((a,c)=>a+(c.puntos||0),0);
+  if(document.getElementById('cli-stat-total')) document.getElementById('cli-stat-total').textContent=lista.length;
+  if(document.getElementById('cli-stat-puntos')) document.getElementById('cli-stat-puntos').textContent=totalPuntos.toFixed(0)+' pts';
+  if(document.getElementById('cli-stat-cumple')) document.getElementById('cli-stat-cumple').textContent=cumpleHoy;
+  document.getElementById('cli-empty').style.display=lista.length?'none':'block';
+  document.getElementById('cli-tbody').innerHTML=lista.map(c=>{
+    const esCumple=(c.cumple||'').slice(5)===hoyMD;
+    const bloqueado=c.bloqueado==='1'||c.bloqueado===1||c.bloqueado===true;
+    const nombre=`${c.nombre||''} ${c.apPat||''} ${c.apMat||''}`.trim();
+    return`<tr style="${esCumple?'background:rgba(240,180,41,.08)':''}">
+      <td><div style="font-weight:500;color:var(--cream)">${nombre}${esCumple?' 🎂':''}</div>
+          <div style="font-size:11px;color:var(--muted)">${c.email||''}</div></td>
+      <td class="mono" style="font-size:12px">${c.telefono||'—'}</td>
+      <td class="mono" style="font-size:12px">${c.celular||'—'}</td>
+      <td style="font-size:12px;color:var(--muted)">${c.cumple?c.cumple.slice(5).replace('-','/')+'  ('+c.cumple.slice(0,4)+')':'—'}</td>
+      <td class="mono">${c.limiteCredito>0?fmt(c.limiteCredito):'—'}</td>
+      <td class="mono">${c.descPct>0?c.descPct+'%':'—'}</td>
+      <td><span class="badge b-gold">${(c.puntos||0).toFixed(0)} pts</span></td>
+      <td style="font-size:11px;color:var(--muted)">${c.ultimaCompra||'—'}</td>
+      <td>
+        <div class="flex-row" style="gap:3px">
+          <button class="btn btn-ghost btn-xs" onclick="abrirModalCliente('${c.id}')">✏️</button>
+          <button class="btn btn-red btn-xs" onclick="deleteCliente('${c.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function abrirModalCliente(id){
+  editClienteId=id||null;
+  const fields=['nombre','ap-pat','ap-mat','celular','telefono','cumple','limite-cred','desc-pct','dias-pagar','email','direccion','puntos','notas'];
+  fields.forEach(f=>{const el=document.getElementById('cli-'+f);if(el)el.value='';});
+  document.getElementById('cli-bloqueado').value='0';
+  document.getElementById('mc-cliente-title').textContent=id?'Editar Cliente':'Nuevo Cliente';
+  if(id){
+    const c=clientes.find(x=>x.id===id);if(!c)return;
+    document.getElementById('cli-nombre').value=c.nombre||'';
+    document.getElementById('cli-ap-pat').value=c.apPat||'';
+    document.getElementById('cli-ap-mat').value=c.apMat||'';
+    document.getElementById('cli-celular').value=c.celular||'';
+    document.getElementById('cli-telefono').value=c.telefono||'';
+    document.getElementById('cli-cumple').value=c.cumple||'';
+    document.getElementById('cli-limite-cred').value=c.limiteCredito||0;
+    document.getElementById('cli-desc-pct').value=c.descPct||0;
+    document.getElementById('cli-dias-pagar').value=c.diasPagar||15;
+    document.getElementById('cli-email').value=c.email||'';
+    document.getElementById('cli-direccion').value=c.direccion||'';
+    document.getElementById('cli-puntos').value=c.puntos||0;
+    document.getElementById('cli-notas').value=c.notas||'';
+    document.getElementById('cli-bloqueado').value=c.bloqueado?'1':'0';
+  }
+  openM('mo-cliente');
+}
+
+async function saveCliente(){
+  const nombre=document.getElementById('cli-nombre').value.trim();
+  if(!nombre){toast('El nombre es requerido','err');return;}
+  const data={
+    nombre,
+    apPat:document.getElementById('cli-ap-pat').value.trim(),
+    apMat:document.getElementById('cli-ap-mat').value.trim(),
+    celular:document.getElementById('cli-celular').value.trim(),
+    telefono:document.getElementById('cli-telefono').value.trim(),
+    cumple:document.getElementById('cli-cumple').value,
+    limiteCredito:parseFloat(document.getElementById('cli-limite-cred').value)||0,
+    descPct:parseFloat(document.getElementById('cli-desc-pct').value)||0,
+    diasPagar:parseInt(document.getElementById('cli-dias-pagar').value)||15,
+    email:document.getElementById('cli-email').value.trim(),
+    direccion:document.getElementById('cli-direccion').value.trim(),
+    puntos:parseFloat(document.getElementById('cli-puntos').value)||0,
+    notas:document.getElementById('cli-notas').value.trim(),
+    bloqueado:document.getElementById('cli-bloqueado').value==='1',
+    updatedAt:new Date().toISOString()
+  };
+  try{
+    if(editClienteId){
+      await window._fb.setDoc(docRef('clientes',editClienteId),data,{merge:true});
+      toast('Cliente actualizado ✓');
+    }else{
+      data.createdAt=new Date().toISOString();
+      data.ultimaCompra='';
+      await window._fb.addDoc(col('clientes'),data);
+      toast('Cliente registrado ✓');
+    }
+    closeM('mo-cliente');
+    editClienteId=null;
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function deleteCliente(id){
+  if(!confirm('¿Eliminar este cliente?'))return;
+  await window._fb.deleteDoc(docRef('clientes',id));
+  toast('Cliente eliminado');
+}
+
+function exportarClientesExcel(){
+  const headers=['Nombre','Apellido_Paterno','Apellido_Materno','Celular','Telefono','Cumpleanos','Limite_Credito','Desc_Pct','Dias_Pagar','Email','Direccion','Puntos_Monedero','Ultima_Compra','Notas','Estado'];
+  const rows=clientes.map(c=>[
+    c.nombre||'',c.apPat||'',c.apMat||'',
+    c.celular||'',c.telefono||'',c.cumple||'',
+    c.limiteCredito||0,c.descPct||0,c.diasPagar||15,
+    c.email||'',c.direccion||'',c.puntos||0,
+    c.ultimaCompra||'',c.notas||'',
+    c.bloqueado?'Bloqueado':'Activo'
+  ]);
+  const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const csv='\uFEFF'+headers.map(esc).join(',')+'\n'+rows.map(r=>r.map(esc).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='clientes_zapateria_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();toast('Clientes exportados ✓');
+}
+
+function populateClienteSelect(){
+  const sel=document.getElementById('c-cliente-sel');if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Cliente general —</option>'+
+    clientes.filter(c=>!c.bloqueado).map(c=>{
+      const nombre=`${c.nombre||''} ${c.apPat||''}`.trim();
+      return`<option value="${c.id}">${nombre}${c.celular?' · '+c.celular:''}</option>`;
+    }).join('');
+  if(cur)sel.value=cur;
+}
+
+function onClienteSelect(){
+  const id=document.getElementById('c-cliente-sel')?.value;
+  const infoBox=document.getElementById('c-cliente-info');
+  const cumpleAlert=document.getElementById('c-cumple-alert');
+  if(!id){
+    if(infoBox)infoBox.style.display='none';
+    if(cumpleAlert)cumpleAlert.style.display='none';
+    return;
+  }
+  const c=clientes.find(x=>x.id===id);if(!c)return;
+  const nombre=`${c.nombre||''} ${c.apPat||''} ${c.apMat||''}`.trim();
+  // Show client info
+  if(infoBox){
+    infoBox.style.display='block';
+    infoBox.innerHTML=`<div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div><span style="color:var(--muted);font-size:10px">CLIENTE </span><span style="font-weight:600">${nombre}</span></div>
+      ${c.celular?`<div><span style="color:var(--muted);font-size:10px">TEL </span><span>${c.celular}</span></div>`:''}
+      <div><span style="color:var(--muted);font-size:10px">PUNTOS </span><span style="color:var(--gold)">${(c.puntos||0).toFixed(0)} pts</span></div>
+      ${c.descPct>0?`<div><span style="color:var(--muted);font-size:10px">DESC </span><span style="color:var(--green)">${c.descPct}%</span></div>`:''}
+    </div>`;
+  }
+  // Auto-fill nota separo fields
+  const notaNombre=document.getElementById('c-nota-nombre');
+  const notaTel=document.getElementById('c-nota-tel');
+  if(notaNombre)notaNombre.value=nombre;
+  if(notaTel)notaTel.value=c.celular||c.telefono||'';
+  // Birthday alert
+  const hoyMD=hoy().slice(5);
+  const esCumple=(c.cumple||'').slice(5)===hoyMD;
+  if(cumpleAlert){
+    cumpleAlert.style.display=esCumple?'flex':'none';
+    if(esCumple){
+      const pct=configGeneral.cumpleanosDesc||10;
+      document.getElementById('c-cumple-pct').textContent=pct;
+    }
+  }
+}
+
+function aplicarDescCumple(){
+  const pct=configGeneral.cumpleanosDesc||10;
+  document.getElementById('c-desc').value=pct;
+  document.getElementById('c-desc-t').value='%';
+  calcCart();
+  document.getElementById('c-cumple-alert').style.display='none';
+  toast('Descuento de cumpleaños aplicado: '+pct+'% ✓');
+}
+
+// ══════════════════ VENDEDORES SELECT ══════════════════
+function populateVendedoresSelect(){
+  const sel=document.getElementById('c-vendedor-sel');if(!sel)return;
+  const cur=sel.value;
+  const lista=getCatalogList('vendedores');
+  sel.innerHTML='<option value="">— Seleccionar vendedor —</option>'+
+    lista.map(v=>`<option value="${v}">${v}</option>`).join('');
+  if(cur)sel.value=cur;
+}
+
+// ══════════════════ NOTA DE SEPARO ══════════════════
+function toggleApartado(){
+  const tipo=document.getElementById('c-tipo-venta')?.value||'venta';
+  const sec=document.getElementById('c-apartado-section');
+  const notaSec=document.getElementById('c-nota-section');
+  const lbl=document.getElementById('c-anticipo-label');
+  const fechaLbl=document.getElementById('c-fecha-label');
+  const isAC=tipo==='apartado'||tipo==='credito';
+  if(sec)sec.style.display=isAC?'block':'none';
+  if(notaSec)notaSec.style.display=isAC?'block':'none';
+  if(lbl)lbl.textContent=tipo==='credito'?'Abono inicial ($)':'Anticipo ($)';
+  if(fechaLbl)fechaLbl.textContent=tipo==='credito'?'Fecha límite de crédito':'Fecha límite de apartado';
+  // Auto-fill nota fields from selected cliente
+  if(isAC) onClienteSelect();
+}
+
+function mostrarNotaSeparo(ventaData){
+  notaSeparoData=ventaData;
+  const c=ventaData;
+  const folio=String(++folioSeparo).padStart(6,'0');
+  const fechaHoy=hoy();
+  const [anio,mes,dia]=fechaHoy.split('-');
+  document.getElementById('nota-sep-body').innerHTML=`
+    <div style="text-align:center;border-bottom:2px solid var(--border);padding-bottom:12px;margin-bottom:12px">
+      <div style="font-size:18px;font-weight:700;color:var(--cream)">Zapatería & Novedades JABED</div>
+      <div style="font-size:11px;color:var(--muted)">Circuito Zamia Col. Los Almendros · (899) 434-9242</div>
+      <div style="font-size:11px;color:var(--muted)">Zapateria Jabed</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--muted)">NOTA DE SEPARO</div>
+      <div style="background:var(--red);color:#fff;padding:4px 12px;border-radius:6px;font-size:18px;font-weight:700">Nº ${folio}</div>
+    </div>
+    <div style="margin-bottom:4px;font-size:11px;color:var(--muted)">FECHA: ${dia}/${mes}/${anio}</div>
+    <div style="background:var(--s2);border-radius:8px;padding:10px;margin-bottom:12px">
+      <div style="display:flex;gap:8px;margin-bottom:4px">
+        <span style="font-size:11px;color:var(--muted);width:70px">CLIENTE:</span>
+        <span style="font-weight:600">${c.notaNombre||c.cliente||'—'}</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <span style="font-size:11px;color:var(--muted);width:70px">TELÉFONO:</span>
+        <span>${c.notaTel||'—'}</span>
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:12px;font-size:13px">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:4px 6px;font-size:11px;color:var(--muted)">CANT.</th>
+          <th style="text-align:left;padding:4px 6px;font-size:11px;color:var(--muted)">DESCRIPCIÓN</th>
+          <th style="text-align:right;padding:4px 6px;font-size:11px;color:var(--muted)">PRECIO</th>
+          <th style="text-align:right;padding:4px 6px;font-size:11px;color:var(--muted)">IMPORTE</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${(c.items||[]).map(item=>`<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:5px 6px">${item.qty}</td>
+          <td style="padding:5px 6px">${item.desc} T${item.talla} ${item.color?'/ '+item.color:''}</td>
+          <td style="padding:5px 6px;text-align:right">${fmt(item.price)}</td>
+          <td style="padding:5px 6px;text-align:right">${fmt(item.price*item.qty)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <div style="text-align:right;margin-bottom:12px">
+      ${c.descuento>0?`<div style="font-size:12px;color:var(--red)">Descuento: -${fmt(c.descuento)}</div>`:''}
+      <div style="font-size:16px;font-weight:700;color:var(--cream)">TOTAL: ${fmt(c.total)}</div>
+      <div style="font-size:13px;color:var(--green)">Anticipo: ${fmt(c.anticipo||0)}</div>
+      <div style="font-size:15px;font-weight:600;color:var(--gold)">SALDO: ${fmt(Math.max(0,c.total-(c.anticipo||0)))}</div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:10px;font-size:10px;color:var(--muted)">
+      <div>• No habrá cambios ni devoluciones</div>
+      <div>• Separo a 30 días con el ${configGeneral.puntoPorcentaje||5}% de anticipo</div>
+      <div>• Abona o liquida presentando tu nota de apartado</div>
+      <div>• Revisa tu mercancía al momento para cualquier aclaración</div>
+      <div style="text-align:center;margin-top:8px;font-weight:500">Gracias por su preferencia</div>
+    </div>`;
+  openM('mo-nota-sep');
+}
+
+function imprimirNotaSeparo(){
+  const body=document.getElementById('nota-sep-body').innerHTML;
+  const win=window.open('','_blank','width=480,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;background:#fff;color:#000;padding:16px;font-size:13px}
+    .btn-print{padding:8px 18px;background:#222;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-bottom:12px;font-size:14px}
+    @media print{.btn-print{display:none!important}}
+  </style></head><body>
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimir</button>
+  ${body.replace(/var\(--[\w-]+\)/g,'#000').replace(/style="[^"]*color:[^;"]*;?/g,s=>s)}
+  </body></html>`);
+  win.document.close();
+}
+
+// ══════════════════ MONEDERO ELECTRÓNICO ══════════════════
+async function loadConfigGeneral(){
+  try{
+    const snap=await window._fb.getDoc(docRef('config','general'));
+    if(snap.exists()) configGeneral={...configGeneral,...snap.data()};
+    if(document.getElementById('cfg-puntos-pct')) document.getElementById('cfg-puntos-pct').value=configGeneral.puntoPorcentaje||5;
+    if(document.getElementById('cfg-cumple-pct')) document.getElementById('cfg-cumple-pct').value=configGeneral.cumpleanosDesc||10;
+  }catch(e){console.error('loadConfigGeneral:',e);}
+}
+
+async function saveConfigGeneral(){
+  const puntoPct=parseFloat(document.getElementById('cfg-puntos-pct')?.value)||5;
+  const cumplePct=parseFloat(document.getElementById('cfg-cumple-pct')?.value)||10;
+  configGeneral={puntoPorcentaje:puntoPct, cumpleanosDesc:cumplePct};
+  try{
+    await window._fb.setDoc(docRef('config','general'),configGeneral,{merge:true});
+    toast('Configuración guardada ✓');
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function acumularPuntosCliente(clienteId, totalVenta){
+  if(!clienteId||!totalVenta)return;
+  const pct=(configGeneral.puntoPorcentaje||5)/100;
+  const puntosGanados=parseFloat((totalVenta*pct).toFixed(2));
+  if(puntosGanados<=0)return;
+  const c=clientes.find(x=>x.id===clienteId);if(!c)return;
+  const nuevosPuntos=(c.puntos||0)+puntosGanados;
+  try{
+    await window._fb.updateDoc(docRef('clientes',clienteId),{
+      puntos:nuevosPuntos,
+      ultimaCompra:hoy()
+    });
+    toast(`+${puntosGanados.toFixed(0)} puntos al monedero de ${c.nombre} ✓`);
+  }catch(e){console.error('acumularPuntos:',e);}
+}
+
+
 // ══════════════════ NAV ══════════════════
 const PAGE_TITLES={
   dashboard:{t:'Dashboard',sub:'Vista general del negocio',actions:''},
@@ -2621,6 +3225,7 @@ const PAGE_TITLES={
   catalogo:{t:'Catálogo General',sub:'Todos los productos con foto',actions:`<button class="btn btn-accent" onclick="abrirModalProducto()">＋ Nuevo Producto</button>`},
   pos:{t:'Punto de Venta',sub:'Registrar ventas',actions:''},
   historial:{t:'Historial de Ventas',sub:'Todas las transacciones',actions:''},
+  clientes:{t:'Clientes',sub:'Base de datos de clientes y monedero electrónico',actions:`<button class="btn btn-ghost" onclick="exportarClientesExcel()" style="margin-right:6px">📊 Excel</button><button class="btn btn-accent" onclick="abrirModalCliente()">＋ Nuevo Cliente</button>`},
   transferencias:{t:'Transferencias',sub:'Mover stock entre sucursales y bodega',actions:''},
   cuentas:{t:'Apartados / Créditos',sub:'Gestión de abonos y liquidaciones',actions:''},
   gastos:{t:'Gastos',sub:'Registro de egresos',actions:`<button class="btn btn-accent" onclick="abrirModalGasto()">＋ Registrar Gasto</button>`},
@@ -2645,12 +3250,13 @@ function go(page,el){
   if(page==='reportes')initReportes();
   if(page==='pos'){renderPOS();populatePOSSuc();}
   if(page==='historial')renderHist();
+  if(page==='clientes'){renderClientes();}
   if(page==='sucursales')renderSucursales();
   if(page==='inventario')renderInv();
   if(page==='catalogo')renderCatalogo();
   if(page==='gastos')renderGastos();
   if(page==='cuentas')renderCuentas();
-  if(page==='catalogos-cfg'){loadCatalogos();}
+  if(page==='catalogos-cfg'){loadCatalogos();loadConfigGeneral();}
   if(page==='etiquetas'){document.getElementById('etiq-desde').value=hoy();}
 }
 
