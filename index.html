@@ -315,6 +315,7 @@ select option{background:var(--s2)}
         <div class="nav-item" id="nav-pos" onclick="go('pos',this)"><span class="ni">🛒</span><span class="nt">Punto de Venta</span></div>
         <div class="nav-item" id="nav-hist" onclick="go('historial',this)"><span class="ni">📋</span><span class="nt">Historial Ventas</span></div>
         <div class="nav-item" id="nav-transfer" onclick="go('transferencias',this)"><span class="ni">↔️</span><span class="nt">Transferencias</span></div>
+        <div class="nav-item" id="nav-cuentas" onclick="go('cuentas',this)"><span class="ni">📒</span><span class="nt">Apartados/Créditos</span></div>
         <div class="nav-divider"></div>
         <div class="nav-label">Finanzas</div>
         <div class="nav-item" id="nav-gastos" onclick="go('gastos',this)"><span class="ni">💸</span><span class="nt">Gastos</span></div>
@@ -466,10 +467,11 @@ select option{background:var(--s2)}
                   <select id="c-tipo-venta" onchange="toggleApartado()" style="width:100%">
                     <option value="venta">💵 Venta Normal</option>
                     <option value="apartado">📦 Apartado</option>
+                    <option value="credito">💳 Crédito</option>
                   </select></div>
                 <div id="c-apartado-section" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
-                  <div class="fg" style="margin-bottom:6px"><label>Anticipo ($)</label><input type="number" id="c-anticipo" placeholder="0.00" step="0.01" min="0"></div>
-                  <div class="fg" style="margin-bottom:0"><label>Fecha Límite Apartado</label><input type="date" id="c-fecha-aprt"></div>
+                  <div class="fg" style="margin-bottom:6px"><label id="c-anticipo-label">Anticipo / Abono inicial ($)</label><input type="number" id="c-anticipo" placeholder="0.00" step="0.01" min="0"></div>
+                  <div class="fg" style="margin-bottom:0"><label id="c-fecha-label">Fecha Límite</label><input type="date" id="c-fecha-aprt"></div>
                 </div>
                 <div class="fg" style="margin-bottom:5px"><label style="font-size:9px">Forma de Pago</label>
                   <select id="c-pago"><option value="efectivo">💵 Efectivo</option><option value="tarjeta">💳 Tarjeta</option><option value="transferencia">📲 Transferencia</option><option value="mixto">🔀 Mixto</option></select></div>
@@ -479,6 +481,45 @@ select option{background:var(--s2)}
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- ══════════ APARTADOS / CRÉDITOS ══════════ -->
+        <div id="page-cuentas" class="page">
+          <div class="flex-between" style="margin-bottom:14px">
+            <div class="flex-row" style="gap:8px;flex-wrap:wrap">
+              <div class="search-wrap" style="width:220px"><span class="search-ico">🔍</span><input type="text" id="cta-q" placeholder="Buscar cliente…" oninput="renderCuentas()"></div>
+              <select id="cta-tipo" onchange="renderCuentas()" style="width:140px">
+                <option value="">Todos</option>
+                <option value="apartado">📦 Apartados</option>
+                <option value="credito">💳 Créditos</option>
+              </select>
+              <select id="cta-estado" onchange="renderCuentas()" style="width:140px">
+                <option value="">Todos los estados</option>
+                <option value="pendiente">⏳ Pendiente</option>
+                <option value="liquidado">✅ Liquidado</option>
+              </select>
+            </div>
+            <div class="flex-row">
+              <span class="badge b-gold" id="cta-total-pend">Pendiente: $0</span>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="stat-grid sg3" style="margin-bottom:16px">
+            <div class="scard gold"><div class="sl">Total Apartados Activos</div><div class="sv gold" id="cta-stat-apartados">0</div></div>
+            <div class="scard b"><div class="sl">Total Créditos Activos</div><div class="sv b" id="cta-stat-creditos">0</div></div>
+            <div class="scard r"><div class="sl">Saldo Total Pendiente</div><div class="sv r" id="cta-stat-saldo">$0</div></div>
+          </div>
+
+          <div class="tw">
+            <table><thead><tr>
+              <th>Fecha</th><th>Cliente</th><th>Tipo</th><th>Productos</th>
+              <th>Total</th><th>Anticipo</th><th>Abonado</th><th>Saldo</th>
+              <th>Estado</th><th></th>
+            </tr></thead>
+            <tbody id="cta-tbody"></tbody>
+          </table></div>
+          <div class="empty" id="cta-empty" style="display:none"><div class="empty-icon">📒</div><div>Sin apartados ni créditos.</div></div>
         </div>
 
         <!-- ══════════ HISTORIAL ══════════ -->
@@ -888,6 +929,33 @@ select option{background:var(--s2)}
   </div>
 </div>
 
+<!-- Modal Abono -->
+<div class="mo" id="mo-abono">
+  <div class="md">
+    <div class="mh">
+      <div class="mt">Registrar Abono / Liquidar</div>
+      <button class="xbtn" onclick="closeM('mo-abono')">✕</button>
+    </div>
+    <div class="mb">
+      <div id="abono-info" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px"></div>
+      <div class="fg"><label>Monto del Abono ($)</label><input type="number" id="ab-monto" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="fg"><label>Forma de Pago</label>
+        <select id="ab-pago">
+          <option value="efectivo">💵 Efectivo</option>
+          <option value="tarjeta">💳 Tarjeta</option>
+          <option value="transferencia">📲 Transferencia</option>
+        </select>
+      </div>
+      <div class="fg"><label>Notas</label><input type="text" id="ab-notas" placeholder="Opcional"></div>
+      <div class="warn" id="ab-liquidar-warn" style="display:none">⚠️ Este abono <b>liquida el saldo completo</b>.</div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeM('mo-abono')">Cancelar</button>
+      <button class="btn btn-green" onclick="guardarAbono()">✅ Registrar Abono</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast" style="position:fixed;bottom:20px;right:20px;z-index:9999;display:none">
   <div id="toast-in" style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-size:13px;box-shadow:var(--shadow);display:flex;align-items:center;gap:8px"></div>
@@ -1026,7 +1094,7 @@ function startListeners(){
   }));
   push(onSnapshot(query(col('ventas'),orderBy('createdAt','desc')),snap=>{
     ventas=snap.docs.map(d=>({id:d.id,...d.data()}));
-    renderDashboard();renderHist();calcCorte();
+    renderDashboard();renderHist();calcCorte();renderCuentas();
   }));
   push(onSnapshot(query(col('gastos'),orderBy('fecha','desc')),snap=>{
     gastos=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -2221,11 +2289,7 @@ function imprimirEtiqueta(id){
 }
 
 
-// ══════════════════ APARTADO ══════════════════
-function toggleApartado(){
-  const tipo=document.getElementById('c-tipo-venta').value;
-  document.getElementById('c-apartado-section').style.display=tipo==='apartado'?'block':'none';
-}
+// toggleApartado moved to cuentas section
 
 // ══════════════════ EXPORTAR HISTORIAL ══════════════════
 function exportarHistorialExcel(){
@@ -2371,6 +2435,185 @@ function renderHist(){
   }).join('');
 }
 
+
+// ══════════════════ APARTADOS / CRÉDITOS / ABONOS ══════════════════
+let abonoVentaId = null;
+
+function toggleApartado(){
+  const tipo = document.getElementById('c-tipo-venta')?.value || 'venta';
+  const sec = document.getElementById('c-apartado-section');
+  const label = document.getElementById('c-anticipo-label');
+  const fechaLabel = document.getElementById('c-fecha-label');
+  if(sec){
+    sec.style.display = (tipo==='apartado'||tipo==='credito') ? 'block' : 'none';
+  }
+  if(label){
+    label.textContent = tipo==='credito' ? 'Abono inicial ($)' : 'Anticipo ($)';
+  }
+  if(fechaLabel){
+    fechaLabel.textContent = tipo==='credito' ? 'Fecha límite de crédito' : 'Fecha límite de apartado';
+  }
+}
+
+function renderCuentas(){
+  const q = (document.getElementById('cta-q')?.value||'').toLowerCase();
+  const tipo = document.getElementById('cta-tipo')?.value||'';
+  const estado = document.getElementById('cta-estado')?.value||'';
+
+  // Filter ventas that are apartado or credito
+  let lista = ventas.filter(v=>{
+    const esCuenta = v.tipoVenta==='apartado'||v.tipoVenta==='credito';
+    if(!esCuenta) return false;
+    const matchQ = !q||(v.cliente||'').toLowerCase().includes(q);
+    const matchTipo = !tipo||v.tipoVenta===tipo;
+    // Calculate saldo
+    const abonado = (v.abonos||[]).reduce((a,b)=>a+b.monto,0);
+    const anticipo = v.anticipo||0;
+    const totalAbonado = anticipo+abonado;
+    const saldo = Math.max(0,(v.total||0)-totalAbonado);
+    const estadoActual = saldo<=0?'liquidado':'pendiente';
+    const matchEstado = !estado||estadoActual===estado;
+    return matchQ&&matchTipo&&matchEstado;
+  });
+
+  // Stats
+  const apartadosActivos = lista.filter(v=>v.tipoVenta==='apartado'&&getSaldo(v)>0).length;
+  const creditosActivos = lista.filter(v=>v.tipoVenta==='credito'&&getSaldo(v)>0).length;
+  const saldoTotal = lista.reduce((a,v)=>a+getSaldo(v),0);
+  if(document.getElementById('cta-stat-apartados')) document.getElementById('cta-stat-apartados').textContent=apartadosActivos;
+  if(document.getElementById('cta-stat-creditos')) document.getElementById('cta-stat-creditos').textContent=creditosActivos;
+  if(document.getElementById('cta-stat-saldo')) document.getElementById('cta-stat-saldo').textContent=fmt(saldoTotal);
+  if(document.getElementById('cta-total-pend')) document.getElementById('cta-total-pend').textContent='Pendiente: '+fmt(saldoTotal);
+
+  document.getElementById('cta-empty').style.display=lista.length?'none':'block';
+
+  document.getElementById('cta-tbody').innerHTML=lista.map(v=>{
+    const saldo = getSaldo(v);
+    const abonado = getAbonado(v);
+    const liquidado = saldo<=0;
+    const sucObj = sucursales.find(s=>s.id===v.sucursalId);
+    const tipoLabel = v.tipoVenta==='credito'?'<span class="badge b-blue">💳 Crédito</span>':'<span class="badge b-gold">📦 Apartado</span>';
+    const estadoBadge = liquidado?'<span class="badge b-green">✅ Liquidado</span>':'<span class="badge b-red">⏳ Pendiente</span>';
+    return`<tr>
+      <td><div>${v.fecha}</div><div style="font-size:11px;color:var(--muted)">${v.hora||''}</div></td>
+      <td><div style="font-weight:500">${v.cliente}</div><div style="font-size:11px;color:var(--muted)">${v.vendedor||'—'}</div></td>
+      <td>${tipoLabel}</td>
+      <td style="font-size:12px;max-width:160px">${(v.items||[]).map(x=>`${x.desc} T${x.talla}`).join(', ')}</td>
+      <td class="mono" style="color:var(--cream)">${fmt(v.total)}</td>
+      <td class="mono" style="color:var(--green)">${fmt(v.anticipo||0)}</td>
+      <td class="mono" style="color:var(--blue)">${fmt(abonado)}</td>
+      <td class="mono" style="color:${liquidado?'var(--green)':'var(--red)'};font-weight:600">${fmt(saldo)}</td>
+      <td>${estadoBadge}</td>
+      <td>
+        <div class="flex-row" style="gap:4px">
+          ${!liquidado?`<button class="btn btn-green btn-xs" onclick="abrirAbono('${v.id}')">💰 Abonar</button>`:''}
+          <button class="btn btn-ghost btn-xs" onclick="verHistorialAbonos('${v.id}')">📋</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function getSaldo(v){
+  const abonado = (v.abonos||[]).reduce((a,b)=>a+b.monto,0);
+  return Math.max(0,(v.total||0)-(v.anticipo||0)-abonado);
+}
+
+function getAbonado(v){
+  return (v.abonos||[]).reduce((a,b)=>a+b.monto,0);
+}
+
+function abrirAbono(id){
+  const v = ventas.find(x=>x.id===id); if(!v) return;
+  abonoVentaId = id;
+  const saldo = getSaldo(v);
+  const abonado = getAbonado(v);
+  const tipoLabel = v.tipoVenta==='credito'?'Crédito':'Apartado';
+  document.getElementById('abono-info').innerHTML=`
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <div><div style="font-size:10px;color:var(--muted)">CLIENTE</div><div style="font-weight:600">${v.cliente}</div></div>
+      <div><div style="font-size:10px;color:var(--muted)">TIPO</div><div>${tipoLabel}</div></div>
+      <div><div style="font-size:10px;color:var(--muted)">TOTAL</div><div class="mono">${fmt(v.total)}</div></div>
+      <div><div style="font-size:10px;color:var(--muted)">ANTICIPO</div><div class="mono" style="color:var(--green)">${fmt(v.anticipo||0)}</div></div>
+      <div><div style="font-size:10px;color:var(--muted)">ABONADO</div><div class="mono" style="color:var(--blue)">${fmt(abonado)}</div></div>
+      <div><div style="font-size:10px;color:var(--muted)">SALDO</div><div class="mono" style="color:var(--red);font-size:18px;font-weight:700">${fmt(saldo)}</div></div>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">${(v.items||[]).map(x=>`${x.desc} T${x.talla}`).join(' · ')}</div>`;
+  document.getElementById('ab-monto').value = saldo.toFixed(2);
+  document.getElementById('ab-monto').max = saldo;
+  document.getElementById('ab-notas').value = '';
+  document.getElementById('ab-pago').value = 'efectivo';
+  // Show liquidar warning if amount equals saldo
+  document.getElementById('ab-liquidar-warn').style.display='block';
+  document.getElementById('ab-monto').oninput = function(){
+    const val = parseFloat(this.value)||0;
+    document.getElementById('ab-liquidar-warn').style.display = val>=saldo?'block':'none';
+  };
+  openM('mo-abono');
+}
+
+async function guardarAbono(){
+  const v = ventas.find(x=>x.id===abonoVentaId); if(!v) return;
+  const monto = parseFloat(document.getElementById('ab-monto').value)||0;
+  const saldo = getSaldo(v);
+  if(monto<=0){toast('Ingresa un monto válido','err');return;}
+  if(monto>saldo+0.01){toast(`El monto no puede ser mayor al saldo (${fmt(saldo)})`,'err');return;}
+  const abono = {
+    monto, pago: document.getElementById('ab-pago').value,
+    notas: document.getElementById('ab-notas').value.trim(),
+    fecha: hoy(), hora: hora(),
+    usuario: currentProfile?.nombre||'—',
+    createdAt: new Date().toISOString()
+  };
+  const nuevosAbonos = [...(v.abonos||[]), abono];
+  const nuevoSaldo = Math.max(0, saldo - monto);
+  try{
+    await window._fb.updateDoc(docRef('ventas', abonoVentaId), {
+      abonos: nuevosAbonos,
+      liquidado: nuevoSaldo<=0
+    });
+    closeM('mo-abono');
+    toast(nuevoSaldo<=0 ? '✅ Cuenta liquidada completamente' : `Abono de ${fmt(monto)} registrado ✓`);
+    abonoVentaId = null;
+  }catch(e){
+    toast('Error: '+e.message,'err');
+    console.error(e);
+  }
+}
+
+function verHistorialAbonos(id){
+  const v = ventas.find(x=>x.id===id); if(!v) return;
+  const saldo = getSaldo(v);
+  const abonos = v.abonos||[];
+  let html = `<div style="margin-bottom:12px">
+    <div style="font-size:16px;font-weight:600;color:var(--cream)">${v.cliente}</div>
+    <div style="font-size:12px;color:var(--muted)">${v.tipoVenta==='credito'?'Crédito':'Apartado'} · ${v.fecha}</div>
+  </div>
+  <div style="background:var(--s2);border-radius:8px;padding:12px;margin-bottom:12px">
+    <div class="flex-row" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div><div style="font-size:10px;color:var(--muted)">TOTAL</div><div class="mono">${fmt(v.total)}</div></div>
+      <div><div style="font-size:10px;color:var(--muted)">ANTICIPO</div><div class="mono" style="color:var(--green)">${fmt(v.anticipo||0)}</div></div>
+      <div><div style="font-size:10px;color:var(--muted)">TOTAL ABONADO</div><div class="mono" style="color:var(--blue)">${fmt(getAbonado(v))}</div></div>
+      <div><div style="font-size:10px;color:var(--muted)">SALDO PENDIENTE</div><div class="mono" style="color:${saldo<=0?'var(--green)':'var(--red)'};font-weight:700">${fmt(saldo)}</div></div>
+    </div>
+  </div>`;
+  if(abonos.length){
+    html += `<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Historial de abonos</div>`;
+    html += abonos.map((a,i)=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--s2);border-radius:7px;margin-bottom:5px;border:1px solid var(--border)">
+        <div>
+          <div style="font-size:12px;color:var(--cream)">Abono #${i+1} — ${a.fecha} ${a.hora||''}</div>
+          <div style="font-size:11px;color:var(--muted)">${a.pago} · ${a.usuario||'—'} ${a.notas?'· '+a.notas:''}</div>
+        </div>
+        <div class="mono" style="color:var(--green);font-size:14px;font-weight:600">${fmt(a.monto)}</div>
+      </div>`).join('');
+  }else{
+    html += `<div style="text-align:center;padding:20px;color:var(--muted)">Sin abonos registrados</div>`;
+  }
+  document.getElementById('mv-body').innerHTML = html;
+  openM('mo-venta');
+}
+
 // ══════════════════ NAV ══════════════════
 const PAGE_TITLES={
   dashboard:{t:'Dashboard',sub:'Vista general del negocio',actions:''},
@@ -2379,6 +2622,7 @@ const PAGE_TITLES={
   pos:{t:'Punto de Venta',sub:'Registrar ventas',actions:''},
   historial:{t:'Historial de Ventas',sub:'Todas las transacciones',actions:''},
   transferencias:{t:'Transferencias',sub:'Mover stock entre sucursales y bodega',actions:''},
+  cuentas:{t:'Apartados / Créditos',sub:'Gestión de abonos y liquidaciones',actions:''},
   gastos:{t:'Gastos',sub:'Registro de egresos',actions:`<button class="btn btn-accent" onclick="abrirModalGasto()">＋ Registrar Gasto</button>`},
   corte:{t:'Corte de Caja',sub:'Resumen del día por sucursal',actions:''},
   reportes:{t:'Reportes Avanzados',sub:'Modelos campeón, rotación, vendedores',actions:''},
@@ -2405,6 +2649,7 @@ function go(page,el){
   if(page==='inventario')renderInv();
   if(page==='catalogo')renderCatalogo();
   if(page==='gastos')renderGastos();
+  if(page==='cuentas')renderCuentas();
   if(page==='catalogos-cfg'){loadCatalogos();}
   if(page==='etiquetas'){document.getElementById('etiq-desde').value=hoy();}
 }
