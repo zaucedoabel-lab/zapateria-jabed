@@ -958,6 +958,11 @@ select option{background:var(--s2)}
               <div class="card-title">Vendedores <button class="btn btn-accent btn-xs" onclick="addCatalogItem('vendedores')">＋ Agregar</button></div>
               <div id="cfg-vendedores-list"></div>
             </div>
+            <!-- Categorías de Gastos -->
+            <div class="card">
+              <div class="card-title">Categorías de Gastos <button class="btn btn-accent btn-xs" onclick="addCatalogItem('gastoCategorias')">＋ Agregar</button></div>
+              <div id="cfg-gastoCategorias-list"></div>
+            </div>
           </div>
 
           <!-- Config Monedero y Cumpleaños -->
@@ -1933,7 +1938,29 @@ function renderCart(){
 }
 function cqty(i,d){carrito[i].qty=Math.max(1,carrito[i].qty+d);renderCart();}
 function cremove(i){carrito.splice(i,1);renderCart();}
-function clearCart(){if(!carrito.length||confirm('¿Vaciar carrito?')){carrito=[];renderCart();}}
+function clearCart(){
+  if(!carrito.length||confirm('¿Vaciar carrito?')){
+    carrito=[];
+    renderCart();
+    // Reset all cart form fields
+    const resets={
+      'c-desc':'0','c-anticipo':'','c-nota-nombre':'','c-nota-tel':'',
+      'c-nota-folio':'','c-recibido':'','c-monedero-monto':''
+    };
+    Object.entries(resets).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.value=val;});
+    const typeEl=document.getElementById('c-tipo-venta');if(typeEl)typeEl.value='venta';
+    const pagoEl=document.getElementById('c-pago');if(pagoEl){pagoEl.value='efectivo';toggleMonederoField();}
+    const aprtEl=document.getElementById('c-apartado-section');if(aprtEl)aprtEl.style.display='none';
+    const notaEl=document.getElementById('c-nota-section');if(notaEl)notaEl.style.display='none';
+    const cliSel=document.getElementById('c-cliente-sel');if(cliSel)cliSel.value='';
+    const cliInfo=document.getElementById('c-cliente-info');if(cliInfo)cliInfo.style.display='none';
+    const cumpleAl=document.getElementById('c-cumple-alert');if(cumpleAl)cumpleAl.style.display='none';
+    const cambioEl=document.getElementById('c-cambio');if(cambioEl)cambioEl.textContent='$0.00';
+    const monederoDisp=document.getElementById('c-monedero-disp');if(monederoDisp)monederoDisp.textContent='$0.00';
+    const monederoResto=document.getElementById('c-monedero-resto');if(monederoResto)monederoResto.textContent='';
+    const monSec=document.getElementById('c-monedero-section');if(monSec)monSec.style.display='none';
+  }
+}
 function calcCart(){
   const sub=carrito.reduce((a,c)=>a+c.price*c.qty,0);
   const dv=parseFloat(document.getElementById('c-desc')?.value)||0;
@@ -2032,7 +2059,11 @@ function abrirModalGasto(){
   document.getElementById('g-monto').value='';
   document.getElementById('g-fecha').value=hoy();
   if(sucursales.length>0)document.getElementById('g-suc').value=activeSucId!=='all'?activeSucId:sucursales[0].id;
-  document.getElementById('g-cats').innerHTML=GASTO_CATS.map(c=>`<span class="gcat" onclick="selGCat(this,'${c}')">${c}</span>`).join('');
+  // Use catalogos if available, else fallback to GASTO_CATS
+  const gastoCatsList = getCatalogList('gastoCategorias').length>0
+    ? getCatalogList('gastoCategorias')
+    : GASTO_CATS;
+  document.getElementById('g-cats').innerHTML=gastoCatsList.map(c=>`<span class="gcat" onclick="selGCat(this,'${c}')">${c}</span>`).join('');
   openM('mo-gasto');
 }
 function selGCat(el,c){gastoCat=c;document.querySelectorAll('.gcat').forEach(t=>t.classList.remove('on'));el.classList.add('on');}
@@ -2332,7 +2363,8 @@ const CFG_DEFAULTS = {
   marcas: [],
   colores: [],
   proveedores: [],
-  vendedores: []
+  vendedores: [],
+  gastoCategorias: ['Renta','Servicios','Mercancía','Empaques','Sueldos','Publicidad','Transporte','Limpieza','Pago a Proveedores','Internet','Mantenimiento','Comida','Varios']
 };
 // Config general (monedero, cumpleaños)
 let configGeneral = {puntoPorcentaje:5, cumpleanosDesc:10};
@@ -2354,7 +2386,7 @@ async function loadCatalogos(){
 function getCatalogList(key){ return catalogosData[key]||CFG_DEFAULTS[key]||[]; }
 
 function renderCatalogosCfg(){
-  const keys=['categorias','lineas','temporadas','marcas','colores','proveedores','vendedores'];
+  const keys=['categorias','lineas','temporadas','marcas','colores','proveedores','vendedores','gastoCategorias'];
   keys.forEach(k=>{
     const el=document.getElementById('cfg-'+k+'-list');
     if(!el)return;
@@ -2731,6 +2763,42 @@ function exportarExcel(){
 async function cobrar(){
   if(!carrito.length){toast('Carrito vacío','err');return;}
   const sub=carrito.reduce((a,c)=>a+c.price*c.qty,0);
+  const dv_pre=parseFloat(document.getElementById('c-desc')?.value)||0;
+  const dt_pre=document.getElementById('c-desc-t')?.value||'$';
+  const dm_pre=dt_pre==='%'?sub*(dv_pre/100):dv_pre;
+  const totalPre=Math.max(0,sub-dm_pre);
+  const pagoPre=document.getElementById('c-pago')?.value||'efectivo';
+  const tipoPre=document.getElementById('c-tipo-venta')?.value||'venta';
+  const isACpre=tipoPre==='apartado'||tipoPre==='credito';
+  const anticipoPre=isACpre?parseFloat(document.getElementById('c-anticipo')?.value||'0')||0:0;
+  const monederoUsadoPre=pagoPre==='monedero'?parseFloat(document.getElementById('c-monedero-monto')?.value||'0')||0:0;
+  const recibidoPre=parseFloat(document.getElementById('c-recibido')?.value||'0')||0;
+  // ── Validaciones antes de cobrar ──
+  // 1. Monedero: no puede usar más de lo disponible
+  if(pagoPre==='monedero'&&monederoUsadoPre>0){
+    const cliId=document.getElementById('c-cliente-sel')?.value||'';
+    const cObj=clientes.find(x=>x.id===cliId);
+    const ptsDisp=cObj?cObj.puntos||0:0;
+    if(monederoUsadoPre>ptsDisp){
+      toast('⚠️ El monto de monedero supera el saldo disponible ($'+ptsDisp.toFixed(2)+')','err');
+      return;
+    }
+  }
+  // 2. Efectivo: verificar que se haya recibido suficiente
+  const esEfectivo=pagoPre==='efectivo'||pagoPre==='monedero';
+  if(esEfectivo){
+    const aPagarPre=isACpre?anticipoPre:Math.max(0,totalPre-monederoUsadoPre);
+    if(aPagarPre>0&&recibidoPre<aPagarPre){
+      const falta=aPagarPre-recibidoPre;
+      toast('⚠️ Falta recibir $'+falta.toFixed(2)+' del cliente','err');
+      return;
+    }
+  }
+  // 3. Apartado: anticipo debe ser mayor a 0
+  if(isACpre&&anticipoPre<=0){
+    toast('⚠️ Ingresa el monto del anticipo','err');
+    return;
+  }
   const dv=parseFloat(document.getElementById('c-desc')?.value)||0;
   const dt=document.getElementById('c-desc-t')?.value||'$';
   const dm=dt==='%'?sub*(dv/100):dv;
@@ -3264,15 +3332,30 @@ function calcCambio(){
   const totalStr = document.getElementById('c-total')?.textContent||'0';
   const total = parseFloat(totalStr.replace(/[^0-9.]/g,''))||0;
   const tipo = document.getElementById('c-tipo-venta')?.value||'venta';
+  const pago = document.getElementById('c-pago')?.value||'efectivo';
   const isAC = tipo==='apartado'||tipo==='credito';
-  // For apartado/credito, cambio is based on anticipo not total
-  const anticipo = isAC ? parseFloat(document.getElementById('c-anticipo')?.value||'0')||0 : total;
-  const aPagar = isAC ? anticipo : total;
+  const isMonedero = pago==='monedero';
+  // For apartado/credito: cambio based on anticipo
+  const anticipo = isAC ? parseFloat(document.getElementById('c-anticipo')?.value||'0')||0 : 0;
+  // Monedero amount to subtract
+  const monederoUsado = isMonedero ? parseFloat(document.getElementById('c-monedero-monto')?.value||'0')||0 : 0;
+  // Amount to pay in cash = total (or anticipo) minus monedero
+  let aPagar;
+  if(isAC){
+    aPagar = anticipo; // apartado: pay anticipo in cash
+  } else {
+    aPagar = Math.max(0, total - monederoUsado); // normal: total minus monedero
+  }
   const recibido = parseFloat(document.getElementById('c-recibido')?.value||'0')||0;
   const cambio = Math.max(0, recibido - aPagar);
   const el = document.getElementById('c-cambio');
   const lbl = document.getElementById('c-recibido-label');
-  if(lbl) lbl.textContent = isAC ? '💵 Recibido (anticipo $'+aPagar.toFixed(0)+')' : '💵 Total Recibido ($)';
+  let lblText = isAC
+    ? '💵 Recibido (anticipo $'+anticipo.toFixed(0)+')'
+    : isMonedero && monederoUsado>0
+      ? '💵 Recibido (resto $'+aPagar.toFixed(2)+')'
+      : '💵 Total Recibido ($)';
+  if(lbl) lbl.textContent = lblText;
   if(el){
     el.textContent = '$'+cambio.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
     el.style.color = recibido>0&&recibido<aPagar ? 'var(--red)' : 'var(--green)';
@@ -3285,10 +3368,18 @@ function calcCartMonedero(){
   const puntos = c?c.puntos||0:0;
   const total = parseFloat(document.getElementById('c-total')?.textContent?.replace(/[^0-9.]/g,'')||'0')||0;
   const usado = parseFloat(document.getElementById('c-monedero-monto')?.value||'0')||0;
-  const maxUso = Math.min(puntos, total);
   const resto = Math.max(0, total - usado);
   const el = document.getElementById('c-monedero-resto');
-  if(el) el.textContent = usado>0?`Resto a pagar en efectivo/tarjeta: $${resto.toLocaleString('es-MX',{minimumFractionDigits:2})}`:'';
+  // Warn if trying to use more than available
+  const montoEl = document.getElementById('c-monedero-monto');
+  if(usado > puntos && montoEl){
+    montoEl.style.border = '1px solid var(--red)';
+    if(el) el.innerHTML = `<span style="color:var(--red)">⚠️ Solo tienes $${puntos.toFixed(2)} disponibles</span>`;
+  } else {
+    if(montoEl) montoEl.style.border = '';
+    if(el) el.textContent = usado>0?`Resto a pagar en efectivo: $${resto.toLocaleString('es-MX',{minimumFractionDigits:2})}`:'';
+  }
+  calcCambio(); // update cambio when monedero changes
 }
 
 function onClienteSelectMonedero(){
