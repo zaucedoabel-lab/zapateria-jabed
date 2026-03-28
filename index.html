@@ -322,6 +322,8 @@ select option{background:var(--s2)}
         <div class="nav-item" id="nav-reportes" onclick="go('reportes',this)"><span class="ni">📈</span><span class="nt">Reportes</span></div>
         <div class="nav-divider"></div>
         <div class="nav-label">Configuración</div>
+        <div class="nav-item" id="nav-catalogos-cfg" onclick="go('catalogos-cfg',this)"><span class="ni">📋</span><span class="nt">Catálogos</span></div>
+        <div class="nav-item" id="nav-etiquetas" onclick="go('etiquetas',this)"><span class="ni">🏷️</span><span class="nt">Imprimir Etiquetas</span></div>
         <div class="nav-item" id="nav-sucursales" onclick="go('sucursales',this)"><span class="ni">🏪</span><span class="nt">Sucursales</span></div>
         <div class="nav-item" id="nav-usuarios" onclick="go('usuarios',this)"><span class="ni">👥</span><span class="nt">Usuarios y Roles</span></div>
         <div class="nav-item" id="nav-importar" onclick="go('importar',this)"><span class="ni">📥</span><span class="nt">Importar CSV</span></div>
@@ -2223,41 +2225,58 @@ function exportarExcel(){
 async function cobrar(){
   if(!carrito.length){toast('Carrito vacío','err');return;}
   const sub=carrito.reduce((a,c)=>a+c.price*c.qty,0);
-  const dv=parseFloat(document.getElementById('c-desc').value)||0;
-  const dt=document.getElementById('c-desc-t').value;
+  const dv=parseFloat(document.getElementById('c-desc')?.value)||0;
+  const dt=document.getElementById('c-desc-t')?.value||'$';
   const dm=dt==='%'?sub*(dv/100):dv;
   const total=Math.max(0,sub-dm);
-  const pago=document.getElementById('c-pago').value;
-  const cliente=document.getElementById('c-cliente').value.trim();
-  const vendedor=document.getElementById('c-vendedor').value.trim();
+  const pago=document.getElementById('c-pago')?.value||'efectivo';
+  const cliente=document.getElementById('c-cliente')?.value.trim()||'Cliente general';
+  const vendedor=document.getElementById('c-vendedor')?.value.trim()||currentProfile?.nombre||'—';
   const tipoVenta=document.getElementById('c-tipo-venta')?.value||'venta';
-  const sucId=document.getElementById('c-suc-venta')?.value||document.getElementById('pos-suc')?.value||activeSucId;
+  // Get sucursal - try multiple selects, fallback to first available
+  let sucId = document.getElementById('c-suc-venta')?.value
+    || document.getElementById('pos-suc')?.value
+    || activeSucId
+    || (sucursales.length>0?sucursales[0].id:'');
   const anticipo=tipoVenta==='apartado'?parseFloat(document.getElementById('c-anticipo')?.value)||0:0;
-  const fechaAprt=tipoVenta==='apartado'?document.getElementById('c-fecha-aprt')?.value:'';
-  const {updateDoc}=window._fb;
-  for(const item of carrito){
-    const p=productos.find(x=>x.id===item.id);
-    if(p&&p.stock&&p.stock[item.talla]!==undefined){
-      await updateDoc(docRef('productos',p.id),{[`stock.${item.talla}`]:Math.max(0,p.stock[item.talla]-item.qty)});
+  const fechaAprt=tipoVenta==='apartado'?(document.getElementById('c-fecha-aprt')?.value||''):'';
+  try{
+    const {updateDoc}=window._fb;
+    // Descontar stock
+    for(const item of carrito){
+      const p=productos.find(x=>x.id===item.id);
+      if(p&&p.stock&&p.stock[item.talla]!==undefined){
+        await updateDoc(docRef('productos',p.id),{[`stock.${item.talla}`]:Math.max(0,p.stock[item.talla]-item.qty)});
+      }
     }
+    // Guardar venta
+    await window._fb.addDoc(col('ventas'),{
+      fecha:hoy(),hora:hora(),
+      items:JSON.parse(JSON.stringify(carrito)),
+      subtotal:sub,descuento:dm,total,pago,
+      tipoVenta:tipoVenta||'venta',
+      anticipo:anticipo||0,
+      fechaApartado:fechaAprt||'',
+      cliente:cliente,vendedor:vendedor,
+      sucursalId:sucId||'',
+      createdAt:new Date().toISOString()
+    });
+    // Limpiar carrito
+    carrito=[];
+    ['c-desc','c-cliente','c-vendedor','c-anticipo'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)el.value=id==='c-desc'?'0':'';
+    });
+    const tipoEl=document.getElementById('c-tipo-venta');
+    if(tipoEl)tipoEl.value='venta';
+    const aprtEl=document.getElementById('c-apartado-section');
+    if(aprtEl)aprtEl.style.display='none';
+    renderCart();renderPOS();
+    toast(tipoVenta==='apartado'?'Apartado registrado ✓':'Venta: '+fmt(total)+' ✓');
+  }catch(e){
+    toast('Error al cobrar: '+e.message,'err');
+    console.error('cobrar error:',e);
   }
-  await window._fb.addDoc(col('ventas'),{
-    fecha:hoy(),hora:hora(),items:JSON.parse(JSON.stringify(carrito)),
-    subtotal:sub,descuento:dm,total,pago,tipoVenta,anticipo,
-    fechaApartado:fechaAprt||'',
-    cliente:cliente||'Cliente general',
-    vendedor:vendedor||currentProfile?.nombre||'—',
-    sucursalId:sucId,
-    createdAt:new Date().toISOString()
-  });
-  carrito=[];
-  ['c-desc','c-cliente','c-vendedor','c-anticipo'].forEach(id=>{
-    const el=document.getElementById(id);if(el)el.value=id==='c-desc'?'0':'';
-  });
-  if(document.getElementById('c-tipo-venta'))document.getElementById('c-tipo-venta').value='venta';
-  if(document.getElementById('c-apartado-section'))document.getElementById('c-apartado-section').style.display='none';
-  renderCart();renderPOS();
-  toast(tipoVenta==='apartado'?`Apartado registrado ✓`:`Venta: ${fmt(total)} ✓`);
 }
 
 // ══════════════════ HISTORIAL ══════════════════
