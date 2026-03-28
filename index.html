@@ -181,10 +181,10 @@ select option{background:var(--s2)}
 .tb.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
 
 /* ══ POS ══ */
-.pos-wrap{display:grid;grid-template-columns:1fr 340px;gap:16px;height:calc(100vh - 124px)}
-.cart-panel{background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column}
+.pos-wrap{display:grid;grid-template-columns:1fr 360px;gap:16px;height:calc(100vh - 124px)}
+.cart-panel{background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;overflow:hidden}
 .cp-head{padding:12px 14px;border-bottom:1px solid var(--border)}
-.cp-items{flex:1;overflow-y:auto;padding:10px}
+.cp-items{flex:0 0 auto;max-height:160px;overflow-y:auto;padding:10px}
 .ci{display:flex;align-items:center;gap:10px;background:var(--s2);border-radius:8px;padding:9px 11px;margin-bottom:6px;border:1px solid var(--border)}
 .ci-info{flex:1;min-width:0}
 .ci-name{font-size:13px;font-weight:500;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -193,7 +193,7 @@ select option{background:var(--s2)}
 .qty-row{display:flex;align-items:center;gap:5px}
 .qb{width:22px;height:22px;border-radius:5px;background:var(--s3);border:1px solid var(--border);color:var(--cream);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s}.qb:hover{background:var(--accent);border-color:var(--accent)}
 .qn{font-family:var(--mono);font-size:12px;min-width:18px;text-align:center}
-.cp-total{padding:13px 14px;border-top:1px solid var(--border)}
+.cp-total{padding:10px 12px;border-top:1px solid var(--border);overflow-y:auto;flex:1}
 .tr-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
 .tr-l{font-size:12px;color:var(--muted)}
 .tr-v{font-family:var(--mono);font-size:13px}
@@ -460,9 +460,9 @@ select option{background:var(--s2)}
                 </div>
                 <div class="divider"></div>
                 <div class="tr-row"><span class="tr-l" style="font-size:14px;color:var(--cream)">TOTAL</span><span class="tr-v tr-grand" id="c-total">$0.00</span></div>
-                <div class="fg" style="margin-top:10px;margin-bottom:7px"><label>Sucursal de Venta</label>
+                <div class="fg" style="margin-top:8px;margin-bottom:5px"><label style="font-size:9px">Sucursal de Venta</label>
                   <select id="c-suc-venta" style="width:100%"></select></div>
-                <div class="fg" style="margin-bottom:7px"><label>Tipo de Transacción</label>
+                <div class="fg" style="margin-bottom:5px"><label style="font-size:9px">Tipo de Transacción</label>
                   <select id="c-tipo-venta" onchange="toggleApartado()" style="width:100%">
                     <option value="venta">💵 Venta Normal</option>
                     <option value="apartado">📦 Apartado</option>
@@ -471,11 +471,11 @@ select option{background:var(--s2)}
                   <div class="fg" style="margin-bottom:6px"><label>Anticipo ($)</label><input type="number" id="c-anticipo" placeholder="0.00" step="0.01" min="0"></div>
                   <div class="fg" style="margin-bottom:0"><label>Fecha Límite Apartado</label><input type="date" id="c-fecha-aprt"></div>
                 </div>
-                <div class="fg" style="margin-bottom:7px"><label>Forma de Pago</label>
+                <div class="fg" style="margin-bottom:5px"><label style="font-size:9px">Forma de Pago</label>
                   <select id="c-pago"><option value="efectivo">💵 Efectivo</option><option value="tarjeta">💳 Tarjeta</option><option value="transferencia">📲 Transferencia</option><option value="mixto">🔀 Mixto</option></select></div>
-                <div class="fg" style="margin-bottom:7px"><label>Cliente</label><input type="text" id="c-cliente" placeholder="Nombre del cliente"></div>
-                <div class="fg" style="margin-bottom:9px"><label>Vendedor</label><input type="text" id="c-vendedor" placeholder="Nombre del vendedor"></div>
-                <button class="btn btn-gold btn-full" style="padding:10px;font-size:14px" onclick="cobrar()">✅ Cobrar Venta</button>
+                <div class="fg" style="margin-bottom:5px"><label style="font-size:9px">Cliente</label><input type="text" id="c-cliente" placeholder="Nombre del cliente"></div>
+                <div class="fg" style="margin-bottom:5px"><label style="font-size:9px">Vendedor</label><input type="text" id="c-vendedor" placeholder="Nombre del vendedor"></div>
+                <button class="btn btn-gold btn-full" style="padding:11px;font-size:14px;margin-top:8px;position:sticky;bottom:0" onclick="cobrar()">✅ Cobrar Venta</button>
               </div>
             </div>
           </div>
