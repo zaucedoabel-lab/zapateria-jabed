@@ -475,7 +475,29 @@ select option{background:var(--s2)}
                   <div class="fg" style="margin-bottom:0"><label id="c-fecha-label">Fecha Límite</label><input type="date" id="c-fecha-aprt"></div>
                 </div>
                 <div class="fg" style="margin-bottom:5px"><label style="font-size:9px">Forma de Pago</label>
-                  <select id="c-pago"><option value="efectivo">💵 Efectivo</option><option value="tarjeta">💳 Tarjeta</option><option value="transferencia">📲 Transferencia</option><option value="mixto">🔀 Mixto</option></select></div>
+                  <select id="c-pago" onchange="toggleMonederoField()" style="width:100%">
+                    <option value="efectivo">💵 Efectivo</option>
+                    <option value="tarjeta">💳 Tarjeta</option>
+                    <option value="transferencia">📲 Transferencia</option>
+                    <option value="mixto">🔀 Mixto</option>
+                    <option value="monedero">🪙 Monedero + Efectivo</option>
+                  </select></div>
+                <!-- Monedero electrónico -->
+                <div id="c-monedero-section" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:8px;margin-bottom:5px">
+                  <div style="font-size:10px;color:var(--gold);margin-bottom:5px">🪙 Pago con Monedero</div>
+                  <div class="flex-row" style="gap:8px;align-items:center">
+                    <div class="fg" style="flex:1;margin-bottom:0"><label style="font-size:9px">Monedero a usar ($)</label><input type="number" id="c-monedero-monto" placeholder="0.00" step="0.01" min="0" oninput="calcCartMonedero()"></div>
+                    <div style="font-size:11px;color:var(--muted)">Disponible: <span id="c-monedero-disp" style="color:var(--gold)">$0.00</span></div>
+                  </div>
+                  <div id="c-monedero-resto" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+                </div>
+                <!-- Efectivo recibido y cambio -->
+                <div id="c-efectivo-section" style="background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:8px;margin-bottom:5px">
+                  <div class="flex-row" style="gap:8px">
+                    <div class="fg" style="flex:1;margin-bottom:0"><label style="font-size:9px">💵 Total Recibido ($)</label><input type="number" id="c-recibido" placeholder="0.00" step="1" min="0" oninput="calcCambio()"></div>
+                    <div class="fg" style="flex:1;margin-bottom:0"><label style="font-size:9px">🔄 Cambio</label><div id="c-cambio" style="font-size:18px;font-weight:700;color:var(--green);padding:6px 0">$0.00</div></div>
+                  </div>
+                </div>
                 <div class="fg" style="margin-bottom:5px">
                   <label style="font-size:9px">Cliente</label>
                   <select id="c-cliente-sel" onchange="onClienteSelect()" style="width:100%">
@@ -492,6 +514,7 @@ select option{background:var(--s2)}
                 <!-- Nota separo (aparece en apartado/credito) -->
                 <div id="c-nota-section" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:6px">
                   <div style="font-size:10px;color:var(--gold);font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">📄 Datos para Nota de Separo</div>
+                  <div class="fg" style="margin-bottom:4px"><label style="font-size:9px">Nº de Nota (folio físico)</label><input type="text" id="c-nota-folio" placeholder="Ej: 000917" style="font-weight:700;font-size:14px;letter-spacing:1px"></div>
                   <div class="fg" style="margin-bottom:4px"><label style="font-size:9px">Nombre completo</label><input type="text" id="c-nota-nombre" placeholder="Nombre del cliente"></div>
                   <div class="fg" style="margin-bottom:0"><label style="font-size:9px">Teléfono</label><input type="text" id="c-nota-tel" placeholder="(899) 000-0000"></div>
                 </div>
@@ -586,8 +609,8 @@ select option{background:var(--s2)}
               <button class="btn btn-ghost btn-sm" onclick="exportarHistorialExcel()">📊 Exportar Excel</button>
             </div>
           </div>
-          <div class="tw"><table><thead><tr>
-            <th>#</th><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Vendedor</th>
+          <div class="tw" style="overflow-x:auto"><table style="min-width:1200px"><thead><tr>
+            <th>#</th><th>Mes</th><th>Sem.</th><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Vendedor</th>
             <th>Producto</th><th>Talla</th><th>Cat.</th><th>Qty</th>
             <th>Sucursal</th><th>Tipo</th><th>Pago</th><th>Total</th><th></th>
           </tr></thead>
@@ -640,11 +663,12 @@ select option{background:var(--s2)}
             <div class="scard gold"><div class="sl">Puntos Totales Emitidos</div><div class="sv gold" id="cli-stat-puntos">0</div></div>
             <div class="scard g"><div class="sl">Cumpleaños Hoy 🎂</div><div class="sv g" id="cli-stat-cumple">0</div></div>
           </div>
-          <div class="tw">
-            <table><thead><tr>
-              <th>#</th><th>Nombre</th><th>Teléfono</th><th>Celular</th>
-              <th>Cumpleaños</th><th>Límite Crédito</th><th>% Desc.</th>
-              <th>Puntos</th><th>Última Compra</th><th></th>
+          <div class="tw" style="overflow-x:auto">
+            <table style="min-width:1100px"><thead><tr>
+              <th>Nombre</th><th>Teléfono</th><th>Celular</th>
+              <th>Edad</th><th>Género</th><th>Colonia</th>
+              <th>Cumpleaños</th><th>Lím. Crédito</th><th>% Desc.</th>
+              <th>Puntos 🪙</th><th>Última Compra</th><th></th>
             </tr></thead>
             <tbody id="cli-tbody"></tbody>
           </table></div>
@@ -1083,7 +1107,18 @@ select option{background:var(--s2)}
         <div class="fg"><label>Días para Pagar (crédito)</label><input type="number" id="cli-dias-pagar" placeholder="15" min="0"></div>
         <div class="fg"><label>Email</label><input type="email" id="cli-email" placeholder="correo@ejemplo.com"></div>
       </div>
-      <div class="fg"><label>Dirección</label><input type="text" id="cli-direccion" placeholder="Calle, colonia, ciudad"></div>
+      <div class="fr fr2">
+        <div class="fg"><label>Género</label>
+          <select id="cli-genero">
+            <option value="">No especificado</option>
+            <option value="F">Femenino</option>
+            <option value="M">Masculino</option>
+            <option value="O">Otro</option>
+          </select>
+        </div>
+        <div class="fg"><label>Colonia</label><input type="text" id="cli-colonia" placeholder="Nombre de la colonia"></div>
+      </div>
+      <div class="fg"><label>Dirección completa</label><input type="text" id="cli-direccion" placeholder="Calle y número"></div>
       <div class="fr fr2">
         <div class="fg"><label>Puntos Monedero Actuales</label><input type="number" id="cli-puntos" placeholder="0" min="0"></div>
         <div class="fg"><label>Estado</label>
@@ -1327,7 +1362,7 @@ function showSucursalPicker(){
 
 function renderSucursales(){
   document.getElementById('suc-tbody').innerHTML=sucursales.map(s=>{
-    const tot=productos.filter(p=>p.sucursalId===s.id).reduce((a,p)=>a+Object.values(p.stock||{}).reduce((x,y)=>x+y,0),0);
+    const tot=productos.filter(p=>p.sucursalId===s.id).reduce((a,p)=>a+Object.values(p.stock||{}).reduce((x,y)=>x+(isNaN(Number(y))?0:Number(y)),0),0);
     return`<tr>
       <td><b>${s.nombre}</b></td>
       <td><span class="badge ${s.tipo==='bodega'?'b-orange':'b-green'}">${s.tipo==='bodega'?'📦 Bodega':'🏪 Tienda'}</span></td>
@@ -1528,7 +1563,8 @@ function renderInv(){
     const mt=!temp||p.temporada===temp;
     const mm=!marca||(p.marca||'').toLowerCase().includes(marca);
     const ms=activeSucId==='all'||p.sucursalId===activeSucId;
-    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+b,0);
+    const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    const tot=sumS(p.stock);
     const mstock=mostrar==='todos'||(mostrar==='con_stock'&&tot>0)||(mostrar==='sin_stock'&&tot===0)||(mostrar==='bajo_stock'&&tot>0&&tot<=3);
     return mq&&mc&&ml&&mt&&mm&&ms&&mstock;
   });
@@ -1547,8 +1583,9 @@ function renderInv(){
   const agrupados=Object.values(grupos);
 
   // Stats
-  const totalPzas=agrupados.reduce((a,p)=>a+Object.values(p.stock||{}).reduce((x,y)=>x+y,0),0);
-  const totalValor=agrupados.reduce((a,p)=>a+(p.precio||0)*Object.values(p.stock||{}).reduce((x,y)=>x+y,0),0);
+  const sumStock=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+  const totalPzas=agrupados.reduce((a,p)=>a+sumStock(p.stock),0);
+  const totalValor=agrupados.reduce((a,p)=>a+(parseFloat(p.precio)||0)*sumStock(p.stock),0);
   if(document.getElementById('inv-count'))document.getElementById('inv-count').textContent=agrupados.length+' artículos';
   if(document.getElementById('inv-total-stock'))document.getElementById('inv-total-stock').textContent='Stock: '+totalPzas.toLocaleString('es-MX')+' pzas';
   if(document.getElementById('inv-total-valor'))document.getElementById('inv-total-valor').textContent='Valor: '+fmt(totalValor);
@@ -1595,7 +1632,8 @@ function renderInvMatriz(agrupados){
   // Build rows
   const tbody=document.getElementById('inv-tbody-matriz');
   tbody.innerHTML=agrupados.map(p=>{
-    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+b,0);
+    const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    const tot=sumS(p.stock);
     const suc=getSucNombre(p.sucursalId);
     const isBodega=sucursales.find(s=>s.id===p.sucursalId)?.tipo==='bodega';
     const rowColor=tot===0?'opacity:.5':tot<=3?'background:rgba(240,180,41,.06)':'';
@@ -1629,7 +1667,8 @@ function renderInvMatriz(agrupados){
 function renderInvLista(agrupados){
   const getSucNombre=id=>sucursales.find(s=>s.id===id)?.nombre||'—';
   document.getElementById('inv-tbody').innerHTML=agrupados.map(p=>{
-    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+b,0);
+    const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    const tot=sumS(p.stock);
     const ts=Object.entries(p.stock||{}).filter(([,v])=>v>0).map(([t,c])=>`<span class="tag">${t}(${c})</span>`).join('');
     const estado=tot===0?'<span class="badge b-red">Sin stock</span>':tot<=3?'<span class="badge b-gold">Bajo</span>':'<span class="badge b-green">OK</span>';
     const suc=getSucNombre(p.sucursalId);
@@ -1661,7 +1700,8 @@ function renderCatalogo(){
   const lista=productos.filter(p=>!q||(p.desc||'').toLowerCase().includes(q)||(p.cat||'').toLowerCase().includes(q)||(p.marca||'').toLowerCase().includes(q)||(p.linea||'').toLowerCase().includes(q));
   document.getElementById('cat-empty').style.display=lista.length?'none':'block';
   document.getElementById('cat-grid').innerHTML=lista.map(p=>{
-    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+b,0);
+    const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    const tot=sumS(p.stock);
     const suc=sucursales.find(s=>s.id===p.sucursalId);
     return`<div class="prod-card">
       <div class="prod-img" onclick="abrirModalProducto('${p.id}')">${p.foto?`<img src="${p.foto}" alt="${p.desc}">`:'👟'}</div>
@@ -1689,7 +1729,8 @@ function renderPOS(){
   const q=(document.getElementById('pos-q')?.value||'').toLowerCase();
   const sid=document.getElementById('pos-suc')?.value||'';
   const lista=productos.filter(p=>{
-    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+b,0);
+    const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    const tot=sumS(p.stock);
     if(tot<=0)return false;
     const mq=!q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').includes(q);
     const ms=!sid||p.sucursalId===sid;
@@ -1697,7 +1738,8 @@ function renderPOS(){
   });
   const grid=document.getElementById('pos-grid');if(!grid)return;
   grid.innerHTML=lista.length?lista.map(p=>{
-    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+b,0);
+    const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    const tot=sumS(p.stock);
     const suc=sucursales.find(s=>s.id===p.sucursalId);
     return`<div class="prod-card" onclick="openAddCart('${p.id}')">
       <div class="prod-img" style="height:100px">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div>
@@ -2128,7 +2170,7 @@ function renderDashboard(){
   const vH=ventas.filter(v=>v.fecha===h);
   const gH=gastos.filter(g=>g.fecha===h);
   const tv=vH.reduce((a,v)=>a+v.total,0),tg=gH.reduce((a,g)=>a+g.monto,0);
-  const stock=productos.reduce((a,p)=>a+Object.values(p.stock||{}).reduce((x,y)=>x+y,0),0);
+  const stock=productos.reduce((a,p)=>a+Object.values(p.stock||{}).reduce((x,y)=>x+(isNaN(Number(y))?0:Number(y)),0),0);
   document.getElementById('dash-fecha').textContent=fmtFecha(h);
   document.getElementById('dash-stats').innerHTML=`
     <div class="scard gold"><div class="sl">Ventas Hoy</div><div class="sv gold">${fmt(tv)}</div><div class="ss">${vH.length} transacciones</div></div>
@@ -2149,7 +2191,8 @@ function renderDashboard(){
   const bajos=productos.filter(p=>Object.values(p.stock||{}).reduce((a,b)=>a+b,0)<=3&&Object.values(p.stock||{}).reduce((a,b)=>a+b,0)>0);
   document.getElementById('dash-bajo-cnt').textContent=bajos.length;
   document.getElementById('dash-bajo').innerHTML=bajos.length?bajos.slice(0,6).map(p=>{
-    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+b,0);
+    const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    const tot=sumS(p.stock);
     const suc=sucursales.find(s=>s.id===p.sucursalId);
     return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
       <div class="flex-row" style="gap:8px">
@@ -2275,7 +2318,8 @@ function buscarEtiq(){
   if(!q){res.innerHTML='';return;}
   const lista=productos.filter(p=>(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q)).slice(0,8);
   res.innerHTML=lista.map(p=>{
-    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+b,0);
+    const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    const tot=sumS(p.stock);
     return`<div onclick="selEtiqProd('${p.id}')" style="padding:9px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:5px;transition:background .15s" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
       <div style="font-weight:600;font-size:13px;color:var(--cream)">${p.desc}</div>
       <div style="font-size:11px;color:var(--muted)">${p.barcode||p.sku||'—'} · ${p.cat} · ${p.color||'—'} · ${tot} pzas</div>
@@ -2482,7 +2526,8 @@ function exportarHistorialExcel(){
 function exportarExcel(){
   const headers=['Codigo','SKU','Descripcion','Categoria','Linea','Temporada','Marca','Color','Precio','Costo','Tallas_Stock','Stock_Total','Sucursal'];
   const rows=productos.map(p=>{
-    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+b,0);
+    const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    const tot=sumS(p.stock);
     const ts=Object.entries(p.stock||{}).filter(([,v])=>v>0).map(([t,c])=>t+':'+c).join(' | ');
     const suc=sucursales.find(s=>s.id===p.sucursalId)?.nombre||'—';
     return[p.barcode||'',p.sku||'',p.desc||'',p.cat||'',p.linea||'',p.temporada||'',p.marca||'',p.color||'',p.precio||0,p.costo||0,ts,tot,suc];
@@ -2571,54 +2616,8 @@ async function cobrar(){
   }
 }
 
-// ══════════════════ HISTORIAL ══════════════════
-function renderHist(){
-  const fecha=document.getElementById('h-fecha')?.value||'';
-  const pago=document.getElementById('h-pago')?.value||'';
-  const suc=document.getElementById('h-suc')?.value||'';
-  const tipo=document.getElementById('h-tipo')?.value||'';
-  let lista=ventas.filter(v=>{
-    const tipoV=v.tipoVenta||'venta';
-    // Include abonos in historial when tipo filter is 'abono' or empty
-    return(!fecha||v.fecha===fecha)&&(!pago||v.pago===pago)&&(!suc||v.sucursalId===suc)&&(!tipo||tipoV===tipo);
-  });
-  document.getElementById('h-total').textContent='Total: '+fmt(lista.reduce((a,v)=>a+v.total,0));
-  document.getElementById('h-empty').style.display=lista.length?'none':'block';
-  const pi={efectivo:'💵',tarjeta:'💳',transferencia:'📲',mixto:'🔀',apartado:'📦'};
-  document.getElementById('h-tbody').innerHTML=lista.map((v,idx)=>{
-    const sucObj=sucursales.find(s=>s.id===v.sucursalId);
-    const isAprt=(v.tipoVenta||'venta')==='apartado';
-    const isAbono=v.tipoVenta==='abono';
-    const isCredito=v.tipoVenta==='credito';
-    const items=v.items||[];
-    if(!items.length)return`<tr>
-      <td class="mono">#${lista.length-idx}</td><td>${v.fecha}</td><td style="color:var(--muted)">${v.hora||'—'}</td>
-      <td>${v.cliente}</td><td style="color:var(--muted)">${v.vendedor||'—'}</td>
-      <td>—</td><td>—</td><td>—</td><td>—</td>
-      <td>${sucObj?`<span class="badge b-green" style="font-size:10px">${sucObj.nombre}</span>`:'—'}</td>
-      <td><span class="badge ${isAprt?'b-gold':'b-green'}" style="font-size:10px">${isAprt?'📦 Apartado':'💵 Venta'}</span></td>
-      <td>${pi[v.pago]||''} ${v.pago}</td>
-      <td class="mono" style="color:var(--gold)">${fmt(v.total)}</td>
-      <td><button class="btn btn-ghost btn-xs" onclick="verVenta('${v.id}')">Ver</button></td>
-    </tr>`;
-    return items.map((item,ii)=>`<tr ${isAprt?'style="background:rgba(240,180,41,.05)"':''}>
-      ${ii===0?`<td class="mono" rowspan="${items.length}">#${lista.length-idx}</td>
-      <td rowspan="${items.length}">${v.fecha}</td>
-      <td rowspan="${items.length}" style="color:var(--muted)">${v.hora||'—'}</td>
-      <td rowspan="${items.length}">${v.cliente}</td>
-      <td rowspan="${items.length}" style="color:var(--muted)">${v.vendedor||'—'}</td>`:''}
-      <td style="font-size:12px">${item.desc||'—'}</td>
-      <td class="mono" style="text-align:center">${item.talla||'—'}</td>
-      <td><span class="badge b-accent" style="font-size:10px">${item.cat||'—'}</span></td>
-      <td class="mono" style="text-align:center">${item.qty||1}</td>
-      ${ii===0?`<td rowspan="${items.length}">${sucObj?`<span class="badge b-green" style="font-size:10px">${sucObj.nombre}</span>`:'—'}</td>
-      <td rowspan="${items.length}"><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apartado':isCredito?'💳 Crédito':'💵 Venta'}</span>${isAbono&&v.saldoDespues!==undefined?`<div style="font-size:9px;color:var(--muted)">Saldo: ${fmt(v.saldoDespues)}</div>`:''}</td>
-      <td rowspan="${items.length}">${pi[v.pago]||''} ${v.pago}</td>
-      <td rowspan="${items.length}" class="mono" style="color:var(--gold)">${fmt(v.total)}${isAprt&&v.anticipo?`<div style="font-size:10px;color:var(--muted)">Ant: ${fmt(v.anticipo)}</div>`:''}</td>
-      <td rowspan="${items.length}"><button class="btn btn-ghost btn-xs" onclick="verVenta('${v.id}')">Ver</button></td>`:''}
-    </tr>`).join('');
-  }).join('');
-}
+// renderHist replaced
+
 
 
 function exportarCuentasExcel(){
@@ -2677,7 +2676,7 @@ function getNumSemana(fecha){
   const d=new Date(fecha+'T12:00:00');
   const startYear=new Date(d.getFullYear(),0,1);
   const week=Math.ceil(((d-startYear)/86400000+startYear.getDay()+1)/7);
-  return'Sem '+week;
+  return String(week);
 }
 
 function renderCuentas(){
@@ -2896,105 +2895,11 @@ async function loadClientes(){
   }catch(e){ console.error('loadClientes:',e); }
 }
 
-function renderClientes(){
-  const q=(document.getElementById('cli-q')?.value||'').toLowerCase();
-  let lista=clientes.filter(c=>{
-    return !q||(c.nombre||'').toLowerCase().includes(q)
-      ||(c.apPat||'').toLowerCase().includes(q)
-      ||(c.celular||'').includes(q);
-  });
-  const hoyStr=hoy();
-  const hoyMD=hoyStr.slice(5); // MM-DD
-  const cumpleHoy=lista.filter(c=>(c.cumple||'').slice(5)===hoyMD).length;
-  const totalPuntos=lista.reduce((a,c)=>a+(c.puntos||0),0);
-  if(document.getElementById('cli-stat-total')) document.getElementById('cli-stat-total').textContent=lista.length;
-  if(document.getElementById('cli-stat-puntos')) document.getElementById('cli-stat-puntos').textContent=totalPuntos.toFixed(0)+' pts';
-  if(document.getElementById('cli-stat-cumple')) document.getElementById('cli-stat-cumple').textContent=cumpleHoy;
-  document.getElementById('cli-empty').style.display=lista.length?'none':'block';
-  document.getElementById('cli-tbody').innerHTML=lista.map(c=>{
-    const esCumple=(c.cumple||'').slice(5)===hoyMD;
-    const bloqueado=c.bloqueado==='1'||c.bloqueado===1||c.bloqueado===true;
-    const nombre=`${c.nombre||''} ${c.apPat||''} ${c.apMat||''}`.trim();
-    return`<tr style="${esCumple?'background:rgba(240,180,41,.08)':''}">
-      <td><div style="font-weight:500;color:var(--cream)">${nombre}${esCumple?' 🎂':''}</div>
-          <div style="font-size:11px;color:var(--muted)">${c.email||''}</div></td>
-      <td class="mono" style="font-size:12px">${c.telefono||'—'}</td>
-      <td class="mono" style="font-size:12px">${c.celular||'—'}</td>
-      <td style="font-size:12px;color:var(--muted)">${c.cumple?c.cumple.slice(5).replace('-','/')+'  ('+c.cumple.slice(0,4)+')':'—'}</td>
-      <td class="mono">${c.limiteCredito>0?fmt(c.limiteCredito):'—'}</td>
-      <td class="mono">${c.descPct>0?c.descPct+'%':'—'}</td>
-      <td><span class="badge b-gold">${(c.puntos||0).toFixed(0)} pts</span></td>
-      <td style="font-size:11px;color:var(--muted)">${c.ultimaCompra||'—'}</td>
-      <td>
-        <div class="flex-row" style="gap:3px">
-          <button class="btn btn-ghost btn-xs" onclick="abrirModalCliente('${c.id}')">✏️</button>
-          <button class="btn btn-red btn-xs" onclick="deleteCliente('${c.id}')">🗑️</button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-}
+// renderClientes moved
 
-function abrirModalCliente(id){
-  editClienteId=id||null;
-  const fields=['nombre','ap-pat','ap-mat','celular','telefono','cumple','limite-cred','desc-pct','dias-pagar','email','direccion','puntos','notas'];
-  fields.forEach(f=>{const el=document.getElementById('cli-'+f);if(el)el.value='';});
-  document.getElementById('cli-bloqueado').value='0';
-  document.getElementById('mc-cliente-title').textContent=id?'Editar Cliente':'Nuevo Cliente';
-  if(id){
-    const c=clientes.find(x=>x.id===id);if(!c)return;
-    document.getElementById('cli-nombre').value=c.nombre||'';
-    document.getElementById('cli-ap-pat').value=c.apPat||'';
-    document.getElementById('cli-ap-mat').value=c.apMat||'';
-    document.getElementById('cli-celular').value=c.celular||'';
-    document.getElementById('cli-telefono').value=c.telefono||'';
-    document.getElementById('cli-cumple').value=c.cumple||'';
-    document.getElementById('cli-limite-cred').value=c.limiteCredito||0;
-    document.getElementById('cli-desc-pct').value=c.descPct||0;
-    document.getElementById('cli-dias-pagar').value=c.diasPagar||15;
-    document.getElementById('cli-email').value=c.email||'';
-    document.getElementById('cli-direccion').value=c.direccion||'';
-    document.getElementById('cli-puntos').value=c.puntos||0;
-    document.getElementById('cli-notas').value=c.notas||'';
-    document.getElementById('cli-bloqueado').value=c.bloqueado?'1':'0';
-  }
-  openM('mo-cliente');
-}
+// abrirModalCliente moved
 
-async function saveCliente(){
-  const nombre=document.getElementById('cli-nombre').value.trim();
-  if(!nombre){toast('El nombre es requerido','err');return;}
-  const data={
-    nombre,
-    apPat:document.getElementById('cli-ap-pat').value.trim(),
-    apMat:document.getElementById('cli-ap-mat').value.trim(),
-    celular:document.getElementById('cli-celular').value.trim(),
-    telefono:document.getElementById('cli-telefono').value.trim(),
-    cumple:document.getElementById('cli-cumple').value,
-    limiteCredito:parseFloat(document.getElementById('cli-limite-cred').value)||0,
-    descPct:parseFloat(document.getElementById('cli-desc-pct').value)||0,
-    diasPagar:parseInt(document.getElementById('cli-dias-pagar').value)||15,
-    email:document.getElementById('cli-email').value.trim(),
-    direccion:document.getElementById('cli-direccion').value.trim(),
-    puntos:parseFloat(document.getElementById('cli-puntos').value)||0,
-    notas:document.getElementById('cli-notas').value.trim(),
-    bloqueado:document.getElementById('cli-bloqueado').value==='1',
-    updatedAt:new Date().toISOString()
-  };
-  try{
-    if(editClienteId){
-      await window._fb.setDoc(docRef('clientes',editClienteId),data,{merge:true});
-      toast('Cliente actualizado ✓');
-    }else{
-      data.createdAt=new Date().toISOString();
-      data.ultimaCompra='';
-      await window._fb.addDoc(col('clientes'),data);
-      toast('Cliente registrado ✓');
-    }
-    closeM('mo-cliente');
-    editClienteId=null;
-  }catch(e){toast('Error: '+e.message,'err');}
-}
+// saveCliente moved
 
 async function deleteCliente(id){
   if(!confirm('¿Eliminar este cliente?'))return;
@@ -3067,7 +2972,8 @@ function onClienteSelect(){
       document.getElementById('c-cumple-pct').textContent=pct;
     }
   }
-}
+
+  onClienteSelectMonedero();}
 
 function aplicarDescCumple(){
   const pct=configGeneral.cumpleanosDesc||10;
@@ -3104,66 +3010,7 @@ function toggleApartado(){
   if(isAC) onClienteSelect();
 }
 
-function mostrarNotaSeparo(ventaData){
-  notaSeparoData=ventaData;
-  const c=ventaData;
-  const folio=String(++folioSeparo).padStart(6,'0');
-  const fechaHoy=hoy();
-  const [anio,mes,dia]=fechaHoy.split('-');
-  document.getElementById('nota-sep-body').innerHTML=`
-    <div style="text-align:center;border-bottom:2px solid var(--border);padding-bottom:12px;margin-bottom:12px">
-      <div style="font-size:18px;font-weight:700;color:var(--cream)">Zapatería & Novedades JABED</div>
-      <div style="font-size:11px;color:var(--muted)">Circuito Zamia Col. Los Almendros · (899) 434-9242</div>
-      <div style="font-size:11px;color:var(--muted)">Zapateria Jabed</div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div style="font-size:11px;color:var(--muted)">NOTA DE SEPARO</div>
-      <div style="background:var(--red);color:#fff;padding:4px 12px;border-radius:6px;font-size:18px;font-weight:700">Nº ${folio}</div>
-    </div>
-    <div style="margin-bottom:4px;font-size:11px;color:var(--muted)">FECHA: ${dia}/${mes}/${anio}</div>
-    <div style="background:var(--s2);border-radius:8px;padding:10px;margin-bottom:12px">
-      <div style="display:flex;gap:8px;margin-bottom:4px">
-        <span style="font-size:11px;color:var(--muted);width:70px">CLIENTE:</span>
-        <span style="font-weight:600">${c.notaNombre||c.cliente||'—'}</span>
-      </div>
-      <div style="display:flex;gap:8px">
-        <span style="font-size:11px;color:var(--muted);width:70px">TELÉFONO:</span>
-        <span>${c.notaTel||'—'}</span>
-      </div>
-    </div>
-    <table style="width:100%;border-collapse:collapse;margin-bottom:12px;font-size:13px">
-      <thead>
-        <tr style="border-bottom:1px solid var(--border)">
-          <th style="text-align:left;padding:4px 6px;font-size:11px;color:var(--muted)">CANT.</th>
-          <th style="text-align:left;padding:4px 6px;font-size:11px;color:var(--muted)">DESCRIPCIÓN</th>
-          <th style="text-align:right;padding:4px 6px;font-size:11px;color:var(--muted)">PRECIO</th>
-          <th style="text-align:right;padding:4px 6px;font-size:11px;color:var(--muted)">IMPORTE</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${(c.items||[]).map(item=>`<tr style="border-bottom:1px solid var(--border)">
-          <td style="padding:5px 6px">${item.qty}</td>
-          <td style="padding:5px 6px">${item.desc} T${item.talla} ${item.color?'/ '+item.color:''}</td>
-          <td style="padding:5px 6px;text-align:right">${fmt(item.price)}</td>
-          <td style="padding:5px 6px;text-align:right">${fmt(item.price*item.qty)}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-    <div style="text-align:right;margin-bottom:12px">
-      ${c.descuento>0?`<div style="font-size:12px;color:var(--red)">Descuento: -${fmt(c.descuento)}</div>`:''}
-      <div style="font-size:16px;font-weight:700;color:var(--cream)">TOTAL: ${fmt(c.total)}</div>
-      <div style="font-size:13px;color:var(--green)">Anticipo: ${fmt(c.anticipo||0)}</div>
-      <div style="font-size:15px;font-weight:600;color:var(--gold)">SALDO: ${fmt(Math.max(0,c.total-(c.anticipo||0)))}</div>
-    </div>
-    <div style="border-top:1px solid var(--border);padding-top:10px;font-size:10px;color:var(--muted)">
-      <div>• No habrá cambios ni devoluciones</div>
-      <div>• Separo a 30 días con el ${configGeneral.puntoPorcentaje||5}% de anticipo</div>
-      <div>• Abona o liquida presentando tu nota de apartado</div>
-      <div>• Revisa tu mercancía al momento para cualquier aclaración</div>
-      <div style="text-align:center;margin-top:8px;font-weight:500">Gracias por su preferencia</div>
-    </div>`;
-  openM('mo-nota-sep');
-}
+// mostrarNotaSeparo moved
 
 function imprimirNotaSeparo(){
   const body=document.getElementById('nota-sep-body').innerHTML;
@@ -3215,6 +3062,327 @@ async function acumularPuntosCliente(clienteId, totalVenta){
     });
     toast(`+${puntosGanados.toFixed(0)} puntos al monedero de ${c.nombre} ✓`);
   }catch(e){console.error('acumularPuntos:',e);}
+}
+
+
+
+// ══════════════════ TAREA 1: CAMBIO + MONEDERO EN POS ══════════════════
+function toggleMonederoField(){
+  const pago = document.getElementById('c-pago')?.value||'efectivo';
+  const monSec = document.getElementById('c-monedero-section');
+  const efSec = document.getElementById('c-efectivo-section');
+  if(monSec) monSec.style.display = pago==='monedero'?'block':'none';
+  // Show cambio only for efectivo/monedero
+  if(efSec) efSec.style.display = (pago==='efectivo'||pago==='monedero')?'block':'none';
+  calcCambio();
+}
+
+function calcCambio(){
+  const total = parseFloat(document.getElementById('c-total')?.textContent?.replace(/[^0-9.]/g,'')||'0')||0;
+  const recibido = parseFloat(document.getElementById('c-recibido')?.value||'0')||0;
+  const cambio = Math.max(0, recibido - total);
+  const el = document.getElementById('c-cambio');
+  if(el){
+    el.textContent = '$'+cambio.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+    el.style.color = recibido>0&&recibido<total ? 'var(--red)' : 'var(--green)';
+  }
+}
+
+function calcCartMonedero(){
+  const clienteId = document.getElementById('c-cliente-sel')?.value||'';
+  const c = clientes.find(x=>x.id===clienteId);
+  const puntos = c?c.puntos||0:0;
+  const total = parseFloat(document.getElementById('c-total')?.textContent?.replace(/[^0-9.]/g,'')||'0')||0;
+  const usado = parseFloat(document.getElementById('c-monedero-monto')?.value||'0')||0;
+  const maxUso = Math.min(puntos, total);
+  const resto = Math.max(0, total - usado);
+  const el = document.getElementById('c-monedero-resto');
+  if(el) el.textContent = usado>0?`Resto a pagar en efectivo/tarjeta: $${resto.toLocaleString('es-MX',{minimumFractionDigits:2})}`:'';
+}
+
+function onClienteSelectMonedero(){
+  const clienteId = document.getElementById('c-cliente-sel')?.value||'';
+  const c = clientes.find(x=>x.id===clienteId);
+  const puntos = c?c.puntos||0:0;
+  const dispEl = document.getElementById('c-monedero-disp');
+  if(dispEl) dispEl.textContent = '$'+puntos.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const montoEl = document.getElementById('c-monedero-monto');
+  if(montoEl) montoEl.max = puntos;
+}
+
+// ══════════════════ TAREA 3: HISTORIAL CON MES + SEMANA ══════════════════
+function renderHist(){
+  const fecha=document.getElementById('h-fecha')?.value||'';
+  const pago=document.getElementById('h-pago')?.value||'';
+  const suc=document.getElementById('h-suc')?.value||'';
+  const tipo=document.getElementById('h-tipo')?.value||'';
+  let lista=ventas.filter(v=>{
+    const tipoV=v.tipoVenta||'venta';
+    return(!fecha||v.fecha===fecha)&&(!pago||v.pago===pago)&&(!suc||v.sucursalId===suc)&&(!tipo||tipoV===tipo);
+  });
+  document.getElementById('h-total').textContent='Total: '+fmt(lista.reduce((a,v)=>a+v.total,0));
+  document.getElementById('h-empty').style.display=lista.length?'none':'block';
+  const pi={efectivo:'💵',tarjeta:'💳',transferencia:'📲',mixto:'🔀',apartado:'📦',credito:'💳',monedero:'🪙',abono:'💰'};
+  document.getElementById('h-tbody').innerHTML=lista.map((v,idx)=>{
+    const sucObj=sucursales.find(s=>s.id===v.sucursalId);
+    const isAprt=(v.tipoVenta||'venta')==='apartado';
+    const isAbono=v.tipoVenta==='abono';
+    const isCredito=v.tipoVenta==='credito';
+    const mesStr=getNombreMes(v.fecha).slice(0,3);
+    const semStr=getNumSemana(v.fecha);
+    const items=v.items||[];
+    if(!items.length)return`<tr>
+      <td class="mono">#${lista.length-idx}</td>
+      <td style="font-size:11px">${mesStr}</td>
+      <td class="mono" style="font-size:11px">${semStr}</td>
+      <td>${v.fecha}</td><td style="color:var(--muted)">${v.hora||'—'}</td>
+      <td>${v.cliente}</td><td style="color:var(--muted)">${v.vendedor||'—'}</td>
+      <td>—</td><td>—</td><td>—</td><td>—</td>
+      <td>${sucObj?`<span class="badge b-green" style="font-size:10px">${sucObj.nombre}</span>`:'—'}</td>
+      <td><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
+      <td>${pi[v.pago]||''} ${v.pago}</td>
+      <td class="mono" style="color:var(--gold)">${fmt(v.total)}</td>
+      <td><button class="btn btn-ghost btn-xs" onclick="verVenta('${v.id}')">Ver</button></td>
+    </tr>`;
+    return items.map((item,ii)=>`<tr ${isAprt?'style="background:rgba(240,180,41,.05)"':isAbono?'style="background:rgba(82,201,122,.04)"':''}>
+      ${ii===0?`<td class="mono" rowspan="${items.length}">#${lista.length-idx}</td>
+      <td style="font-size:11px" rowspan="${items.length}">${mesStr}</td>
+      <td class="mono" style="font-size:11px" rowspan="${items.length}">${semStr}</td>
+      <td rowspan="${items.length}">${v.fecha}</td>
+      <td rowspan="${items.length}" style="color:var(--muted)">${v.hora||'—'}</td>
+      <td rowspan="${items.length}">${v.cliente}</td>
+      <td rowspan="${items.length}" style="color:var(--muted)">${v.vendedor||'—'}</td>`:''}
+      <td style="font-size:12px">${item.desc||'—'}</td>
+      <td class="mono" style="text-align:center">${item.talla||'—'}</td>
+      <td><span class="badge b-accent" style="font-size:10px">${item.cat||'—'}</span></td>
+      <td class="mono" style="text-align:center">${item.qty||1}</td>
+      ${ii===0?`<td rowspan="${items.length}">${sucObj?`<span class="badge b-green" style="font-size:10px">${sucObj.nombre}</span>`:'—'}</td>
+      <td rowspan="${items.length}"><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
+      <td rowspan="${items.length}">${pi[v.pago]||''} ${v.pago}</td>
+      <td rowspan="${items.length}" class="mono" style="color:var(--gold)">${fmt(v.total)}${isAprt&&v.anticipo?`<div style="font-size:10px;color:var(--muted)">Ant: ${fmt(v.anticipo)}</div>`:''}</td>
+      <td rowspan="${items.length}"><button class="btn btn-ghost btn-xs" onclick="verVenta('${v.id}')">Ver</button></td>`:''}
+    </tr>`).join('');
+  }).join('');
+}
+
+// ══════════════════ TAREA 4: CLIENTES MEJORADO ══════════════════
+function calcEdad(cumple){
+  if(!cumple)return'—';
+  const hoyD=new Date();
+  const b=new Date(cumple+'T12:00:00');
+  let edad=hoyD.getFullYear()-b.getFullYear();
+  const m=hoyD.getMonth()-b.getMonth();
+  if(m<0||(m===0&&hoyD.getDate()<b.getDate()))edad--;
+  return edad>0?edad+'a':'—';
+}
+
+function renderClientes(){
+  const q=(document.getElementById('cli-q')?.value||'').toLowerCase();
+  let lista=clientes.filter(c=>{
+    return !q||(c.nombre||'').toLowerCase().includes(q)
+      ||(c.apPat||'').toLowerCase().includes(q)
+      ||(c.celular||'').includes(q)
+      ||(c.colonia||'').toLowerCase().includes(q);
+  });
+  const hoyStr=hoy();
+  const hoyMD=hoyStr.slice(5);
+  const cumpleHoy=lista.filter(c=>(c.cumple||'').slice(5)===hoyMD).length;
+  const totalPuntos=lista.reduce((a,c)=>a+(c.puntos||0),0);
+  if(document.getElementById('cli-stat-total'))document.getElementById('cli-stat-total').textContent=lista.length;
+  if(document.getElementById('cli-stat-puntos'))document.getElementById('cli-stat-puntos').textContent='$'+totalPuntos.toFixed(2);
+  if(document.getElementById('cli-stat-cumple'))document.getElementById('cli-stat-cumple').textContent=cumpleHoy;
+  document.getElementById('cli-empty').style.display=lista.length?'none':'block';
+  document.getElementById('cli-tbody').innerHTML=lista.map(c=>{
+    const esCumple=(c.cumple||'').slice(5)===hoyMD;
+    const nombre=`${c.nombre||''} ${c.apPat||''} ${c.apMat||''}`.trim();
+    const generoLabel={F:'♀ Femenino',M:'♂ Masculino',O:'Otro'}[c.genero||'']||'—';
+    const edad=calcEdad(c.cumple);
+    const puntosDinero=(c.puntos||0).toFixed(2);
+    return`<tr style="${esCumple?'background:rgba(240,180,41,.08)':''}">
+      <td><div style="font-weight:500;color:var(--cream)">${nombre}${esCumple?' 🎂':''}</div>
+          <div style="font-size:11px;color:var(--muted)">${c.email||''}</div></td>
+      <td class="mono" style="font-size:12px">${c.telefono||'—'}</td>
+      <td class="mono" style="font-size:12px">${c.celular||'—'}</td>
+      <td style="font-size:12px;text-align:center">${edad}</td>
+      <td style="font-size:11px;color:var(--muted)">${generoLabel}</td>
+      <td style="font-size:12px;color:var(--muted)">${c.colonia||'—'}</td>
+      <td style="font-size:12px;color:var(--muted)">${c.cumple?c.cumple.slice(5).replace('-','/'):'—'}</td>
+      <td class="mono">${c.limiteCredito>0?fmt(c.limiteCredito):'—'}</td>
+      <td class="mono">${c.descPct>0?c.descPct+'%':'—'}</td>
+      <td><span class="badge b-gold" style="font-size:12px">$${puntosDinero}</span></td>
+      <td style="font-size:11px;color:var(--muted)">${c.ultimaCompra||'—'}</td>
+      <td>
+        <div class="flex-row" style="gap:3px">
+          <button class="btn btn-ghost btn-xs" onclick="verHistorialCliente('${c.id}')" title="Ver compras">📋</button>
+          <button class="btn btn-ghost btn-xs" onclick="abrirModalCliente('${c.id}')">✏️</button>
+          <button class="btn btn-red btn-xs" onclick="deleteCliente('${c.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function verHistorialCliente(clienteId){
+  const c=clientes.find(x=>x.id===clienteId); if(!c)return;
+  const nombre=`${c.nombre||''} ${c.apPat||''}`.trim();
+  const compras=ventas.filter(v=>v.clienteId===clienteId&&v.tipoVenta!=='abono');
+  const totalGastado=compras.reduce((a,v)=>a+v.total,0);
+  let html=`<div style="margin-bottom:14px">
+    <div style="font-size:16px;font-weight:600;color:var(--cream)">${nombre}</div>
+    <div class="flex-row" style="gap:16px;margin-top:8px;flex-wrap:wrap">
+      <div><div style="font-size:10px;color:var(--muted)">TOTAL COMPRAS</div><div class="mono" style="color:var(--gold)">${fmt(totalGastado)}</div></div>
+      <div><div style="font-size:10px;color:var(--muted)">VISITAS</div><div class="mono">${compras.length}</div></div>
+      <div><div style="font-size:10px;color:var(--muted)">PUNTOS</div><div class="mono" style="color:var(--gold)">$${(c.puntos||0).toFixed(2)}</div></div>
+    </div>
+  </div>`;
+  if(compras.length){
+    html+=`<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Historial de compras</div>`;
+    html+=compras.slice().sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(v=>{
+      const badge=v.tipoVenta==='apartado'?'📦':v.tipoVenta==='credito'?'💳':'💵';
+      return`<div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div style="font-size:12px;color:var(--muted)">${v.fecha} ${v.hora||''} ${badge}</div>
+          <div class="mono" style="color:var(--gold);font-weight:600">${fmt(v.total)}</div>
+        </div>
+        <div style="font-size:12px;color:var(--cream)">${(v.items||[]).map(x=>`${x.desc} T${x.talla} ×${x.qty}`).join(' · ')}</div>
+        ${v.vendedor?`<div style="font-size:11px;color:var(--muted);margin-top:2px">Vendedor: ${v.vendedor}</div>`:''}
+      </div>`;
+    }).join('');
+  }else{
+    html+=`<div style="text-align:center;padding:20px;color:var(--muted)">Sin compras registradas aún</div>`;
+  }
+  document.getElementById('mv-body').innerHTML=html;
+  openM('mo-venta');
+}
+
+// Override saveCliente to include genero+colonia
+async function saveCliente(){
+  const nombre=document.getElementById('cli-nombre').value.trim();
+  if(!nombre){toast('El nombre es requerido','err');return;}
+  const data={
+    nombre,
+    apPat:document.getElementById('cli-ap-pat').value.trim(),
+    apMat:document.getElementById('cli-ap-mat').value.trim(),
+    celular:document.getElementById('cli-celular').value.trim(),
+    telefono:document.getElementById('cli-telefono').value.trim(),
+    cumple:document.getElementById('cli-cumple').value,
+    genero:document.getElementById('cli-genero')?.value||'',
+    colonia:document.getElementById('cli-colonia')?.value.trim()||'',
+    limiteCredito:parseFloat(document.getElementById('cli-limite-cred').value)||0,
+    descPct:parseFloat(document.getElementById('cli-desc-pct').value)||0,
+    diasPagar:parseInt(document.getElementById('cli-dias-pagar').value)||15,
+    email:document.getElementById('cli-email').value.trim(),
+    direccion:document.getElementById('cli-direccion').value.trim(),
+    puntos:parseFloat(document.getElementById('cli-puntos').value)||0,
+    notas:document.getElementById('cli-notas').value.trim(),
+    bloqueado:document.getElementById('cli-bloqueado').value==='1',
+    updatedAt:new Date().toISOString()
+  };
+  try{
+    if(editClienteId){
+      await window._fb.setDoc(docRef('clientes',editClienteId),data,{merge:true});
+      toast('Cliente actualizado ✓');
+    }else{
+      data.createdAt=new Date().toISOString();
+      data.ultimaCompra='';
+      await window._fb.addDoc(col('clientes'),data);
+      toast('Cliente registrado ✓');
+    }
+    closeM('mo-cliente');editClienteId=null;
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+// Override abrirModalCliente to load genero+colonia
+function abrirModalCliente(id){
+  editClienteId=id||null;
+  const fields=['nombre','ap-pat','ap-mat','celular','telefono','cumple','limite-cred','desc-pct','dias-pagar','email','colonia','direccion','puntos','notas'];
+  fields.forEach(f=>{const el=document.getElementById('cli-'+f);if(el)el.value='';});
+  if(document.getElementById('cli-bloqueado'))document.getElementById('cli-bloqueado').value='0';
+  if(document.getElementById('cli-genero'))document.getElementById('cli-genero').value='';
+  document.getElementById('mc-cliente-title').textContent=id?'Editar Cliente':'Nuevo Cliente';
+  if(id){
+    const c=clientes.find(x=>x.id===id);if(!c)return;
+    const map={nombre:'nombre','ap-pat':'apPat','ap-mat':'apMat',celular:'celular',telefono:'telefono',cumple:'cumple',colonia:'colonia',email:'email',direccion:'direccion',notas:'notas'};
+    Object.entries(map).forEach(([fid,key])=>{const el=document.getElementById('cli-'+fid);if(el&&c[key]!==undefined)el.value=c[key];});
+    if(document.getElementById('cli-limite-cred'))document.getElementById('cli-limite-cred').value=c.limiteCredito||0;
+    if(document.getElementById('cli-desc-pct'))document.getElementById('cli-desc-pct').value=c.descPct||0;
+    if(document.getElementById('cli-dias-pagar'))document.getElementById('cli-dias-pagar').value=c.diasPagar||15;
+    if(document.getElementById('cli-puntos'))document.getElementById('cli-puntos').value=c.puntos||0;
+    if(document.getElementById('cli-bloqueado'))document.getElementById('cli-bloqueado').value=c.bloqueado?'1':'0';
+    if(document.getElementById('cli-genero'))document.getElementById('cli-genero').value=c.genero||'';
+  }
+  openM('mo-cliente');
+}
+
+// ══════════════════ TAREA 5: FIX INVENTARIO STATS ══════════════════
+function fixStockValue(stock){
+  if(!stock)return 0;
+  if(typeof stock==='number')return stock;
+  if(typeof stock==='object')return Object.values(stock).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+  return 0;
+}
+
+// ══════════════════ FIX NOTA SEPARO WITH FOLIO ══════════════════
+function mostrarNotaSeparo(ventaData){
+  notaSeparoData=ventaData;
+  const c=ventaData;
+  // Use manual folio if provided, else auto-increment
+  const folioManual=document.getElementById('c-nota-folio')?.value.trim();
+  const folioNum=folioManual||String(++folioSeparo).padStart(6,'0');
+  const fechaHoy=hoy();
+  const [anio,mes,dia]=fechaHoy.split('-');
+  document.getElementById('nota-sep-body').innerHTML=`
+    <div style="text-align:center;border-bottom:2px solid var(--border);padding-bottom:12px;margin-bottom:12px">
+      <div style="font-size:18px;font-weight:700;color:var(--cream)">Zapatería & Novedades JABED</div>
+      <div style="font-size:11px;color:var(--muted)">Circuito Zamia Col. Los Almendros · (899) 434-9242</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--muted)">NOTA DE SEPARO</div>
+      <div style="background:var(--red);color:#fff;padding:4px 14px;border-radius:6px;font-size:18px;font-weight:700;letter-spacing:1px">Nº ${folioManual||folioNum}</div>
+    </div>
+    <div style="margin-bottom:4px;font-size:11px;color:var(--muted)">FECHA: ${dia}/${mes}/${anio}</div>
+    <div style="background:var(--s2);border-radius:8px;padding:10px;margin-bottom:12px">
+      <div style="display:flex;gap:8px;margin-bottom:4px">
+        <span style="font-size:11px;color:var(--muted);width:80px">CLIENTE:</span>
+        <span style="font-weight:600">${c.notaNombre||c.cliente||'—'}</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <span style="font-size:11px;color:var(--muted);width:80px">TELÉFONO:</span>
+        <span>${c.notaTel||'—'}</span>
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:12px;font-size:13px">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:4px 6px;font-size:11px;color:var(--muted)">CANT.</th>
+          <th style="text-align:left;padding:4px 6px;font-size:11px;color:var(--muted)">DESCRIPCIÓN</th>
+          <th style="text-align:right;padding:4px 6px;font-size:11px;color:var(--muted)">PRECIO</th>
+          <th style="text-align:right;padding:4px 6px;font-size:11px;color:var(--muted)">IMPORTE</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${(c.items||[]).map(item=>`<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:5px 6px">${item.qty}</td>
+          <td style="padding:5px 6px">${item.desc} T${item.talla}${item.color?' / '+item.color:''}</td>
+          <td style="padding:5px 6px;text-align:right">${fmt(item.price)}</td>
+          <td style="padding:5px 6px;text-align:right">${fmt(item.price*item.qty)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <div style="text-align:right;margin-bottom:12px">
+      ${c.descuento>0?`<div style="font-size:12px;color:var(--red)">Descuento: -${fmt(c.descuento)}</div>`:''}
+      <div style="font-size:16px;font-weight:700;color:var(--cream)">TOTAL: ${fmt(c.total)}</div>
+      <div style="font-size:13px;color:var(--green)">Anticipo: ${fmt(c.anticipo||0)}</div>
+      <div style="font-size:15px;font-weight:700;color:var(--gold)">SALDO: ${fmt(Math.max(0,c.total-(c.anticipo||0)))}</div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:10px;font-size:10px;color:var(--muted)">
+      <div>• No habrá cambios ni devoluciones</div>
+      <div>• Separo a 30 días con anticipo</div>
+      <div>• Abona o liquida presentando tu nota de apartado</div>
+      <div>• Revisa tu mercancía al momento para cualquier aclaración</div>
+      <div style="text-align:center;margin-top:8px;font-weight:500;color:var(--cream)">Gracias por su preferencia</div>
+    </div>`;
+  openM('mo-nota-sep');
 }
 
 
