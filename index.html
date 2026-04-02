@@ -324,9 +324,11 @@ select option{background:var(--s2)}
         <div class="nav-item" id="nav-gastos" onclick="go('gastos',this)"><span class="ni">💸</span><span class="nt">Gastos</span></div>
         <div class="nav-item" id="nav-corte" onclick="go('corte',this)"><span class="ni">🏦</span><span class="nt">Corte de Caja</span></div>
         <div class="nav-item" id="nav-reportes" onclick="go('reportes',this)"><span class="ni">📈</span><span class="nt">Reportes</span></div>
+        <div class="nav-item" id="nav-resumen" onclick="go('resumen',this)"><span class="ni">📊</span><span class="nt">Resumen Anual</span></div>
         <div class="nav-divider"></div>
         <div class="nav-label">Configuración</div>
         <div class="nav-item" id="nav-catalogos-cfg" onclick="go('catalogos-cfg',this)"><span class="ni">📋</span><span class="nt">Catálogos</span></div>
+        <div class="nav-item" id="nav-promociones" onclick="go('promociones',this)"><span class="ni">🎁</span><span class="nt">Promociones</span></div>
         <div class="nav-item" id="nav-etiquetas" onclick="go('etiquetas',this)"><span class="ni">🏷️</span><span class="nt">Imprimir Etiquetas</span></div>
         <div class="nav-item" id="nav-sucursales" onclick="go('sucursales',this)"><span class="ni">🏪</span><span class="nt">Sucursales</span></div>
         <div class="nav-item" id="nav-usuarios" onclick="go('usuarios',this)"><span class="ni">👥</span><span class="nt">Usuarios y Roles</span></div>
@@ -638,6 +640,8 @@ select option{background:var(--s2)}
                   🎂 ¡Este cliente cumple años hoy! Aplica descuento del <span id="c-cumple-pct"></span>%
                   <button class="btn btn-gold btn-xs" style="margin-left:8px" onclick="aplicarDescCumple()">Aplicar</button>
                 </div>
+                <!-- Alerta de promoción -->
+                <div id="c-promo-alert" style="display:none;background:#0a1f0f;border:1px solid var(--green)44;border-radius:8px;padding:8px;margin-bottom:6px"></div>
                 <button class="btn btn-gold btn-full" style="padding:11px;font-size:14px;margin-top:8px;position:sticky;bottom:0" onclick="cobrar()">✅ Cobrar Venta</button>
               </div>
             </div>
@@ -701,37 +705,138 @@ select option{background:var(--s2)}
 
         <!-- ══════════ HISTORIAL ══════════ -->
         <div id="page-historial" class="page">
-          <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-            <div class="flex-row" style="flex-wrap:wrap;gap:8px">
+          <!-- Filtros -->
+          <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px">
+            <div class="flex-row" style="flex-wrap:wrap;gap:10px;align-items:flex-end">
               <div>
-                <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Fecha</label>
-                <input type="date" id="h-fecha" oninput="renderHist()" style="width:150px">
+                <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Desde</label>
+                <input type="date" id="h-desde" oninput="renderHist()" style="width:145px">
+              </div>
+              <div>
+                <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Hasta</label>
+                <input type="date" id="h-hasta" oninput="renderHist()" style="width:145px">
               </div>
               <div>
                 <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Forma de Pago</label>
-                <select id="h-pago" onchange="renderHist()" style="width:140px"><option value="">Todos</option><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option><option value="apartado">Apartado</option></select>
+                <select id="h-pago" onchange="renderHist()" style="width:155px">
+                  <option value="">Todos los pagos</option>
+                  <option value="efectivo">💵 Efectivo</option>
+                  <option value="tarjeta-bbva">💳 Tarjeta BBVA</option>
+                  <option value="tarjeta-mp">💳 Tarjeta Mercado Pago</option>
+                  <option value="tarjeta">💳 Tarjeta (otro)</option>
+                  <option value="transferencia">📲 Transferencia</option>
+                  <option value="monedero">🪙 Monedero</option>
+                  <option value="mixto">🔀 Mixto</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Tipo</label>
+                <select id="h-tipo" onchange="renderHist()" style="width:130px">
+                  <option value="">Todos</option>
+                  <option value="venta">💵 Venta</option>
+                  <option value="apartado">📦 Apartado</option>
+                  <option value="credito">💳 Crédito</option>
+                  <option value="abono">💰 Abono</option>
+                </select>
               </div>
               <div>
                 <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Sucursal</label>
                 <select id="h-suc" onchange="renderHist()" style="width:140px"><option value="">Todas</option></select>
               </div>
-              <div>
-                <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Tipo</label>
-                <select id="h-tipo" onchange="renderHist()" style="width:120px"><option value="">Todos</option><option value="venta">Venta</option><option value="apartado">Apartado</option><option value="credito">Crédito</option><option value="abono">Abono</option></select>
+              <div style="margin-left:auto">
+                <button class="btn btn-ghost btn-sm" onclick="exportarHistorialExcel()">📊 Exportar Excel</button>
               </div>
             </div>
-            <div class="flex-row" style="gap:8px">
-              <span class="badge b-gold" id="h-total">Total: $0</span>
-              <button class="btn btn-ghost btn-sm" onclick="exportarHistorialExcel()">📊 Exportar Excel</button>
-            </div>
           </div>
-          <div class="tw" style="overflow-x:auto"><table style="min-width:1200px"><thead><tr>
+          <!-- Totales resumen -->
+          <div class="stat-grid sg4" style="margin-bottom:12px">
+            <div class="scard gold"><div class="sl">Total Cobrado</div><div class="sv gold" id="h-total-cobrado">$0</div></div>
+            <div class="scard g"><div class="sl">Efectivo</div><div class="sv g" id="h-total-efectivo">$0</div></div>
+            <div class="scard b"><div class="sl">Tarjeta</div><div class="sv b" id="h-total-tarjeta">$0</div></div>
+            <div class="scard r"><div class="sl">Pendiente (Apart./Cred.)</div><div class="sv r" id="h-total-pendiente">$0</div></div>
+          </div>
+          <div class="tw" style="overflow-x:auto"><table style="min-width:1300px"><thead><tr>
             <th>#</th><th>Mes</th><th>Sem.</th><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Vendedor</th>
             <th>Producto</th><th>Talla</th><th>Cat.</th><th>Qty</th>
-            <th>Sucursal</th><th>Tipo</th><th>Pago</th><th>Total</th><th></th>
+            <th>Sucursal</th><th>Tipo</th><th>Pago</th>
+            <th>Total Compra</th><th>Apart./Créd.</th><th>Cobrado</th>
           </tr></thead>
           <tbody id="h-tbody"></tbody></table></div>
           <div class="empty" id="h-empty" style="display:none"><div class="empty-icon">📋</div><div>Sin ventas.</div></div>
+        </div>
+
+        <!-- ══════════ PROMOCIONES ══════════ -->
+        <div id="page-promociones" class="page">
+          <div class="flex-between" style="margin-bottom:14px">
+            <div></div>
+            <button class="btn btn-accent" onclick="abrirModalPromocion()">🎁 Nueva Promoción</button>
+          </div>
+          <div class="stat-grid sg3" style="margin-bottom:14px">
+            <div class="scard gold"><div class="sl">Promociones Activas</div><div class="sv gold" id="promo-stat-activas">0</div></div>
+            <div class="scard g"><div class="sl">Artículos Gratis Entregados</div><div class="sv g" id="promo-stat-gratis">0</div></div>
+            <div class="scard b"><div class="sl">Valor Promovido</div><div class="sv b" id="promo-stat-valor">$0</div></div>
+          </div>
+          <div class="tw">
+            <table><thead><tr>
+              <th>Nombre</th><th>Tipo</th><th>Descripción</th><th>Vigencia</th>
+              <th>Productos Aplica</th><th>Estado</th><th>Gratis Entregados</th><th></th>
+            </tr></thead>
+            <tbody id="promo-tbody"></tbody>
+          </table></div>
+          <div class="empty" id="promo-empty" style="display:none"><div class="empty-icon">🎁</div><div>Sin promociones. Crea la primera.</div></div>
+        </div>
+
+        <!-- ══════════ RESUMEN ANUAL ══════════ -->
+        <div id="page-resumen" class="page">
+          <div class="flex-between" style="margin-bottom:14px">
+            <div class="flex-row" style="gap:12px;align-items:center">
+              <div>
+                <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Año</label>
+                <select id="resumen-anio" onchange="renderResumenAnual()" style="width:100px">
+                  <option value="2024">2024</option>
+                  <option value="2025">2025</option>
+                  <option value="2026" selected>2026</option>
+                  <option value="2027">2027</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Sucursal</label>
+                <select id="resumen-suc" onchange="renderResumenAnual()" style="width:140px"><option value="">Todas</option></select>
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="exportarResumenExcel()">📊 Exportar Excel</button>
+          </div>
+
+          <!-- TARJETAS ANUALES -->
+          <div class="stat-grid sg4" style="margin-bottom:16px">
+            <div class="scard gold"><div class="sl">Ingresos Totales Año</div><div class="sv gold" id="res-total-anio">$0</div></div>
+            <div class="scard g"><div class="sl">Efectivo Año</div><div class="sv g" id="res-efectivo-anio">$0</div></div>
+            <div class="scard b"><div class="sl">Tarjeta Año</div><div class="sv b" id="res-tarjeta-anio">$0</div></div>
+            <div class="scard r"><div class="sl">Gastos Año</div><div class="sv r" id="res-gastos-anio">$0</div></div>
+          </div>
+          <div class="scard" style="margin-bottom:16px;padding:14px 18px;background:var(--s1);border:1px solid var(--green)44">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Utilidad Real del Año (Ingresos − Gastos)</div>
+            <div style="font-size:28px;font-weight:700" id="res-utilidad-anio">$0</div>
+          </div>
+
+          <!-- TABLA MENSUAL -->
+          <div class="tw" style="overflow-x:auto;margin-bottom:16px">
+            <table style="min-width:900px" id="resumen-tabla">
+              <thead id="resumen-thead"></thead>
+              <tbody id="resumen-tbody"></tbody>
+            </table>
+          </div>
+
+          <!-- GRÁFICA SIMPLE DE BARRAS -->
+          <div class="card" style="padding:16px">
+            <div class="card-title">📊 Ingresos vs Gastos por Mes</div>
+            <div id="resumen-grafica" style="display:flex;align-items:flex-end;gap:6px;height:160px;padding:10px 0;overflow-x:auto"></div>
+            <div style="display:flex;gap:16px;margin-top:8px;font-size:12px">
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:var(--green);border-radius:2px;display:inline-block"></span>Ingresos</span>
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:var(--red);border-radius:2px;display:inline-block"></span>Gastos</span>
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:var(--gold);border-radius:2px;display:inline-block"></span>Utilidad</span>
+            </div>
+          </div>
         </div>
 
         <!-- ══════════ TRANSFERENCIAS ══════════ -->
@@ -1269,6 +1374,65 @@ select option{background:var(--s2)}
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeM('mo-nota-sep')">Cerrar</button>
       <button class="btn btn-accent" onclick="imprimirNotaSeparo()">🖨️ Imprimir Nota</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Promoción -->
+<div class="mo" id="mo-promo">
+  <div class="md" style="max-width:600px">
+    <div class="mh">
+      <div class="mt" id="mp-title">Nueva Promoción</div>
+      <button class="xbtn" onclick="closeM('mo-promo')">✕</button>
+    </div>
+    <div class="mb">
+      <div class="fr fr2">
+        <div class="fg"><label>Nombre de la Promoción *</label>
+          <input type="text" id="pr-nombre" placeholder="Ej: 2x1 en Crocs, 3x2 Verano…">
+        </div>
+        <div class="fg"><label>Tipo</label>
+          <select id="pr-tipo" onchange="onTipoPromoChange()">
+            <option value="2x1">2×1 (lleva 2, paga 1)</option>
+            <option value="3x2">3×2 (lleva 3, paga 2)</option>
+            <option value="3x1">3×1 (lleva 3, paga 1)</option>
+            <option value="4x3">4×3 (lleva 4, paga 3)</option>
+            <option value="descuento_pct">% Descuento</option>
+            <option value="personalizado">Personalizado</option>
+          </select>
+        </div>
+      </div>
+      <div id="pr-tipo-config" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px">
+        <div id="pr-tipo-desc" style="font-size:13px;color:var(--muted);margin-bottom:8px"></div>
+        <div class="fr fr2" id="pr-personalizado-fields" style="display:none">
+          <div class="fg"><label>Compra N artículos</label><input type="number" id="pr-compra-n" value="3" min="1"></div>
+          <div class="fg"><label>Lleva N artículos GRATIS</label><input type="number" id="pr-gratis-n" value="1" min="1"></div>
+        </div>
+        <div id="pr-descuento-field" style="display:none">
+          <div class="fg"><label>% de descuento</label><input type="number" id="pr-descuento-pct" value="20" min="1" max="100"></div>
+        </div>
+        <div class="fg"><label>Descripción visible para cajero</label>
+          <input type="text" id="pr-desc-cajero" placeholder="Ej: Por cada 3 Crocs, lleva 1 sandalia gratis">
+        </div>
+      </div>
+      <div class="fr fr2">
+        <div class="fg"><label>Vigencia Desde</label><input type="date" id="pr-desde"></div>
+        <div class="fg"><label>Vigencia Hasta</label><input type="date" id="pr-hasta"></div>
+      </div>
+      <div class="fg"><label>¿A qué productos aplica? (deja vacío = todos)</label>
+        <input type="text" id="pr-prod-q" placeholder="Busca producto para agregar…" oninput="buscarProdPromo()">
+        <div id="pr-prod-res" style="margin-top:4px;max-height:120px;overflow-y:auto"></div>
+        <div id="pr-prod-lista" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px"></div>
+      </div>
+      <div class="fg"><label>Estado</label>
+        <select id="pr-activa">
+          <option value="1">✅ Activa</option>
+          <option value="0">⏸️ Pausada</option>
+        </select>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeM('mo-promo')">Cancelar</button>
+      <button class="btn btn-accent" onclick="savePromocion()">💾 Guardar Promoción</button>
     </div>
   </div>
 </div>
@@ -1935,6 +2099,7 @@ function renderCart(){
       <div style="text-align:right;margin-left:6px"><div class="ci-price">${fmt(item.price*item.qty)}</div><button onclick="cremove(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:10px;margin-top:1px">✕</button></div>
     </div>`).join(''):`<div class="empty" style="padding:24px"><div class="empty-icon">🛒</div><div>Vacío</div></div>`;
   calcCart();
+  mostrarAlertaPromo();
 }
 function cqty(i,d){carrito[i].qty=Math.max(1,carrito[i].qty+d);renderCart();}
 function cremove(i){carrito.splice(i,1);renderCart();}
@@ -3392,60 +3557,8 @@ function onClienteSelectMonedero(){
   if(montoEl) montoEl.max = puntos;
 }
 
-// ══════════════════ TAREA 3: HISTORIAL CON MES + SEMANA ══════════════════
-function renderHist(){
-  const fecha=document.getElementById('h-fecha')?.value||'';
-  const pago=document.getElementById('h-pago')?.value||'';
-  const suc=document.getElementById('h-suc')?.value||'';
-  const tipo=document.getElementById('h-tipo')?.value||'';
-  let lista=ventas.filter(v=>{
-    const tipoV=v.tipoVenta||'venta';
-    return(!fecha||v.fecha===fecha)&&(!pago||v.pago===pago)&&(!suc||v.sucursalId===suc)&&(!tipo||tipoV===tipo);
-  });
-  document.getElementById('h-total').textContent='Total: '+fmt(lista.reduce((a,v)=>a+v.total,0));
-  document.getElementById('h-empty').style.display=lista.length?'none':'block';
-  const pi={efectivo:'💵',tarjeta:'💳',transferencia:'📲',mixto:'🔀',apartado:'📦',credito:'💳',monedero:'🪙',abono:'💰'};
-  document.getElementById('h-tbody').innerHTML=lista.map((v,idx)=>{
-    const sucObj=sucursales.find(s=>s.id===v.sucursalId);
-    const isAprt=(v.tipoVenta||'venta')==='apartado';
-    const isAbono=v.tipoVenta==='abono';
-    const isCredito=v.tipoVenta==='credito';
-    const mesStr=getNombreMes(v.fecha).slice(0,3);
-    const semStr=getNumSemana(v.fecha);
-    const items=v.items||[];
-    if(!items.length)return`<tr>
-      <td class="mono">#${lista.length-idx}</td>
-      <td style="font-size:11px">${mesStr}</td>
-      <td class="mono" style="font-size:11px">${semStr}</td>
-      <td>${v.fecha}</td><td style="color:var(--muted)">${v.hora||'—'}</td>
-      <td>${v.cliente}</td><td style="color:var(--muted)">${v.vendedor||'—'}</td>
-      <td>—</td><td>—</td><td>—</td><td>—</td>
-      <td>${sucObj?`<span class="badge b-green" style="font-size:10px">${sucObj.nombre}</span>`:'—'}</td>
-      <td><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
-      <td>${pi[v.pago]||''} ${v.pago}</td>
-      <td class="mono" style="color:var(--gold)">${fmt(v.total)}</td>
-      <td><button class="btn btn-ghost btn-xs" onclick="verVenta('${v.id}')">Ver</button></td>
-    </tr>`;
-    return items.map((item,ii)=>`<tr ${isAprt?'style="background:rgba(240,180,41,.05)"':isAbono?'style="background:rgba(82,201,122,.04)"':''}>
-      ${ii===0?`<td class="mono" rowspan="${items.length}">#${lista.length-idx}</td>
-      <td style="font-size:11px" rowspan="${items.length}">${mesStr}</td>
-      <td class="mono" style="font-size:11px" rowspan="${items.length}">${semStr}</td>
-      <td rowspan="${items.length}">${v.fecha}</td>
-      <td rowspan="${items.length}" style="color:var(--muted)">${v.hora||'—'}</td>
-      <td rowspan="${items.length}">${v.cliente}</td>
-      <td rowspan="${items.length}" style="color:var(--muted)">${v.vendedor||'—'}</td>`:''}
-      <td style="font-size:12px">${item.desc||'—'}</td>
-      <td class="mono" style="text-align:center">${item.talla||'—'}</td>
-      <td><span class="badge b-accent" style="font-size:10px">${item.cat||'—'}</span></td>
-      <td class="mono" style="text-align:center">${item.qty||1}</td>
-      ${ii===0?`<td rowspan="${items.length}">${sucObj?`<span class="badge b-green" style="font-size:10px">${sucObj.nombre}</span>`:'—'}</td>
-      <td rowspan="${items.length}"><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
-      <td rowspan="${items.length}">${pi[v.pago]||''} ${v.pago}</td>
-      <td rowspan="${items.length}" class="mono" style="color:var(--gold)">${fmt(v.total)}${isAprt&&v.anticipo?`<div style="font-size:10px;color:var(--muted)">Ant: ${fmt(v.anticipo)}</div>`:''}</td>
-      <td rowspan="${items.length}"><button class="btn btn-ghost btn-xs" onclick="verVenta('${v.id}')">Ver</button></td>`:''}
-    </tr>`).join('');
-  }).join('');
-}
+// renderHist replaced
+
 
 // ══════════════════ TAREA 4: CLIENTES MEJORADO ══════════════════
 function calcEdad(cumple){
@@ -4015,6 +4128,520 @@ function exportarSalidasExcel(){
 }
 
 
+
+// ══════════════════ TAREA 1: HISTORIAL MEJORADO ══════════════════
+function renderHist(){
+  const desde=document.getElementById('h-desde')?.value||'';
+  const hasta=document.getElementById('h-hasta')?.value||'';
+  const pago=document.getElementById('h-pago')?.value||'';
+  const suc=document.getElementById('h-suc')?.value||'';
+  const tipo=document.getElementById('h-tipo')?.value||'';
+
+  let lista=ventas.filter(v=>{
+    const tipoV=v.tipoVenta||'venta';
+    const matchDesde=!desde||v.fecha>=desde;
+    const matchHasta=!hasta||v.fecha<=hasta;
+    const matchPago=!pago||v.pago===pago||(pago==='tarjeta'&&(v.pago||'').startsWith('tarjeta'));
+    const matchSuc=!suc||v.sucursalId===suc;
+    const matchTipo=!tipo||tipoV===tipo;
+    return matchDesde&&matchHasta&&matchPago&&matchSuc&&matchTipo;
+  });
+
+  // Calculate totals correctly
+  // "Cobrado" = what was actually received (anticipo for apartado/credito, full total for venta/abono)
+  let totalCobrado=0, totalEfectivo=0, totalTarjeta=0, totalPendiente=0;
+  lista.forEach(v=>{
+    const isAC=v.tipoVenta==='apartado'||v.tipoVenta==='credito';
+    const isAbono=v.tipoVenta==='abono';
+    const cobrado=isAC?(v.anticipo||0):(v.total||0);
+    totalCobrado+=cobrado;
+    const p=v.pago||'';
+    if(p==='efectivo'||p==='monedero') totalEfectivo+=cobrado;
+    else if(p.startsWith('tarjeta')||p==='transferencia') totalTarjeta+=cobrado;
+    if(isAC) totalPendiente+=Math.max(0,(v.total||0)-(v.anticipo||0));
+  });
+
+  // Update stat cards
+  const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+  setEl('h-total-cobrado',fmt(totalCobrado));
+  setEl('h-total-efectivo',fmt(totalEfectivo));
+  setEl('h-total-tarjeta',fmt(totalTarjeta));
+  setEl('h-total-pendiente',fmt(totalPendiente));
+  // Legacy badge
+  const legBadge=document.getElementById('h-total');
+  if(legBadge)legBadge.textContent='Total cobrado: '+fmt(totalCobrado);
+
+  document.getElementById('h-empty').style.display=lista.length?'none':'block';
+
+  const pi={efectivo:'💵',tarjeta:'💳','tarjeta-bbva':'💳 BBVA','tarjeta-mp':'💳 MP',
+    transferencia:'📲',mixto:'🔀',monedero:'🪙',abono:'💰'};
+
+  document.getElementById('h-tbody').innerHTML=lista.map((v,idx)=>{
+    const sucObj=sucursales.find(s=>s.id===v.sucursalId);
+    const isAprt=(v.tipoVenta||'venta')==='apartado';
+    const isAbono=v.tipoVenta==='abono';
+    const isCredito=v.tipoVenta==='credito';
+    const isAC=isAprt||isCredito;
+    const mesStr=getNombreMes(v.fecha).slice(0,3);
+    const semStr=getNumSemana(v.fecha);
+    const cobrado=isAC?(v.anticipo||0):(v.total||0);
+    const items=v.items||[];
+    const rowBg=isAprt?'background:rgba(240,180,41,.05)':isAbono?'background:rgba(82,201,122,.04)':isCredito?'background:rgba(82,168,224,.04)':'';
+
+    if(!items.length)return`<tr style="${rowBg}">
+      <td class="mono">#${lista.length-idx}</td>
+      <td style="font-size:11px">${mesStr}</td>
+      <td class="mono" style="font-size:11px">${semStr}</td>
+      <td>${v.fecha}</td><td style="color:var(--muted)">${v.hora||'—'}</td>
+      <td>${v.cliente}</td><td style="color:var(--muted)">${v.vendedor||'—'}</td>
+      <td>—</td><td>—</td><td>—</td><td>—</td>
+      <td>—</td>
+      <td><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
+      <td>${pi[v.pago]||v.pago}</td>
+      <td class="mono" style="color:var(--cream)">${fmt(v.total)}</td>
+      <td class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
+      <td class="mono" style="color:var(--green);font-weight:600">${fmt(cobrado)}</td>
+    </tr>`;
+
+    return items.map((item,ii)=>`<tr style="${rowBg}">
+      ${ii===0?`<td class="mono" rowspan="${items.length}">#${lista.length-idx}</td>
+      <td style="font-size:11px" rowspan="${items.length}">${mesStr}</td>
+      <td class="mono" style="font-size:11px" rowspan="${items.length}">${semStr}</td>
+      <td rowspan="${items.length}">${v.fecha}</td>
+      <td rowspan="${items.length}" style="color:var(--muted)">${v.hora||'—'}</td>
+      <td rowspan="${items.length}">${v.cliente}</td>
+      <td rowspan="${items.length}" style="color:var(--muted)">${v.vendedor||'—'}</td>`:''}
+      <td style="font-size:12px">${item.desc||'—'}${item.esGratis?'<span class="badge b-green" style="font-size:9px;margin-left:4px">GRATIS</span>':''}</td>
+      <td class="mono" style="text-align:center">${item.talla||'—'}</td>
+      <td><span class="badge b-accent" style="font-size:10px">${item.cat||'—'}</span></td>
+      <td class="mono" style="text-align:center">${item.qty||1}</td>
+      ${ii===0?`<td rowspan="${items.length}">${sucObj?`<span class="badge b-green" style="font-size:10px">${sucObj.nombre}</span>`:'—'}</td>
+      <td rowspan="${items.length}"><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
+      <td rowspan="${items.length}">${pi[v.pago]||v.pago}</td>
+      <td rowspan="${items.length}" class="mono" style="color:var(--cream)">${fmt(v.total)}</td>
+      <td rowspan="${items.length}" class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
+      <td rowspan="${items.length}" class="mono" style="color:var(--green);font-weight:600">${fmt(cobrado)}${isAC&&v.anticipo?`<div style="font-size:10px;color:var(--muted)">Ant: ${fmt(v.anticipo)}</div>`:''}</td>`:''}
+    </tr>`).join('');
+  }).join('');
+}
+
+// ══════════════════ TAREA 2: PROMOCIONES ══════════════════
+let promociones = [];
+let editPromoId = null;
+let promoProdsSeleccionados = []; // [{id, desc}]
+
+const TIPO_PROMO_DESC = {
+  '2x1': 'El cliente lleva 2 artículos y paga solo 1. El más barato va GRATIS.',
+  '3x2': 'El cliente lleva 3 artículos y paga solo 2. El más barato va GRATIS.',
+  '3x1': 'El cliente lleva 3 artículos y paga solo 1. Los 2 más baratos van GRATIS.',
+  '4x3': 'El cliente lleva 4 artículos y paga solo 3. El más barato va GRATIS.',
+  'descuento_pct': 'Se aplica un % de descuento sobre los productos seleccionados.',
+  'personalizado': 'Define cuántos debe comprar y cuántos lleva gratis.'
+};
+
+async function loadPromociones(){
+  try{
+    const {onSnapshot}=window._fb;
+    onSnapshot(col('promociones'),snap=>{
+      promociones=snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderPromociones();
+    });
+  }catch(e){console.error(e);}
+}
+
+function renderPromociones(){
+  const hoyStr=hoy();
+  const activas=promociones.filter(p=>p.activa==='1'&&(!p.hasta||p.hasta>=hoyStr)).length;
+  const totalGratis=ventas.reduce((a,v)=>{
+    return a+(v.items||[]).filter(i=>i.esGratis).reduce((x,i)=>x+(i.qty||1),0);
+  },0);
+  const valorGratis=ventas.reduce((a,v)=>{
+    return a+(v.items||[]).filter(i=>i.esGratis).reduce((x,i)=>x+(i.price||0)*(i.qty||1),0);
+  },0);
+  if(document.getElementById('promo-stat-activas'))document.getElementById('promo-stat-activas').textContent=activas;
+  if(document.getElementById('promo-stat-gratis'))document.getElementById('promo-stat-gratis').textContent=totalGratis+' pzas';
+  if(document.getElementById('promo-stat-valor'))document.getElementById('promo-stat-valor').textContent=fmt(valorGratis);
+  document.getElementById('promo-empty').style.display=promociones.length?'none':'block';
+  const tipoLabels={'2x1':'2×1','3x2':'3×2','3x1':'3×1','4x3':'4×3','descuento_pct':'% Desc.','personalizado':'Custom'};
+  document.getElementById('promo-tbody').innerHTML=promociones.map(p=>{
+    const vigente=p.activa==='1'&&(!p.hasta||p.hasta>=hoyStr)&&(!p.desde||p.desde<=hoyStr);
+    const statBadge=vigente?'<span class="badge b-green">✅ Activa</span>':'<span class="badge b-red">⏸️ Pausada</span>';
+    const gratisCount=ventas.reduce((a,v)=>{
+      return a+(v.items||[]).filter(i=>i.promoId===p.id&&i.esGratis).reduce((x,i)=>x+(i.qty||1),0);
+    },0);
+    return`<tr>
+      <td style="font-weight:600;color:var(--cream)">${p.nombre}</td>
+      <td><span class="badge b-purple">${tipoLabels[p.tipo]||p.tipo}</span></td>
+      <td style="font-size:12px;color:var(--muted);max-width:200px">${p.descCajero||p.nombre}</td>
+      <td style="font-size:12px;color:var(--muted)">${p.desde||'—'} al ${p.hasta||'siempre'}</td>
+      <td style="font-size:11px;color:var(--muted)">${p.prods&&p.prods.length>0?p.prods.map(x=>x.desc).join(', ').slice(0,40)+'…':'Todos los productos'}</td>
+      <td>${statBadge}</td>
+      <td class="mono" style="color:var(--green)">${gratisCount} pzas</td>
+      <td>
+        <div class="flex-row" style="gap:3px">
+          <button class="btn btn-ghost btn-xs" onclick="abrirModalPromocion('${p.id}')">✏️</button>
+          <button class="btn btn-red btn-xs" onclick="deletePromocion('${p.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function abrirModalPromocion(id){
+  editPromoId=id||null;
+  promoProdsSeleccionados=[];
+  document.getElementById('mp-title').textContent=id?'Editar Promoción':'Nueva Promoción';
+  ['pr-nombre','pr-desc-cajero','pr-desde','pr-hasta'].forEach(f=>{
+    const el=document.getElementById(f);if(el)el.value='';
+  });
+  document.getElementById('pr-tipo').value='2x1';
+  document.getElementById('pr-activa').value='1';
+  document.getElementById('pr-prod-lista').innerHTML='';
+  onTipoPromoChange();
+  if(id){
+    const p=promociones.find(x=>x.id===id);if(!p)return;
+    document.getElementById('pr-nombre').value=p.nombre||'';
+    document.getElementById('pr-tipo').value=p.tipo||'2x1';
+    document.getElementById('pr-desc-cajero').value=p.descCajero||'';
+    document.getElementById('pr-desde').value=p.desde||'';
+    document.getElementById('pr-hasta').value=p.hasta||'';
+    document.getElementById('pr-activa').value=p.activa||'1';
+    if(p.tipo==='personalizado'){
+      document.getElementById('pr-compra-n').value=p.compraN||3;
+      document.getElementById('pr-gratis-n').value=p.gratisN||1;
+    }
+    if(p.tipo==='descuento_pct') document.getElementById('pr-descuento-pct').value=p.descuentoPct||20;
+    promoProdsSeleccionados=p.prods||[];
+    renderPromoProdLista();
+    onTipoPromoChange();
+  }
+  openM('mo-promo');
+}
+
+function onTipoPromoChange(){
+  const tipo=document.getElementById('pr-tipo').value;
+  const descEl=document.getElementById('pr-tipo-desc');
+  if(descEl)descEl.textContent=TIPO_PROMO_DESC[tipo]||'';
+  document.getElementById('pr-personalizado-fields').style.display=tipo==='personalizado'?'flex':'none';
+  document.getElementById('pr-descuento-field').style.display=tipo==='descuento_pct'?'block':'none';
+}
+
+function buscarProdPromo(){
+  const q=(document.getElementById('pr-prod-q')?.value||'').toLowerCase();
+  const res=document.getElementById('pr-prod-res');if(!res||!q){if(res)res.innerHTML='';return;}
+  const lista=productos.filter(p=>(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)).slice(0,6);
+  res.innerHTML=lista.map(p=>`
+    <div onclick="agregarProdPromo('${p.id}','${(p.desc||'').replace(/'/g,"\\'")}','${p.barcode||p.sku||''}')" 
+     style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:7px;cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--cream)"
+     onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
+      ${p.desc} <span style="color:var(--muted)">${p.barcode||p.sku||''}</span>
+    </div>`).join('');
+}
+
+function agregarProdPromo(id,desc,sku){
+  if(promoProdsSeleccionados.find(x=>x.id===id)) return;
+  promoProdsSeleccionados.push({id,desc,sku});
+  renderPromoProdLista();
+  document.getElementById('pr-prod-q').value='';
+  document.getElementById('pr-prod-res').innerHTML='';
+}
+
+function renderPromoProdLista(){
+  document.getElementById('pr-prod-lista').innerHTML=promoProdsSeleccionados.map((p,i)=>`
+    <span style="display:inline-flex;align-items:center;gap:4px;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--cream)">
+      ${p.desc}
+      <button onclick="promoProdsSeleccionados.splice(${i},1);renderPromoProdLista()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;line-height:1">✕</button>
+    </span>`).join('');
+}
+
+async function savePromocion(){
+  const nombre=document.getElementById('pr-nombre').value.trim();
+  if(!nombre){toast('Ingresa el nombre de la promoción','err');return;}
+  const tipo=document.getElementById('pr-tipo').value;
+  const data={
+    nombre,tipo,
+    descCajero:document.getElementById('pr-desc-cajero').value.trim(),
+    desde:document.getElementById('pr-desde').value,
+    hasta:document.getElementById('pr-hasta').value,
+    activa:document.getElementById('pr-activa').value,
+    prods:[...promoProdsSeleccionados],
+    compraN:tipo==='personalizado'?parseInt(document.getElementById('pr-compra-n').value)||3:null,
+    gratisN:tipo==='personalizado'?parseInt(document.getElementById('pr-gratis-n').value)||1:null,
+    descuentoPct:tipo==='descuento_pct'?parseFloat(document.getElementById('pr-descuento-pct').value)||20:null,
+    updatedAt:new Date().toISOString()
+  };
+  try{
+    if(editPromoId){
+      await window._fb.setDoc(docRef('promociones',editPromoId),data,{merge:true});
+    }else{
+      data.createdAt=new Date().toISOString();
+      await window._fb.addDoc(col('promociones'),data);
+    }
+    closeM('mo-promo');
+    toast('Promoción guardada ✓');
+    editPromoId=null;
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function deletePromocion(id){
+  if(!confirm('¿Eliminar esta promoción?'))return;
+  await window._fb.deleteDoc(docRef('promociones',id));
+  toast('Promoción eliminada');
+}
+
+// ── POS: detectar promociones activas ──
+function checkPromocionesCarrito(){
+  const hoyStr=hoy();
+  const promosActivas=promociones.filter(p=>
+    p.activa==='1'&&
+    (!p.desde||p.desde<=hoyStr)&&
+    (!p.hasta||p.hasta>=hoyStr)
+  );
+  if(!promosActivas.length||!carrito.length)return null;
+
+  for(const promo of promosActivas){
+    // Get carrito items that apply to this promo
+    const itemsAplica=carrito.filter(item=>{
+      if(!promo.prods||promo.prods.length===0)return true; // aplica a todos
+      return promo.prods.some(p=>p.id===item.id);
+    });
+    const totalAplica=itemsAplica.reduce((a,c)=>a+c.qty,0);
+
+    let compraN=2,gratisN=1;
+    if(promo.tipo==='2x1'){compraN=2;gratisN=1;}
+    else if(promo.tipo==='3x2'){compraN=3;gratisN=1;}
+    else if(promo.tipo==='3x1'){compraN=3;gratisN=2;}
+    else if(promo.tipo==='4x3'){compraN=4;gratisN=1;}
+    else if(promo.tipo==='personalizado'){compraN=promo.compraN||3;gratisN=promo.gratisN||1;}
+    else continue; // descuento_pct handled separately
+
+    if(totalAplica>=compraN){
+      return{promo,itemsAplica,compraN,gratisN,totalAplica};
+    }
+  }
+  return null;
+}
+
+function mostrarAlertaPromo(){
+  const match=checkPromocionesCarrito();
+  const alertEl=document.getElementById('c-promo-alert');
+  if(!alertEl)return;
+  if(match){
+    alertEl.style.display='block';
+    alertEl.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:700;color:var(--green);font-size:13px">🎁 ¡Aplica: ${match.promo.nombre}!</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${match.promo.descCajero||''}</div>
+      </div>
+      <button class="btn btn-green btn-sm" onclick="aplicarPromocion('${match.promo.id}')">Aplicar</button>
+    </div>`;
+  }else{
+    alertEl.style.display='none';
+  }
+}
+
+function aplicarPromocion(promoId){
+  const promo=promociones.find(x=>x.id===promoId);if(!promo)return;
+  const hoyStr=hoy();
+
+  let compraN=2,gratisN=1;
+  if(promo.tipo==='2x1'){compraN=2;gratisN=1;}
+  else if(promo.tipo==='3x2'){compraN=3;gratisN=1;}
+  else if(promo.tipo==='3x1'){compraN=3;gratisN=2;}
+  else if(promo.tipo==='4x3'){compraN=4;gratisN=1;}
+  else if(promo.tipo==='personalizado'){compraN=promo.compraN||3;gratisN=promo.gratisN||1;}
+
+  // Sort items by price ascending — cheapest goes free
+  const itemsAplica=carrito.filter(item=>{
+    if(!promo.prods||promo.prods.length===0)return true;
+    return promo.prods.some(p=>p.id===item.id);
+  }).sort((a,b)=>a.price-b.price);
+
+  let gratisRestantes=gratisN;
+  itemsAplica.forEach(item=>{
+    if(gratisRestantes>0){
+      item.esGratis=true;
+      item.promoId=promoId;
+      item.promoNombre=promo.nombre;
+      item.precioOriginal=item.price;
+      item.price=0;
+      gratisRestantes-=item.qty;
+    }
+  });
+  renderCart();
+  mostrarAlertaPromo();
+  toast('Promoción '+promo.nombre+' aplicada ✓');
+}
+
+// ══════════════════ TAREA 3: RESUMEN ANUAL ══════════════════
+const MESES_LABELS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function renderResumenAnual(){
+  const anio=document.getElementById('resumen-anio')?.value||String(new Date().getFullYear());
+  const sucFilt=document.getElementById('resumen-suc')?.value||'';
+
+  // Populate resumen-suc
+  const sucSel=document.getElementById('resumen-suc');
+  if(sucSel&&sucSel.options.length<=1){
+    sucursales.forEach(s=>{
+      const opt=document.createElement('option');
+      opt.value=s.id;opt.textContent=s.nombre;
+      sucSel.appendChild(opt);
+    });
+  }
+
+  const prefijo=anio+'-';
+  const ventasAnio=ventas.filter(v=>{
+    const isAbo=v.tipoVenta==='abono';
+    const isAC=v.tipoVenta==='apartado'||v.tipoVenta==='credito';
+    return (v.fecha||'').startsWith(prefijo)&&!isAbo&&(!sucFilt||v.sucursalId===sucFilt);
+  });
+  const gastosAnio=gastos.filter(g=>(g.fecha||'').startsWith(prefijo)&&(!sucFilt||g.sucursalId===sucFilt));
+
+  // Build month data
+  const meses=Array.from({length:12},(_,i)=>{
+    const mesStr=anio+'-'+String(i+1).padStart(2,'0');
+    const vMes=ventasAnio.filter(v=>(v.fecha||'').startsWith(mesStr));
+    const gMes=gastosAnio.filter(g=>(g.fecha||'').startsWith(mesStr));
+
+    const efectivo=vMes.filter(v=>v.pago==='efectivo'||v.pago==='monedero').reduce((a,v)=>{
+      const isAC=v.tipoVenta==='apartado'||v.tipoVenta==='credito';
+      return a+(isAC?(v.anticipo||0):(v.total||0));
+    },0);
+    const tarjetaBBVA=vMes.filter(v=>v.pago==='tarjeta-bbva').reduce((a,v)=>{
+      const isAC=v.tipoVenta==='apartado'||v.tipoVenta==='credito';
+      return a+(isAC?(v.anticipo||0):(v.total||0));
+    },0);
+    const tarjetaMP=vMes.filter(v=>v.pago==='tarjeta-mp').reduce((a,v)=>{
+      const isAC=v.tipoVenta==='apartado'||v.tipoVenta==='credito';
+      return a+(isAC?(v.anticipo||0):(v.total||0));
+    },0);
+    const tarjetaOtro=vMes.filter(v=>v.pago==='tarjeta'||v.pago==='transferencia').reduce((a,v)=>{
+      const isAC=v.tipoVenta==='apartado'||v.tipoVenta==='credito';
+      return a+(isAC?(v.anticipo||0):(v.total||0));
+    },0);
+    const totalIngresos=efectivo+tarjetaBBVA+tarjetaMP+tarjetaOtro;
+    const totalGastos=gMes.reduce((a,g)=>a+g.monto,0);
+    const utilidad=totalIngresos-totalGastos;
+    return{mes:MESES_LABELS[i],mesStr,efectivo,tarjetaBBVA,tarjetaMP,tarjetaOtro,totalIngresos,totalGastos,utilidad,numVentas:vMes.length};
+  });
+
+  // Totals
+  const totEfectivo=meses.reduce((a,m)=>a+m.efectivo,0);
+  const totBBVA=meses.reduce((a,m)=>a+m.tarjetaBBVA,0);
+  const totMP=meses.reduce((a,m)=>a+m.tarjetaMP,0);
+  const totOtro=meses.reduce((a,m)=>a+m.tarjetaOtro,0);
+  const totIngresos=meses.reduce((a,m)=>a+m.totalIngresos,0);
+  const totGastos=meses.reduce((a,m)=>a+m.totalGastos,0);
+  const totUtilidad=totIngresos-totGastos;
+
+  // Update stat cards
+  const setE=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  setE('res-total-anio',fmt(totIngresos));
+  setE('res-efectivo-anio',fmt(totEfectivo));
+  setE('res-tarjeta-anio',fmt(totBBVA+totMP+totOtro));
+  setE('res-gastos-anio',fmt(totGastos));
+  const utilEl=document.getElementById('res-utilidad-anio');
+  if(utilEl){
+    utilEl.textContent=fmt(totUtilidad);
+    utilEl.style.color=totUtilidad>=0?'var(--green)':'var(--red)';
+  }
+
+  // Build table
+  const thead=document.getElementById('resumen-thead');
+  const tbody=document.getElementById('resumen-tbody');
+  if(!thead||!tbody)return;
+
+  thead.innerHTML=`<tr>
+    <th style="text-align:left;padding:8px 10px">Mes</th>
+    <th style="text-align:right;padding:8px 10px;color:var(--green)">💵 Efectivo</th>
+    <th style="text-align:right;padding:8px 10px;color:var(--blue)">💳 BBVA</th>
+    <th style="text-align:right;padding:8px 10px;color:var(--blue)">💳 Mercado Pago</th>
+    <th style="text-align:right;padding:8px 10px;color:var(--muted)">📲 Transf./Otro</th>
+    <th style="text-align:right;padding:8px 10px;color:var(--gold)">Total Ingresos</th>
+    <th style="text-align:right;padding:8px 10px;color:var(--red)">Gastos</th>
+    <th style="text-align:right;padding:8px 10px;color:var(--cream)">Utilidad</th>
+    <th style="text-align:right;padding:8px 10px;color:var(--muted)"># Ventas</th>
+  </tr>`;
+
+  tbody.innerHTML=meses.map(m=>{
+    const hasData=m.totalIngresos>0||m.totalGastos>0;
+    const utilColor=m.utilidad>=0?'var(--green)':'var(--red)';
+    const rowStyle=!hasData?'opacity:.4':'';
+    return`<tr style="${rowStyle}">
+      <td style="padding:7px 10px;font-weight:600;color:var(--cream)">${m.mes}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono)">${m.efectivo>0?fmt(m.efectivo):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono)">${m.tarjetaBBVA>0?fmt(m.tarjetaBBVA):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono)">${m.tarjetaMP>0?fmt(m.tarjetaMP):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono)">${m.tarjetaOtro>0?fmt(m.tarjetaOtro):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono);color:var(--gold);font-weight:700">${hasData?fmt(m.totalIngresos):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono);color:var(--red)">${m.totalGastos>0?fmt(m.totalGastos):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-weight:700;color:${utilColor}">${hasData?fmt(m.utilidad):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;color:var(--muted)">${m.numVentas||'—'}</td>
+    </tr>`;
+  }).join('')+`<tr style="border-top:2px solid var(--border);font-weight:700">
+    <td style="padding:9px 10px;color:var(--cream)">TOTAL ${anio}</td>
+    <td style="padding:9px 10px;text-align:right;font-family:var(--mono);color:var(--green)">${fmt(totEfectivo)}</td>
+    <td style="padding:9px 10px;text-align:right;font-family:var(--mono);color:var(--blue)">${fmt(totBBVA)}</td>
+    <td style="padding:9px 10px;text-align:right;font-family:var(--mono);color:var(--blue)">${fmt(totMP)}</td>
+    <td style="padding:9px 10px;text-align:right;font-family:var(--mono);color:var(--muted)">${fmt(totOtro)}</td>
+    <td style="padding:9px 10px;text-align:right;font-family:var(--mono);color:var(--gold)">${fmt(totIngresos)}</td>
+    <td style="padding:9px 10px;text-align:right;font-family:var(--mono);color:var(--red)">${fmt(totGastos)}</td>
+    <td style="padding:9px 10px;text-align:right;font-family:var(--mono);color:${totUtilidad>=0?'var(--green)':'var(--red)'};">${fmt(totUtilidad)}</td>
+    <td style="padding:9px 10px;text-align:right;color:var(--muted)">${ventasAnio.length}</td>
+  </tr>`;
+
+  // Gráfica de barras
+  const maxVal=Math.max(...meses.map(m=>Math.max(m.totalIngresos,m.totalGastos)),1);
+  const grafEl=document.getElementById('resumen-grafica');
+  if(grafEl){
+    grafEl.innerHTML=meses.map((m,i)=>{
+      const hI=Math.round((m.totalIngresos/maxVal)*130);
+      const hG=Math.round((m.totalGastos/maxVal)*130);
+      const hU=m.utilidad>0?Math.round((m.utilidad/maxVal)*130):0;
+      return`<div style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:50px;flex:1">
+        <div style="display:flex;gap:2px;align-items:flex-end;height:130px">
+          <div style="width:12px;background:var(--green);border-radius:3px 3px 0 0;height:${hI}px;min-height:${m.totalIngresos>0?2:0}px" title="Ingresos: ${fmt(m.totalIngresos)}"></div>
+          <div style="width:12px;background:var(--red);border-radius:3px 3px 0 0;height:${hG}px;min-height:${m.totalGastos>0?2:0}px" title="Gastos: ${fmt(m.totalGastos)}"></div>
+          <div style="width:12px;background:var(--gold);border-radius:3px 3px 0 0;height:${hU}px;min-height:${m.utilidad>0?2:0}px" title="Utilidad: ${fmt(m.utilidad)}"></div>
+        </div>
+        <div style="font-size:9px;color:var(--muted);text-align:center">${m.mes.slice(0,3)}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function exportarResumenExcel(){
+  const anio=document.getElementById('resumen-anio')?.value||String(new Date().getFullYear());
+  const nl='\n';
+  const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const headers=['Mes','Efectivo','Tarjeta_BBVA','Tarjeta_MP','Transferencia_Otro','Total_Ingresos','Total_Gastos','Utilidad','Num_Ventas'];
+  const prefijo=anio+'-';
+  const ventasAnio=ventas.filter(v=>(v.fecha||'').startsWith(prefijo)&&v.tipoVenta!=='abono');
+  const gastosAnio=gastos.filter(g=>(g.fecha||'').startsWith(prefijo));
+
+  const rows=MESES_LABELS.map((mes,i)=>{
+    const mesStr=anio+'-'+String(i+1).padStart(2,'0');
+    const vMes=ventasAnio.filter(v=>(v.fecha||'').startsWith(mesStr));
+    const gMes=gastosAnio.filter(g=>(g.fecha||'').startsWith(mesStr));
+    const getCobrado=v=>{const isAC=v.tipoVenta==='apartado'||v.tipoVenta==='credito';return isAC?(v.anticipo||0):(v.total||0);};
+    const ef=vMes.filter(v=>v.pago==='efectivo'||v.pago==='monedero').reduce((a,v)=>a+getCobrado(v),0);
+    const bb=vMes.filter(v=>v.pago==='tarjeta-bbva').reduce((a,v)=>a+getCobrado(v),0);
+    const mp=vMes.filter(v=>v.pago==='tarjeta-mp').reduce((a,v)=>a+getCobrado(v),0);
+    const ot=vMes.filter(v=>v.pago==='tarjeta'||v.pago==='transferencia').reduce((a,v)=>a+getCobrado(v),0);
+    const ti=ef+bb+mp+ot;
+    const tg=gMes.reduce((a,g)=>a+g.monto,0);
+    return[mes,ef,bb,mp,ot,ti,tg,ti-tg,vMes.length];
+  });
+
+  const csv='\uFEFF'+headers.map(esc).join(',')+nl+rows.map(r=>r.map(esc).join(',')).join(nl);
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='resumen_anual_'+anio+'.csv';
+  a.click();toast('Resumen '+anio+' exportado ✓');
+}
+
+
 // ══════════════════ NAV ══════════════════
 const PAGE_TITLES={
   dashboard:{t:'Dashboard',sub:'Vista general del negocio',actions:''},
@@ -4030,6 +4657,8 @@ const PAGE_TITLES={
   gastos:{t:'Gastos',sub:'Registro de egresos',actions:`<button class="btn btn-accent" onclick="abrirModalGasto()">＋ Registrar Gasto</button>`},
   corte:{t:'Corte de Caja',sub:'Resumen del día por sucursal',actions:''},
   reportes:{t:'Reportes Avanzados',sub:'Modelos campeón, rotación, vendedores',actions:''},
+  resumen:{t:'Resumen Anual',sub:'Ingresos por mes · Efectivo · Tarjeta · Gastos · Utilidad',actions:''},
+  promociones:{t:'Promociones',sub:'2×1, 3×2 y promociones personalizadas',actions:''},
   'catalogos-cfg':{t:'Catálogos',sub:'Administrar categorías, líneas, marcas, colores y proveedores',actions:''},
   etiquetas:{t:'Imprimir Etiquetas',sub:'Manual o por entrada de inventario',actions:''},
   sucursales:{t:'Sucursales',sub:'Tiendas y bodegas',actions:`<button class="btn btn-accent" onclick="abrirModalSucursal()">＋ Nueva Sucursal</button>`},
@@ -4058,6 +4687,8 @@ function go(page,el){
   if(page==='gastos')renderGastos();
   if(page==='cuentas')renderCuentas();
   if(page==='catalogos-cfg'){loadCatalogos();loadConfigGeneral();}
+  if(page==='resumen'){renderResumenAnual();}
+  if(page==='promociones'){loadPromociones();}
   if(page==='etiquetas'){document.getElementById('etiq-desde').value=hoy();}
 }
 
