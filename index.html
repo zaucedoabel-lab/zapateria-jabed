@@ -2724,128 +2724,138 @@ function abrirVentanaEtiquetas(items){
     bc:x.p.barcode||x.p.sku||''
   }));
 
-  // Talla font size: big tallas (3XL, 10.5) need smaller font
-  const tallaFontSize=t=>{
-    const l=String(t).length;
-    if(l<=2)return'13px';
-    if(l===3)return'11px';
-    return'9px';
-  };
-
-  const win=window.open('','_blank','width=700,height=600');
+  const win=window.open('','_blank','width=750,height=680');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Arial Narrow',Arial,sans-serif;background:#d0d0d0;padding:16px}
 
-    /* ── PANTALLA: preview con fondo gris ── */
-    body{
-      font-family:Arial,sans-serif;
-      background:#e8e8e8;
-      padding:16px;
-    }
     .no-print{
-      background:#fff;border-radius:8px;padding:12px;
-      margin-bottom:16px;
-      display:flex;gap:10px;align-items:center;
-      box-shadow:0 2px 8px rgba(0,0,0,.15);
+      background:#fff;border-radius:8px;padding:12px 16px;margin-bottom:16px;
+      display:flex;gap:10px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.2);
+      flex-wrap:wrap;
     }
-    .preview-grid{
-      display:flex;flex-wrap:wrap;gap:8px;
-    }
+    .tip{font-size:11px;color:#666;margin-left:8px}
+    .preview-grid{display:flex;flex-wrap:wrap;gap:10px}
 
-    /* ── ETIQUETA: exactamente 51mm x 25mm ── */
+    /*
+     ┌─────────────────────────────────────────────┐
+     │  ZAPATERIA JABED              26/04          │ ← línea con divisor
+     │  SIN MARCA                                   │
+     │  BLUSA MODA (M.CORTA)         $235.00        │
+     │  1 VARIOS COLORES                            │
+     │  ▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌          ┌────┐         │
+     │  10000000000044248            │ 32 │         │
+     └─────────────────────────────────────────────┘
+     Tamaño: 51mm × 25mm  Ribetec RT-420BE
+    */
+
     .etiq{
       width:51mm;
       height:25mm;
       background:#fff;
-      border:1px solid #bbb;
-      overflow:hidden;
+      border:0.5px solid #999;
       display:flex;
       flex-direction:column;
-      justify-content:space-between;
-      padding:1mm 1.5mm 0.5mm 1.5mm;
-      position:relative;
-    }
-    .e-top{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      border-bottom:0.3mm solid #000;
-      padding-bottom:0.3mm;
-      margin-bottom:0.3mm;
-    }
-    .e-tienda{font-size:5.5pt;font-weight:bold;letter-spacing:0.3pt;text-transform:uppercase;color:#000}
-    .e-fecha{font-size:5.5pt;color:#333}
-    .e-marca{font-size:6.5pt;font-weight:bold;margin-bottom:0.2mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#000}
-    .e-mid{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.2mm}
-    .e-desc{font-size:6pt;font-weight:bold;flex:1;line-height:1.15;max-width:32mm;overflow:hidden;color:#000}
-    .e-precio{font-size:9pt;font-weight:bold;white-space:nowrap;margin-left:1mm;color:#000}
-    .e-color{font-size:5.5pt;color:#444;margin-bottom:0.2mm}
-    .e-bot{display:flex;align-items:flex-end;justify-content:space-between}
-    .e-bc{flex:1;display:flex;flex-direction:column;align-items:flex-start}
-    .e-bc svg{display:block;max-width:35mm}
-    .e-bcnum{font-size:4.5pt;color:#333;margin-top:0.1mm;font-family:'Courier New',monospace}
-    .e-talla{
-      width:8mm;height:8mm;
-      background:#000;color:#fff;
-      font-size:${tallaFontSize('X')};font-weight:bold;
-      display:flex;align-items:center;justify-content:center;
-      margin-left:1mm;flex-shrink:0;
-      font-family:Arial,sans-serif;
-      line-height:1;
+      padding:0.8mm 0.8mm 0.3mm 2mm;
+      overflow:hidden;
     }
 
-    /* ── IMPRESIÓN ── */
+    /* ROW 1: ZAPATERIA JABED ─────── 26/04 */
+    .r1{
+      display:flex;justify-content:space-between;align-items:center;
+      border-bottom:0.5mm solid #000;
+      padding-bottom:0.3mm;margin-bottom:0.5mm;
+      flex-shrink:0;
+    }
+    .r1-tienda{font-size:5.2pt;font-weight:700;letter-spacing:0.5pt;color:#000}
+    .r1-fecha{font-size:5.2pt;color:#222;font-weight:600;letter-spacing:0.3pt}
+
+    /* ROW 2: MARCA */
+    .r2-marca{
+      font-size:8pt;font-weight:700;color:#000;
+      line-height:1.05;margin-bottom:0.3mm;flex-shrink:0;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+
+    /* ROW 3: DESCRIPCION + PRECIO */
+    .r3{display:flex;justify-content:space-between;align-items:baseline;
+        margin-bottom:0.25mm;flex-shrink:0}
+    .r3-desc{
+      font-size:6.5pt;font-weight:700;color:#000;
+      flex:1;line-height:1.1;max-width:31mm;overflow:hidden;
+    }
+    .r3-precio{
+      font-size:10pt;font-weight:700;color:#000;
+      white-space:nowrap;margin-left:0.5mm;
+    }
+
+    /* ROW 4: COLOR */
+    .r4-color{
+      font-size:5.5pt;color:#222;flex-shrink:0;
+      line-height:1;margin-bottom:0.5mm;
+    }
+
+    /* ROW 5: BARCODE + TALLA */
+    .r5{display:flex;align-items:flex-end;flex:1;min-height:0;justify-content:space-between}
+    .r5-bc{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start}
+    .r5-bc svg{display:block}
+    .r5-bcnum{
+      font-size:4.8pt;color:#000;font-family:'Courier New',monospace;
+      font-weight:700;letter-spacing:0.8pt;
+      margin-top:0.15mm;white-space:nowrap;
+    }
+    .r5-talla{
+      width:10mm;height:10mm;
+      background:#000;color:#fff;
+      display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;margin-left:1.5mm;
+      font-family:Arial,sans-serif;font-weight:900;line-height:1;
+      border:0.2mm solid #000;
+    }
+
+    /* ═══ IMPRESIÓN ═══ */
     @media print{
+      *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
       body{background:#fff!important;padding:0!important;margin:0!important}
       .no-print{display:none!important}
       .preview-grid{gap:0;display:block}
-
-      /* Cada etiqueta = una página de 51x25mm */
       .etiq{
         border:none!important;
-        width:51mm!important;
-        height:25mm!important;
-        page-break-after:always;
-        page-break-inside:avoid;
-        display:flex;
-        margin:0;
-        padding:0.8mm 1.2mm 0.4mm 1.2mm;
+        width:51mm!important;height:25mm!important;
+        page-break-after:always;page-break-inside:avoid;
+        margin:0;padding:0.8mm 0.5mm 0.3mm 2mm;
       }
       .etiq:last-child{page-break-after:avoid}
-
-      @page{
-        size:51mm 25mm;
-        margin:0mm;
-      }
+      .r5-talla{background:#000!important;color:#fff!important}
+      @page{size:51mm 25mm;margin:0mm}
     }
   <\/style></head><body>
   <div class="no-print">
-    <button onclick="window.print()" style="padding:8px 20px;background:#000;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:bold">🖨️ Imprimir ${items.length} etiqueta(s)</button>
-    <button onclick="window.close()" style="padding:8px 14px;background:#eee;border:1px solid #ccc;border-radius:6px;cursor:pointer;font-size:13px">✕ Cerrar</button>
-    <span style="font-size:12px;color:#666">Tamaño: 51×25mm · Ribetec · ${items.length} etiqueta(s)</span>
-    <span style="font-size:11px;color:#999;margin-left:8px">⚙️ En Chrome: más opciones → Sin márgenes → Tamaño: 51×25mm</span>
+    <button onclick="window.print()" style="padding:8px 22px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:bold">🖨️ Imprimir ${items.length} etiqueta(s)</button>
+    <button onclick="window.close()" style="padding:8px 14px;background:#f0f0f0;border:1px solid #ccc;border-radius:6px;cursor:pointer;font-size:13px">✕ Cerrar</button>
+    <span class="tip">📌 Usa <strong>Ctrl+Shift+P</strong> → selecciona 4BARCODE 4B-2054A → tamaño "etiqueta jabed 51x25" → Márgenes: Ninguno</span>
   </div>
   <div class="preview-grid">
   ${prodData.map((p,i)=>{
-    const tf=p.talla.length<=2?'13px':p.talla.length===3?'10px':'8px';
+    const tf = p.talla.length<=2 ? '13px' : p.talla.length===3 ? '11px' : '9px';
     return`<div class="etiq">
-    <div class="e-top">
-      <span class="e-tienda">ZAPATERIA JABED</span>
-      <span class="e-fecha">${fechaImp}</span>
+    <div class="r1">
+      <span class="r1-tienda">ZAPATERIA JABED</span>
+      <span class="r1-fecha">${fechaImp}</span>
     </div>
-    <div class="e-marca">${p.marca}</div>
-    <div class="e-mid">
-      <div class="e-desc">${p.desc}</div>
-      <div class="e-precio">$${Number(p.precio).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+    <div class="r2-marca">${p.marca}</div>
+    <div class="r3">
+      <div class="r3-desc">${p.desc}</div>
+      <div class="r3-precio">$${Number(p.precio).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
     </div>
-    <div class="e-color">${p.color||'&nbsp;'}</div>
-    <div class="e-bot">
-      <div class="e-bc">
-        ${p.bc?`<svg id="bc${i}"></svg><div class="e-bcnum">${p.bc}</div>`:''}
+    <div class="r4-color">${p.color||'&nbsp;'}</div>
+    <div class="r5">
+      <div class="r5-bc">
+        ${p.bc?`<svg id="bc${i}"></svg><div class="r5-bcnum">${p.bc}</div>`:'<div style="font-size:5pt;color:#aaa">Sin código de barras</div>'}
       </div>
-      <div class="e-talla" style="font-size:${tf}">${p.talla}</div>
+      <div class="r5-talla" style="font-size:${tf}">${p.talla}</div>
     </div>
   </div>`;}).join('')}
   </div>
@@ -2858,18 +2868,22 @@ function abrirVentanaEtiquetas(items){
       try{
         JsBarcode(svg,bc,{
           format:'CODE128',
-          width:1.0,
-          height:16,
+          width:1.7,        /* grosor de barras — más grueso = más legible */
+          height:22,        /* altura en px — más alto = más fácil de escanear */
           displayValue:false,
           margin:0,
           background:'#ffffff',
           lineColor:'#000000'
         });
-      }catch(e){console.warn('barcode error',e);}
+        /* Forzar ancho máximo disponible */
+        svg.style.maxWidth='35mm';
+        svg.style.width='35mm';
+      }catch(e){console.warn('barcode error:',e);}
     });
   <\/script></body></html>`);
   win.document.close();
 }
+
 
 function imprimirEtiqueta(id){
   const p=productos.find(x=>x.id===id); if(!p) return;
