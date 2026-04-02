@@ -563,7 +563,7 @@ select option{background:var(--s2)}
           <div class="pos-wrap">
             <div>
               <div class="flex-row" style="margin-bottom:12px">
-                <div class="search-wrap" style="flex:1"><span class="search-ico">🔍</span><input type="text" id="pos-q" placeholder="Buscar o escanear código de barras…" oninput="renderPOS()"></div>
+                <div class="search-wrap" style="flex:1"><span class="search-ico">🔍</span><input type="text" id="pos-q" placeholder="Buscar o escanear código de barras…" oninput="onPOSInput()" onkeydown="onPOSKeydown(event)"></div>
                 <select id="pos-suc" onchange="renderPOS()" style="width:140px"></select>
               </div>
               <div id="pos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px"></div>
@@ -1192,6 +1192,13 @@ select option{background:var(--s2)}
       </div>
       <div class="fg"><label>Tallas (selecciona las disponibles)</label><div id="p-tallas-sel"></div></div>
       <div id="p-stock-inputs"></div>
+      <!-- Códigos de barras por talla -->
+      <div class="fg" style="margin-top:8px">
+        <label>🔲 Código de Barras por Talla <span style="font-size:10px;color:var(--muted)">(para escanear directo en POS)</span>
+          <button type="button" class="btn btn-ghost btn-xs" style="margin-left:8px" onclick="autoGenerarCodigosTalla()">⚡ Generar automático</button>
+        </label>
+        <div id="p-barcodes-talla" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
+      </div>
       <div class="fg" style="margin-top:6px"><label>Notas</label><textarea id="p-notas" rows="2" placeholder="Material, temporada, proveedor…"></textarea></div>
     </div>
     <div class="mf"><button class="btn btn-ghost" onclick="closeM('mo-prod')">Cancelar</button><button class="btn btn-accent" onclick="saveProducto()">💾 Guardar</button></div>
@@ -1786,9 +1793,17 @@ async function saveProducto(){
     const existing=productos.find(x=>x.id===editProdId);
     if(existing)foto=existing.foto||null;
   }
+  // Collect per-talla barcodes
+  const barcodeTallas={};
+  document.querySelectorAll('[id^="pbt-"]').forEach(inp=>{
+    const talla=inp.id.replace('pbt-','').replace(/_/g,'.');
+    const val=inp.value.trim();
+    if(val)barcodeTallas[talla]=val;
+  });
   const data={
     barcode:document.getElementById('p-bar').value.trim(),
     sku:document.getElementById('p-sku').value.trim(),
+    barcodeTallas,
     desc,
     cat:document.getElementById('p-cat').value,
     linea:document.getElementById('p-linea').value||'',
@@ -2018,7 +2033,9 @@ function renderPOS(){
     const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
     const tot=sumS(p.stock);
     if(tot<=0)return false;
-    const mq=!q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').includes(q);
+    // Also search in per-talla barcodes
+    const bcTallaMatch=!q||Object.values(p.barcodeTallas||{}).some(bc=>(bc||'').includes(q));
+    const mq=!q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||bcTallaMatch;
     const ms=!sid||p.sucursalId===sid;
     return mq&&ms;
   });
@@ -2736,21 +2753,9 @@ function abrirVentanaEtiquetas(items){
       display:flex;gap:10px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.2);
       flex-wrap:wrap;
     }
-    .tip{font-size:11px;color:#666;margin-left:8px}
     .preview-grid{display:flex;flex-wrap:wrap;gap:10px}
 
-    /*
-     ┌─────────────────────────────────────────────┐
-     │  ZAPATERIA JABED              26/04          │ ← línea con divisor
-     │  SIN MARCA                                   │
-     │  BLUSA MODA (M.CORTA)         $235.00        │
-     │  1 VARIOS COLORES                            │
-     │  ▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌          ┌────┐         │
-     │  10000000000044248            │ 32 │         │
-     └─────────────────────────────────────────────┘
-     Tamaño: 51mm × 25mm  Ribetec RT-420BE
-    */
-
+    /* ═══ ETIQUETA 51×25mm ═══ */
     .etiq{
       width:51mm;
       height:25mm;
@@ -2758,61 +2763,59 @@ function abrirVentanaEtiquetas(items){
       border:0.5px solid #999;
       display:flex;
       flex-direction:column;
-      padding:0.8mm 0.8mm 0.3mm 2mm;
+      /* Margen izquierdo amplio para que no se corte */
+      padding:0.8mm 0.5mm 0.3mm 4mm;
       overflow:hidden;
     }
 
-    /* ROW 1: ZAPATERIA JABED ─────── 26/04 */
+    /* ROW 1: ZAPATERIA JABED ─── 26/04 */
     .r1{
       display:flex;justify-content:space-between;align-items:center;
       border-bottom:0.5mm solid #000;
-      padding-bottom:0.3mm;margin-bottom:0.5mm;
+      padding-bottom:0.3mm;margin-bottom:0.4mm;
       flex-shrink:0;
     }
-    .r1-tienda{font-size:5.2pt;font-weight:700;letter-spacing:0.5pt;color:#000}
-    .r1-fecha{font-size:5.2pt;color:#222;font-weight:600;letter-spacing:0.3pt}
+    .r1-tienda{font-size:5pt;font-weight:700;letter-spacing:0.4pt;color:#000}
+    .r1-fecha{font-size:5pt;color:#222;font-weight:600}
 
     /* ROW 2: MARCA */
-    .r2-marca{
+    .r2{
       font-size:8pt;font-weight:700;color:#000;
-      line-height:1.05;margin-bottom:0.3mm;flex-shrink:0;
+      line-height:1.05;margin-bottom:0.25mm;flex-shrink:0;
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     }
 
-    /* ROW 3: DESCRIPCION + PRECIO */
+    /* ROW 3: DESC + PRECIO */
     .r3{display:flex;justify-content:space-between;align-items:baseline;
         margin-bottom:0.25mm;flex-shrink:0}
     .r3-desc{
       font-size:6.5pt;font-weight:700;color:#000;
-      flex:1;line-height:1.1;max-width:31mm;overflow:hidden;
+      flex:1;line-height:1.1;max-width:28mm;overflow:hidden;
     }
-    .r3-precio{
-      font-size:10pt;font-weight:700;color:#000;
-      white-space:nowrap;margin-left:0.5mm;
-    }
+    .r3-precio{font-size:10pt;font-weight:700;color:#000;white-space:nowrap;margin-left:1mm}
 
     /* ROW 4: COLOR */
-    .r4-color{
-      font-size:5.5pt;color:#222;flex-shrink:0;
-      line-height:1;margin-bottom:0.5mm;
+    .r4{font-size:5.5pt;color:#222;flex-shrink:0;line-height:1;margin-bottom:0.8mm}
+
+    /* ROW 5: BARCODE — centrado horizontalmente, sin talla abajo */
+    .r5{
+      display:flex;align-items:center;justify-content:space-between;
+      flex:1;min-height:0;
+    }
+    .r5-bc{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start}
+    .r5-bc svg{display:block;width:100%;max-width:33mm}
+    .r5-bcnum{
+      font-size:5pt;color:#000;font-family:'Courier New',monospace;
+      font-weight:700;letter-spacing:0.6pt;margin-top:0.15mm;white-space:nowrap;
     }
 
-    /* ROW 5: BARCODE + TALLA */
-    .r5{display:flex;align-items:flex-end;flex:1;min-height:0;justify-content:space-between}
-    .r5-bc{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start}
-    .r5-bc svg{display:block}
-    .r5-bcnum{
-      font-size:4.8pt;color:#000;font-family:'Courier New',monospace;
-      font-weight:700;letter-spacing:0.8pt;
-      margin-top:0.15mm;white-space:nowrap;
-    }
+    /* TALLA en cuadro negro — alineado al centro vertical con el barcode */
     .r5-talla{
       width:10mm;height:10mm;
       background:#000;color:#fff;
       display:flex;align-items:center;justify-content:center;
-      flex-shrink:0;margin-left:1.5mm;
+      flex-shrink:0;margin-left:2mm;
       font-family:Arial,sans-serif;font-weight:900;line-height:1;
-      border:0.2mm solid #000;
     }
 
     /* ═══ IMPRESIÓN ═══ */
@@ -2825,7 +2828,9 @@ function abrirVentanaEtiquetas(items){
         border:none!important;
         width:51mm!important;height:25mm!important;
         page-break-after:always;page-break-inside:avoid;
-        margin:0;padding:0.8mm 0.5mm 0.3mm 2mm;
+        margin:0;
+        /* Mismo padding que pantalla para que la impresión coincida */
+        padding:0.8mm 0.5mm 0.3mm 4mm;
       }
       .etiq:last-child{page-break-after:avoid}
       .r5-talla{background:#000!important;color:#fff!important}
@@ -2835,25 +2840,25 @@ function abrirVentanaEtiquetas(items){
   <div class="no-print">
     <button onclick="window.print()" style="padding:8px 22px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:bold">🖨️ Imprimir ${items.length} etiqueta(s)</button>
     <button onclick="window.close()" style="padding:8px 14px;background:#f0f0f0;border:1px solid #ccc;border-radius:6px;cursor:pointer;font-size:13px">✕ Cerrar</button>
-    <span class="tip">📌 Usa <strong>Ctrl+Shift+P</strong> → selecciona 4BARCODE 4B-2054A → tamaño "etiqueta jabed 51x25" → Márgenes: Ninguno</span>
+    <span style="font-size:11px;color:#555">📌 <strong>Ctrl+Shift+P</strong> → 4BARCODE 4B-2054A → etiqueta jabed 51x25 → Márgenes: Ninguno</span>
   </div>
   <div class="preview-grid">
   ${prodData.map((p,i)=>{
-    const tf = p.talla.length<=2 ? '13px' : p.talla.length===3 ? '11px' : '9px';
+    const tf = p.talla.length<=2?'13px':p.talla.length===3?'11px':'9px';
     return`<div class="etiq">
     <div class="r1">
       <span class="r1-tienda">ZAPATERIA JABED</span>
       <span class="r1-fecha">${fechaImp}</span>
     </div>
-    <div class="r2-marca">${p.marca}</div>
+    <div class="r2">${p.marca}</div>
     <div class="r3">
       <div class="r3-desc">${p.desc}</div>
       <div class="r3-precio">$${Number(p.precio).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
     </div>
-    <div class="r4-color">${p.color||'&nbsp;'}</div>
+    <div class="r4">${p.color||'&nbsp;'}</div>
     <div class="r5">
       <div class="r5-bc">
-        ${p.bc?`<svg id="bc${i}"></svg><div class="r5-bcnum">${p.bc}</div>`:'<div style="font-size:5pt;color:#aaa">Sin código de barras</div>'}
+        ${p.bc?`<svg id="bc${i}"></svg><div class="r5-bcnum">${p.bc}</div>`:''}
       </div>
       <div class="r5-talla" style="font-size:${tf}">${p.talla}</div>
     </div>
@@ -2868,17 +2873,21 @@ function abrirVentanaEtiquetas(items){
       try{
         JsBarcode(svg,bc,{
           format:'CODE128',
-          width:1.7,        /* grosor de barras — más grueso = más legible */
-          height:22,        /* altura en px — más alto = más fácil de escanear */
+          width:2.2,      /* grosor barra — 2.2 legible para Zebra */
+          height:22,      /* altura px */
           displayValue:false,
           margin:0,
           background:'#ffffff',
           lineColor:'#000000'
         });
-        /* Forzar ancho máximo disponible */
-        svg.style.maxWidth='35mm';
-        svg.style.width='35mm';
-      }catch(e){console.warn('barcode error:',e);}
+        /* Forzar el SVG a ocupar todo el ancho disponible */
+        svg.removeAttribute('width');
+        svg.removeAttribute('height');
+        svg.style.width='100%';
+        svg.style.maxWidth='33mm';
+        svg.style.height='22px';
+        svg.style.display='block';
+      }catch(e){}
     });
   <\/script></body></html>`);
   win.document.close();
@@ -4653,6 +4662,147 @@ function exportarResumenExcel(){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='resumen_anual_'+anio+'.csv';
   a.click();toast('Resumen '+anio+' exportado ✓');
+}
+
+
+
+// ══════════════════ CÓDIGOS DE BARRAS POR TALLA ══════════════════
+
+function renderBarcodeTallaInputs(prod){
+  const container = document.getElementById('p-barcodes-talla');
+  if(!container) return;
+  // Get currently selected tallas
+  const tallasSel = [...document.querySelectorAll('.tb.on')].map(b=>b.textContent.trim());
+  const btExisting = prod?.barcodeTallas || {};
+  if(!tallasSel.length){
+    container.innerHTML = '<div style="font-size:12px;color:var(--faint)">Selecciona las tallas primero</div>';
+    return;
+  }
+  container.innerHTML = tallasSel.map(t=>`
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;min-width:130px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700">Talla ${t}</div>
+      <input type="text" id="pbt-${t.replace('.','_')}"
+        value="${btExisting[t]||''}"
+        placeholder="Código barras…"
+        style="width:100%;font-size:12px;font-family:var(--mono);background:var(--s3);border:1px solid var(--border);border-radius:5px;padding:4px 6px;color:var(--cream)">
+    </div>`).join('');
+}
+
+function autoGenerarCodigosTalla(){
+  const baseBar = document.getElementById('p-bar')?.value.trim() || '';
+  const baseSku = document.getElementById('p-sku')?.value.trim() || '';
+  const base = baseBar || baseSku;
+  if(!base){ toast('Ingresa primero el Código de Barras o SKU base','err'); return; }
+  const tallasSel = [...document.querySelectorAll('.tb.on')].map(b=>b.textContent.trim());
+  if(!tallasSel.length){ toast('Selecciona las tallas primero','err'); return; }
+  // Generate: base + 2-digit talla index
+  tallasSel.forEach((t,i)=>{
+    const inp = document.getElementById('pbt-'+t.replace('.','_'));
+    if(inp && !inp.value){
+      // Use base code + talla suffix
+      const suffix = String(i+1).padStart(2,'0');
+      inp.value = base + suffix;
+    }
+  });
+  toast('Códigos generados ✓ — puedes editarlos manualmente');
+}
+
+// Hook: when tallas change, refresh barcode inputs
+const _origToggleT = typeof toggleT !== 'undefined' ? toggleT : null;
+
+// Override syncStockInps to also update barcode inputs
+const _origSyncStockInps = syncStockInps;
+function syncStockInps(){
+  _origSyncStockInps();
+  const prod = editProdId ? productos.find(x=>x.id===editProdId) : null;
+  setTimeout(()=>renderBarcodeTallaInputs(prod), 50);
+}
+
+// ══════════════════ POS: SCAN INTELIGENTE ══════════════════
+let posInputTimer = null;
+
+function onPOSInput(){
+  clearTimeout(posInputTimer);
+  const q = (document.getElementById('pos-q')?.value||'').trim();
+  if(!q){ renderPOS(); return; }
+  // Check if it's an exact barcode match for a talla-specific code
+  const match = buscarPorCodigoDeTalla(q);
+  if(match){
+    // Exact barcode match — add directly to cart
+    posInputTimer = setTimeout(()=>agregarDirectoAlCarrito(match.prod, match.talla), 200);
+  } else {
+    renderPOS();
+  }
+}
+
+function onPOSKeydown(e){
+  // Enter key = immediate scan
+  if(e.key === 'Enter'){
+    clearTimeout(posInputTimer);
+    const q = (document.getElementById('pos-q')?.value||'').trim();
+    if(!q) return;
+    const match = buscarPorCodigoDeTalla(q);
+    if(match){
+      agregarDirectoAlCarrito(match.prod, match.talla);
+    } else {
+      // Try exact barcode match on main barcode field
+      const exactProd = productos.find(p=>p.barcode===q||p.sku===q);
+      if(exactProd){
+        const tallas = Object.entries(exactProd.stock||{}).filter(([,v])=>v>0);
+        if(tallas.length===1){
+          agregarDirectoAlCarrito(exactProd, tallas[0][0]);
+        } else {
+          openAddCart(exactProd.id);
+        }
+      }
+    }
+  }
+}
+
+function buscarPorCodigoDeTalla(codigo){
+  if(!codigo) return null;
+  for(const prod of productos){
+    const bt = prod.barcodeTallas || {};
+    for(const [talla, bc] of Object.entries(bt)){
+      if(bc && bc.trim() === codigo.trim()){
+        return { prod, talla };
+      }
+    }
+  }
+  return null;
+}
+
+function agregarDirectoAlCarrito(p, talla){
+  if(!p || !talla){ toast('Producto o talla no encontrado','err'); return; }
+  const stockTalla = (p.stock||{})[talla] || 0;
+  if(stockTalla <= 0){
+    toast('Sin stock en talla '+talla,'err');
+    // Clear search
+    document.getElementById('pos-q').value='';
+    renderPOS();
+    return;
+  }
+  // Check if already in cart
+  const ex = carrito.find(c=>c.id===p.id&&c.talla===talla);
+  if(ex){
+    if(ex.qty >= stockTalla){ toast('Máximo stock: '+stockTalla,'err'); return; }
+    ex.qty += 1;
+  } else {
+    carrito.push({
+      id:p.id, desc:p.desc, talla, color:p.color||'',
+      price:p.precio, qty:1,
+      sku:p.barcode||p.sku||'',
+      sucursalId:p.sucursalId,
+      foto:p.foto||null,
+      cat:p.cat||''
+    });
+  }
+  // Clear search box and refresh
+  document.getElementById('pos-q').value = '';
+  renderCart();
+  mostrarAlertaPromo();
+  // Show quick toast
+  toast('✓ '+p.desc+' T'+talla+' agregado');
 }
 
 
