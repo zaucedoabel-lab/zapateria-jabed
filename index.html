@@ -333,6 +333,7 @@ select option{background:var(--s2)}
         <div class="nav-item" id="nav-sucursales" onclick="go('sucursales',this)"><span class="ni">🏪</span><span class="nt">Sucursales</span></div>
         <div class="nav-item" id="nav-usuarios" onclick="go('usuarios',this)"><span class="ni">👥</span><span class="nt">Usuarios y Roles</span></div>
         <div class="nav-item" id="nav-importar" onclick="go('importar',this)"><span class="ni">📥</span><span class="nt">Importar CSV</span></div>
+        <div class="nav-item" id="nav-bitacora" onclick="go('bitacora',this)"><span class="ni">📜</span><span class="nt">Bitácora</span></div>
       </div>
       <div class="sidebar-foot">
         <div style="font-size:10px;color:var(--faint);text-align:center">ZapateriaPro v2.0</div>
@@ -562,9 +563,15 @@ select option{background:var(--s2)}
         <div id="page-pos" class="page">
           <div class="pos-wrap">
             <div>
-              <div class="flex-row" style="margin-bottom:12px">
-                <div class="search-wrap" style="flex:1"><span class="search-ico">🔍</span><input type="text" id="pos-q" placeholder="Buscar o escanear código de barras…" oninput="onPOSInput()" onkeydown="onPOSKeydown(event)"></div>
-                <select id="pos-suc" onchange="renderPOS()" style="width:140px"></select>
+              <div class="flex-row" style="margin-bottom:8px;flex-wrap:wrap;gap:8px">
+                <div class="search-wrap" style="flex:2;min-width:160px"><span class="search-ico">🔍</span><input type="text" id="pos-q" placeholder="Buscar o escanear código de barras…" oninput="onPOSInput()" onkeydown="onPOSKeydown(event)"></div>
+                <select id="pos-cat" onchange="renderPOS()" style="width:130px">
+                  <option value="">Todas las Cat.</option>
+                </select>
+                <select id="pos-linea" onchange="renderPOS()" style="width:130px">
+                  <option value="">Todas las Líneas</option>
+                </select>
+                <select id="pos-suc" onchange="renderPOS()" style="width:130px"></select>
               </div>
               <div id="pos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px"></div>
             </div>
@@ -981,10 +988,63 @@ select option{background:var(--s2)}
 
         <!-- ══════════ USUARIOS ══════════ -->
         <div id="page-usuarios" class="page">
-          <div class="info">Los usuarios deben registrarse primero desde la pantalla de login. Luego asígnales un rol aquí.</div>
-          <div class="tw"><table><thead><tr><th>UID / Correo</th><th>Nombre</th><th>Rol</th><th>Sucursal Asignada</th><th>Estado</th><th></th></tr></thead>
-          <tbody id="usr-tbody"></tbody></table></div>
-          <div class="empty" id="usr-empty" style="display:none"><div class="empty-icon">👥</div><div>Sin usuarios registrados.</div></div>
+          <div class="sg2 stat-grid" style="margin-bottom:14px">
+            <div class="card" style="padding:18px">
+              <div class="flex-between" style="margin-bottom:12px">
+                <div class="card-title" style="margin:0">👥 Usuarios del Sistema</div>
+                <button class="btn btn-accent btn-sm" onclick="abrirModalUsuarioInterno()">＋ Nuevo Usuario</button>
+              </div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+                Todos acceden con el correo <strong style="color:var(--cream)">jabedbp2026@gmail.com</strong> a Firebase,
+                pero dentro de ZapateriaPro cada uno tiene su propio usuario y contraseña.
+              </div>
+              <div class="tw"><table><thead><tr>
+                <th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th><th></th>
+              </tr></thead>
+              <tbody id="usr-interno-tbody"></tbody></table></div>
+            </div>
+            <div class="card" style="padding:18px">
+              <div class="card-title">🔒 Permisos por Rol</div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Módulos accesibles según el rol asignado</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="background:var(--s2);border-radius:8px;padding:10px;border:1px solid var(--border)">
+                  <div style="font-weight:700;color:var(--gold);margin-bottom:4px">👑 Admin</div>
+                  <div style="font-size:11px;color:var(--muted)">Acceso completo a todos los módulos</div>
+                </div>
+                <div style="background:var(--s2);border-radius:8px;padding:10px;border:1px solid var(--border)">
+                  <div style="font-weight:700;color:var(--green);margin-bottom:4px">🏷️ Vendedor</div>
+                  <div style="font-size:11px;color:var(--muted)">POS, Historial, Clientes, Apartados, Inventario (solo ver)</div>
+                </div>
+                <div style="background:var(--s2);border-radius:8px;padding:10px;border:1px solid var(--border)">
+                  <div style="font-weight:700;color:var(--blue);margin-bottom:4px">📦 Bodeguero</div>
+                  <div style="font-size:11px;color:var(--muted)">Inventario, Entradas, Salidas, Transferencias, Etiquetas</div>
+                </div>
+                <div style="background:var(--s2);border-radius:8px;padding:10px;border:1px solid var(--border)">
+                  <div style="font-weight:700;color:var(--muted);margin-bottom:4px">👁️ Solo Lectura</div>
+                  <div style="font-size:11px;color:var(--muted)">Inventario, Catálogo, Historial, Reportes (sin modificar)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════ BITÁCORA ══════════ -->
+        <div id="page-bitacora" class="page">
+          <div class="stat-grid sg3" style="margin-bottom:14px">
+            <div class="scard gold"><div class="sl">Pendientes de Aprobar</div><div class="sv gold" id="bitacora-pend">0</div></div>
+            <div class="scard g"><div class="sl">Total Movimientos</div><div class="sv g" id="bitacora-total">—</div></div>
+            <div class="scard b"><div class="sl">Último Movimiento</div><div class="sv b" style="font-size:14px" id="bitacora-ultimo">—</div></div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+            <button class="btn btn-ghost btn-sm" onclick="loadBitacora()">🔄 Actualizar</button>
+          </div>
+          <div class="tw" style="overflow-x:auto">
+            <table style="min-width:900px"><thead><tr>
+              <th>Fecha</th><th>Hora</th><th>Tipo</th><th>Descripción</th>
+              <th>Usuario</th><th>Rol</th><th>Aprobó</th><th>Acciones</th>
+            </tr></thead>
+            <tbody id="bitacora-tbody"></tbody></table>
+          </div>
         </div>
 
         <!-- ══════════ IMPORTAR CSV ══════════ -->
@@ -1067,6 +1127,12 @@ select option{background:var(--s2)}
             <div class="card">
               <div class="card-title">Categorías de Gastos <button class="btn btn-accent btn-xs" onclick="addCatalogItem('gastoCategorias')">＋ Agregar</button></div>
               <div id="cfg-gastoCategorias-list"></div>
+            </div>
+            <!-- Locaciones -->
+            <div class="card">
+              <div class="card-title">📍 Locaciones <button class="btn btn-accent btn-xs" onclick="addCatalogItem('locaciones')">＋ Agregar</button></div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Ej: A-1, A-2, B-1, B-2… Aparecen en el catálogo de productos</div>
+              <div id="cfg-locaciones-list"></div>
             </div>
           </div>
 
@@ -1189,6 +1255,12 @@ select option{background:var(--s2)}
       <div class="fr fr2">
         <div class="fg"><label>Sucursal</label><select id="p-suc"><option value="">Cargando…</option></select></div>
         <div class="fg"><label>Precio de Costo ($) <span style="color:var(--faint)">(opcional)</span></label><input type="number" id="p-costo" step="0.01" placeholder="0.00"></div>
+      </div>
+      <div class="fr fr2">
+        <div class="fg"><label>📍 Locación <span style="color:var(--faint)">(ej: A-1, B-3…)</span></label>
+          <select id="p-locacion"><option value="">Sin locación asignada</option></select>
+        </div>
+        <div class="fg"></div>
       </div>
       <div class="fg"><label>Tallas (selecciona las disponibles)</label><div id="p-tallas-sel"></div></div>
       <div id="p-stock-inputs"></div>
@@ -1444,6 +1516,57 @@ select option{background:var(--s2)}
   </div>
 </div>
 
+<!-- Modal Usuario Interno -->
+<div class="mo" id="mo-usuario-interno">
+  <div class="md" style="max-width:480px">
+    <div class="mh"><div class="mt" id="ui-title">Nuevo Usuario</div><button class="xbtn" onclick="closeM('mo-usuario-interno')">✕</button></div>
+    <div class="mb">
+      <div class="fr fr2">
+        <div class="fg"><label>Nombre completo *</label><input type="text" id="ui-nombre" placeholder="María González"></div>
+        <div class="fg"><label>Usuario (login) *</label><input type="text" id="ui-usuario" placeholder="maria" autocomplete="off"></div>
+      </div>
+      <div class="fg"><label>Contraseña *</label><input type="password" id="ui-pin" placeholder="Deja vacío para no cambiar" autocomplete="new-password"></div>
+      <div class="fr fr2">
+        <div class="fg"><label>Rol</label>
+          <select id="ui-rol">
+            <option value="admin">👑 Administrador</option>
+            <option value="vendedor" selected>🏷️ Vendedor</option>
+            <option value="bodeguero">📦 Bodeguero</option>
+            <option value="lectura">👁️ Solo Lectura</option>
+          </select>
+        </div>
+        <div class="fg"><label>Estado</label>
+          <select id="ui-activo">
+            <option value="1">✅ Activo</option>
+            <option value="0">⏸️ Inactivo</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeM('mo-usuario-interno')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveUsuarioInterno()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay selección de usuario interno -->
+<div id="usr-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;flex-direction:column">
+  <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:500px;width:95%;text-align:center">
+    <div style="font-size:36px;margin-bottom:8px">👟</div>
+    <div style="font-size:18px;font-weight:700;color:var(--cream);margin-bottom:4px">ZapateriaPro</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Selecciona tu usuario</div>
+    <div id="usr-overlay-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:16px"></div>
+    <div id="usr-pin-section" style="display:none;margin-top:12px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px" id="usr-pin-label">Contraseña</div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <input type="password" id="usr-pin-input" placeholder="••••••" style="width:180px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--cream);font-size:14px" onkeydown="if(event.key==='Enter')confirmarPin()">
+        <button class="btn btn-accent" onclick="confirmarPin()">→ Entrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast" style="position:fixed;bottom:20px;right:20px;z-index:9999;display:none">
   <div id="toast-in" style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-size:13px;box-shadow:var(--shadow);display:flex;align-items:center;gap:8px"></div>
@@ -1574,6 +1697,7 @@ function startListeners(){
     populateSucursalSelects();
     populatePOSSuc();
     populateEntSalSucursales();
+    populatePOSFilters();
     renderSucursales();
     updateTopbarSuc();
     renderInv();
@@ -1582,6 +1706,8 @@ function startListeners(){
   push(onSnapshot(col('productos'),snap=>{
     productos=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderInv();renderPOS();renderCatalogo();renderDashboard();
+    loadUsuariosInternos();
+    setTimeout(()=>mostrarPantallaUsuarios(),800);
   }));
   push(onSnapshot(query(col('ventas'),orderBy('createdAt','desc')),snap=>{
     ventas=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1661,7 +1787,12 @@ function renderSucursales(){
       <td><span class="badge ${s.tipo==='bodega'?'b-orange':'b-green'}">${s.tipo==='bodega'?'📦 Bodega':'🏪 Tienda'}</span></td>
       <td style="color:var(--muted)">${s.dir||'—'}</td>
       <td><span class="mono">${tot} piezas</span></td>
-      <td><button class="btn btn-ghost btn-xs" onclick="editSucursal('${s.id}')">✏️</button></td>
+      <td>
+        <div class="flex-row" style="gap:4px">
+          <button class="btn btn-ghost btn-xs" onclick="editSucursal('${s.id}')">✏️ Editar</button>
+          <button class="btn btn-red btn-xs" onclick="deleteSucursal('${s.id}','${s.nombre}')">🗑️ Eliminar</button>
+        </div>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -1702,6 +1833,21 @@ async function saveSucursal(){
   }
 }
 
+async function deleteSucursal(id, nombre){
+  const prods = productos.filter(p=>p.sucursalId===id).length;
+  const msg = prods > 0
+    ? `⚠️ La sucursal "${nombre}" tiene ${prods} productos asignados.
+
+¿Eliminar de todas formas? Los productos quedarán sin sucursal asignada.`
+    : `¿Eliminar la sucursal "${nombre}"? Esta acción no se puede deshacer.`;
+  if(!confirm(msg)) return;
+  try{
+    await window._fb.deleteDoc(docRef('sucursales',id));
+    toast('Sucursal "'+nombre+'" eliminada');
+    renderSucursales();
+  }catch(e){ toast('Error: '+e.message,'err'); }
+}
+
 // ══════════════════ PRODUCTOS ══════════════════
 function abrirModalProducto(id){
   editProdId=id||null; photoDataUrl=null;
@@ -1719,6 +1865,7 @@ function abrirModalProducto(id){
       document.getElementById('p-cat').value=p.cat||'Dama';
       document.getElementById('p-linea').value=p.linea||'';
       document.getElementById('p-temporada').value=p.temporada||'';
+      setTimeout(()=>populateLocacionSelect(p.locacion||''),50);
       if(p.sucursalId)sucSel.value=p.sucursalId;
       if(p.foto){document.getElementById('photo-preview').src=p.foto;document.getElementById('photo-preview').style.display='block';document.getElementById('photo-placeholder').style.display='none';}
       renderTallasSel(p);
@@ -1813,6 +1960,7 @@ async function saveProducto(){
     costo:parseFloat(document.getElementById('p-costo').value)||0,
     color:document.getElementById('p-color').value.trim(),
     notas:document.getElementById('p-notas').value.trim(),
+    locacion:window._tempLocacion||document.getElementById('p-locacion')?.value||'',
     stock,
     sucursalId:sucId,
     foto,
@@ -1923,6 +2071,7 @@ function renderInvMatriz(agrupados){
     <th style="min-width:180px">Descripción / Marca</th>
     <th style="min-width:70px">Color</th>
     <th style="min-width:60px">Cat.</th>
+    <th style="min-width:60px">Loc.</th>
     <th style="min-width:70px">Sucursal</th>
     ${allTallas.map(t=>`<th style="min-width:36px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--accent2)">${t}</th>`).join('')}
     <th style="min-width:50px;text-align:center">Total</th>
@@ -1945,6 +2094,7 @@ function renderInvMatriz(agrupados){
       <td><div style="font-weight:500;color:var(--cream);font-size:12px;line-height:1.3">${p.desc}</div><div style="font-size:10px;color:var(--muted)">${p.marca||''}</div></td>
       <td style="font-size:12px;color:var(--muted)">${p.color||'—'}</td>
       <td><span class="badge b-accent" style="font-size:10px">${p.cat}</span></td>
+      <td><span class="badge b-blue" style="font-size:10px">${p.locacion||'—'}</span></td>
       <td><span class="badge ${isBodega?'b-orange':'b-green'}" style="font-size:10px">${isBodega?'📦':'🏪'} ${suc}</span></td>
       ${allTallas.map(t=>{
         const qty=(p.stock||{})[t];
@@ -2546,7 +2696,8 @@ const CFG_DEFAULTS = {
   colores: [],
   proveedores: [],
   vendedores: [],
-  gastoCategorias: ['Renta','Servicios','Mercancía','Empaques','Sueldos','Publicidad','Transporte','Limpieza','Pago a Proveedores','Internet','Mantenimiento','Comida','Varios']
+  gastoCategorias: ['Renta','Servicios','Mercancía','Empaques','Sueldos','Publicidad','Transporte','Limpieza','Pago a Proveedores','Internet','Mantenimiento','Comida','Varios'],
+  locaciones: ['A-1','A-2','A-3','B-1','B-2','B-3','C-1','C-2','C-3']
 };
 // Config general (monedero, cumpleaños)
 let configGeneral = {puntoPorcentaje:5, cumpleanosDesc:10};
@@ -2568,7 +2719,7 @@ async function loadCatalogos(){
 function getCatalogList(key){ return catalogosData[key]||CFG_DEFAULTS[key]||[]; }
 
 function renderCatalogosCfg(){
-  const keys=['categorias','lineas','temporadas','marcas','colores','proveedores','vendedores','gastoCategorias'];
+  const keys=['categorias','lineas','temporadas','marcas','colores','proveedores','vendedores','gastoCategorias','locaciones'];
   keys.forEach(k=>{
     const el=document.getElementById('cfg-'+k+'-list');
     if(!el)return;
@@ -4812,6 +4963,329 @@ function agregarDirectoAlCarrito(p, talla){
 }
 
 
+
+// ══════════════════ TAREA 1: POS FILTERS ══════════════════
+function populatePOSFilters(){
+  // Categorias
+  const catSel = document.getElementById('pos-cat');
+  if(catSel){
+    const cats = getCatalogList('categorias');
+    catSel.innerHTML = '<option value="">Todas las Cat.</option>' +
+      cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  }
+  // Lineas
+  const lineaSel = document.getElementById('pos-linea');
+  if(lineaSel){
+    const lineas = getCatalogList('lineas');
+    lineaSel.innerHTML = '<option value="">Todas las Líneas</option>' +
+      lineas.map(l=>`<option value="${l}">${l}</option>`).join('');
+  }
+}
+
+// Patch renderPOS to use new filters
+const _origRenderPOS = renderPOS;
+function renderPOS(){
+  const q   = (document.getElementById('pos-q')?.value||'').toLowerCase();
+  const sid = document.getElementById('pos-suc')?.value||'';
+  const cat = document.getElementById('pos-cat')?.value||'';
+  const lin = document.getElementById('pos-linea')?.value||'';
+
+  const lista = productos.filter(p=>{
+    const sumS = s => Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    if(sumS(p.stock)<=0) return false;
+    const bcTallaMatch = !q || Object.values(p.barcodeTallas||{}).some(bc=>(bc||'').includes(q));
+    const mq = !q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||bcTallaMatch;
+    const ms = !sid || p.sucursalId===sid;
+    const mc = !cat || p.cat===cat;
+    const ml = !lin || p.linea===lin;
+    return mq&&ms&&mc&&ml;
+  });
+
+  const grid = document.getElementById('pos-grid'); if(!grid) return;
+  grid.innerHTML = lista.length ? lista.map(p=>{
+    const sumS = s => Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    const tot  = sumS(p.stock);
+    const suc  = sucursales.find(s=>s.id===p.sucursalId);
+    return`<div class="prod-card" onclick="openAddCart('${p.id}')">
+      <div class="prod-img" style="height:100px">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div>
+      <div class="prod-info">
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:2px">${p.sku||p.barcode||'—'}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--cream);line-height:1.3;margin-bottom:3px">${p.desc}</div>
+        ${suc?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px">${suc.tipo==='bodega'?'📦':'🏪'} ${suc.nombre}</div>`:''}
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:var(--mono);color:var(--gold);font-size:14px">${fmt(p.precio)}</span>
+          <span class="badge ${tot<=3?'b-gold':'b-green'}">${tot}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div>Sin resultados</div></div>`;
+  renderCart();
+  mostrarAlertaPromo();
+}
+
+// ══════════════════ TAREA 2: LOCACION ══════════════════
+function populateLocacionSelect(selectedVal){
+  const sel = document.getElementById('p-locacion'); if(!sel) return;
+  const locs = getCatalogList('locaciones');
+  sel.innerHTML = '<option value="">Sin locación asignada</option>' +
+    locs.map(l=>`<option value="${l}" ${l===selectedVal?'selected':''}>${l}</option>`).join('');
+}
+
+// Hook into saveProducto to include locacion
+const _origSaveProducto = saveProducto;
+async function saveProducto(){
+  // Collect locacion before calling original
+  const locEl = document.getElementById('p-locacion');
+  const locVal = locEl ? locEl.value : '';
+  // Temporarily store for use in the original function's data object
+  window._tempLocacion = locVal;
+  await _origSaveProducto();
+}
+
+// ══════════════════ TAREA 3: USUARIOS INTERNOS ══════════════════
+// Sistema de usuarios internos — autenticación dentro de la app
+// Un solo Firebase user, múltiples perfiles internos con PIN/contraseña
+
+let usuariosInternos = []; // loaded from Firestore
+let usuarioActivo = null;  // {id, nombre, rol, pin}
+
+const PERMISOS_ROL = {
+  admin:    ['inventario','catalogo','entradas','salidas','pos','historial','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','sucursales','usuarios','importar'],
+  vendedor: ['pos','historial','clientes','cuentas','inventario','catalogo'],
+  bodeguero:['inventario','catalogo','entradas','salidas','transfer','etiquetas'],
+  lectura:  ['inventario','catalogo','historial','reportes','resumen']
+};
+
+async function loadUsuariosInternos(){
+  try{
+    const snap = await window._fb.getDocs(col('usuariosInternos'));
+    usuariosInternos = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderUsuariosInternos();
+  }catch(e){ console.error('loadUsuariosInternos:', e); }
+}
+
+function renderUsuariosInternos(){
+  const tbody = document.getElementById('usr-interno-tbody');
+  if(!tbody) return;
+  const rolLabel = {admin:'👑 Admin', vendedor:'🏷️ Vendedor', bodeguero:'📦 Bodeguero', lectura:'👁️ Solo Lectura'};
+  tbody.innerHTML = usuariosInternos.map(u=>`<tr>
+    <td style="font-weight:600;color:var(--cream)">${u.nombre}</td>
+    <td style="font-family:var(--mono);color:var(--muted)">${u.usuario}</td>
+    <td><span class="badge b-purple">${rolLabel[u.rol]||u.rol}</span></td>
+    <td style="color:var(--muted)">${u.activo!==false?'✅ Activo':'⏸️ Inactivo'}</td>
+    <td>
+      <div class="flex-row" style="gap:3px">
+        <button class="btn btn-ghost btn-xs" onclick="editUsuarioInterno('${u.id}')">✏️</button>
+        <button class="btn btn-red btn-xs" onclick="deleteUsuarioInterno('${u.id}')">🗑️</button>
+      </div>
+    </td>
+  </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Sin usuarios creados</td></tr>';
+}
+
+// editUsrId declared globally
+function abrirModalUsuarioInterno(id){
+  editUsrId = id || null;
+  const u = id ? usuariosInternos.find(x=>x.id===id) : null;
+  document.getElementById('ui-title').textContent = id ? 'Editar Usuario' : 'Nuevo Usuario';
+  document.getElementById('ui-nombre').value = u?.nombre||'';
+  document.getElementById('ui-usuario').value = u?.usuario||'';
+  document.getElementById('ui-pin').value = '';
+  document.getElementById('ui-rol').value = u?.rol||'vendedor';
+  document.getElementById('ui-activo').value = u?.activo===false?'0':'1';
+  openM('mo-usuario-interno');
+}
+
+function editUsuarioInterno(id){ abrirModalUsuarioInterno(id); }
+
+async function saveUsuarioInterno(){
+  const nombre   = document.getElementById('ui-nombre').value.trim();
+  const usuario  = document.getElementById('ui-usuario').value.trim().toLowerCase();
+  const pin      = document.getElementById('ui-pin').value.trim();
+  const rol      = document.getElementById('ui-rol').value;
+  const activo   = document.getElementById('ui-activo').value === '1';
+  if(!nombre){ toast('Falta el nombre','err'); return; }
+  if(!usuario){ toast('Falta el usuario','err'); return; }
+  if(!editUsrId && !pin){ toast('Ingresa una contraseña','err'); return; }
+  // Check duplicate username
+  const dup = usuariosInternos.find(u=>u.usuario===usuario && u.id!==editUsrId);
+  if(dup){ toast('Ese usuario ya existe','err'); return; }
+  const data = { nombre, usuario, rol, activo, updatedAt: new Date().toISOString() };
+  if(pin) data.pin = btoa(pin); // simple obfuscation (base64)
+  try{
+    if(editUsrId){
+      await window._fb.setDoc(docRef('usuariosInternos', editUsrId), data, {merge:true});
+    } else {
+      data.createdAt = new Date().toISOString();
+      await window._fb.addDoc(col('usuariosInternos'), data);
+    }
+    closeM('mo-usuario-interno');
+    toast('Usuario guardado ✓');
+    editUsrId = null;
+    await loadUsuariosInternos();
+  }catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+async function deleteUsuarioInterno(id){
+  if(!confirm('¿Eliminar este usuario?')) return;
+  await window._fb.deleteDoc(docRef('usuariosInternos', id));
+  toast('Usuario eliminado');
+  await loadUsuariosInternos();
+}
+
+// ── Pantalla de selección de usuario interno ──
+function mostrarPantallaUsuarios(){
+  const overlay = document.getElementById('usr-overlay');
+  if(!overlay) return;
+  if(!usuariosInternos.length){
+    // No internal users configured — skip selection
+    usuarioActivo = { nombre: currentProfile?.nombre||'Admin', rol:'admin', usuario:'admin' };
+    aplicarPermisosNav();
+    return;
+  }
+  // Show user selector
+  overlay.style.display = 'flex';
+  document.getElementById('usr-overlay-lista').innerHTML = usuariosInternos
+    .filter(u=>u.activo!==false)
+    .map(u=>`
+      <div onclick="seleccionarUsuario('${u.id}')" style="padding:14px;background:var(--s2);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .15s" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
+        <div style="font-size:24px;margin-bottom:6px">${{admin:'👑',vendedor:'🏷️',bodeguero:'📦',lectura:'👁️'}[u.rol]||'👤'}</div>
+        <div style="font-weight:600;color:var(--cream)">${u.nombre}</div>
+        <div style="font-size:11px;color:var(--muted)">${u.rol}</div>
+      </div>`).join('');
+  document.getElementById('usr-pin-section').style.display = 'none';
+  window._usrSelId = null;
+}
+
+function seleccionarUsuario(id){
+  window._usrSelId = id;
+  document.getElementById('usr-pin-section').style.display = 'block';
+  document.getElementById('usr-pin-input').value = '';
+  document.getElementById('usr-pin-input').focus();
+  const u = usuariosInternos.find(x=>x.id===id);
+  document.getElementById('usr-pin-label').textContent = 'Contraseña de '+u?.nombre;
+}
+
+function confirmarPin(){
+  const id = window._usrSelId; if(!id) return;
+  const u  = usuariosInternos.find(x=>x.id===id); if(!u) return;
+  const pin = document.getElementById('usr-pin-input').value.trim();
+  if(btoa(pin) !== u.pin && pin !== atob(u.pin||'')){
+    // Try plain comparison
+    if(pin !== (u.pinPlain||'') && btoa(pin) !== (u.pin||'')){
+      toast('Contraseña incorrecta','err'); return;
+    }
+  }
+  usuarioActivo = u;
+  document.getElementById('usr-overlay').style.display = 'none';
+  aplicarPermisosNav();
+  toast('Bienvenido, '+u.nombre+' ✓');
+  // Update header
+  const rb = document.getElementById('role-badge');
+  if(rb){ rb.textContent = u.nombre+' ('+u.rol+')'; }
+}
+
+function aplicarPermisosNav(){
+  const rol = usuarioActivo?.rol || currentProfile?.rol || 'admin';
+  const perms = PERMISOS_ROL[rol] || PERMISOS_ROL.admin;
+  // Hide/show nav items
+  const navMap = {
+    'nav-inv':'inventario','nav-prods':'catalogo','nav-entradas':'entradas',
+    'nav-salidas':'salidas','nav-pos':'pos','nav-hist':'historial',
+    'nav-clientes':'clientes','nav-transfer':'transferencias','nav-cuentas':'cuentas',
+    'nav-gastos':'gastos','nav-corte':'corte','nav-reportes':'reportes',
+    'nav-resumen':'resumen','nav-promociones':'promociones',
+    'nav-catalogos-cfg':'catalogos-cfg','nav-etiquetas':'etiquetas',
+    'nav-sucursales':'sucursales','nav-usuarios':'usuarios','nav-importar':'importar'
+  };
+  Object.entries(navMap).forEach(([navId, page])=>{
+    const el = document.getElementById(navId);
+    if(el) el.style.display = perms.includes(page) ? '' : 'none';
+  });
+}
+
+// ══════════════════ TAREA 4: BITÁCORA DE MOVIMIENTOS ══════════════════
+async function registrarMovimiento(tipo, descripcion, datos){
+  const user = usuarioActivo || currentProfile;
+  try{
+    await window._fb.addDoc(col('bitacora'),{
+      tipo,           // 'nuevo_producto','editar_producto','entrada','salida','ajuste_pendiente'
+      descripcion,
+      datos: datos || {},
+      usuario: user?.nombre || user?.email || '—',
+      usuarioRol: user?.rol || '—',
+      fecha: hoy(),
+      hora:  hora(),
+      estado: tipo.includes('pendiente') ? 'pendiente' : 'aprobado',
+      aprobadoPor: tipo.includes('pendiente') ? '' : (user?.nombre||'—'),
+      createdAt: new Date().toISOString()
+    });
+  }catch(e){ console.warn('bitacora error:', e); }
+}
+
+async function loadBitacora(){
+  try{
+    const snap = await window._fb.getDocs(col('bitacora'));
+    const movs = snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+    renderBitacora(movs);
+  }catch(e){ console.error(e); }
+}
+
+function renderBitacora(movs){
+  const tbody = document.getElementById('bitacora-tbody');
+  if(!tbody) return;
+  const tipoIcon = {
+    nuevo_producto:'➕', editar_producto:'✏️', eliminar_producto:'🗑️',
+    entrada:'📥', salida:'📤', ajuste_pendiente:'⏳', aprobado:'✅', rechazado:'❌'
+  };
+  tbody.innerHTML = movs.length ? movs.map(m=>`<tr>
+    <td style="font-family:var(--mono);font-size:11px">${m.fecha}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${m.hora||'—'}</td>
+    <td><span class="badge ${m.estado==='pendiente'?'b-gold':m.estado==='rechazado'?'b-red':'b-green'}" style="font-size:10px">
+      ${tipoIcon[m.tipo]||'📝'} ${m.tipo.replace(/_/g,' ')}
+    </span></td>
+    <td style="font-size:12px;color:var(--cream);max-width:200px">${m.descripcion}</td>
+    <td style="font-size:12px;color:var(--muted)">${m.usuario}</td>
+    <td style="font-size:11px;color:var(--muted)">${m.usuarioRol||'—'}</td>
+    <td style="font-size:11px;color:var(--muted)">${m.aprobadoPor||'—'}</td>
+    <td>
+      ${m.estado==='pendiente'?`
+        <button class="btn btn-green btn-xs" onclick="aprobarMovimiento('${m.id}')">✅ Aprobar</button>
+        <button class="btn btn-red btn-xs" onclick="rechazarMovimiento('${m.id}')">❌ Rechazar</button>
+      `:m.estado==='aprobado'?'<span style="color:var(--green);font-size:11px">✅ Aprobado</span>':'<span style="color:var(--red);font-size:11px">❌ Rechazado</span>'}
+    </td>
+  </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Sin movimientos registrados</td></tr>';
+
+  // Stats
+  const pend = movs.filter(m=>m.estado==='pendiente').length;
+  const el = document.getElementById('bitacora-pend');
+  if(el) el.textContent = pend;
+}
+
+async function aprobarMovimiento(id){
+  const user = usuarioActivo || currentProfile;
+  if((user?.rol||'')!=='admin'){ toast('Solo el administrador puede aprobar','err'); return; }
+  await window._fb.setDoc(docRef('bitacora',id),{
+    estado:'aprobado', aprobadoPor: user?.nombre||'Admin',
+    aprobadoEn: new Date().toISOString()
+  },{merge:true});
+  toast('Movimiento aprobado ✓');
+  loadBitacora();
+}
+
+async function rechazarMovimiento(id){
+  const user = usuarioActivo || currentProfile;
+  if((user?.rol||'')!=='admin'){ toast('Solo el administrador puede rechazar','err'); return; }
+  const motivo = prompt('Motivo del rechazo:'); if(!motivo) return;
+  await window._fb.setDoc(docRef('bitacora',id),{
+    estado:'rechazado', aprobadoPor: user?.nombre||'Admin', motivoRechazo: motivo,
+    aprobadoEn: new Date().toISOString()
+  },{merge:true});
+  toast('Movimiento rechazado');
+  loadBitacora();
+}
+
+
 // ══════════════════ NAV ══════════════════
 const PAGE_TITLES={
   dashboard:{t:'Dashboard',sub:'Vista general del negocio',actions:''},
@@ -4853,6 +5327,8 @@ function go(page,el){
   if(page==='inventario')renderInv();
   if(page==='catalogo')renderCatalogo();
   if(page==='entradas'){populateEntSalSucursales();renderHistEntradas();}
+  if(page==='bitacora')loadBitacora();
+  if(page==='usuarios'){loadUsuariosInternos();}
   if(page==='salidas'){populateEntSalSucursales();renderHistSalidas();}
   if(page==='gastos')renderGastos();
   if(page==='cuentas')renderCuentas();
