@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZapateriaPro v2.0</title>
+<title>Zapatería JABED</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <!-- Firebase -->
@@ -40,7 +40,7 @@ window._fb = { db, auth, storage:null, collection, doc, addDoc, setDoc, updateDo
 :root {
   --bg:#0a0a0f; --s1:#12121a; --s2:#1a1a25; --s3:#22222f; --s4:#2a2a3a;
   --border:#2e2e42; --border2:#3a3a52;
-  --accent:#6c63ff; --accent2:#8b84ff; --accent-dim:#2d2a6e;
+  --accent:#1a9e5c; --accent2:#25c97a; --accent-dim:#0a2e1a;
   --gold:#f0b429; --gold-dim:#5a4410;
   --cream:#e8e6f0; --muted:#7a7890; --faint:#3a3850;
   --red:#e05252; --green:#52c97a; --blue:#52a8e0; --orange:#e07a52;
@@ -80,7 +80,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
 .online-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .role-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.role-admin{background:#1a1060;color:var(--accent2)}
+.role-admin{background:#0a2e1a;color:var(--accent2)}
 .role-vendedor{background:#1a3a20;color:var(--green)}
 .role-bodega{background:#3a2a10;color:var(--gold)}
 .role-lectura{background:#2a2a2a;color:var(--muted)}
@@ -264,12 +264,12 @@ select option{background:var(--s2)}
 <body>
 
 <!-- LOADING -->
-<div id="loading"><div class="spin"></div><div class="load-logo">🥿 ZapateriaPro</div></div>
+<div id="loading"><div class="spin"></div><div class="load-logo">👟 Zapatería JABED</div></div>
 
 <!-- AUTH -->
 <div id="auth">
   <div class="auth-card">
-    <div class="auth-logo">🥿 ZapateriaPro <span style="font-size:13px;color:var(--muted)">v2.0</span></div>
+    <div class="auth-logo">👟 Zapatería JABED <span style="font-size:13px;color:var(--muted)">v2.0</span></div>
     <div class="auth-tagline">Sistema de Gestión en la Nube</div>
     <div class="tab-row">
       <button class="tab-btn on" id="tab-login" onclick="setAuthMode('login')">Iniciar Sesión</button>
@@ -290,7 +290,7 @@ select option{background:var(--s2)}
 <div id="app">
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="tb-logo">🥿 ZapateriaPro</div>
+    <div class="tb-logo">👟 Zapatería JABED</div>
     <div class="tb-store" id="tb-suc" onclick="showSucursalPicker()">📍 Cargando…</div>
     <div class="tb-spacer"></div>
     <div class="tb-user">
@@ -336,7 +336,13 @@ select option{background:var(--s2)}
         <div class="nav-item" id="nav-bitacora" onclick="go('bitacora',this)"><span class="ni">📜</span><span class="nt">Bitácora</span></div>
       </div>
       <div class="sidebar-foot">
-        <div style="font-size:10px;color:var(--faint);text-align:center">ZapateriaPro v2.0</div>
+        <div style="padding:8px 10px;border-top:1px solid var(--border)">
+          <div id="usr-activo-label" style="font-size:11px;color:var(--muted);margin-bottom:6px;text-align:center">—</div>
+          <button onclick="cambiarUsuario()" style="width:100%;padding:6px;background:var(--s3);border:1px solid var(--border);border-radius:7px;color:var(--muted);font-size:11px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'">
+            🔄 Cambiar Usuario
+          </button>
+        </div>
+        <div style="font-size:10px;color:var(--faint);text-align:center;padding:4px">Zapatería JABED</div>
       </div>
     </nav>
 
@@ -526,7 +532,7 @@ select option{background:var(--s2)}
                   <select id="sal-sucursal"></select>
                 </div>
                 <div class="fg"><label>Usuario Responsable</label>
-                  <input type="text" id="sal-usuario" placeholder="Nombre del responsable">
+                  <input type="text" id="sal-usuario" readonly style="background:var(--s3);color:var(--muted);cursor:not-allowed" placeholder="Auto">
                 </div>
               </div>
               <!-- Buscador -->
@@ -996,7 +1002,7 @@ select option{background:var(--s2)}
               </div>
               <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
                 Todos acceden con el correo <strong style="color:var(--cream)">jabedbp2026@gmail.com</strong> a Firebase,
-                pero dentro de ZapateriaPro cada uno tiene su propio usuario y contraseña.
+                pero dentro de Zapatería JABED cada uno tiene su propio usuario y contraseña.
               </div>
               <div class="tw"><table><thead><tr>
                 <th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th><th></th>
@@ -1167,9 +1173,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ ETIQUETAS ══════════ -->
         <div id="page-etiquetas" class="page">
-          <div class="tab-row" style="margin-bottom:16px;max-width:400px">
-            <button class="tab-btn on" id="etiq-tab-manual" onclick="setEtiqTab('manual')">Manual</button>
-            <button class="tab-btn" id="etiq-tab-entrada" onclick="setEtiqTab('entrada')">Por Entrada</button>
+          <div class="tab-row" style="margin-bottom:16px">
+            <button class="tab-btn on" id="etiq-tab-manual" onclick="setEtiqTab('manual')">🏷️ Manual</button>
+            <button class="tab-btn" id="etiq-tab-entrada" onclick="setEtiqTab('entrada')">📦 Por Entrada</button>
+            <button class="tab-btn btn-accent" onclick="abrirEtiquetaMuestra()" style="background:var(--s3);border:1px solid var(--border)">🪟 Etiqueta Muestra</button>
+            <button class="tab-btn btn-accent" onclick="abrirEtiquetaTextoLibre()" style="background:var(--s3);border:1px solid var(--border)">✏️ Texto Libre</button>
           </div>
 
           <!-- TAB MANUAL -->
@@ -1554,7 +1562,7 @@ select option{background:var(--s2)}
 <div id="usr-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;flex-direction:column">
   <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:500px;width:95%;text-align:center">
     <div style="font-size:36px;margin-bottom:8px">👟</div>
-    <div style="font-size:18px;font-weight:700;color:var(--cream);margin-bottom:4px">ZapateriaPro</div>
+    <div style="font-size:18px;font-weight:700;color:var(--cream);margin-bottom:4px">Zapatería JABED</div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Selecciona tu usuario</div>
     <div id="usr-overlay-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:16px"></div>
     <div id="usr-pin-section" style="display:none;margin-top:12px">
@@ -1563,6 +1571,29 @@ select option{background:var(--s2)}
         <input type="password" id="usr-pin-input" placeholder="••••••" style="width:180px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--cream);font-size:14px" onkeydown="if(event.key==='Enter')confirmarPin()">
         <button class="btn btn-accent" onclick="confirmarPin()">→ Entrar</button>
       </div>
+    </div>
+    <div style="margin-top:16px">
+      <button id="usr-cancelar-btn" onclick="cancelarSeleccionUsuario()" style="padding:7px 20px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--muted);font-size:12px;cursor:pointer">
+        ✕ Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editor de Permisos -->
+<div class="mo" id="mo-permisos">
+  <div class="md" style="max-width:560px">
+    <div class="mh"><div class="mt" id="ep-titulo">Permisos del usuario</div><button class="xbtn" onclick="closeM('mo-permisos')">✕</button></div>
+    <div class="mb">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="btn btn-ghost btn-sm" onclick="seleccionarTodosPermisos(true)">✅ Seleccionar todos</button>
+        <button class="btn btn-ghost btn-sm" onclick="seleccionarTodosPermisos(false)">☐ Quitar todos</button>
+      </div>
+      <div id="ep-modulos" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:360px;overflow-y:auto"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeM('mo-permisos')">Cancelar</button>
+      <button class="btn btn-accent" onclick="guardarPermisos()">💾 Guardar Permisos</button>
     </div>
   </div>
 </div>
@@ -1960,7 +1991,7 @@ async function saveProducto(){
     costo:parseFloat(document.getElementById('p-costo').value)||0,
     color:document.getElementById('p-color').value.trim(),
     notas:document.getElementById('p-notas').value.trim(),
-    locacion:window._tempLocacion||document.getElementById('p-locacion')?.value||'',
+    locacion:document.getElementById('p-locacion')?.value.trim()||'',
     stock,
     sucursalId:sucId,
     foto,
@@ -3976,7 +4007,8 @@ function populateEntSalSucursales(){
   });
   // Set usuario field from current user
   const uEl=document.getElementById('sal-usuario');
-  if(uEl&&currentProfile?.nombre)uEl.value=currentProfile.nombre;
+  const uActivo=typeof usuarioActivo!=='undefined'&&usuarioActivo?usuarioActivo:currentProfile;
+  if(uEl&&uActivo?.nombre)uEl.value=uActivo.nombre;
 }
 
 // ── ENTRADAS: buscar producto ──
@@ -4067,25 +4099,51 @@ async function registrarEntrada(){
   const proveedor=document.getElementById('ent-proveedor')?.value.trim()||'';
   const comentario=document.getElementById('ent-comentario')?.value.trim()||'';
   const sucId=document.getElementById('ent-sucursal')?.value||'';
-  if(!confirm(`¿Registrar entrada de ${entLineas.reduce((a,l)=>a+l.cantidad,0)} piezas?`))return;
+  const totalPiezas=entLineas.reduce((a,l)=>a+l.cantidad,0);
+  const usuarioActual=usuarioActivo||currentProfile;
+  const esAdmin=usuarioActual?.rol==='admin';
+  const descLineas=entLineas.map(l=>`${l.desc} T${l.talla} ×${l.cantidad}`).join(', ');
+  if(!confirm(`¿${esAdmin?'Registrar':'Enviar para aprobación'}: entrada de ${totalPiezas} piezas?`))return;
   try{
-    const {updateDoc}=window._fb;
-    // Update stock for each line
-    for(const linea of entLineas){
-      const p=productos.find(x=>x.id===linea.prodId); if(!p)continue;
-      const stockActual=(p.stock||{})[linea.talla]||0;
-      await updateDoc(docRef('productos',p.id),{[`stock.${linea.talla}`]:stockActual+linea.cantidad});
-    }
-    // Save entrada record
-    await window._fb.addDoc(col('entradas'),{
+    // Build the entrada record
+    const entradaData={
       tipo,proveedor,comentario,sucursalId:sucId,
       lineas:JSON.parse(JSON.stringify(entLineas)),
-      totalPiezas:entLineas.reduce((a,l)=>a+l.cantidad,0),
-      usuario:currentProfile?.nombre||'—',
+      totalPiezas,
+      usuario:usuarioActual?.nombre||'—',
+      usuarioRol:usuarioActual?.rol||'—',
       fecha:hoy(),hora:hora(),
+      estado:esAdmin?'aprobado':'pendiente',
+      aprobadoPor:esAdmin?(usuarioActual?.nombre||'Admin'):'',
+      createdAt:new Date().toISOString()
+    };
+    // Save entrada record  
+    const entRef=await window._fb.addDoc(col('entradas'),entradaData);
+    // Register in bitacora
+    await window._fb.addDoc(col('bitacora'),{
+      tipo:'entrada',
+      subTipo:tipo,
+      descripcion:`Entrada: ${descLineas}${proveedor?' | Prov: '+proveedor:''}`,
+      datos:{entradaId:entRef.id,lineas:JSON.parse(JSON.stringify(entLineas)),sucursalId:sucId},
+      usuario:usuarioActual?.nombre||'—',
+      usuarioRol:usuarioActual?.rol||'—',
+      fecha:hoy(),hora:hora(),
+      estado:esAdmin?'aprobado':'pendiente',
+      aprobadoPor:esAdmin?(usuarioActual?.nombre||'Admin'):'',
       createdAt:new Date().toISOString()
     });
-    toast(`Entrada registrada: ${entLineas.reduce((a,l)=>a+l.cantidad,0)} piezas ✓`);
+    // If admin: apply stock immediately
+    if(esAdmin){
+      const {updateDoc}=window._fb;
+      for(const linea of entLineas){
+        const p=productos.find(x=>x.id===linea.prodId); if(!p)continue;
+        const stockActual=(p.stock||{})[linea.talla]||0;
+        await updateDoc(docRef('productos',p.id),{[`stock.${linea.talla}`]:stockActual+linea.cantidad});
+      }
+      toast(`Entrada registrada y aplicada: ${totalPiezas} piezas ✓`);
+    }else{
+      toast(`✅ Entrada enviada para aprobación del administrador`);
+    }
     limpiarEntrada();
     renderHistEntradas();
   }catch(e){toast('Error: '+e.message,'err');console.error(e);}
@@ -4114,8 +4172,14 @@ async function renderHistEntradas(){
           <div>
             <span class="badge b-green" style="font-size:10px">📥 ${e.tipo||'compra'}</span>
             <span style="font-size:12px;color:var(--muted);margin-left:6px">${e.fecha} ${e.hora||''}</span>
+            ${e.estado==='pendiente'?'<span class="badge b-gold" style="font-size:10px;margin-left:4px">⏳ Pendiente aprobación</span>':e.estado==='aprobado'?'<span class="badge b-green" style="font-size:10px;margin-left:4px">✅ Aprobado</span>':''}
           </div>
           <span class="badge b-accent" style="font-size:11px">${e.totalPiezas||0} pzas</span>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:4px;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--cream)">👤 <b>${e.usuario||'—'}</b></span>
+          ${e.usuarioRol?`<span style="font-size:11px;color:var(--muted)">(${e.usuarioRol})</span>`:''}
+          ${e.aprobadoPor?`<span style="font-size:11px;color:var(--green)">✅ Aprobó: ${e.aprobadoPor}</span>`:''}
         </div>
         ${e.proveedor?`<div style="font-size:12px;color:var(--muted)">Proveedor: ${e.proveedor}</div>`:''}
         ${e.comentario?`<div style="font-size:12px;color:var(--muted)">Ref: ${e.comentario}</div>`:''}
@@ -4231,25 +4295,51 @@ async function registrarSalida(){
   if(!salLineas.length){toast('Agrega al menos un producto','err');return;}
   const tipo=document.getElementById('sal-tipo')?.value||'ajuste';
   const comentario=document.getElementById('sal-comentario')?.value.trim()||'';
-  const usuario=document.getElementById('sal-usuario')?.value.trim()||currentProfile?.nombre||'—';
   const sucId=document.getElementById('sal-sucursal')?.value||'';
   const totalBaja=salLineas.reduce((a,l)=>a+l.cantidad,0);
-  if(!confirm(`¿Dar de baja ${totalBaja} piezas? Esta acción reduce el inventario.`))return;
+  const usuarioActual=usuarioActivo||currentProfile;
+  const esAdmin=usuarioActual?.rol==='admin';
+  const descLineas=salLineas.map(l=>`${l.desc} T${l.talla} ×${l.cantidad}`).join(', ');
+  if(!confirm(`¿${esAdmin?'Dar de baja':'Enviar para aprobación'}: ${totalBaja} piezas?`))return;
   try{
-    const {updateDoc}=window._fb;
-    for(const linea of salLineas){
-      const p=productos.find(x=>x.id===linea.prodId); if(!p)continue;
-      const stockActual=(p.stock||{})[linea.talla]||0;
-      await updateDoc(docRef('productos',p.id),{[`stock.${linea.talla}`]:Math.max(0,stockActual-linea.cantidad)});
-    }
-    await window._fb.addDoc(col('salidas'),{
-      tipo,comentario,usuario,sucursalId:sucId,
+    const salidaData={
+      tipo,comentario,
+      usuario:usuarioActual?.nombre||'—',
+      usuarioRol:usuarioActual?.rol||'—',
+      sucursalId:sucId,
       lineas:JSON.parse(JSON.stringify(salLineas)),
       totalPiezas:totalBaja,
       fecha:hoy(),hora:hora(),
+      estado:esAdmin?'aprobado':'pendiente',
+      aprobadoPor:esAdmin?(usuarioActual?.nombre||'Admin'):'',
+      createdAt:new Date().toISOString()
+    };
+    const salRef=await window._fb.addDoc(col('salidas'),salidaData);
+    // Bitacora
+    await window._fb.addDoc(col('bitacora'),{
+      tipo:'salida',
+      subTipo:tipo,
+      descripcion:`Salida (${tipo}): ${descLineas}${comentario?' | '+comentario:''}`,
+      datos:{salidaId:salRef.id,lineas:JSON.parse(JSON.stringify(salLineas)),sucursalId:sucId},
+      usuario:usuarioActual?.nombre||'—',
+      usuarioRol:usuarioActual?.rol||'—',
+      fecha:hoy(),hora:hora(),
+      estado:esAdmin?'aprobado':'pendiente',
+      aprobadoPor:esAdmin?(usuarioActual?.nombre||'Admin'):'',
       createdAt:new Date().toISOString()
     });
-    toast(`Salida registrada: ${totalBaja} piezas dadas de baja ✓`);
+    // If admin: apply stock immediately
+    if(esAdmin){
+      const {updateDoc}=window._fb;
+      for(const linea of salLineas){
+        const p=productos.find(x=>x.id===linea.prodId); if(!p)continue;
+        const stockActual=(p.stock||{})[linea.talla]||0;
+        await updateDoc(docRef('productos',p.id),{[`stock.${linea.talla}`]:Math.max(0,stockActual-linea.cantidad)});
+      }
+      toast(`Salida registrada y aplicada: ${totalBaja} piezas ✓`);
+    }else{
+      toast(`✅ Salida enviada para aprobación del administrador`);
+    }
     limpiarSalida();
     renderHistSalidas();
   }catch(e){toast('Error: '+e.message,'err');console.error(e);}
@@ -5031,16 +5121,7 @@ function populateLocacionSelect(selectedVal){
     locs.map(l=>`<option value="${l}" ${l===selectedVal?'selected':''}>${l}</option>`).join('');
 }
 
-// Hook into saveProducto to include locacion
-const _origSaveProducto = saveProducto;
-async function saveProducto(){
-  // Collect locacion before calling original
-  const locEl = document.getElementById('p-locacion');
-  const locVal = locEl ? locEl.value : '';
-  // Temporarily store for use in the original function's data object
-  window._tempLocacion = locVal;
-  await _origSaveProducto();
-}
+// locacion is read directly in saveProducto via p-locacion element
 
 // ══════════════════ TAREA 3: USUARIOS INTERNOS ══════════════════
 // Sistema de usuarios internos — autenticación dentro de la app
@@ -5049,12 +5130,18 @@ async function saveProducto(){
 let usuariosInternos = []; // loaded from Firestore
 let usuarioActivo = null;  // {id, nombre, rol, pin}
 
-const PERMISOS_ROL = {
-  admin:    ['inventario','catalogo','entradas','salidas','pos','historial','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','sucursales','usuarios','importar'],
+const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','sucursales','usuarios','importar','bitacora'];
+const PERMISOS_ROL_DEFAULT = {
+  admin:    [...TODOS_MODULOS],
   vendedor: ['pos','historial','clientes','cuentas','inventario','catalogo'],
   bodeguero:['inventario','catalogo','entradas','salidas','transfer','etiquetas'],
   lectura:  ['inventario','catalogo','historial','reportes','resumen']
 };
+function getPermisosUsuario(u){
+  // If user has custom permisos saved, use them; else use role defaults
+  if(u?.permisos&&Array.isArray(u.permisos)&&u.permisos.length>0) return u.permisos;
+  return PERMISOS_ROL_DEFAULT[u?.rol||'vendedor']||PERMISOS_ROL_DEFAULT.vendedor;
+}
 
 async function loadUsuariosInternos(){
   try{
@@ -5186,7 +5273,7 @@ function confirmarPin(){
 
 function aplicarPermisosNav(){
   const rol = usuarioActivo?.rol || currentProfile?.rol || 'admin';
-  const perms = PERMISOS_ROL[rol] || PERMISOS_ROL.admin;
+  const perms = getPermisosUsuario(usuarioActivo||{rol});
   // Hide/show nav items
   const navMap = {
     'nav-inv':'inventario','nav-prods':'catalogo','nav-entradas':'entradas',
@@ -5265,12 +5352,38 @@ function renderBitacora(movs){
 async function aprobarMovimiento(id){
   const user = usuarioActivo || currentProfile;
   if((user?.rol||'')!=='admin'){ toast('Solo el administrador puede aprobar','err'); return; }
-  await window._fb.setDoc(docRef('bitacora',id),{
-    estado:'aprobado', aprobadoPor: user?.nombre||'Admin',
-    aprobadoEn: new Date().toISOString()
-  },{merge:true});
-  toast('Movimiento aprobado ✓');
-  loadBitacora();
+  // Get bitacora entry to apply changes
+  try{
+    const bSnap = await window._fb.getDoc(docRef('bitacora',id));
+    if(!bSnap.exists()){ toast('Movimiento no encontrado','err'); return; }
+    const mov = bSnap.data();
+    const {updateDoc} = window._fb;
+    // Apply stock changes
+    if(mov.tipo==='entrada'&&mov.datos?.lineas){
+      for(const linea of mov.datos.lineas){
+        const p=productos.find(x=>x.id===linea.prodId); if(!p)continue;
+        const stockActual=(p.stock||{})[linea.talla]||0;
+        await updateDoc(docRef('productos',p.id),{[`stock.${linea.talla}`]:stockActual+linea.cantidad});
+      }
+      // Mark entrada as aprobado too
+      if(mov.datos.entradaId) await window._fb.setDoc(docRef('entradas',mov.datos.entradaId),{estado:'aprobado',aprobadoPor:user?.nombre||'Admin'},{merge:true});
+    }
+    if(mov.tipo==='salida'&&mov.datos?.lineas){
+      for(const linea of mov.datos.lineas){
+        const p=productos.find(x=>x.id===linea.prodId); if(!p)continue;
+        const stockActual=(p.stock||{})[linea.talla]||0;
+        await updateDoc(docRef('productos',p.id),{[`stock.${linea.talla}`]:Math.max(0,stockActual-linea.cantidad)});
+      }
+      if(mov.datos.salidaId) await window._fb.setDoc(docRef('salidas',mov.datos.salidaId),{estado:'aprobado',aprobadoPor:user?.nombre||'Admin'},{merge:true});
+    }
+    // Mark bitacora entry as approved
+    await window._fb.setDoc(docRef('bitacora',id),{
+      estado:'aprobado', aprobadoPor: user?.nombre||'Admin',
+      aprobadoEn: new Date().toISOString()
+    },{merge:true});
+    toast('Movimiento aprobado y aplicado al inventario ✓');
+    loadBitacora();
+  }catch(e){ toast('Error al aprobar: '+e.message,'err'); console.error(e); }
 }
 
 async function rechazarMovimiento(id){
@@ -5283,6 +5396,289 @@ async function rechazarMovimiento(id){
   },{merge:true});
   toast('Movimiento rechazado');
   loadBitacora();
+}
+
+
+
+// ══════════════════ TAREA 3: EDITOR DE PERMISOS POR USUARIO ══════════════════
+const MODULO_LABELS = {
+  'inventario':'📦 Inventario','catalogo':'🗂️ Catálogo General',
+  'entradas':'📥 Entrada Mercancía','salidas':'📤 Salida Mercancía',
+  'pos':'🛒 Punto de Venta','historial':'📋 Historial Ventas',
+  'clientes':'👤 Clientes','transfer':'↔️ Transferencias',
+  'cuentas':'📒 Apartados/Créditos','gastos':'💸 Gastos',
+  'corte':'🏦 Corte de Caja','reportes':'📈 Reportes',
+  'resumen':'📊 Resumen Anual','promociones':'🎁 Promociones',
+  'catalogos-cfg':'📋 Catálogos','etiquetas':'🏷️ Etiquetas',
+  'sucursales':'🏪 Sucursales','usuarios':'👥 Usuarios y Roles',
+  'importar':'📥 Importar CSV','bitacora':'📜 Bitácora'
+};
+
+let editPermisosUsrId = null;
+
+function abrirEditorPermisos(id){
+  editPermisosUsrId = id;
+  const u = usuariosInternos.find(x=>x.id===id); if(!u) return;
+  const permsActuales = getPermisosUsuario(u);
+  document.getElementById('ep-titulo').textContent = 'Permisos de: '+u.nombre;
+  const grid = document.getElementById('ep-modulos');
+  grid.innerHTML = TODOS_MODULOS.map(m=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
+      <input type="checkbox" id="ep-${m}" value="${m}" ${permsActuales.includes(m)?'checked':''} style="width:15px;height:15px;accent-color:var(--accent)">
+      <span style="font-size:13px;color:var(--cream)">${MODULO_LABELS[m]||m}</span>
+    </label>`).join('');
+  // Pre-check by default based on role
+  openM('mo-permisos');
+}
+
+function seleccionarTodosPermisos(val){
+  TODOS_MODULOS.forEach(m=>{
+    const cb=document.getElementById('ep-'+m); if(cb) cb.checked=val;
+  });
+}
+
+async function guardarPermisos(){
+  if(!editPermisosUsrId) return;
+  const permsSeleccionados = TODOS_MODULOS.filter(m=>{
+    const cb=document.getElementById('ep-'+m); return cb&&cb.checked;
+  });
+  try{
+    await window._fb.setDoc(docRef('usuariosInternos',editPermisosUsrId),
+      {permisos:permsSeleccionados},{merge:true});
+    // Update local cache
+    const idx=usuariosInternos.findIndex(x=>x.id===editPermisosUsrId);
+    if(idx>=0)usuariosInternos[idx].permisos=permsSeleccionados;
+    closeM('mo-permisos');
+    toast('Permisos guardados ✓');
+    // If this is the active user, re-apply nav
+    if(usuarioActivo?.id===editPermisosUsrId){
+      usuarioActivo.permisos=permsSeleccionados;
+      aplicarPermisosNav();
+    }
+  }catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+// Override renderUsuariosInternos to add permisos button
+function renderUsuariosInternos(){
+  const tbody = document.getElementById('usr-interno-tbody');
+  if(!tbody) return;
+  const rolLabel = {admin:'👑 Admin', vendedor:'🏷️ Vendedor', bodeguero:'📦 Bodeguero', lectura:'👁️ Solo Lectura'};
+  tbody.innerHTML = usuariosInternos.map(u=>`<tr>
+    <td style="font-weight:600;color:var(--cream)">${u.nombre}</td>
+    <td style="font-family:var(--mono);color:var(--muted)">${u.usuario}</td>
+    <td><span class="badge b-purple">${rolLabel[u.rol]||u.rol}</span></td>
+    <td style="color:var(--muted)">${u.activo!==false?'✅ Activo':'⏸️ Inactivo'}</td>
+    <td>
+      <div class="flex-row" style="gap:3px">
+        <button class="btn btn-ghost btn-xs" onclick="editUsuarioInterno('${u.id}')">✏️</button>
+        <button class="btn btn-accent btn-xs" onclick="abrirEditorPermisos('${u.id}')">🔐 Permisos</button>
+        <button class="btn btn-red btn-xs" onclick="deleteUsuarioInterno('${u.id}')">🗑️</button>
+      </div>
+    </td>
+  </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Sin usuarios creados</td></tr>';
+}
+
+// ══════════════════ TAREA 4: ETIQUETAS EXTRA ══════════════════
+
+// ── Etiqueta de Muestra: FRENTE y REVERSO ──
+function abrirEtiquetaMuestra(){
+  // Get selected product from etiq page if any
+  const p = etiqProdSel;
+  const win = window.open('','_blank','width=700,height=620');
+  const now = new Date();
+  const f = String(now.getFullYear()).slice(2)+'/'+String(now.getMonth()+1).padStart(2,'0');
+  const desc  = p ? (p.desc||'').toUpperCase() : 'DESCRIPCIÓN DEL PRODUCTO';
+  const precio= p ? '$'+(p.precio||0).toLocaleString('es-MX',{minimumFractionDigits:2}) : '$0.00';
+  const sku   = p ? (p.sku||p.barcode||'—') : '—';
+  const loc   = p ? (p.locacion||'—') : '—';
+  const tallasDisp = p ? Object.entries(p.stock||{}).filter(([,v])=>v>0).map(([t])=>t).join(' · ') || '—' : '—';
+
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Arial Narrow',Arial,sans-serif;background:#ccc;padding:20px}
+    .no-print{background:#fff;border-radius:8px;padding:12px;margin-bottom:14px;display:flex;gap:10px;align-items:center}
+    .pair{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    .label-face{
+      width:51mm;height:25mm;background:#fff;border:0.5px solid #999;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:1mm 2mm;overflow:hidden;
+    }
+    /* FRENTE */
+    .sku-txt{font-size:6pt;color:#555;margin-bottom:1mm;letter-spacing:0.5pt}
+    .big-desc{font-size:9pt;font-weight:800;color:#000;text-align:center;line-height:1.2;margin-bottom:1.5mm;max-height:14mm;overflow:hidden}
+    .big-price{font-size:16pt;font-weight:900;color:#000;letter-spacing:-0.5pt}
+    /* REVERSO */
+    .rev-title{font-size:5.5pt;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.5pt;margin-bottom:1mm;border-bottom:0.3mm solid #000;padding-bottom:0.3mm;width:100%;text-align:center}
+    .rev-tallas{font-size:8pt;font-weight:700;color:#000;text-align:center;letter-spacing:1pt;line-height:1.4}
+    .rev-loc{font-size:6.5pt;color:#444;margin-top:1.5mm;text-align:center}
+    @media print{
+      *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+      body{background:#fff!important;padding:0!important}
+      .no-print{display:none!important}
+      .pair{gap:0;display:block}
+      .label-face{border:none!important;width:51mm!important;height:25mm!important;page-break-after:always;page-break-inside:avoid;margin:0}
+      .label-face:last-child{page-break-after:avoid}
+      @page{size:51mm 25mm;margin:0mm}
+    }
+  </style></head><body>
+  <div class="no-print">
+    <button onclick="window.print()" style="padding:8px 20px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold">🖨️ Imprimir (Frente + Reverso)</button>
+    <button onclick="window.close()" style="padding:8px 14px;background:#eee;border:1px solid #ccc;border-radius:6px;cursor:pointer">✕ Cerrar</button>
+    <span style="font-size:11px;color:#666">📌 Ctrl+Shift+P → 4BARCODE → etiqueta jabed 51x25 → Sin márgenes</span>
+  </div>
+  <div class="pair">
+    <!-- FRENTE -->
+    <div class="label-face" style="border-radius:4px">
+      <div class="sku-txt">${sku}</div>
+      <div class="big-desc">${desc}</div>
+      <div class="big-price">${precio}</div>
+    </div>
+    <!-- REVERSO -->
+    <div class="label-face" style="border-radius:4px">
+      <div class="rev-title">Tallas disponibles</div>
+      <div class="rev-tallas">${tallasDisp}</div>
+      <div class="rev-loc">📍 Loc: ${loc}</div>
+    </div>
+  </div>
+  </body></html>`);
+  win.document.close();
+}
+
+// ── Etiqueta de Texto Libre ──
+function abrirEtiquetaTextoLibre(){
+  const win = window.open('','_blank','width=720,height=680');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;background:#ccc;padding:20px}
+    .no-print{background:#fff;border-radius:8px;padding:14px;margin-bottom:14px}
+    .controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    .controls label{display:block;font-size:11px;color:#555;margin-bottom:3px}
+    .controls input,.controls select,.controls textarea{width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:6px;font-size:13px}
+    .controls textarea{height:60px;resize:vertical}
+    .preview-label{width:51mm;height:25mm;background:#fff;border:0.5px solid #999;border-radius:3px;
+      display:flex;flex-direction:column;overflow:hidden;margin-bottom:12px}
+    .pl-header{background:#000;color:#fff;padding:1.5mm 2mm;font-size:5.5pt;font-weight:700;display:flex;justify-content:space-between}
+    .pl-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5mm 2.5mm;text-align:center}
+    .pl-line1{font-size:var(--l1size,9pt);font-weight:800;color:#000;line-height:1.2;margin-bottom:1mm}
+    .pl-line2{font-size:var(--l2size,7pt);font-weight:600;color:#222;line-height:1.3;margin-bottom:1mm}
+    .pl-line3{font-size:var(--l3size,7pt);color:#444;line-height:1.3}
+    @media print{
+      *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+      body{background:#fff!important;padding:0!important}
+      .no-print{display:none!important}
+      .preview-label{border:none!important;width:51mm!important;height:25mm!important;page-break-after:always;margin:0}
+      @page{size:51mm 25mm;margin:0mm}
+    }
+  </style></head><body>
+  <div class="no-print">
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px">✏️ Etiqueta de Texto Libre — 51×25mm</div>
+    <div class="controls">
+      <div>
+        <label>Encabezado (fondo negro)</label>
+        <input id="tl-head" value="ZAPATERÍA JABED" oninput="renderTL()">
+      </div>
+      <div>
+        <label>Texto derecho (encabezado)</label>
+        <input id="tl-head2" value="" placeholder="Ej: OFERTA" oninput="renderTL()">
+      </div>
+      <div>
+        <label>Línea 1 (grande)</label>
+        <input id="tl-l1" placeholder="Ej: SANDALIA DAMA" oninput="renderTL()">
+      </div>
+      <div>
+        <label>Tamaño L1</label>
+        <select id="tl-l1s" onchange="renderTL()">
+          <option value="10pt">Muy grande</option>
+          <option value="8pt" selected>Grande</option>
+          <option value="7pt">Mediano</option>
+        </select>
+      </div>
+      <div>
+        <label>Línea 2</label>
+        <input id="tl-l2" placeholder="Ej: VARIOS COLORES" oninput="renderTL()">
+      </div>
+      <div>
+        <label>Línea 3</label>
+        <input id="tl-l3" placeholder="Ej: TALLAS: 4-9" oninput="renderTL()">
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <label style="font-size:12px;color:#555">Copias:</label>
+      <input type="number" id="tl-copias" value="1" min="1" max="50" style="width:60px;padding:5px;border:1px solid #ccc;border-radius:6px" oninput="renderTL()">
+      <button onclick="window.print()" style="padding:8px 20px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;margin-left:auto">🖨️ Imprimir</button>
+      <button onclick="window.close()" style="padding:8px 14px;background:#eee;border:1px solid #ccc;border-radius:6px;cursor:pointer">✕</button>
+    </div>
+    <div style="font-size:11px;color:#888">Vista previa:</div>
+  </div>
+  <div id="tl-preview"></div>
+  <script>
+  function renderTL(){
+    const head=document.getElementById('tl-head').value||'';
+    const head2=document.getElementById('tl-head2').value||'';
+    const l1=document.getElementById('tl-l1').value||'';
+    const l2=document.getElementById('tl-l2').value||'';
+    const l3=document.getElementById('tl-l3').value||'';
+    const l1s=document.getElementById('tl-l1s').value||'8pt';
+    const copias=parseInt(document.getElementById('tl-copias').value)||1;
+    const lbl=\`<div class="preview-label" style="--l1size:\${l1s}">
+      <div class="pl-header"><span>\${head}</span><span>\${head2}</span></div>
+      <div class="pl-body">
+        <div class="pl-line1">\${l1}</div>
+        <div class="pl-line2">\${l2}</div>
+        <div class="pl-line3">\${l3}</div>
+      </div>
+    </div>\`;
+    document.getElementById('tl-preview').innerHTML=Array(copias).fill(lbl).join('');
+  }
+  renderTL();
+  <\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+// ══════════════════ TAREA 5: CAMBIAR USUARIO ══════════════════
+function cambiarUsuario(){
+  usuarioActivo = null;
+  mostrarPantallaUsuarios();
+}
+
+function cancelarSeleccionUsuario(){
+  // Only allow cancel if there's already an active user
+  if(usuarioActivo){
+    document.getElementById('usr-overlay').style.display='none';
+  } else {
+    // If no user selected yet and there are users configured, force selection
+    if(usuariosInternos.filter(u=>u.activo!==false).length > 0){
+      toast('Debes seleccionar un usuario para continuar','err');
+    } else {
+      document.getElementById('usr-overlay').style.display='none';
+    }
+  }
+}
+
+// Update confirmarPin to update sidebar label
+const _origConfirmarPin = confirmarPin;
+function confirmarPin(){
+  const id = window._usrSelId; if(!id) return;
+  const u  = usuariosInternos.find(x=>x.id===id); if(!u) return;
+  const pin = document.getElementById('usr-pin-input').value.trim();
+  if(btoa(pin) !== u.pin){
+    toast('Contraseña incorrecta','err'); return;
+  }
+  usuarioActivo = u;
+  document.getElementById('usr-overlay').style.display = 'none';
+  aplicarPermisosNav();
+  toast('Bienvenido, '+u.nombre+' ✓');
+  const rb = document.getElementById('role-badge');
+  if(rb) rb.textContent = u.nombre+' ('+u.rol+')';
+  // Update sidebar label
+  const lbl = document.getElementById('usr-activo-label');
+  if(lbl) lbl.textContent = '👤 '+u.nombre+' · '+u.rol;
+  // Also update sal-usuario
+  const uEl = document.getElementById('sal-usuario');
+  if(uEl) uEl.value = u.nombre;
 }
 
 
