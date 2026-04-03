@@ -2728,93 +2728,102 @@ function imprimirEtiqEntrada(){
 }
 
 function abrirVentanaEtiquetas(items){
-  const barcodes=items.map(x=>x.p.barcode||x.p.sku||'');
-  const now=new Date();
-  const fechaImp=String(now.getFullYear()).slice(2)+'/'+String(now.getMonth()+1).padStart(2,'0');
-  const prodData=items.map(x=>({
-    sku:x.p.sku||x.p.barcode||'',
-    desc:(x.p.desc||'').toUpperCase(),
-    marca:(x.p.marca||'SIN MARCA').toUpperCase(),
-    color:(x.p.color||'').toUpperCase(),
-    precio:x.p.precio||0,
-    talla:String(x.t),
-    bc:x.p.barcode||x.p.sku||''
+  const barcodes = items.map(x => x.p.barcode || x.p.sku || '');
+  const now = new Date();
+  const fechaImp = String(now.getFullYear()).slice(2) + '/' + String(now.getMonth()+1).padStart(2,'0');
+
+  const prodData = items.map(x => ({
+    sku:   x.p.sku   || x.p.barcode || '',
+    desc:  (x.p.desc  || '').toUpperCase(),
+    marca: (x.p.marca || 'SIN MARCA').toUpperCase(),
+    color: (x.p.color || '').toUpperCase(),
+    precio: x.p.precio || 0,
+    talla:  String(x.t),
+    bc:     x.p.barcode || x.p.sku || '',
+    estilo: x.p.sku || x.p.barcode || ''
   }));
 
-  const win=window.open('','_blank','width=750,height=680');
+  const win = window.open('','_blank','width=760,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Arial Narrow',Arial,sans-serif;background:#d0d0d0;padding:16px}
+    body{font-family:'Arial Narrow',Arial,sans-serif;background:#ccc;padding:16px}
 
     .no-print{
       background:#fff;border-radius:8px;padding:12px 16px;margin-bottom:16px;
-      display:flex;gap:10px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.2);
-      flex-wrap:wrap;
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+      box-shadow:0 2px 8px rgba(0,0,0,.2);
     }
     .preview-grid{display:flex;flex-wrap:wrap;gap:10px}
 
-    /* ═══ ETIQUETA 51×25mm ═══ */
+    /*
+    ┌──────────────────────────────────────────────────────┐
+    │ ZAPATERIA JABED                           26/04      │
+    │──────────────────────────────────────────────────────│
+    │ NAVARROS          ┌──────┐                           │
+    │ ESCOLAR NINA      │  QR  │              $235.00      │
+    │ NEGRO             │      │                           │
+    │ Estilo: 505       └──────┘                  ┌────┐  │
+    │ 505                                          │ 17 │  │
+    └──────────────────────────────────────────────┴────┘  │
+    Tamaño: 51mm × 25mm
+    */
+
     .etiq{
       width:51mm;
       height:25mm;
       background:#fff;
       border:0.5px solid #999;
-      display:flex;
-      flex-direction:column;
-      /* Margen izquierdo amplio para que no se corte */
-      padding:0.8mm 0.5mm 0.3mm 4mm;
+      display:grid;
+      /* Columnas: texto | QR | talla */
+      grid-template-columns: 1fr 11mm 10mm;
+      grid-template-rows: auto 1fr;
       overflow:hidden;
+      padding:0;
     }
 
-    /* ROW 1: ZAPATERIA JABED ─── 26/04 */
-    .r1{
+    /* FILA 1: header ocupa todo el ancho */
+    .e-header{
+      grid-column: 1 / 4;
       display:flex;justify-content:space-between;align-items:center;
       border-bottom:0.5mm solid #000;
-      padding-bottom:0.3mm;margin-bottom:0.4mm;
-      flex-shrink:0;
+      padding:0.6mm 1.5mm 0.4mm 3.5mm;
     }
-    .r1-tienda{font-size:5pt;font-weight:700;letter-spacing:0.4pt;color:#000}
-    .r1-fecha{font-size:5pt;color:#222;font-weight:600}
+    .e-tienda{font-size:5pt;font-weight:700;letter-spacing:0.5pt;color:#000}
+    .e-fecha{font-size:5pt;color:#333;font-weight:600}
 
-    /* ROW 2: MARCA */
-    .r2{
-      font-size:8pt;font-weight:700;color:#000;
-      line-height:1.05;margin-bottom:0.25mm;flex-shrink:0;
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    /* COLUMNA IZQUIERDA: texto del producto */
+    .e-texto{
+      grid-column:1;grid-row:2;
+      display:flex;flex-direction:column;justify-content:center;
+      padding:0.5mm 0.5mm 0.5mm 3.5mm;
+      overflow:hidden;
     }
+    .e-marca{font-size:7.5pt;font-weight:700;color:#000;line-height:1.1;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .e-desc{font-size:6pt;font-weight:700;color:#000;line-height:1.15;
+      overflow:hidden;max-height:3em}
+    .e-color{font-size:5pt;color:#333;line-height:1.2}
+    .e-estilo{font-size:5.5pt;color:#000;font-weight:600;line-height:1.2}
+    .e-precio{font-size:9pt;font-weight:700;color:#000;margin-top:0.3mm}
 
-    /* ROW 3: DESC + PRECIO */
-    .r3{display:flex;justify-content:space-between;align-items:baseline;
-        margin-bottom:0.25mm;flex-shrink:0}
-    .r3-desc{
-      font-size:6.5pt;font-weight:700;color:#000;
-      flex:1;line-height:1.1;max-width:28mm;overflow:hidden;
+    /* COLUMNA CENTRO: QR */
+    .e-qr{
+      grid-column:2;grid-row:2;
+      display:flex;align-items:center;justify-content:center;
+      padding:0.5mm;
     }
-    .r3-precio{font-size:10pt;font-weight:700;color:#000;white-space:nowrap;margin-left:1mm}
-
-    /* ROW 4: COLOR */
-    .r4{font-size:5.5pt;color:#222;flex-shrink:0;line-height:1;margin-bottom:0.8mm}
-
-    /* ROW 5: BARCODE — centrado horizontalmente, sin talla abajo */
-    .r5{
-      display:flex;align-items:center;justify-content:space-between;
-      flex:1;min-height:0;
-    }
-    .r5-bc{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start}
-    .r5-bc svg{display:block;width:100%;max-width:33mm}
-    .r5-bcnum{
-      font-size:5pt;color:#000;font-family:'Courier New',monospace;
-      font-weight:700;letter-spacing:0.6pt;margin-top:0.15mm;white-space:nowrap;
+    .e-qr canvas, .e-qr img{
+      width:10mm!important;height:10mm!important;
+      display:block;
     }
 
-    /* TALLA en cuadro negro — alineado al centro vertical con el barcode */
-    .r5-talla{
-      width:10mm;height:10mm;
+    /* COLUMNA DERECHA: talla en cuadro negro */
+    .e-talla{
+      grid-column:3;grid-row:2;
       background:#000;color:#fff;
       display:flex;align-items:center;justify-content:center;
-      flex-shrink:0;margin-left:2mm;
       font-family:Arial,sans-serif;font-weight:900;line-height:1;
     }
 
@@ -2829,65 +2838,62 @@ function abrirVentanaEtiquetas(items){
         width:51mm!important;height:25mm!important;
         page-break-after:always;page-break-inside:avoid;
         margin:0;
-        /* Mismo padding que pantalla para que la impresión coincida */
-        padding:0.8mm 0.5mm 0.3mm 4mm;
       }
       .etiq:last-child{page-break-after:avoid}
-      .r5-talla{background:#000!important;color:#fff!important}
+      .e-talla{background:#000!important;color:#fff!important}
       @page{size:51mm 25mm;margin:0mm}
     }
   <\/style></head><body>
   <div class="no-print">
     <button onclick="window.print()" style="padding:8px 22px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:bold">🖨️ Imprimir ${items.length} etiqueta(s)</button>
     <button onclick="window.close()" style="padding:8px 14px;background:#f0f0f0;border:1px solid #ccc;border-radius:6px;cursor:pointer;font-size:13px">✕ Cerrar</button>
-    <span style="font-size:11px;color:#555">📌 <strong>Ctrl+Shift+P</strong> → 4BARCODE 4B-2054A → etiqueta jabed 51x25 → Márgenes: Ninguno</span>
+    <span style="font-size:11px;color:#555">📌 <strong>Ctrl+Shift+P</strong> → 4BARCODE → etiqueta jabed 51x25 → Márgenes: Ninguno</span>
   </div>
   <div class="preview-grid">
-  ${prodData.map((p,i)=>{
-    const tf = p.talla.length<=2?'13px':p.talla.length===3?'11px':'9px';
-    return`<div class="etiq">
-    <div class="r1">
-      <span class="r1-tienda">ZAPATERIA JABED</span>
-      <span class="r1-fecha">${fechaImp}</span>
-    </div>
-    <div class="r2">${p.marca}</div>
-    <div class="r3">
-      <div class="r3-desc">${p.desc}</div>
-      <div class="r3-precio">$${Number(p.precio).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
-    </div>
-    <div class="r4">${p.color||'&nbsp;'}</div>
-    <div class="r5">
-      <div class="r5-bc">
-        ${p.bc?`<svg id="bc${i}"></svg><div class="r5-bcnum">${p.bc}</div>`:''}
+  ${prodData.map((p,i) => {
+    const tf = p.talla.length <= 2 ? '12px' : p.talla.length === 3 ? '10px' : '8px';
+    return `<div class="etiq">
+
+      <!-- HEADER -->
+      <div class="e-header">
+        <span class="e-tienda">ZAPATERIA JABED</span>
+        <span class="e-fecha">${fechaImp}</span>
       </div>
-      <div class="r5-talla" style="font-size:${tf}">${p.talla}</div>
-    </div>
-  </div>`;}).join('')}
+
+      <!-- TEXTO -->
+      <div class="e-texto">
+        <div class="e-marca">${p.marca}</div>
+        <div class="e-desc">${p.desc}</div>
+        <div class="e-color">${p.color||'&nbsp;'}</div>
+        <div class="e-estilo">Estilo: ${p.estilo||p.sku||'—'}</div>
+        <div class="e-precio">$${Number(p.precio).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+      </div>
+
+      <!-- QR -->
+      <div class="e-qr" id="qr-wrap-${i}"></div>
+
+      <!-- TALLA -->
+      <div class="e-talla" style="font-size:${tf}">${p.talla}</div>
+
+    </div>`;
+  }).join('')}
   </div>
   <script>
-    var bcs=${JSON.stringify(barcodes)};
-    bcs.forEach(function(bc,i){
-      if(!bc)return;
-      var svg=document.getElementById('bc'+i);
-      if(!svg)return;
+    var qrData = ${JSON.stringify(barcodes)};
+    qrData.forEach(function(bc, i){
+      if(!bc) return;
+      var wrap = document.getElementById('qr-wrap-' + i);
+      if(!wrap) return;
       try{
-        JsBarcode(svg,bc,{
-          format:'CODE128',
-          width:2.2,      /* grosor barra — 2.2 legible para Zebra */
-          height:22,      /* altura px */
-          displayValue:false,
-          margin:0,
-          background:'#ffffff',
-          lineColor:'#000000'
+        new QRCode(wrap, {
+          text: bc,
+          width:  38,   /* px — se ajusta a 10mm en pantalla via CSS */
+          height: 38,
+          colorDark:  '#000000',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
         });
-        /* Forzar el SVG a ocupar todo el ancho disponible */
-        svg.removeAttribute('width');
-        svg.removeAttribute('height');
-        svg.style.width='100%';
-        svg.style.maxWidth='33mm';
-        svg.style.height='22px';
-        svg.style.display='block';
-      }catch(e){}
+      }catch(e){ wrap.innerHTML='<div style="font-size:6px;color:#999">Sin QR</div>'; }
     });
   <\/script></body></html>`);
   win.document.close();
