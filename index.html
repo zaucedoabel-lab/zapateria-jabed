@@ -1761,6 +1761,7 @@ select option{background:var(--s2)}
           <select id="ui-rol">
             <option value="admin">👑 Administrador</option>
             <option value="manager">⭐ Manager</option>
+            <option value="supervisor">🔎 Supervisor</option>
             <option value="vendedor" selected>🏷️ Vendedor</option>
             <option value="bodeguero">📦 Bodeguero</option>
             <option value="lectura">👁️ Solo Lectura</option>
@@ -5659,16 +5660,86 @@ let usuarioActivo = null;  // {id, nombre, rol, pin}
 
 const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','sucursales','usuarios','importar','bitacora'];
 const PERMISOS_ROL_DEFAULT = {
-  admin:    [...TODOS_MODULOS],
-  manager:  [...TODOS_MODULOS], // Manager = same as admin + can delete from historial
-  vendedor: ['pos','historial','clientes','cuentas','inventario','catalogo'],
-  bodeguero:['inventario','catalogo','entradas','salidas','transfer','etiquetas'],
-  lectura:  ['inventario','catalogo','historial','reportes','resumen']
+  admin:      [...TODOS_MODULOS],
+  manager:    [...TODOS_MODULOS],
+  supervisor: [],  // Empty by default — Abel assigns modules manually
+  vendedor:   ['pos','historial','clientes','cuentas','inventario','catalogo'],
+  bodeguero:  ['inventario','catalogo','entradas','salidas','transfer','etiquetas'],
+  lectura:    ['inventario','catalogo','historial','reportes','resumen']
 };
+// Roles that DON'T need to re-identify on every module change
+const ROLES_SIN_REAUTH = ['supervisor'];
 function getPermisosUsuario(u){
   // If user has custom permisos saved, use them; else use role defaults
   if(u?.permisos&&Array.isArray(u.permisos)&&u.permisos.length>0) return u.permisos;
   return PERMISOS_ROL_DEFAULT[u?.rol||'vendedor']||PERMISOS_ROL_DEFAULT.vendedor;
+}
+
+// ══════════════════ INTERNAL USER CRUD ══════════════════
+let _editUsrInternoId = null;
+
+function nuevoUsuarioInterno(){
+  _editUsrInternoId = null;
+  document.getElementById('ui-title').textContent = 'Nuevo Usuario';
+  ['ui-nombre','ui-usuario','ui-pin'].forEach(id=>{
+    const el=document.getElementById(id); if(el)el.value='';
+  });
+  document.getElementById('ui-rol').value='vendedor';
+  document.getElementById('ui-activo').value='1';
+  openM('mo-usuario-interno');
+}
+
+function editUsuarioInterno(id){
+  _editUsrInternoId = id;
+  const u = usuariosInternos.find(x=>x.id===id);
+  if(!u){ toast('Usuario no encontrado','err'); return; }
+  document.getElementById('ui-title').textContent = 'Editar: ' + u.nombre;
+  document.getElementById('ui-nombre').value = u.nombre||'';
+  document.getElementById('ui-usuario').value = u.usuario||'';
+  document.getElementById('ui-pin').value = ''; // leave blank = no change
+  document.getElementById('ui-pin').placeholder = 'Dejar vacío para no cambiar';
+  document.getElementById('ui-rol').value = u.rol||'vendedor';
+  document.getElementById('ui-activo').value = u.activo!==false?'1':'0';
+  openM('mo-usuario-interno');
+}
+
+async function saveUsuarioInterno(){
+  const nombre = document.getElementById('ui-nombre')?.value.trim();
+  const usuario = document.getElementById('ui-usuario')?.value.trim();
+  const pinRaw = document.getElementById('ui-pin')?.value.trim();
+  const rol = document.getElementById('ui-rol')?.value||'vendedor';
+  const activo = document.getElementById('ui-activo')?.value==='1';
+  if(!nombre){toast('Ingresa el nombre','err');return;}
+  if(!usuario){toast('Ingresa el nombre de usuario','err');return;}
+  // New user requires password
+  if(!_editUsrInternoId && !pinRaw){toast('La contraseña es obligatoria para nuevo usuario','err');return;}
+  const data = {nombre, usuario, rol, activo};
+  if(pinRaw) data.pin = btoa(pinRaw); // encode
+  try{
+    if(_editUsrInternoId){
+      await window._fb.setDoc(docRef('usuariosInternos',_editUsrInternoId), data, {merge:true});
+      const idx = usuariosInternos.findIndex(x=>x.id===_editUsrInternoId);
+      if(idx>=0) usuariosInternos[idx] = {...usuariosInternos[idx], ...data};
+      toast('Usuario actualizado ✓');
+    } else {
+      const ref = await window._fb.addDoc(col('usuariosInternos'), {...data, createdAt:new Date().toISOString()});
+      usuariosInternos.push({...data, id:ref.id});
+      toast('Usuario creado ✓');
+    }
+    closeM('mo-usuario-interno');
+    _editUsrInternoId = null;
+    renderUsuariosInternos();
+  }catch(e){ toast('Error: '+e.message,'err'); console.error(e); }
+}
+
+async function deleteUsuarioInterno(id){
+  if(!confirm('¿Eliminar este usuario? No se puede deshacer.'))return;
+  try{
+    await window._fb.deleteDoc(docRef('usuariosInternos',id));
+    usuariosInternos = usuariosInternos.filter(x=>x.id!==id);
+    renderUsuariosInternos();
+    toast('Usuario eliminado ✓');
+  }catch(e){ toast('Error: '+e.message,'err'); }
 }
 
 async function loadUsuariosInternos(){
@@ -5682,8 +5753,8 @@ async function loadUsuariosInternos(){
 function renderUsuariosInternos(){
   const tbody = document.getElementById('usr-interno-tbody');
   if(!tbody) return;
-  const rolLabel = {admin:'👑 Admin', manager:'⭐ Manager', vendedor:'🏷️ Vendedor', bodeguero:'📦 Bodeguero', lectura:'👁️ Solo Lectura'};
-  const rolColor = {admin:'b-red', manager:'b-accent', vendedor:'b-purple', bodeguero:'b-orange', lectura:'b-gray'};
+  const rolLabel = {admin:'👑 Admin', manager:'⭐ Manager', supervisor:'🔎 Supervisor', vendedor:'🏷️ Vendedor', bodeguero:'📦 Bodeguero', lectura:'👁️ Solo Lectura'};
+  const rolColor = {admin:'b-red', manager:'b-accent', supervisor:'b-green', vendedor:'b-purple', bodeguero:'b-orange', lectura:'b-gray'};
   if(!usuariosInternos.length){
     tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Sin usuarios creados. Clic en + Nuevo Usuario.</td></tr>';
     return;
@@ -5883,23 +5954,82 @@ function cancelarSeleccionUsuario(){
   }
 }
 
-// Update confirmarPin to update sidebar label
-const _origConfirmarPin = confirmarPin;
-function confirmarPin(){
-  const id = window._usrSelId; if(!id) return;
-  const u  = usuariosInternos.find(x=>x.id===id); if(!u) return;
-  const pin = document.getElementById('usr-pin-input').value.trim();
-  if(btoa(pin) !== u.pin){
-    toast('Contraseña incorrecta','err'); return;
+// ══════════════════ SELECTOR DE USUARIO — OVERLAY ══════════════════
+function mostrarPantallaUsuarios(){
+  const overlay = document.getElementById('usr-overlay');
+  if(!overlay) return;
+  const activos = usuariosInternos.filter(u=>u.activo!==false);
+  if(!activos.length){
+    // No users configured — just continue without selector
+    return;
   }
+  // Build user grid
+  const lista = document.getElementById('usr-overlay-lista');
+  if(lista){
+    lista.innerHTML = activos.map(u=>`
+      <div onclick="seleccionarUsuario('${u.id}')"
+        style="background:var(--s2);border:2px solid var(--border);border-radius:12px;
+          padding:16px 10px;text-align:center;cursor:pointer;transition:all .15s"
+        onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--s3)'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--s2)'">
+        <div style="font-size:28px;margin-bottom:6px">
+          ${{admin:'👑',manager:'⭐',supervisor:'🔎',vendedor:'🏷️',bodeguero:'📦',lectura:'👁️'}[u.rol]||'👤'}
+        </div>
+        <div style="font-size:13px;font-weight:700;color:var(--cream)">${u.nombre}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${u.rol}</div>
+      </div>`).join('');
+  }
+  // Hide pin section
+  const pinSec = document.getElementById('usr-pin-section');
+  if(pinSec) pinSec.style.display='none';
+  const pinInp = document.getElementById('usr-pin-input');
+  if(pinInp) pinInp.value='';
+  window._usrSelId = null;
+  overlay.style.display = 'flex';
+}
+
+function seleccionarUsuario(id){
+  window._usrSelId = id;
+  const u = usuariosInternos.find(x=>x.id===id); if(!u) return;
+  // Highlight selected card
+  document.querySelectorAll('#usr-overlay-lista > div').forEach((el,i)=>{
+    el.style.borderColor = 'var(--border)';
+    el.style.background = 'var(--s2)';
+  });
+  event?.currentTarget?.style && (event.currentTarget.style.borderColor='var(--accent)');
+  // Show pin input
+  const pinSec = document.getElementById('usr-pin-section');
+  const pinLbl = document.getElementById('usr-pin-label');
+  const pinInp = document.getElementById('usr-pin-input');
+  if(pinLbl) pinLbl.textContent = 'Contraseña de ' + u.nombre;
+  if(pinInp){ pinInp.value=''; setTimeout(()=>pinInp.focus(),80); }
+  if(pinSec) pinSec.style.display='block';
+}
+
+function confirmarPin(){
+  const id = window._usrSelId;
+  if(!id){ toast('Selecciona un usuario primero','err'); return; }
+  const u = usuariosInternos.find(x=>x.id===id);
+  if(!u){ toast('Usuario no encontrado','err'); return; }
+  const pin = document.getElementById('usr-pin-input')?.value.trim()||'';
+  if(!u.pin || btoa(pin) !== u.pin){
+    toast('Contraseña incorrecta ❌','err');
+    document.getElementById('usr-pin-input').value='';
+    document.getElementById('usr-pin-input').focus();
+    return;
+  }
+  // Login success
   usuarioActivo = u;
   document.getElementById('usr-overlay').style.display = 'none';
   aplicarPermisosNav();
   toast('Bienvenido, '+u.nombre+' ✓');
-  const rb = document.getElementById('role-badge');
-  if(rb) rb.textContent = u.nombre+' ('+u.rol+')';
+  // Update sidebar label
   const lbl = document.getElementById('usr-activo-label');
   if(lbl) lbl.textContent = '👤 '+u.nombre+' · '+u.rol;
+  // Update role badge
+  const rb = document.getElementById('role-badge');
+  if(rb) rb.textContent = u.nombre+' ('+u.rol+')';
+  // Auto-fill sal-usuario
   const uEl = document.getElementById('sal-usuario');
   if(uEl) uEl.value = u.nombre;
   // Navigate to pending page if any
@@ -5909,6 +6039,27 @@ function confirmarPin(){
     window._pendingPage = null;
     window._pendingEl = null;
     _navigateTo(pg, elPg);
+  }
+}
+
+function cambiarUsuario(){
+  usuarioActivo = null;
+  // Update sidebar label
+  const lbl = document.getElementById('usr-activo-label');
+  if(lbl) lbl.textContent = '— Sin usuario —';
+  mostrarPantallaUsuarios();
+}
+
+function cancelarSeleccionUsuario(){
+  if(usuarioActivo){
+    document.getElementById('usr-overlay').style.display='none';
+  } else {
+    const activos = usuariosInternos.filter(u=>u.activo!==false);
+    if(activos.length>0){
+      toast('Selecciona un usuario para continuar','err');
+    } else {
+      document.getElementById('usr-overlay').style.display='none';
+    }
   }
 }
 
@@ -6343,9 +6494,11 @@ const PAGE_TITLES={
 };
 let _currentPage = '';
 function go(page,el){
-  // Show user selector only when switching to a DIFFERENT page AND users exist
-  // Don't show when staying on same page or returning after save
-  if(usuariosInternos.length>0 && page!=='usuarios' && page !== _currentPage){
+  // Supervisor role: only identifies at login, never re-asked on module change
+  const rolActivo = usuarioActivo?.rol || '';
+  const esSupervisor = ROLES_SIN_REAUTH.includes(rolActivo);
+  // Show user selector when switching to a DIFFERENT page, users exist, and NOT supervisor
+  if(usuariosInternos.length>0 && page!=='usuarios' && page !== _currentPage && !esSupervisor){
     window._pendingPage = page;
     window._pendingEl = el;
     mostrarPantallaUsuarios();
