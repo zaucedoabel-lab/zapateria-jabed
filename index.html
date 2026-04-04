@@ -1111,8 +1111,12 @@ select option{background:var(--s2)}
           <div class="sg2 stat-grid">
             <div class="card">
               <div class="card-title">📥 Importar desde CSV</div>
-              <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Descarga la plantilla, llénala con tu inventario de Sizes & Colors y sube el archivo aquí.</p>
-              <button class="btn btn-ghost btn-full" style="margin-bottom:14px" onclick="descargarPlantilla()">⬇️ Descargar Plantilla CSV</button>
+              <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Importa tu inventario directamente desde Sizes & Colors. La plantilla tiene el mismo formato de columnas.</p>
+              <div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--muted)">
+                <b style="color:var(--cream)">Formato compatible:</b><br>
+                CATEGORIA · LINEA · TEMPORADA · SUCURSAL · ESTILO · MARCA · COLOR · CONCEPTO · [TALLAS…] · TOTAL · PRECIO
+              </div>
+              <button class="btn btn-ghost btn-full" style="margin-bottom:14px" onclick="descargarPlantilla()">⬇️ Descargar Plantilla CSV (formato Sizes & Colors)</button>
               <div class="csv-zone" id="csv-zone">
                 <input type="file" accept=".csv" onchange="importarCSV(this)">
                 <div style="font-size:28px;margin-bottom:8px">📄</div>
@@ -1126,7 +1130,18 @@ select option{background:var(--s2)}
               <div class="tw nb"><table>
                 <thead><tr><th>Columna</th><th>Ejemplo</th><th>Req.</th></tr></thead>
                 <tbody>
-                  <tr><td>barcode</td><td>7501234</td><td><span class="badge b-red">Sí</span></td></tr>
+                  <tr><td>CATEGORIA</td><td>Boutique</td><td><span class="badge b-red">Sí</span></td></tr>
+                  <tr><td>LINEA</td><td>Ropa</td><td></td></tr>
+                  <tr><td>TEMPORADA</td><td>2026</td><td></td></tr>
+                  <tr><td>SUCURSAL</td><td>JABED</td><td></td></tr>
+                  <tr><td>ESTILO</td><td>B2235</td><td><span class="badge b-red">Sí</span></td></tr>
+                  <tr><td>MARCA</td><td>SIN MARCA</td><td></td></tr>
+                  <tr><td>COLOR</td><td>VARIOS COLORES</td><td></td></tr>
+                  <tr><td>CONCEPTO</td><td>BLUSA MODA</td><td><span class="badge b-red">Sí</span></td></tr>
+                  <tr><td>[TALLAS]</td><td>XS, S, M, L…</td><td></td></tr>
+                  <tr><td>TOTAL</td><td>12</td><td></td></tr>
+                  <tr><td>PRECIO</td><td>235.00</td><td><span class="badge b-red">Sí</span></td></tr>
+                  <tr style="display:none"><td>barcode</td><td>7501234</td><td><span class="badge b-red">Sí</span></td></tr>
                   <tr><td>sku</td><td>DAM-001</td><td><span class="badge b-gray">No</span></td></tr>
                   <tr><td>descripcion</td><td>Sandalia tacón</td><td><span class="badge b-red">Sí</span></td></tr>
                   <tr><td>categoria</td><td>Dama</td><td><span class="badge b-red">Sí</span></td></tr>
@@ -2760,45 +2775,205 @@ async function saveUsuario(){
 
 // ══════════════════ IMPORTAR CSV ══════════════════
 function descargarPlantilla(){
-  const csv='barcode,sku,descripcion,categoria,marca,color,precio,talla,cantidad,sucursal\n7501001,DAM-001,Sandalia tacón piel,Dama,Flexi,Negro,899.00,24,3,Tienda 1\n7501001,DAM-001,Sandalia tacón piel,Dama,Flexi,Negro,899.00,25,2,Tienda 1\n7501002,CAB-001,Mocasín piel,Caballero,Quirelli,Café,1100.00,27,4,Bodega';
-  const blob=new Blob([csv],{type:'text/csv'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='plantilla_inventario.csv';a.click();
+  // Tallas columns — use configured tallas or defaults
+  const tallasCols = (getCatalogList('tallas').length>0
+    ? getCatalogList('tallas')
+    : ['XS','S','M','L','XL','XXL','XXXL','3XL','UNI']);
+
+  // Header row: fixed columns + one column per talla + TOTAL + PRECIO
+  const fixedHeaders = ['CATEGORIA','LINEA','TEMPORADA','SUCURSAL','ESTILO','MARCA','COLOR','CONCEPTO'];
+  const allHeaders = [...fixedHeaders, ...tallasCols, 'TOTAL', 'PRECIO'];
+
+  // Example rows
+  const ex1 = ['Boutique','Ropa','2026','JABED','B2235','SIN MARCA','1 VARIOS COLORES','BLUSA MODA (M. CORTA)'];
+  const stock1 = tallasCols.map(t=>t==='S'?'3':t==='M'?'5':t==='L'?'4':'0');
+  const total1 = stock1.reduce((a,v)=>a+parseInt(v),0);
+  ex1.push(...stock1, total1.toString(), '235');
+
+  const ex2 = ['Boutique','Ropa','2026','JABED','B2080','JERA MODA','VARIOS','PANTALON DAMA STRETCH'];
+  const stock2 = tallasCols.map(t=>t==='M'?'2':t==='L'?'3':t==='XL'?'2':'0');
+  const total2 = stock2.reduce((a,v)=>a+parseInt(v),0);
+  ex2.push(...stock2, total2.toString(), '180');
+
+  const esc = v => '"'+String(v).replace(/"/g,'""')+'"';
+  const rows = [
+    allHeaders.map(esc).join(','),
+    ex1.map(esc).join(','),
+    ex2.map(esc).join(',')
+  ];
+  const csv = '\uFEFF' + rows.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='plantilla_jabed.csv';
+  a.click();
+  toast('Plantilla descargada — ábrela en Excel para ver el formato ✓');
 }
 
 async function importarCSV(input){
-  const file=input.files[0];if(!file)return;
-  const text=await file.text();
-  const lines=text.trim().split('\n');
-  const headers=lines[0].split(',').map(h=>h.trim().toLowerCase());
+  const file=input.files[0]; if(!file)return;
   const prog=document.getElementById('csv-progress');
-  prog.innerHTML=`<div class="info">Procesando ${lines.length-1} filas…</div>`;
-  let ok=0,err=0;
-  const {addDoc,setDoc}=window._fb;
-  // Group by barcode+sucursal to merge tallas
-  const groups={};
-  for(let i=1;i<lines.length;i++){
-    const vals=lines[i].split(',');
-    const row={};
-    headers.forEach((h,idx)=>{row[h]=(vals[idx]||'').trim();});
-    if(!row.barcode||!row.descripcion){err++;continue;}
-    const key=row.barcode+'_'+(row.sucursal||'default');
-    if(!groups[key]){
-      groups[key]={barcode:row.barcode,sku:row.sku||'',desc:row.descripcion,cat:row.categoria||'Dama',marca:row.marca||'',color:row.color||'',precio:parseFloat(row.precio)||0,sucNombre:row.sucursal||'',stock:{}};
+  prog.innerHTML='<div class="info">Leyendo archivo…</div>';
+
+  // Read file detecting encoding
+  let text;
+  try{
+    text=await file.text();
+    // Remove BOM if present
+    if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+  }catch(e){prog.innerHTML='<div class="warn">Error leyendo archivo</div>';return;}
+
+  // Parse CSV respecting quoted fields
+  function parseCSVLine(line){
+    const result=[];let cur='';let inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){
+        if(inQ&&line[i+1]==='"'){cur+='"';i++;}
+        else{inQ=!inQ;}
+      }else if(ch===','&&!inQ){result.push(cur.trim());cur='';}
+      else{cur+=ch;}
     }
-    if(row.talla)groups[key].stock[row.talla]=parseInt(row.cantidad)||0;
+    result.push(cur.trim());
+    return result;
   }
-  for(const key of Object.keys(groups)){
-    const g=groups[key];
-    // Find sucursal by name
-    let sucId=activeSucId!=='all'?activeSucId:(sucursales[0]?.id||'');
-    if(g.sucNombre){const s=sucursales.find(x=>x.nombre.toLowerCase()===g.sucNombre.toLowerCase());if(s)sucId=s.id;}
+
+  // Split lines (handle \r\n and \n)
+  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split('\n');
+  if(lines.length<2){prog.innerHTML='<div class="warn">Archivo vacío o sin datos</div>';return;}
+
+  const rawHeaders=parseCSVLine(lines[0]).map(h=>h.replace(/^"|"$/g,'').trim().toUpperCase());
+  prog.innerHTML=`<div class="info">Procesando ${lines.length-1} filas con ${rawHeaders.length} columnas…</div>`;
+
+  // Detect format
+  // Fixed columns: CATEGORIA, LINEA, TEMPORADA, SUCURSAL, ESTILO, MARCA, COLOR, CONCEPTO
+  // Then talla columns until TOTAL column
+  // Last 2: TOTAL, PRECIO
+  const FIXED=['CATEGORIA','LINEA','TEMPORADA','SUCURSAL','ESTILO','MARCA','COLOR','CONCEPTO'];
+  // Also support old format: barcode, sku, descripcion, categoria...
+  const isOldFormat=rawHeaders.includes('BARCODE')||rawHeaders.includes('DESCRIPCION');
+
+  let tallaCols=[];
+  let idxTotal=-1, idxPrecio=-1;
+
+  if(!isOldFormat){
+    // New format: find TOTAL and PRECIO at end
+    idxTotal=rawHeaders.lastIndexOf('TOTAL');
+    idxPrecio=rawHeaders.lastIndexOf('PRECIO');
+    if(idxTotal===-1) idxTotal=rawHeaders.length-2;
+    if(idxPrecio===-1) idxPrecio=rawHeaders.length-1;
+    // Tallas are columns 8 (index) to idxTotal-1
+    tallaCols=rawHeaders.slice(8, idxTotal);
+  }
+
+  let ok=0, err=0, skip=0;
+  const {addDoc}=window._fb;
+  const productos_batch=[];
+
+  for(let i=1;i<lines.length;i++){
+    if(!lines[i].trim()){skip++;continue;}
+    const vals=parseCSVLine(lines[i]);
+    if(vals.length<4){skip++;continue;}
+
+    const getV=(idx)=>(vals[idx]||'').replace(/^"|"$/g,'').trim();
+
+    if(isOldFormat){
+      // Old format processing
+      const row={};
+      rawHeaders.forEach((h,idx)=>{row[h]=getV(idx);});
+      if(!row.BARCODE&&!row.ESTILO){skip++;continue;}
+      const stock={};
+      if(row.TALLA)stock[row.TALLA]=parseInt(row.CANTIDAD)||0;
+      productos_batch.push({
+        barcode:row.BARCODE||row.ESTILO||'',
+        sku:row.SKU||row.ESTILO||'',
+        desc:row.DESCRIPCION||row.CONCEPTO||'',
+        cat:row.CATEGORIA||'', linea:row.LINEA||'',
+        temporada:row.TEMPORADA||'', marca:row.MARCA||'',
+        color:row.COLOR||'', precio:parseFloat(row.PRECIO)||0,
+        stock, sucNombre:row.SUCURSAL||''
+      });
+    }else{
+      // New Sizes & Colors format
+      const cat     = getV(0);
+      const linea   = getV(1);
+      const temp    = getV(2);
+      const sucNom  = getV(3);
+      const estilo  = getV(4);
+      const marca   = getV(5);
+      const color   = getV(6);
+      const desc    = getV(7);
+      const precio  = parseFloat(getV(idxPrecio))||0;
+      if(!estilo&&!desc){skip++;continue;}
+
+      // Build stock from talla columns
+      const stock={};
+      tallaCols.forEach((talla,ti)=>{
+        const qty=parseInt(getV(8+ti))||0;
+        if(qty>0) stock[talla]=qty;
+      });
+
+      productos_batch.push({barcode:estilo,sku:estilo,desc,cat,linea,temporada:temp,marca,color,precio,stock,sucNombre:sucNom});
+    }
+  }
+
+  // Merge duplicates (same estilo+sucursal → same product, add tallas)
+  const merged={};
+  productos_batch.forEach(p=>{
+    const key=(p.barcode||p.sku)+'|'+(p.sucNombre||'');
+    if(!merged[key]){merged[key]={...p};}
+    else{Object.entries(p.stock).forEach(([t,c])=>{merged[key].stock[t]=(merged[key].stock[t]||0)+c;});}
+  });
+
+  const total=Object.keys(merged).length;
+  prog.innerHTML=`<div class="info">Importando ${total} productos únicos…</div>`;
+
+  let done=0;
+  for(const key of Object.keys(merged)){
+    const g=merged[key];
+    let sucId=sucursales[0]?.id||'';
+    if(g.sucNombre){
+      const found=sucursales.find(s=>
+        s.nombre.toLowerCase().includes(g.sucNombre.toLowerCase())||
+        g.sucNombre.toLowerCase().includes(s.nombre.toLowerCase())
+      );
+      if(found)sucId=found.id;
+    }
     try{
-      await addDoc(col('productos'),{barcode:g.barcode,sku:g.sku,desc:g.desc,cat:g.cat,marca:g.marca,color:g.color,precio:g.precio,stock:g.stock,sucursalId:sucId,foto:null,createdAt:new Date().toISOString()});
-      ok++;
-    }catch(e){err++;}
+      await addDoc(col('productos'),{
+        barcode:g.barcode||g.sku||'',
+        sku:g.sku||g.barcode||'',
+        desc:g.desc,
+        cat:g.cat||'',
+        linea:g.linea||'',
+        temporada:g.temporada||'',
+        marca:g.marca||'',
+        color:g.color||'',
+        precio:g.precio,
+        costo:0,
+        stock:g.stock,
+        sucursalId:sucId,
+        foto:null,
+        locacion:'',
+        barcodeTallas:{},
+        createdAt:new Date().toISOString(),
+        updatedAt:new Date().toISOString()
+      });
+      ok++;done++;
+      if(done%10===0||done===total){
+        prog.innerHTML=`<div class="info">⏳ Importando… ${done}/${total} productos</div>`;
+      }
+    }catch(e){err++;console.error('Import error:',e,g);}
   }
-  prog.innerHTML=`<div class="info">✅ Importados: ${ok} productos. ${err>0?`⚠️ Errores: ${err}`:''}</div>`;
+
+  prog.innerHTML=`<div class="info" style="color:var(--green)">
+    ✅ <b>${ok} productos importados</b> correctamente.
+    ${skip>0?`<br>⏭️ ${skip} filas vacías omitidas.`:''}
+    ${err>0?`<br>⚠️ ${err} errores — revisa la consola del navegador.`:''}
+  </div>`;
   input.value='';
+  // Refresh views
+  setTimeout(()=>{renderInv();renderPOS();renderCatalogo();renderDashboard();},1000);
 }
 
 // ══════════════════ DASHBOARD ══════════════════
