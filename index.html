@@ -1192,6 +1192,18 @@ select option{background:var(--s2)}
               <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Ej: A-1, A-2, B-1, B-2… Aparecen en el catálogo de productos</div>
               <div id="cfg-locaciones-list"></div>
             </div>
+            <!-- Tallas -->
+            <div class="card" style="grid-column:1/-1">
+              <div class="flex-between" style="margin-bottom:8px">
+                <div class="card-title" style="margin:0">👟 Tallas Disponibles <span style="font-size:11px;color:var(--muted);font-weight:400">— Las tallas que aparecen al crear/editar productos</span></div>
+                <div class="flex-row" style="gap:6px">
+                  <button class="btn btn-ghost btn-xs" onclick="addTallasCatalog()">＋ Agregar talla</button>
+                  <button class="btn btn-ghost btn-xs" onclick="resetTallasCatalog()" style="color:var(--muted)">↺ Restablecer default</button>
+                </div>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Agrega tallas de calzado, ropa (XS, S, M…), tallas especiales o las que uses en tu tienda.</div>
+              <div id="cfg-tallas-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+            </div>
           </div>
 
           <!-- Config Monedero y Cumpleaños -->
@@ -1726,7 +1738,12 @@ select option{background:var(--s2)}
 // ══════════════════ CONSTANTS ══════════════════
 const TALLAS_CALZADO=['13','14','15','16','17','18','19','20','21','22','22.5','23','23.5','24','24.5','25','25.5','26','26.5','27','27.5','28','29','30','31','32'];
 const TALLAS_ROPA=['XS','S','M','L','XL','XXL','XXXL'];
-const ALL_TALLAS=[...TALLAS_CALZADO,...TALLAS_ROPA,'Único','UNI'];
+// ALL_TALLAS is now dynamic — rebuilt from catalogos on load
+let ALL_TALLAS=[...TALLAS_CALZADO,...TALLAS_ROPA,'Único','UNI'];
+function refreshAllTallas(){
+  const fromCat = getCatalogList('tallas');
+  if(fromCat.length>0) ALL_TALLAS=[...new Set(fromCat)];
+}
 const LINEAS=['Calzado','Ropa','Ropa Interior','Accesorios','Bolsos','Otros'];
 const TEMPORADAS=['Primavera/Verano','Otoño/Invierno','Todo el Año','Liquidación','2024','2025','2026','2027'];
 const GASTO_CATS=['Renta','Servicios','Mercancía','Empaques','Sueldos','Publicidad','Transporte','Limpieza','Pago a Proveedores','Internet','Mantenimiento','Comida','Varios'];
@@ -2837,7 +2854,8 @@ const CFG_DEFAULTS = {
   proveedores: [],
   vendedores: [],
   gastoCategorias: ['Renta','Servicios','Mercancía','Empaques','Sueldos','Publicidad','Transporte','Limpieza','Pago a Proveedores','Internet','Mantenimiento','Comida','Varios'],
-  locaciones: ['A-1','A-2','A-3','B-1','B-2','B-3','C-1','C-2','C-3']
+  locaciones: ['A-1','A-2','A-3','B-1','B-2','B-3','C-1','C-2','C-3'],
+  tallas: ['13','14','15','16','17','18','19','20','21','22','22.5','23','23.5','24','24.5','25','25.5','26','26.5','27','27.5','28','29','30','31','32','XS','S','M','L','XL','XXL','XXXL','3XL','4XL','CH','MM','GD','EG','UNI','Único']
 };
 // Config general (monedero, cumpleaños)
 let configGeneral = {puntoPorcentaje:5, cumpleanosDesc:10};
@@ -2860,6 +2878,7 @@ function getCatalogList(key){ return catalogosData[key]||CFG_DEFAULTS[key]||[]; 
 
 function renderCatalogosCfg(){
   const keys=['categorias','lineas','temporadas','marcas','colores','proveedores','vendedores','gastoCategorias','locaciones'];
+  renderTallasCatalogUI();
   keys.forEach(k=>{
     const el=document.getElementById('cfg-'+k+'-list');
     if(!el)return;
@@ -2900,6 +2919,7 @@ async function saveCatalogos(){
   try{
     await window._fb.setDoc(docRef('config','catalogos'),catalogosData,{merge:true});
     renderCatalogosCfg();
+    refreshAllTallas();
     updateProductoSelects();
     toast('Catálogo actualizado ✓');
   }catch(e){toast('Error: '+e.message,'err');}
@@ -6245,6 +6265,58 @@ function abrirModalProductoSinStock(id){
       tallaSec?.parentNode?.insertBefore(note, tallaSec);
     }
   },80);
+}
+
+
+
+// ══════════════════ TALLAS EN CATÁLOGOS ══════════════════
+function renderTallasCatalogUI(){
+  const el = document.getElementById('cfg-tallas-list');
+  if(!el) return;
+  const tallas = getCatalogList('tallas');
+  if(!tallas.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--faint)">Sin tallas configuradas. Clic en "+ Agregar talla" para comenzar.</div>';
+    return;
+  }
+  el.innerHTML = tallas.map((t,i)=>`
+    <div style="display:inline-flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:4px 6px 4px 10px">
+      <span style="font-size:13px;font-weight:600;color:var(--cream);font-family:var(--mono)">${t}</span>
+      <button class="btn btn-ghost btn-xs" style="padding:1px 5px" onclick="editTalla(${i})" title="Editar">✏️</button>
+      <button class="btn btn-red btn-xs" style="padding:1px 5px" onclick="deleteTalla(${i})" title="Eliminar">✕</button>
+    </div>`).join('');
+}
+
+function addTallasCatalog(){
+  const val = prompt('Nueva talla (Ej: 28.5, 4XL, JUV, INFANTIL):');
+  if(!val||!val.trim()) return;
+  const t = val.trim().toUpperCase();
+  if(!catalogosData.tallas) catalogosData.tallas=[...CFG_DEFAULTS.tallas];
+  if(catalogosData.tallas.includes(t)){ toast('Esa talla ya existe','err'); return; }
+  catalogosData.tallas.push(t);
+  saveCatalogos();
+}
+
+function editTalla(idx){
+  const actual = (catalogosData.tallas||CFG_DEFAULTS.tallas)[idx];
+  const nuevo = prompt('Editar talla:', actual);
+  if(!nuevo||!nuevo.trim()) return;
+  if(!catalogosData.tallas) catalogosData.tallas=[...CFG_DEFAULTS.tallas];
+  catalogosData.tallas[idx] = nuevo.trim().toUpperCase();
+  saveCatalogos();
+}
+
+function deleteTalla(idx){
+  if(!confirm('¿Eliminar esta talla del catálogo?')) return;
+  if(!catalogosData.tallas) catalogosData.tallas=[...CFG_DEFAULTS.tallas];
+  catalogosData.tallas.splice(idx,1);
+  saveCatalogos();
+}
+
+function resetTallasCatalog(){
+  if(!confirm('¿Restablecer las tallas al listado por defecto? Se perderán las tallas personalizadas.')) return;
+  catalogosData.tallas = [...CFG_DEFAULTS.tallas];
+  saveCatalogos();
+  toast('Tallas restablecidas al default ✓');
 }
 
 
