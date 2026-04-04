@@ -1888,8 +1888,7 @@ function startListeners(){
   push(onSnapshot(col('productos'),snap=>{
     productos=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderInv();renderPOS();renderCatalogo();renderDashboard();
-    loadUsuariosInternos();
-    setTimeout(()=>mostrarPantallaUsuarios(),800);
+    loadUsuariosInternos(); // Load but DON'T auto-show selector
   }));
   push(onSnapshot(query(col('ventas'),orderBy('createdAt','desc')),snap=>{
     ventas=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -3529,19 +3528,35 @@ async function cobrar(){
     if(isAC){
       mostrarNotaSeparo({...ventaDoc,items:carrito});
     }
-    // Limpiar carrito
+    // ── Limpiar carrito completo post-cobro ──
     carrito=[];
-    ['c-desc','c-anticipo','c-nota-nombre','c-nota-tel'].forEach(id=>{
-      const el=document.getElementById(id);if(el)el.value=id==='c-desc'?'0':'';
+    // Reset all form fields
+    ['c-desc','c-anticipo','c-nota-nombre','c-nota-tel','c-nota-folio','c-recibido','c-monedero-monto'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)el.value=id==='c-desc'?'0':'';
     });
     const tipoEl=document.getElementById('c-tipo-venta');if(tipoEl)tipoEl.value='venta';
+    const pagoEl=document.getElementById('c-pago');if(pagoEl){pagoEl.value='efectivo';toggleMonederoField();}
     const aprtEl=document.getElementById('c-apartado-section');if(aprtEl)aprtEl.style.display='none';
     const notaEl=document.getElementById('c-nota-section');if(notaEl)notaEl.style.display='none';
     const cliSel=document.getElementById('c-cliente-sel');if(cliSel)cliSel.value='';
     const cliInfo=document.getElementById('c-cliente-info');if(cliInfo)cliInfo.style.display='none';
     const cumpleAl=document.getElementById('c-cumple-alert');if(cumpleAl)cumpleAl.style.display='none';
+    const promoAl=document.getElementById('c-promo-alert');if(promoAl)promoAl.style.display='none';
+    const monSec=document.getElementById('c-monedero-section');if(monSec)monSec.style.display='none';
+    const cambioEl=document.getElementById('c-cambio');if(cambioEl)cambioEl.textContent='$0.00';
+    const monDisp=document.getElementById('c-monedero-disp');if(monDisp)monDisp.textContent='$0.00';
+    const monResto=document.getElementById('c-monedero-resto');if(monResto)monResto.textContent='';
+    // Reset vendedor al usuario activo actual
+    const vSel=document.getElementById('c-vendedor-sel');
+    if(vSel&&usuarioActivo?.nombre){
+      // Try to match vendedor by name
+      const opts=[...vSel.options];
+      const match=opts.find(o=>o.value.toLowerCase()===usuarioActivo.nombre.toLowerCase()||o.text.toLowerCase()===usuarioActivo.nombre.toLowerCase());
+      vSel.value=match?match.value:'';
+    }
     renderCart();renderPOS();
-    if(!isAC)toast('Venta: '+fmt(total)+' ✓');
+    if(!isAC)toast('✅ Venta registrada: '+fmt(total));
   }catch(e){
     toast('Error al cobrar: '+e.message,'err');
     console.error('cobrar error:',e);
@@ -4599,6 +4614,8 @@ function renderListaSalida(){
 async function registrarSalida(){
   if(!salLineas.length){toast('Agrega al menos un producto','err');return;}
   const tipo=document.getElementById('sal-tipo')?.value||'ajuste';
+  // Route to liquidacion handler if needed
+  if(tipo==='dañado_liquidacion'){ await registrarSalidaLiquidacion(); return; }
   const comentario=document.getElementById('sal-comentario')?.value.trim()||'';
   const sucId=document.getElementById('sal-sucursal')?.value||'';
   const totalBaja=salLineas.reduce((a,l)=>a+l.cantidad,0);
@@ -5998,14 +6015,8 @@ function onSalTipoChange(){
 }
 
 // Override registrarSalida to handle liquidación type
-const _origRegistrarSalida = registrarSalida;
-async function registrarSalida(){
-  const tipo = document.getElementById('sal-tipo')?.value||'ajuste';
-  if(tipo !== 'dañado_liquidacion'){
-    await _origRegistrarSalida();
-    return;
-  }
-  // Liquidación: change price, don't remove stock
+// registrarSalida handles dañado_liquidacion inline — see full function at original location
+async function registrarSalidaLiquidacion(){
   if(!salLineas.length){toast('Agrega al menos un producto','err');return;}
   const nuevoPrecio = parseFloat(document.getElementById('sal-precio-liq')?.value||'0');
   if(!nuevoPrecio||nuevoPrecio<=0){toast('Ingresa el nuevo precio de liquidación','err');return;}
@@ -6013,344 +6024,36 @@ async function registrarSalida(){
   const usuarioActual = usuarioActivo||currentProfile;
   const esAdmin = usuarioActual?.rol==='admin';
   const descLineas = salLineas.map(l=>`${l.desc} T${l.talla} ×${l.cantidad}`).join(', ');
-  if(!confirm(`¿Cambiar precio a $${nuevoPrecio.toFixed(2)}? El artículo seguirá en inventario.`))return;
+  if(!confirm('¿Cambiar precio a $'+nuevoPrecio.toFixed(2)+'? El artículo seguirá en inventario.'))return;
   try{
     const {updateDoc} = window._fb;
-    // For each product line: update price to new liquidation price, add liquidacion flag
     const prodIds = [...new Set(salLineas.map(l=>l.prodId))];
     for(const prodId of prodIds){
       await updateDoc(docRef('productos',prodId),{
         precio: nuevoPrecio,
         esLiquidacion: true,
-        precioOriginal: salLineas.find(l=>l.prodId===prodId)?.precioOriginal || (productos.find(x=>x.id===prodId)?.precio||0),
+        precioOriginal: productos.find(x=>x.id===prodId)?.precio||0,
         razonLiquidacion: razon,
         liquidadoPor: usuarioActual?.nombre||'—',
         liquidadoEn: new Date().toISOString()
       });
     }
-    // Register in bitacora
     await window._fb.addDoc(col('bitacora'),{
-      tipo: 'liquidacion',
-      descripcion: `Liquidación: ${descLineas} | Nuevo precio: $${nuevoPrecio} | Razón: ${razon}`,
-      datos: {lineas: JSON.parse(JSON.stringify(salLineas)), nuevoPrecio, razon},
-      usuario: usuarioActual?.nombre||'—',
-      usuarioRol: usuarioActual?.rol||'—',
-      fecha: hoy(), hora: hora(),
-      estado: esAdmin?'aprobado':'pendiente',
-      aprobadoPor: esAdmin?(usuarioActual?.nombre||'Admin'):'',
-      createdAt: new Date().toISOString()
+      tipo:'liquidacion',
+      descripcion:'Liquidación: '+descLineas+' | Nuevo precio: $'+nuevoPrecio+' | Razón: '+razon,
+      datos:{lineas:JSON.parse(JSON.stringify(salLineas)),nuevoPrecio,razon},
+      usuario:usuarioActual?.nombre||'—',usuarioRol:usuarioActual?.rol||'—',
+      fecha:hoy(),hora:hora(),
+      estado:esAdmin?'aprobado':'pendiente',
+      aprobadoPor:esAdmin?(usuarioActual?.nombre||'Admin'):'',
+      createdAt:new Date().toISOString()
     });
-    toast(`✅ Precio actualizado a $${nuevoPrecio.toFixed(2)} — artículo marcado como LIQUIDACIÓN`);
+    toast('Precio actualizado a $'+nuevoPrecio.toFixed(2)+' ✓');
     limpiarSalida();
     document.getElementById('sal-liquidacion-section').style.display='none';
   }catch(e){toast('Error: '+e.message,'err');console.error(e);}
 }
 
-// Show LIQUIDACIÓN badge in inventory and POS for liquidated items
-// liquidacion badge now integrated directly in renderInvMatriz
-
-// ══════════════════════════════════════════════════
-// TAREA 2: COSTOS Y UTILIDAD
-// ══════════════════════════════════════════════════
-function renderCostos(){
-  const q     = (document.getElementById('costo-q')?.value||'').toLowerCase();
-  const cat   = document.getElementById('costo-cat')?.value||'';
-  const linea = document.getElementById('costo-linea')?.value||'';
-
-  // Populate filters if empty
-  const catSel = document.getElementById('costo-cat');
-  if(catSel && catSel.options.length<=1){
-    getCatalogList('categorias').forEach(c=>{
-      const o=document.createElement('option'); o.value=c; o.textContent=c; catSel.appendChild(o);
-    });
-  }
-  const lineaSel = document.getElementById('costo-linea');
-  if(lineaSel && lineaSel.options.length<=1){
-    getCatalogList('lineas').forEach(l=>{
-      const o=document.createElement('option'); o.value=l; o.textContent=l; lineaSel.appendChild(o);
-    });
-  }
-
-  const sumS = s => Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
-  const lista = productos.filter(p=>{
-    const mq = !q||(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q);
-    const mc = !cat || p.cat===cat;
-    const ml = !linea || p.linea===linea;
-    return mq&&mc&&ml;
-  });
-
-  // Stats
-  let totalCosto=0, totalVenta=0;
-  lista.forEach(p=>{
-    const stock = sumS(p.stock);
-    totalCosto += (p.costo||0)*stock;
-    totalVenta += (p.precio||0)*stock;
-  });
-  const utilidadTotal = totalVenta - totalCosto;
-  const margenProm = totalVenta>0 ? ((utilidadTotal/totalVenta)*100).toFixed(1) : 0;
-
-  const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  setEl('costo-val-costo', fmt(totalCosto));
-  setEl('costo-val-venta', fmt(totalVenta));
-  setEl('costo-utilidad', fmt(utilidadTotal));
-  setEl('costo-margen', margenProm+'%');
-
-  const tbody = document.getElementById('costos-tbody');
-  if(!tbody)return;
-
-  tbody.innerHTML = lista.map(p=>{
-    const stock  = sumS(p.stock);
-    const costo  = p.costo||0;
-    const precio = p.precio||0;
-    const utilPza = precio - costo;
-    const margen = precio>0 ? ((utilPza/precio)*100).toFixed(1) : 0;
-    const utilTotal = utilPza * stock;
-    const margenColor = margen<20?'var(--red)':margen<40?'var(--gold)':'var(--green)';
-    const liqBadge = p.esLiquidacion ? `<span class="badge b-red" style="font-size:9px">🏷️LIQ</span>` : '';
-
-    return`<tr>
-      <td><div class="mono" style="font-size:11px;color:var(--cream)">${p.barcode||p.sku||'—'}</div></td>
-      <td>
-        <div style="font-weight:600;color:var(--cream);font-size:12px">${p.desc} ${liqBadge}</div>
-        <div style="font-size:10px;color:var(--muted)">${p.marca||'—'}</div>
-        ${p.esLiquidacion?`<div style="font-size:10px;color:var(--red)">Original: ${fmt(p.precioOriginal||0)} → ${fmt(precio)}</div>`:''}
-      </td>
-      <td><span class="badge b-accent" style="font-size:10px">${p.cat||'—'}</span></td>
-      <td style="font-size:11px;color:var(--muted)">${p.linea||'—'}</td>
-      <td style="text-align:right">
-        ${costo>0
-          ? `<span class="mono" style="color:var(--cream)">${fmt(costo)}</span>`
-          : `<button class="btn btn-ghost btn-xs" onclick="editarCostoProducto('${p.id}',${precio})">＋ Agregar</button>`
-        }
-      </td>
-      <td style="text-align:right">
-        <span class="mono" style="color:var(--gold)">${fmt(precio)}</span>
-        <button class="btn btn-ghost btn-xs" style="margin-left:4px" onclick="editarPrecioProducto('${p.id}',${precio})" title="Modificar precio">✏️</button>
-      </td>
-      <td style="text-align:right;font-family:var(--mono);color:${utilPza>0?'var(--green)':'var(--red)'}">${fmt(utilPza)}</td>
-      <td style="text-align:right;font-weight:700;color:${margenColor}">${margen}%</td>
-      <td style="text-align:center;font-family:var(--mono)">${stock}</td>
-      <td style="text-align:right;font-family:var(--mono);font-weight:600;color:${utilTotal>0?'var(--green)':'var(--red)'}">${fmt(utilTotal)}</td>
-      <td>
-        <button class="btn btn-ghost btn-xs" onclick="editarCostoPrecio('${p.id}',${costo},${precio})" title="Editar costo y precio">💹</button>
-      </td>
-    </tr>`;
-  }).join('');
-}
-
-// Modal inline edit for cost/price
-async function editarCostoProducto(id, precioActual){
-  const nuevoCosto = parseFloat(prompt(`Ingresa el costo de compra del producto:\n(Precio de venta actual: $${precioActual})`)||'0');
-  if(isNaN(nuevoCosto)||nuevoCosto<0){toast('Valor inválido','err');return;}
-  await window._fb.setDoc(docRef('productos',id),{costo:nuevoCosto},{merge:true});
-  toast('Costo actualizado ✓');
-}
-
-async function editarPrecioProducto(id, precioActual){
-  const nuevoPrecio = parseFloat(prompt(`Modificar precio de venta:\nPrecio actual: $${precioActual}\nNuevo precio:`)||'0');
-  if(isNaN(nuevoPrecio)||nuevoPrecio<=0){toast('Precio inválido','err');return;}
-  await window._fb.setDoc(docRef('productos',id),{precio:nuevoPrecio},{merge:true});
-  toast('Precio actualizado ✓');
-}
-
-async function editarCostoPrecio(id, costoActual, precioActual){
-  const nuevoCosto  = parseFloat(prompt(`Costo de compra actual: $${costoActual}\nNuevo costo de compra:`)||String(costoActual));
-  if(isNaN(nuevoCosto)||nuevoCosto<0){toast('Valor inválido','err');return;}
-  const nuevoPrecio = parseFloat(prompt(`Precio de venta actual: $${precioActual}\nNuevo precio de venta:`)||String(precioActual));
-  if(isNaN(nuevoPrecio)||nuevoPrecio<=0){toast('Precio inválido','err');return;}
-  const margen = ((nuevoPrecio-nuevoCosto)/nuevoPrecio*100).toFixed(1);
-  await window._fb.setDoc(docRef('productos',id),{costo:nuevoCosto,precio:nuevoPrecio},{merge:true});
-  toast(`✅ Actualizado — Costo: ${fmt(nuevoCosto)} | Precio: ${fmt(nuevoPrecio)} | Margen: ${margen}%`);
-  renderCostos();
-}
-
-function exportarCostosExcel(){
-  const sumS = s => Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
-  const headers=['Codigo','Descripcion','Categoria','Linea','Costo_Compra','Precio_Venta','Utilidad_pza','Margen_%','Stock','Utilidad_Total','Liquidacion'];
-  const rows = productos.map(p=>{
-    const stock=sumS(p.stock);
-    const costo=p.costo||0;
-    const precio=p.precio||0;
-    const util=precio-costo;
-    const margen=precio>0?((util/precio)*100).toFixed(1):0;
-    return[p.barcode||p.sku||'',p.desc,p.cat||'',p.linea||'',costo,precio,util,margen,stock,util*stock,p.esLiquidacion?'SÍ':'NO'];
-  });
-  const nl='\n', esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
-  const csv='\uFEFF'+headers.map(esc).join(',')+nl+rows.map(r=>r.map(esc).join(',')).join(nl);
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='costos_utilidad_'+new Date().toISOString().split('T')[0]+'.csv';
-  a.click(); toast('Exportado ✓');
-}
-
-// ══════════════════════════════════════════════════
-// TAREA 3: ARTÍCULO SIN CÓDIGO
-// ══════════════════════════════════════════════════
-function abrirArticuloSinCodigo(){
-  openM('mo-sin-codigo');
-  document.getElementById('sc-desc').value='';
-  document.getElementById('sc-precio').value='';
-  document.getElementById('sc-qty').value='1';
-  setTimeout(()=>document.getElementById('sc-desc')?.focus(),100);
-}
-
-function agregarArticuloSinCodigo(){
-  const desc  = document.getElementById('sc-desc')?.value.trim();
-  const precio= parseFloat(document.getElementById('sc-precio')?.value||'0');
-  const qty   = parseInt(document.getElementById('sc-qty')?.value||'1')||1;
-  if(!desc){toast('Ingresa la descripción del artículo','err');return;}
-  if(!precio||precio<=0){toast('Ingresa el precio','err');return;}
-  // Add to cart with special flag
-  const ex = carrito.find(c=>c.sinCodigo&&c.desc===desc&&c.price===precio);
-  if(ex){ ex.qty+=qty; }
-  else{
-    carrito.push({
-      id: 'SC_'+Date.now(),
-      desc: desc.toUpperCase(),
-      talla: '—',
-      color: '',
-      price: precio,
-      qty,
-      sku: 'SIN-COD',
-      sucursalId: '',
-      foto: null,
-      sinCodigo: true,
-      cat: 'Sin código'
-    });
-  }
-  closeM('mo-sin-codigo');
-  renderCart();
-  toast('✓ '+desc+' agregado al carrito');
-}
-
-
-
-// ══════════════════ TAREA 1: RECORTADOR DE FOTO ══════════════════
-let cropImgSrc = null;
-let cropCanvas = null, cropCtx = null;
-let cropDrag = false, cropStartX, cropStartY, cropOffX=0, cropOffY=0;
-let cropScale = 1, cropImgW, cropImgH, cropZone = 160;
-
-function abrirRecorte(){
-  if(!photoDataUrl){ toast('Primero sube una foto','err'); return; }
-  cropImgSrc = photoDataUrl;
-  document.getElementById('crop-overlay').style.display='flex';
-  inicializarCrop();
-}
-
-function inicializarCrop(){
-  const img = new Image();
-  img.onload = () => {
-    cropImgW = img.width; cropImgH = img.height;
-    // Fit image: scale so smallest side fills 200px preview
-    cropScale = Math.max(200/cropImgW, 200/cropImgH);
-    cropOffX = (200 - cropImgW*cropScale)/2;
-    cropOffY = (200 - cropImgH*cropScale)/2;
-    dibujarCrop(img);
-    window._cropImg = img;
-  };
-  img.src = cropImgSrc;
-}
-
-function dibujarCrop(img){
-  const c = document.getElementById('crop-canvas');
-  if(!c) return;
-  c.width = 200; c.height = 200;
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = '#1a1a28';
-  ctx.fillRect(0,0,200,200);
-  ctx.drawImage(img, cropOffX, cropOffY, cropImgW*cropScale, cropImgH*cropScale);
-  // Draw crop guide (square overlay)
-  ctx.strokeStyle = '#1a9e5c';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([5,3]);
-  ctx.strokeRect(10, 10, 180, 180);
-  ctx.setLineDash([]);
-  // Corner handles
-  [[10,10],[190,10],[10,190],[190,190]].forEach(([x,y])=>{
-    ctx.fillStyle='#1a9e5c'; ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill();
-  });
-}
-
-function cropMouseDown(e){
-  cropDrag=true;
-  const rect=e.target.getBoundingClientRect();
-  cropStartX=e.clientX-rect.left - cropOffX;
-  cropStartY=e.clientY-rect.top - cropOffY;
-}
-function cropMouseMove(e){
-  if(!cropDrag||!window._cropImg)return;
-  const rect=e.target.getBoundingClientRect();
-  cropOffX = e.clientX-rect.left - cropStartX;
-  cropOffY = e.clientY-rect.top - cropStartY;
-  dibujarCrop(window._cropImg);
-}
-function cropMouseUp(){ cropDrag=false; }
-
-function cropZoom(delta){
-  if(!window._cropImg)return;
-  cropScale = Math.max(0.3, Math.min(5, cropScale + delta*0.1));
-  // Re-center after zoom
-  cropOffX = (200 - cropImgW*cropScale)/2 + (cropOffX - (200 - cropImgW*(cropScale-delta*0.1))/2);
-  cropOffY = (200 - cropImgH*cropScale)/2 + (cropOffY - (200 - cropImgH*(cropScale-delta*0.1))/2);
-  dibujarCrop(window._cropImg);
-}
-
-function aplicarRecorte(){
-  const c = document.getElementById('crop-canvas'); if(!c||!window._cropImg) return;
-  // Extract the 180×180 inner area (skipping 10px border), output as 400×400
-  const out = document.createElement('canvas');
-  out.width = 400; out.height = 400;
-  const ctx = out.getContext('2d');
-  // Scale factor: canvas is 200px display, we crop 180px inner
-  const srcX = (10 - cropOffX) / cropScale;
-  const srcY = (10 - cropOffY) / cropScale;
-  const srcW = 180 / cropScale;
-  const srcH = 180 / cropScale;
-  ctx.drawImage(window._cropImg, srcX, srcY, srcW, srcH, 0, 0, 400, 400);
-  photoDataUrl = out.toDataURL('image/jpeg', 0.82);
-  document.getElementById('photo-preview').src = photoDataUrl;
-  document.getElementById('photo-preview').style.display = 'block';
-  document.getElementById('photo-placeholder').style.display = 'none';
-  document.getElementById('crop-btn').style.display = 'block';
-  document.getElementById('btn-recortar').style.display = '';
-  document.getElementById('btn-quitar-foto').style.display = '';
-  cerrarRecorte();
-  toast('Foto recortada ✓');
-}
-
-function cerrarRecorte(){
-  document.getElementById('crop-overlay').style.display='none';
-  window._cropImg=null;
-}
-
-function quitarFoto(){
-  photoDataUrl=null;
-  document.getElementById('photo-preview').style.display='none';
-  document.getElementById('photo-placeholder').style.display='flex';
-  document.getElementById('btn-recortar').style.display='none';
-  document.getElementById('btn-quitar-foto').style.display='none';
-}
-
-// Patch handlePhoto to show crop button after upload
-const _origHandlePhoto = handlePhoto;
-function handlePhoto(inp){
-  const f=inp.files[0]; if(!f) return;
-  const r=new FileReader();
-  r.onload=e=>{
-    photoDataUrl=e.target.result;
-    document.getElementById('photo-preview').src=photoDataUrl;
-    document.getElementById('photo-preview').style.display='block';
-    document.getElementById('photo-placeholder').style.display='none';
-    // Show crop and remove buttons
-    const bc=document.getElementById('btn-recortar'); if(bc) bc.style.display='';
-    const bq=document.getElementById('btn-quitar-foto'); if(bq) bq.style.display='';
-    const cb=document.getElementById('crop-btn'); if(cb) cb.style.display='block';
-    // Auto-open cropper
-    abrirRecorte();
-  };
-  r.readAsDataURL(f);
-}
 
 // ══════════════════ TAREA 3: CATÁLOGO — solo alta, sin stock, con filtros ══════════════════
 // Override renderCatalogo with improved version
@@ -6538,7 +6241,7 @@ function go(page,el){
   if(page==='entradas'){populateEntSalSucursales();renderHistEntradas();}
   if(page==='bitacora')loadBitacora();
   if(page==='costos')renderCostos();
-  if(page==='usuarios'){loadUsuariosInternos();}
+  if(page==='usuarios'){loadUsuariosInternos();renderUsuariosInternos();}
   if(page==='salidas'){populateEntSalSucursales();renderHistSalidas();}
   if(page==='gastos')renderGastos();
   if(page==='cuentas')renderCuentas();
