@@ -207,10 +207,13 @@ select option{background:var(--s2)}
 .prod-info{padding:10px 12px}
 
 /* ══ PHOTO UPLOAD ══ */
-.photo-zone{border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
-.photo-zone:hover{border-color:rgba(108,99,255,.5);background:rgba(108,99,255,.05)}
-.photo-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.photo-preview{width:100%;height:140px;object-fit:cover;border-radius:8px;margin-top:8px}
+.photo-zone{border:2px dashed var(--border);border-radius:10px;padding:0;text-align:center;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;width:160px;height:160px;flex-shrink:0}
+.photo-zone:hover{border-color:rgba(26,158,92,.6);background:rgba(26,158,92,.05)}
+.photo-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:2}
+.photo-zone .pz-inner{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.photo-preview{width:160px;height:160px;object-fit:cover;border-radius:8px;display:block}
+.photo-crop-btn{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;z-index:10;display:none}
+.photo-zone:hover .photo-crop-btn{display:block}
 
 /* ══ REPORTES ══ */
 .chart-bar-wrap{display:flex;flex-direction:column;gap:8px}
@@ -446,8 +449,20 @@ select option{background:var(--s2)}
 
         <!-- ══════════ CATÁLOGO GENERAL ══════════ -->
         <div id="page-catalogo" class="page">
-          <div class="flex-between">
-            <div class="search-wrap" style="width:240px"><span class="search-ico">🔍</span><input type="text" id="cat-q" placeholder="Buscar producto…" oninput="renderCatalogo()"></div>
+          <!-- Filtros -->
+          <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
+              <div class="search-wrap" style="flex:2;min-width:160px"><span class="search-ico">🔍</span><input type="text" id="cat-q" placeholder="Código, nombre, marca…" oninput="renderCatalogo()"></div>
+              <select id="cat-cat" onchange="renderCatalogo()" style="width:125px"><option value="">Todas Cat.</option></select>
+              <select id="cat-linea" onchange="renderCatalogo()" style="width:125px"><option value="">Todas Líneas</option></select>
+              <select id="cat-temp" onchange="renderCatalogo()" style="width:135px"><option value="">Todas Temp.</option><option>Primavera/Verano</option><option>Otoño/Invierno</option><option>Todo el Año</option><option>Liquidación</option><option>2024</option><option>2025</option><option>2026</option><option>2027</option></select>
+              <select id="cat-liq" onchange="renderCatalogo()" style="width:125px">
+                <option value="">Todos</option>
+                <option value="normal">Solo normales</option>
+                <option value="liquidacion">Solo liquidación</option>
+              </select>
+              <span id="cat-count" style="font-size:12px;color:var(--muted);margin-left:auto"></span>
+            </div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px" id="cat-grid"></div>
           <div class="empty" id="cat-empty" style="display:none"><div class="empty-icon">🗂️</div><div>Sin productos en catálogo.</div></div>
@@ -1276,10 +1291,24 @@ select option{background:var(--s2)}
       <!-- Foto -->
       <div class="fg">
         <label>Foto del Producto</label>
-        <div class="photo-zone" id="photo-zone" onclick="triggerPhotoInput()">
-          <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="handlePhoto(this)">
-          <div id="photo-placeholder"><div style="font-size:32px;margin-bottom:6px">📷</div><div style="font-size:13px;color:var(--muted)">Clic para subir foto del producto</div></div>
-          <img id="photo-preview" class="photo-preview" style="display:none">
+        <div style="display:flex;gap:16px;align-items:flex-start">
+          <div class="photo-zone" id="photo-zone" onclick="triggerPhotoInput()">
+            <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="handlePhoto(this)">
+            <div id="photo-placeholder" class="pz-inner"><div style="font-size:32px;margin-bottom:6px">📷</div><div style="font-size:11px;color:var(--muted);padding:0 8px">Clic para subir foto</div></div>
+            <img id="photo-preview" class="photo-preview" style="display:none">
+            <button class="photo-crop-btn" id="crop-btn" onclick="event.stopPropagation();abrirRecorte()" title="Recortar/ajustar foto">✂️ Recortar</button>
+          </div>
+          <div style="flex:1;font-size:11px;color:var(--muted);line-height:1.6;padding-top:8px">
+            <div style="font-weight:600;color:var(--cream);margin-bottom:6px">📷 Foto del producto</div>
+            <div>• Clic en el cuadro para subir una foto</div>
+            <div>• Formatos: JPG, PNG, WEBP</div>
+            <div>• Clic en <b>✂️ Recortar</b> para ajustar el encuadre</div>
+            <div style="margin-top:8px">
+              <button class="btn btn-ghost btn-xs" onclick="triggerPhotoInput()" style="margin-right:4px">📁 Subir foto</button>
+              <button class="btn btn-ghost btn-xs" id="btn-recortar" style="display:none" onclick="abrirRecorte()">✂️ Recortar</button>
+              <button class="btn btn-ghost btn-xs" id="btn-quitar-foto" style="display:none;color:var(--red)" onclick="quitarFoto()">🗑️ Quitar</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="fr fr2">
@@ -1660,6 +1689,34 @@ select option{background:var(--s2)}
   </div>
 </div>
 
+<!-- Crop Overlay -->
+<div id="crop-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9998;align-items:center;justify-content:center">
+  <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:340px;width:95%">
+    <div style="font-size:15px;font-weight:700;color:var(--cream);margin-bottom:4px">✂️ Recortar / Ajustar Foto</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Arrastra la imagen para posicionarla. Usa los botones para hacer zoom.</div>
+    <div style="display:flex;justify-content:center;margin-bottom:12px">
+      <canvas id="crop-canvas" width="200" height="200"
+        style="border:2px solid var(--border);border-radius:8px;cursor:move;display:block"
+        onmousedown="cropMouseDown(event)"
+        onmousemove="cropMouseMove(event)"
+        onmouseup="cropMouseUp()"
+        onmouseleave="cropMouseUp()"
+        ontouchstart="cropMouseDown({clientX:event.touches[0].clientX,clientY:event.touches[0].clientY,target:event.target})"
+        ontouchmove="event.preventDefault();cropMouseMove({clientX:event.touches[0].clientX,clientY:event.touches[0].clientY,target:event.target})"
+        ontouchend="cropMouseUp()"></canvas>
+    </div>
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:14px">
+      <button class="btn btn-ghost btn-sm" onclick="cropZoom(-1)" title="Alejar">🔍−</button>
+      <button class="btn btn-ghost btn-sm" onclick="cropZoom(1)" title="Acercar">🔍+</button>
+      <button class="btn btn-ghost btn-sm" onclick="inicializarCrop()" title="Restablecer">↺ Reset</button>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="cerrarRecorte()">Cancelar</button>
+      <button class="btn btn-accent" onclick="aplicarRecorte()">✅ Aplicar Recorte</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast" style="position:fixed;bottom:20px;right:20px;z-index:9999;display:none">
   <div id="toast-in" style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-size:13px;box-shadow:var(--shadow);display:flex;align-items:center;gap:8px"></div>
@@ -1975,17 +2032,7 @@ function abrirModalProducto(id){
 }
 
 function triggerPhotoInput(){document.getElementById('photo-input').click();}
-function handlePhoto(inp){
-  const f=inp.files[0]; if(!f) return;
-  const r=new FileReader();
-  r.onload=e=>{
-    photoDataUrl=e.target.result;
-    document.getElementById('photo-preview').src=photoDataUrl;
-    document.getElementById('photo-preview').style.display='block';
-    document.getElementById('photo-placeholder').style.display='none';
-  };
-  r.readAsDataURL(f);
-}
+// handlePhoto replaced by tasks8.js version
 
 function renderTallasSel(prod){
   const sel=document.getElementById('p-tallas-sel');
@@ -2184,7 +2231,7 @@ function renderInvMatriz(agrupados){
     return`<tr style="${rowColor}">
       <td><div class="thumb" style="width:32px;height:32px;font-size:16px">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div></td>
       <td><div class="mono" style="color:var(--cream);font-weight:600">${p.barcode||p.sku||'—'}</div></td>
-      <td><div style="font-weight:500;color:var(--cream);font-size:12px;line-height:1.3">${p.desc}</div><div style="font-size:10px;color:var(--muted)">${p.marca||''}</div></td>
+      <td><div style="font-weight:500;color:var(--cream);font-size:12px;line-height:1.3">${p.desc}${p.esLiquidacion?' <span class=\"badge b-red\" style=\"font-size:9px\">🏷️LIQ</span>':''}</div><div style="font-size:10px;color:var(--muted)">${p.marca||''}</div></td>
       <td style="font-size:12px;color:var(--muted)">${p.color||'—'}</td>
       <td><span class="badge b-accent" style="font-size:10px">${p.cat}</span></td>
       <td><span class="badge b-blue" style="font-size:10px">${p.locacion||'—'}</span></td>
@@ -5805,28 +5852,7 @@ async function registrarSalida(){
 }
 
 // Show LIQUIDACIÓN badge in inventory and POS for liquidated items
-// Patch renderInvMatriz rows to show badge
-const _origRenderInvMatriz = renderInvMatriz;
-function renderInvMatriz(agrupados){
-  _origRenderInvMatriz(agrupados);
-  // Add liquidacion badges to cells
-  agrupados.forEach((p,i)=>{
-    if(p.esLiquidacion){
-      // Find the desc cell and add badge
-      const rows = document.getElementById('inv-tbody-matriz')?.querySelectorAll('tr');
-      if(rows&&rows[i]){
-        const descCell = rows[i].querySelectorAll('td')[2];
-        if(descCell && !descCell.querySelector('.liq-badge')){
-          const badge = document.createElement('span');
-          badge.className = 'badge b-red liq-badge';
-          badge.style.fontSize = '9px';
-          badge.textContent = '🏷️ LIQUIDACIÓN';
-          descCell.appendChild(badge);
-        }
-      }
-    }
-  });
-}
+// liquidacion badge now integrated directly in renderInvMatriz
 
 // ══════════════════════════════════════════════════
 // TAREA 2: COSTOS Y UTILIDAD
@@ -6000,6 +6026,225 @@ function agregarArticuloSinCodigo(){
   closeM('mo-sin-codigo');
   renderCart();
   toast('✓ '+desc+' agregado al carrito');
+}
+
+
+
+// ══════════════════ TAREA 1: RECORTADOR DE FOTO ══════════════════
+let cropImgSrc = null;
+let cropCanvas = null, cropCtx = null;
+let cropDrag = false, cropStartX, cropStartY, cropOffX=0, cropOffY=0;
+let cropScale = 1, cropImgW, cropImgH, cropZone = 160;
+
+function abrirRecorte(){
+  if(!photoDataUrl){ toast('Primero sube una foto','err'); return; }
+  cropImgSrc = photoDataUrl;
+  document.getElementById('crop-overlay').style.display='flex';
+  inicializarCrop();
+}
+
+function inicializarCrop(){
+  const img = new Image();
+  img.onload = () => {
+    cropImgW = img.width; cropImgH = img.height;
+    // Fit image: scale so smallest side fills 200px preview
+    cropScale = Math.max(200/cropImgW, 200/cropImgH);
+    cropOffX = (200 - cropImgW*cropScale)/2;
+    cropOffY = (200 - cropImgH*cropScale)/2;
+    dibujarCrop(img);
+    window._cropImg = img;
+  };
+  img.src = cropImgSrc;
+}
+
+function dibujarCrop(img){
+  const c = document.getElementById('crop-canvas');
+  if(!c) return;
+  c.width = 200; c.height = 200;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#1a1a28';
+  ctx.fillRect(0,0,200,200);
+  ctx.drawImage(img, cropOffX, cropOffY, cropImgW*cropScale, cropImgH*cropScale);
+  // Draw crop guide (square overlay)
+  ctx.strokeStyle = '#1a9e5c';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5,3]);
+  ctx.strokeRect(10, 10, 180, 180);
+  ctx.setLineDash([]);
+  // Corner handles
+  [[10,10],[190,10],[10,190],[190,190]].forEach(([x,y])=>{
+    ctx.fillStyle='#1a9e5c'; ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill();
+  });
+}
+
+function cropMouseDown(e){
+  cropDrag=true;
+  const rect=e.target.getBoundingClientRect();
+  cropStartX=e.clientX-rect.left - cropOffX;
+  cropStartY=e.clientY-rect.top - cropOffY;
+}
+function cropMouseMove(e){
+  if(!cropDrag||!window._cropImg)return;
+  const rect=e.target.getBoundingClientRect();
+  cropOffX = e.clientX-rect.left - cropStartX;
+  cropOffY = e.clientY-rect.top - cropStartY;
+  dibujarCrop(window._cropImg);
+}
+function cropMouseUp(){ cropDrag=false; }
+
+function cropZoom(delta){
+  if(!window._cropImg)return;
+  cropScale = Math.max(0.3, Math.min(5, cropScale + delta*0.1));
+  // Re-center after zoom
+  cropOffX = (200 - cropImgW*cropScale)/2 + (cropOffX - (200 - cropImgW*(cropScale-delta*0.1))/2);
+  cropOffY = (200 - cropImgH*cropScale)/2 + (cropOffY - (200 - cropImgH*(cropScale-delta*0.1))/2);
+  dibujarCrop(window._cropImg);
+}
+
+function aplicarRecorte(){
+  const c = document.getElementById('crop-canvas'); if(!c||!window._cropImg) return;
+  // Extract the 180×180 inner area (skipping 10px border), output as 400×400
+  const out = document.createElement('canvas');
+  out.width = 400; out.height = 400;
+  const ctx = out.getContext('2d');
+  // Scale factor: canvas is 200px display, we crop 180px inner
+  const srcX = (10 - cropOffX) / cropScale;
+  const srcY = (10 - cropOffY) / cropScale;
+  const srcW = 180 / cropScale;
+  const srcH = 180 / cropScale;
+  ctx.drawImage(window._cropImg, srcX, srcY, srcW, srcH, 0, 0, 400, 400);
+  photoDataUrl = out.toDataURL('image/jpeg', 0.82);
+  document.getElementById('photo-preview').src = photoDataUrl;
+  document.getElementById('photo-preview').style.display = 'block';
+  document.getElementById('photo-placeholder').style.display = 'none';
+  document.getElementById('crop-btn').style.display = 'block';
+  document.getElementById('btn-recortar').style.display = '';
+  document.getElementById('btn-quitar-foto').style.display = '';
+  cerrarRecorte();
+  toast('Foto recortada ✓');
+}
+
+function cerrarRecorte(){
+  document.getElementById('crop-overlay').style.display='none';
+  window._cropImg=null;
+}
+
+function quitarFoto(){
+  photoDataUrl=null;
+  document.getElementById('photo-preview').style.display='none';
+  document.getElementById('photo-placeholder').style.display='flex';
+  document.getElementById('btn-recortar').style.display='none';
+  document.getElementById('btn-quitar-foto').style.display='none';
+}
+
+// Patch handlePhoto to show crop button after upload
+const _origHandlePhoto = handlePhoto;
+function handlePhoto(inp){
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    photoDataUrl=e.target.result;
+    document.getElementById('photo-preview').src=photoDataUrl;
+    document.getElementById('photo-preview').style.display='block';
+    document.getElementById('photo-placeholder').style.display='none';
+    // Show crop and remove buttons
+    const bc=document.getElementById('btn-recortar'); if(bc) bc.style.display='';
+    const bq=document.getElementById('btn-quitar-foto'); if(bq) bq.style.display='';
+    const cb=document.getElementById('crop-btn'); if(cb) cb.style.display='block';
+    // Auto-open cropper
+    abrirRecorte();
+  };
+  r.readAsDataURL(f);
+}
+
+// ══════════════════ TAREA 3: CATÁLOGO — solo alta, sin stock, con filtros ══════════════════
+// Override renderCatalogo with improved version
+function renderCatalogo(){
+  const q     = (document.getElementById('cat-q')?.value||'').toLowerCase();
+  const cat   = document.getElementById('cat-cat')?.value||'';
+  const linea = document.getElementById('cat-linea')?.value||'';
+  const temp  = document.getElementById('cat-temp')?.value||'';
+  const liq   = document.getElementById('cat-liq')?.value||'';
+
+  // Populate category and linea selects if empty
+  const catSel = document.getElementById('cat-cat');
+  if(catSel && catSel.options.length<=1){
+    getCatalogList('categorias').forEach(c=>{
+      const o=document.createElement('option'); o.value=c; o.textContent=c; catSel.appendChild(o);
+    });
+  }
+  const lineaSel = document.getElementById('cat-linea');
+  if(lineaSel && lineaSel.options.length<=1){
+    getCatalogList('lineas').forEach(l=>{
+      const o=document.createElement('option'); o.value=l; o.textContent=l; lineaSel.appendChild(o);
+    });
+  }
+
+  const lista = productos.filter(p=>{
+    const mq = !q ||
+      (p.desc||'').toLowerCase().includes(q) ||
+      (p.barcode||'').includes(q) ||
+      (p.sku||'').toLowerCase().includes(q) ||
+      (p.marca||'').toLowerCase().includes(q) ||
+      (p.cat||'').toLowerCase().includes(q) ||
+      (p.color||'').toLowerCase().includes(q);
+    const mc  = !cat   || p.cat===cat;
+    const ml  = !linea || p.linea===linea;
+    const mt  = !temp  || p.temporada===temp;
+    const mlq = !liq   || (liq==='liquidacion'?p.esLiquidacion:(liq==='normal'?!p.esLiquidacion:true));
+    return mq&&mc&&ml&&mt&&mlq;
+  });
+
+  const countEl = document.getElementById('cat-count');
+  if(countEl) countEl.textContent = lista.length+' productos';
+
+  document.getElementById('cat-empty').style.display=lista.length?'none':'block';
+  document.getElementById('cat-grid').innerHTML=lista.map(p=>{
+    const suc=sucursales.find(s=>s.id===p.sucursalId);
+    const liqBadge = p.esLiquidacion ? '<span class="badge b-red" style="font-size:9px;display:block;margin-bottom:3px">🏷️ LIQUIDACIÓN</span>' : '';
+    return`<div class="prod-card">
+      <div class="prod-img" onclick="abrirModalProducto('${p.id}')" style="aspect-ratio:1;height:auto;min-height:120px">
+        ${p.foto?`<img src="${p.foto}" alt="${p.desc}" style="width:100%;height:100%;object-fit:cover">`:'<span style="font-size:36px">👟</span>'}
+      </div>
+      <div class="prod-info">
+        ${liqBadge}
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono)">${p.sku||p.barcode||'—'}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--cream);margin:3px 0;line-height:1.3">${p.desc}</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:3px">${p.cat||''}${p.linea?' · '+p.linea:''}</div>
+        ${p.marca?`<div style="font-size:11px;color:var(--muted);margin-bottom:3px">${p.marca}${p.color?' · '+p.color:''}</div>`:''}
+        ${p.locacion?`<div style="font-size:10px;color:var(--blue);margin-bottom:3px">📍 ${p.locacion}</div>`:''}
+        ${suc?`<div style="font-size:11px;color:var(--muted);margin-bottom:4px">${suc.tipo==='bodega'?'📦':'🏪'} ${suc.nombre}</div>`:''}
+        <div style="font-family:var(--mono);color:var(--gold);font-size:14px;margin-bottom:6px">${fmt(p.precio)}</div>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-xs" style="flex:1" onclick="abrirModalProducto('${p.id}')">✏️ Editar</button>
+          <button class="btn btn-ghost btn-xs" onclick="imprimirEtiqueta('${p.id}')">🏷️</button>
+          <button class="btn btn-red btn-xs" onclick="deleteProducto('${p.id}')">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Remove stock section from product modal — catalog is for registration only
+// Stock will only be managed from Entrada Mercancía
+function abrirModalProductoSinStock(id){
+  // Same as abrirModalProducto but hides stock section
+  abrirModalProducto(id);
+  // Hide stock section after modal opens
+  setTimeout(()=>{
+    const stockSec = document.getElementById('p-stock-inputs');
+    const tallaSec = document.getElementById('p-tallas-sel');
+    const stockNote = document.getElementById('p-stock-note');
+    if(stockSec) stockSec.style.opacity='0.4';
+    if(tallaSec) tallaSec.style.opacity='0.4';
+    if(!stockNote){
+      const note = document.createElement('div');
+      note.id='p-stock-note';
+      note.style.cssText='background:rgba(26,158,92,.08);border:1px solid rgba(26,158,92,.3);border-radius:7px;padding:8px 12px;font-size:11px;color:var(--green);margin-bottom:8px';
+      note.innerHTML='📦 El stock se gestiona desde <b>Entrada de Mercancía</b>. Aquí puedes definir las tallas disponibles del artículo.';
+      tallaSec?.parentNode?.insertBefore(note, tallaSec);
+    }
+  },80);
 }
 
 
