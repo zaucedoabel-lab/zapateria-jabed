@@ -334,6 +334,7 @@ select option{background:var(--s2)}
         <div class="nav-item" id="nav-usuarios" onclick="go('usuarios',this)"><span class="ni">👥</span><span class="nt">Usuarios y Roles</span></div>
         <div class="nav-item" id="nav-importar" onclick="go('importar',this)"><span class="ni">📥</span><span class="nt">Importar CSV</span></div>
         <div class="nav-item" id="nav-bitacora" onclick="go('bitacora',this)"><span class="ni">📜</span><span class="nt">Bitácora</span></div>
+        <div class="nav-item" id="nav-costos" onclick="go('costos',this)"><span class="ni">💹</span><span class="nt">Costos y Utilidad</span></div>
       </div>
       <div class="sidebar-foot">
         <div style="padding:8px 10px;border-top:1px solid var(--border)">
@@ -515,12 +516,13 @@ select option{background:var(--s2)}
               <div class="card-title">📤 Registrar Salida de Mercancía</div>
               <div class="fr fr2">
                 <div class="fg"><label>Tipo de Operación</label>
-                  <select id="sal-tipo">
+                  <select id="sal-tipo" onchange="onSalTipoChange()">
                     <option value="ajuste">Salida (Ajuste)</option>
                     <option value="robo">Salida (Robo)</option>
                     <option value="defecto">Salida (Defectuosa)</option>
                     <option value="devolucion">Salida (Devolución a Proveedor)</option>
                     <option value="muestra">Salida (Muestra)</option>
+                    <option value="dañado_liquidacion">🏷️ Dañado / Liquidación (sigue en venta)</option>
                   </select>
                 </div>
                 <div class="fg"><label>Comentario / Motivo</label>
@@ -582,7 +584,10 @@ select option{background:var(--s2)}
               <div id="pos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px"></div>
             </div>
             <div class="cart-panel">
-              <div class="cp-head"><div class="card-title" style="margin-bottom:0">🛒 Carrito <button class="btn btn-red btn-xs" onclick="clearCart()">Vaciar</button></div></div>
+              <div class="cp-head">
+                <div class="card-title" style="margin-bottom:4px">🛒 Carrito <button class="btn btn-red btn-xs" onclick="clearCart()">Vaciar</button></div>
+                <button class="btn btn-ghost btn-sm" style="width:100%;font-size:11px;margin-bottom:4px;border:1px dashed var(--border)" onclick="abrirArticuloSinCodigo()">＋ Artículo sin código</button>
+              </div>
               <div class="cp-items" id="cart-list"></div>
               <div class="cp-total">
                 <div class="tr-row"><span class="tr-l">Subtotal</span><span class="tr-v" id="c-sub">$0.00</span></div>
@@ -1032,6 +1037,38 @@ select option{background:var(--s2)}
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- ══════════ COSTOS Y UTILIDAD ══════════ -->
+        <div id="page-costos" class="page">
+          <div class="flex-between" style="margin-bottom:14px">
+            <div class="flex-row" style="gap:8px">
+              <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" id="costo-q" placeholder="Buscar producto…" oninput="renderCostos()"></div>
+              <select id="costo-cat" onchange="renderCostos()" style="width:130px"><option value="">Todas Cat.</option></select>
+              <select id="costo-linea" onchange="renderCostos()" style="width:130px"><option value="">Todas Líneas</option></select>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="exportarCostosExcel()">📊 Exportar Excel</button>
+          </div>
+          <!-- Tarjetas resumen -->
+          <div class="stat-grid sg4" style="margin-bottom:14px">
+            <div class="scard gold"><div class="sl">Valor Inventario (costo)</div><div class="sv gold" id="costo-val-costo">$0</div></div>
+            <div class="scard g"><div class="sl">Valor Inventario (venta)</div><div class="sv g" id="costo-val-venta">$0</div></div>
+            <div class="scard b"><div class="sl">Utilidad Potencial</div><div class="sv b" id="costo-utilidad">$0</div></div>
+            <div class="scard"><div class="sl">% Margen Promedio</div><div class="sv" id="costo-margen">0%</div></div>
+          </div>
+          <div class="tw" style="overflow-x:auto">
+            <table style="min-width:900px"><thead><tr>
+              <th>Código</th><th>Descripción</th><th>Cat.</th><th>Línea</th>
+              <th style="text-align:right">Costo Compra</th>
+              <th style="text-align:right">Precio Venta</th>
+              <th style="text-align:right">Utilidad/pza</th>
+              <th style="text-align:right">% Margen</th>
+              <th style="text-align:center">Stock</th>
+              <th style="text-align:right">Utilidad Total</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="costos-tbody"></tbody>
+          </table></div>
         </div>
 
         <!-- ══════════ BITÁCORA ══════════ -->
@@ -1594,6 +1631,31 @@ select option{background:var(--s2)}
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeM('mo-permisos')">Cancelar</button>
       <button class="btn btn-accent" onclick="guardarPermisos()">💾 Guardar Permisos</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Artículo Sin Código -->
+<div class="mo" id="mo-sin-codigo">
+  <div class="md" style="max-width:420px">
+    <div class="mh"><div class="mt">＋ Artículo Sin Código</div><button class="xbtn" onclick="closeM('mo-sin-codigo')">✕</button></div>
+    <div class="mb">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Para artículos que no están dados de alta en el sistema. Se registrará en el historial con la leyenda <b style="color:var(--gold)">ART. SIN CÓDIGO</b>.</div>
+      <div class="fg"><label>Descripción del artículo *</label>
+        <input type="text" id="sc-desc" placeholder="Ej: BLUSA FLORAL DAMA, CINTURÓN CAFÉ…" style="text-transform:uppercase">
+      </div>
+      <div class="fr fr2">
+        <div class="fg"><label>Precio ($) *</label>
+          <input type="number" id="sc-precio" placeholder="0.00" step="0.01" min="0.01">
+        </div>
+        <div class="fg"><label>Cantidad</label>
+          <input type="number" id="sc-qty" value="1" min="1">
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeM('mo-sin-codigo')">Cancelar</button>
+      <button class="btn btn-accent" onclick="agregarArticuloSinCodigo()">＋ Agregar al Carrito</button>
     </div>
   </div>
 </div>
@@ -2229,7 +2291,7 @@ function renderPOS(){
       <div class="prod-img" style="height:100px">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div>
       <div class="prod-info">
         <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:2px">${p.sku||p.barcode||'—'}</div>
-        <div style="font-size:13px;font-weight:600;color:var(--cream);line-height:1.3;margin-bottom:3px">${p.desc}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--cream);line-height:1.3;margin-bottom:3px">${p.desc}${p.esLiquidacion?'<span class="badge b-red" style="font-size:9px;display:block;margin-top:2px">🏷️ LIQUIDACIÓN</span>':''}</div>
         ${suc?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px">${suc.tipo==='bodega'?'📦':'🏪'} ${suc.nombre}</div>`:''}
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="font-family:var(--mono);color:var(--gold);font-size:14px">${fmt(p.precio)}</span>
@@ -3198,6 +3260,7 @@ async function cobrar(){
   try{
     const {updateDoc}=window._fb;
     for(const item of carrito){
+      if(item.sinCodigo)continue; // artículo sin código — no afecta inventario
       const p=productos.find(x=>x.id===item.id);
       if(p&&p.stock&&p.stock[item.talla]!==undefined){
         await updateDoc(docRef('productos',p.id),{[`stock.${item.talla}`]:Math.max(0,p.stock[item.talla]-item.qty)});
@@ -3205,7 +3268,7 @@ async function cobrar(){
     }
     const ventaDoc={
       fecha:hoy(),hora:hora(),
-      items:JSON.parse(JSON.stringify(carrito)),
+      items:JSON.parse(JSON.stringify(carrito.map(item=>({...item,sinCodigo:item.sinCodigo||false})))),
       subtotal:sub,descuento:dm,total,pago,
       tipoVenta:tipoVenta,anticipo:anticipo||0,
       fechaApartado:fechaAprt||'',
@@ -4481,7 +4544,7 @@ function renderHist(){
       <td rowspan="${items.length}" style="color:var(--muted)">${v.hora||'—'}</td>
       <td rowspan="${items.length}">${v.cliente}</td>
       <td rowspan="${items.length}" style="color:var(--muted)">${v.vendedor||'—'}</td>`:''}
-      <td style="font-size:12px">${item.desc||'—'}${item.esGratis?'<span class="badge b-green" style="font-size:9px;margin-left:4px">GRATIS</span>':''}</td>
+      <td style="font-size:12px">${item.desc||'—'}${item.esGratis?'<span class="badge b-green" style="font-size:9px;margin-left:4px">GRATIS</span>':''}${item.sinCodigo?'<span class="badge b-gold" style="font-size:9px;margin-left:4px">ART. SIN CÓDIGO</span>':''}</td>
       <td class="mono" style="text-align:center">${item.talla||'—'}</td>
       <td><span class="badge b-accent" style="font-size:10px">${item.cat||'—'}</span></td>
       <td class="mono" style="text-align:center">${item.qty||1}</td>
@@ -5100,7 +5163,7 @@ function renderPOS(){
       <div class="prod-img" style="height:100px">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div>
       <div class="prod-info">
         <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:2px">${p.sku||p.barcode||'—'}</div>
-        <div style="font-size:13px;font-weight:600;color:var(--cream);line-height:1.3;margin-bottom:3px">${p.desc}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--cream);line-height:1.3;margin-bottom:3px">${p.desc}${p.esLiquidacion?'<span class="badge b-red" style="font-size:9px;display:block;margin-top:2px">🏷️ LIQUIDACIÓN</span>':''}</div>
         ${suc?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px">${suc.tipo==='bodega'?'📦':'🏪'} ${suc.nombre}</div>`:''}
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="font-family:var(--mono);color:var(--gold);font-size:14px">${fmt(p.precio)}</span>
@@ -5682,6 +5745,264 @@ function confirmarPin(){
 }
 
 
+
+// ══════════════════════════════════════════════════
+// TAREA 1: DAÑADO / LIQUIDACIÓN
+// ══════════════════════════════════════════════════
+function onSalTipoChange(){
+  const tipo = document.getElementById('sal-tipo')?.value||'';
+  const sec  = document.getElementById('sal-liquidacion-section');
+  if(sec) sec.style.display = tipo==='dañado_liquidacion' ? 'block' : 'none';
+}
+
+// Override registrarSalida to handle liquidación type
+const _origRegistrarSalida = registrarSalida;
+async function registrarSalida(){
+  const tipo = document.getElementById('sal-tipo')?.value||'ajuste';
+  if(tipo !== 'dañado_liquidacion'){
+    await _origRegistrarSalida();
+    return;
+  }
+  // Liquidación: change price, don't remove stock
+  if(!salLineas.length){toast('Agrega al menos un producto','err');return;}
+  const nuevoPrecio = parseFloat(document.getElementById('sal-precio-liq')?.value||'0');
+  if(!nuevoPrecio||nuevoPrecio<=0){toast('Ingresa el nuevo precio de liquidación','err');return;}
+  const razon = document.getElementById('sal-razon-liq')?.value.trim()||'Liquidación';
+  const usuarioActual = usuarioActivo||currentProfile;
+  const esAdmin = usuarioActual?.rol==='admin';
+  const descLineas = salLineas.map(l=>`${l.desc} T${l.talla} ×${l.cantidad}`).join(', ');
+  if(!confirm(`¿Cambiar precio a $${nuevoPrecio.toFixed(2)}? El artículo seguirá en inventario.`))return;
+  try{
+    const {updateDoc} = window._fb;
+    // For each product line: update price to new liquidation price, add liquidacion flag
+    const prodIds = [...new Set(salLineas.map(l=>l.prodId))];
+    for(const prodId of prodIds){
+      await updateDoc(docRef('productos',prodId),{
+        precio: nuevoPrecio,
+        esLiquidacion: true,
+        precioOriginal: salLineas.find(l=>l.prodId===prodId)?.precioOriginal || (productos.find(x=>x.id===prodId)?.precio||0),
+        razonLiquidacion: razon,
+        liquidadoPor: usuarioActual?.nombre||'—',
+        liquidadoEn: new Date().toISOString()
+      });
+    }
+    // Register in bitacora
+    await window._fb.addDoc(col('bitacora'),{
+      tipo: 'liquidacion',
+      descripcion: `Liquidación: ${descLineas} | Nuevo precio: $${nuevoPrecio} | Razón: ${razon}`,
+      datos: {lineas: JSON.parse(JSON.stringify(salLineas)), nuevoPrecio, razon},
+      usuario: usuarioActual?.nombre||'—',
+      usuarioRol: usuarioActual?.rol||'—',
+      fecha: hoy(), hora: hora(),
+      estado: esAdmin?'aprobado':'pendiente',
+      aprobadoPor: esAdmin?(usuarioActual?.nombre||'Admin'):'',
+      createdAt: new Date().toISOString()
+    });
+    toast(`✅ Precio actualizado a $${nuevoPrecio.toFixed(2)} — artículo marcado como LIQUIDACIÓN`);
+    limpiarSalida();
+    document.getElementById('sal-liquidacion-section').style.display='none';
+  }catch(e){toast('Error: '+e.message,'err');console.error(e);}
+}
+
+// Show LIQUIDACIÓN badge in inventory and POS for liquidated items
+// Patch renderInvMatriz rows to show badge
+const _origRenderInvMatriz = renderInvMatriz;
+function renderInvMatriz(agrupados){
+  _origRenderInvMatriz(agrupados);
+  // Add liquidacion badges to cells
+  agrupados.forEach((p,i)=>{
+    if(p.esLiquidacion){
+      // Find the desc cell and add badge
+      const rows = document.getElementById('inv-tbody-matriz')?.querySelectorAll('tr');
+      if(rows&&rows[i]){
+        const descCell = rows[i].querySelectorAll('td')[2];
+        if(descCell && !descCell.querySelector('.liq-badge')){
+          const badge = document.createElement('span');
+          badge.className = 'badge b-red liq-badge';
+          badge.style.fontSize = '9px';
+          badge.textContent = '🏷️ LIQUIDACIÓN';
+          descCell.appendChild(badge);
+        }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════
+// TAREA 2: COSTOS Y UTILIDAD
+// ══════════════════════════════════════════════════
+function renderCostos(){
+  const q     = (document.getElementById('costo-q')?.value||'').toLowerCase();
+  const cat   = document.getElementById('costo-cat')?.value||'';
+  const linea = document.getElementById('costo-linea')?.value||'';
+
+  // Populate filters if empty
+  const catSel = document.getElementById('costo-cat');
+  if(catSel && catSel.options.length<=1){
+    getCatalogList('categorias').forEach(c=>{
+      const o=document.createElement('option'); o.value=c; o.textContent=c; catSel.appendChild(o);
+    });
+  }
+  const lineaSel = document.getElementById('costo-linea');
+  if(lineaSel && lineaSel.options.length<=1){
+    getCatalogList('lineas').forEach(l=>{
+      const o=document.createElement('option'); o.value=l; o.textContent=l; lineaSel.appendChild(o);
+    });
+  }
+
+  const sumS = s => Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+  const lista = productos.filter(p=>{
+    const mq = !q||(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q);
+    const mc = !cat || p.cat===cat;
+    const ml = !linea || p.linea===linea;
+    return mq&&mc&&ml;
+  });
+
+  // Stats
+  let totalCosto=0, totalVenta=0;
+  lista.forEach(p=>{
+    const stock = sumS(p.stock);
+    totalCosto += (p.costo||0)*stock;
+    totalVenta += (p.precio||0)*stock;
+  });
+  const utilidadTotal = totalVenta - totalCosto;
+  const margenProm = totalVenta>0 ? ((utilidadTotal/totalVenta)*100).toFixed(1) : 0;
+
+  const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  setEl('costo-val-costo', fmt(totalCosto));
+  setEl('costo-val-venta', fmt(totalVenta));
+  setEl('costo-utilidad', fmt(utilidadTotal));
+  setEl('costo-margen', margenProm+'%');
+
+  const tbody = document.getElementById('costos-tbody');
+  if(!tbody)return;
+
+  tbody.innerHTML = lista.map(p=>{
+    const stock  = sumS(p.stock);
+    const costo  = p.costo||0;
+    const precio = p.precio||0;
+    const utilPza = precio - costo;
+    const margen = precio>0 ? ((utilPza/precio)*100).toFixed(1) : 0;
+    const utilTotal = utilPza * stock;
+    const margenColor = margen<20?'var(--red)':margen<40?'var(--gold)':'var(--green)';
+    const liqBadge = p.esLiquidacion ? `<span class="badge b-red" style="font-size:9px">🏷️LIQ</span>` : '';
+
+    return`<tr>
+      <td><div class="mono" style="font-size:11px;color:var(--cream)">${p.barcode||p.sku||'—'}</div></td>
+      <td>
+        <div style="font-weight:600;color:var(--cream);font-size:12px">${p.desc} ${liqBadge}</div>
+        <div style="font-size:10px;color:var(--muted)">${p.marca||'—'}</div>
+        ${p.esLiquidacion?`<div style="font-size:10px;color:var(--red)">Original: ${fmt(p.precioOriginal||0)} → ${fmt(precio)}</div>`:''}
+      </td>
+      <td><span class="badge b-accent" style="font-size:10px">${p.cat||'—'}</span></td>
+      <td style="font-size:11px;color:var(--muted)">${p.linea||'—'}</td>
+      <td style="text-align:right">
+        ${costo>0
+          ? `<span class="mono" style="color:var(--cream)">${fmt(costo)}</span>`
+          : `<button class="btn btn-ghost btn-xs" onclick="editarCostoProducto('${p.id}',${precio})">＋ Agregar</button>`
+        }
+      </td>
+      <td style="text-align:right">
+        <span class="mono" style="color:var(--gold)">${fmt(precio)}</span>
+        <button class="btn btn-ghost btn-xs" style="margin-left:4px" onclick="editarPrecioProducto('${p.id}',${precio})" title="Modificar precio">✏️</button>
+      </td>
+      <td style="text-align:right;font-family:var(--mono);color:${utilPza>0?'var(--green)':'var(--red)'}">${fmt(utilPza)}</td>
+      <td style="text-align:right;font-weight:700;color:${margenColor}">${margen}%</td>
+      <td style="text-align:center;font-family:var(--mono)">${stock}</td>
+      <td style="text-align:right;font-family:var(--mono);font-weight:600;color:${utilTotal>0?'var(--green)':'var(--red)'}">${fmt(utilTotal)}</td>
+      <td>
+        <button class="btn btn-ghost btn-xs" onclick="editarCostoPrecio('${p.id}',${costo},${precio})" title="Editar costo y precio">💹</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// Modal inline edit for cost/price
+async function editarCostoProducto(id, precioActual){
+  const nuevoCosto = parseFloat(prompt(`Ingresa el costo de compra del producto:\n(Precio de venta actual: $${precioActual})`)||'0');
+  if(isNaN(nuevoCosto)||nuevoCosto<0){toast('Valor inválido','err');return;}
+  await window._fb.setDoc(docRef('productos',id),{costo:nuevoCosto},{merge:true});
+  toast('Costo actualizado ✓');
+}
+
+async function editarPrecioProducto(id, precioActual){
+  const nuevoPrecio = parseFloat(prompt(`Modificar precio de venta:\nPrecio actual: $${precioActual}\nNuevo precio:`)||'0');
+  if(isNaN(nuevoPrecio)||nuevoPrecio<=0){toast('Precio inválido','err');return;}
+  await window._fb.setDoc(docRef('productos',id),{precio:nuevoPrecio},{merge:true});
+  toast('Precio actualizado ✓');
+}
+
+async function editarCostoPrecio(id, costoActual, precioActual){
+  const nuevoCosto  = parseFloat(prompt(`Costo de compra actual: $${costoActual}\nNuevo costo de compra:`)||String(costoActual));
+  if(isNaN(nuevoCosto)||nuevoCosto<0){toast('Valor inválido','err');return;}
+  const nuevoPrecio = parseFloat(prompt(`Precio de venta actual: $${precioActual}\nNuevo precio de venta:`)||String(precioActual));
+  if(isNaN(nuevoPrecio)||nuevoPrecio<=0){toast('Precio inválido','err');return;}
+  const margen = ((nuevoPrecio-nuevoCosto)/nuevoPrecio*100).toFixed(1);
+  await window._fb.setDoc(docRef('productos',id),{costo:nuevoCosto,precio:nuevoPrecio},{merge:true});
+  toast(`✅ Actualizado — Costo: ${fmt(nuevoCosto)} | Precio: ${fmt(nuevoPrecio)} | Margen: ${margen}%`);
+  renderCostos();
+}
+
+function exportarCostosExcel(){
+  const sumS = s => Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+  const headers=['Codigo','Descripcion','Categoria','Linea','Costo_Compra','Precio_Venta','Utilidad_pza','Margen_%','Stock','Utilidad_Total','Liquidacion'];
+  const rows = productos.map(p=>{
+    const stock=sumS(p.stock);
+    const costo=p.costo||0;
+    const precio=p.precio||0;
+    const util=precio-costo;
+    const margen=precio>0?((util/precio)*100).toFixed(1):0;
+    return[p.barcode||p.sku||'',p.desc,p.cat||'',p.linea||'',costo,precio,util,margen,stock,util*stock,p.esLiquidacion?'SÍ':'NO'];
+  });
+  const nl='\n', esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const csv='\uFEFF'+headers.map(esc).join(',')+nl+rows.map(r=>r.map(esc).join(',')).join(nl);
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='costos_utilidad_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click(); toast('Exportado ✓');
+}
+
+// ══════════════════════════════════════════════════
+// TAREA 3: ARTÍCULO SIN CÓDIGO
+// ══════════════════════════════════════════════════
+function abrirArticuloSinCodigo(){
+  openM('mo-sin-codigo');
+  document.getElementById('sc-desc').value='';
+  document.getElementById('sc-precio').value='';
+  document.getElementById('sc-qty').value='1';
+  setTimeout(()=>document.getElementById('sc-desc')?.focus(),100);
+}
+
+function agregarArticuloSinCodigo(){
+  const desc  = document.getElementById('sc-desc')?.value.trim();
+  const precio= parseFloat(document.getElementById('sc-precio')?.value||'0');
+  const qty   = parseInt(document.getElementById('sc-qty')?.value||'1')||1;
+  if(!desc){toast('Ingresa la descripción del artículo','err');return;}
+  if(!precio||precio<=0){toast('Ingresa el precio','err');return;}
+  // Add to cart with special flag
+  const ex = carrito.find(c=>c.sinCodigo&&c.desc===desc&&c.price===precio);
+  if(ex){ ex.qty+=qty; }
+  else{
+    carrito.push({
+      id: 'SC_'+Date.now(),
+      desc: desc.toUpperCase(),
+      talla: '—',
+      color: '',
+      price: precio,
+      qty,
+      sku: 'SIN-COD',
+      sucursalId: '',
+      foto: null,
+      sinCodigo: true,
+      cat: 'Sin código'
+    });
+  }
+  closeM('mo-sin-codigo');
+  renderCart();
+  toast('✓ '+desc+' agregado al carrito');
+}
+
+
 // ══════════════════ NAV ══════════════════
 const PAGE_TITLES={
   dashboard:{t:'Dashboard',sub:'Vista general del negocio',actions:''},
@@ -5724,6 +6045,7 @@ function go(page,el){
   if(page==='catalogo')renderCatalogo();
   if(page==='entradas'){populateEntSalSucursales();renderHistEntradas();}
   if(page==='bitacora')loadBitacora();
+  if(page==='costos')renderCostos();
   if(page==='usuarios'){loadUsuariosInternos();}
   if(page==='salidas'){populateEntSalSucursales();renderHistSalidas();}
   if(page==='gastos')renderGastos();
