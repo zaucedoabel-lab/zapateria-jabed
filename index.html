@@ -1806,11 +1806,12 @@ select option{background:var(--s2)}
 <!-- Modal Editor de Permisos -->
 <div class="mo" id="mo-permisos">
   <div class="md" style="max-width:560px">
-    <div class="mh"><div class="mt" id="ep-titulo">Permisos del usuario</div><button class="xbtn" onclick="closeM('mo-permisos')">✕</button></div>
+    <div class="mh"><div class="mt" id="ep-titulo">🔐 Módulos accesibles</div><button class="xbtn" onclick="closeM('mo-permisos')">✕</button></div>
     <div class="mb">
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <button class="btn btn-ghost btn-sm" onclick="seleccionarTodosPermisos(true)">✅ Seleccionar todos</button>
-        <button class="btn btn-ghost btn-sm" onclick="seleccionarTodosPermisos(false)">☐ Quitar todos</button>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Marca los módulos a los que este empleado puede acceder. Los cambios aplican en la próxima sesión.</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-accent btn-sm" onclick="seleccionarTodosPermisos(true)">✅ Todos</button>
+        <button class="btn btn-ghost btn-sm" onclick="seleccionarTodosPermisos(false)">☐ Ninguno</button>
       </div>
       <div id="ep-modulos" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:360px;overflow-y:auto"></div>
     </div>
@@ -2023,6 +2024,18 @@ function startListeners(){
     ventas=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderDashboard();renderHist();calcCorte();renderCuentas();
   }));
+  // Entradas listener — refresh when entries change
+  push(onSnapshot(col('entradas'),snap=>{
+    if(document.getElementById('page-entradas')?.classList.contains('on')){
+      renderHistEntradas();
+    }
+  }));
+  // Salidas listener — refresh when exits change
+  push(onSnapshot(col('salidas'),snap=>{
+    if(document.getElementById('page-salidas')?.classList.contains('on')){
+      renderHistSalidas();
+    }
+  }));
   push(onSnapshot(query(col('gastos'),orderBy('fecha','desc')),snap=>{
     gastos=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderGastos();renderDashboard();calcCorte();
@@ -2192,7 +2205,23 @@ function abrirModalProducto(id){
 }
 
 function triggerPhotoInput(){document.getElementById('photo-input').click();}
-// handlePhoto replaced by tasks8.js version
+function handlePhoto(inp){
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    photoDataUrl=e.target.result;
+    document.getElementById('photo-preview').src=photoDataUrl;
+    document.getElementById('photo-preview').style.display='block';
+    document.getElementById('photo-placeholder').style.display='none';
+    // Show helper buttons
+    const bc=document.getElementById('btn-recortar'); if(bc) bc.style.display='';
+    const bq=document.getElementById('btn-quitar-foto'); if(bq) bq.style.display='';
+    const cb=document.getElementById('crop-btn'); if(cb) cb.style.display='block';
+    // Auto-open cropper if available
+    if(typeof abrirRecorte==='function') abrirRecorte();
+  };
+  r.readAsDataURL(f);
+}
 
 function renderTallasSel(prod){
   const sel=document.getElementById('p-tallas-sel');
@@ -2219,7 +2248,7 @@ async function saveProducto(){
   const desc=document.getElementById('p-desc').value.trim();
   const precio=parseFloat(document.getElementById('p-precio').value);
   if(!desc){toast('Falta descripción','err');return;}
-  if(isNaN(precio)||precio<=0){toast('Precio inválido — ingresa un número mayor a 0','err');return;}
+  if(isNaN(precio)||precio<0){toast('Precio inválido','err');return;}
   const sucId=document.getElementById('p-suc').value;
   if(!sucId){toast('Selecciona una sucursal','err');return;}
   const stock=getStockVals();
@@ -2276,20 +2305,25 @@ async function saveProducto(){
   const {setDoc,addDoc}=window._fb;
   try{
     if(editProdId){
-      await setDoc(docRef('productos',editProdId),data,{merge:true});
-      // Immediately update local cache so UI reflects changes without waiting for onSnapshot
+      // Use setDoc WITHOUT merge for clean full replace of product data
+      await setDoc(docRef('productos',editProdId), {...data, createdAt: productos.find(p=>p.id===editProdId)?.createdAt||new Date().toISOString()});
+      // Update local cache immediately
       const idx=productos.findIndex(p=>p.id===editProdId);
-      if(idx>=0) productos[idx]={...productos[idx],...data,id:editProdId};
+      if(idx>=0) productos[idx]={...data, id:editProdId, createdAt:productos[idx].createdAt||new Date().toISOString()};
+      else productos.push({...data, id:editProdId});
     } else {
       const ref=await addDoc(col('productos'),{...data,createdAt:new Date().toISOString()});
       productos.push({...data,id:ref.id,createdAt:new Date().toISOString()});
     }
+    const savedId = editProdId;
     closeM('mo-prod');
-    toast(editProdId?'Producto actualizado ✓':'Producto guardado ✓');
+    toast(savedId?'Producto actualizado ✓':'Producto guardado ✓');
     editProdId=null;
     photoDataUrl=null;
-    // Refresh all views immediately
-    renderCatalogo();renderInv();renderPOS();
+    // Refresh views immediately — don't wait for Firebase listener
+    renderCatalogo();
+    renderInv();
+    renderPOS();
   }catch(e){
     const msg=e.message||String(e);
     toast('Error al guardar: '+msg,'err');
@@ -4625,7 +4659,8 @@ async function registrarEntrada(){
       toast(`✅ Entrada enviada para aprobación del administrador`);
     }
     limpiarEntrada();
-    renderHistEntradas();
+    // Force reload from Firestore to ensure historial reflects change
+    await renderHistEntradas();
   }catch(e){toast('Error: '+e.message,'err');console.error(e);}
 }
 
@@ -4640,6 +4675,8 @@ function limpiarEntrada(){
 let histEntradas=[];
 async function renderHistEntradas(){
   const fecha=document.getElementById('ent-h-fecha')?.value||'';
+  const el=document.getElementById('ent-historial');
+  if(el)el.innerHTML='<div style="padding:16px;text-align:center;color:var(--muted)">Cargando…</div>';
   try{
     const snap=await window._fb.getDocs(col('entradas'));
     histEntradas=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -4823,7 +4860,8 @@ async function registrarSalida(){
       toast(`✅ Salida enviada para aprobación del administrador`);
     }
     limpiarSalida();
-    renderHistSalidas();
+    // Force reload from Firestore
+    await renderHistSalidas();
   }catch(e){toast('Error: '+e.message,'err');console.error(e);}
 }
 
@@ -4838,6 +4876,8 @@ function limpiarSalida(){
 let histSalidas=[];
 async function renderHistSalidas(){
   const fecha=document.getElementById('sal-h-fecha')?.value||'';
+  const elS=document.getElementById('sal-historial');
+  if(elS)elS.innerHTML='<div style="padding:16px;text-align:center;color:var(--muted)">Cargando…</div>';
   try{
     const snap=await window._fb.getDocs(col('salidas'));
     histSalidas=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -5643,332 +5683,29 @@ function renderUsuariosInternos(){
   const tbody = document.getElementById('usr-interno-tbody');
   if(!tbody) return;
   const rolLabel = {admin:'👑 Admin', manager:'⭐ Manager', vendedor:'🏷️ Vendedor', bodeguero:'📦 Bodeguero', lectura:'👁️ Solo Lectura'};
-  tbody.innerHTML = usuariosInternos.map(u=>`<tr>
-    <td style="font-weight:600;color:var(--cream)">${u.nombre}</td>
-    <td style="font-family:var(--mono);color:var(--muted)">${u.usuario}</td>
-    <td><span class="badge b-purple">${rolLabel[u.rol]||u.rol}</span></td>
-    <td style="color:var(--muted)">${u.activo!==false?'✅ Activo':'⏸️ Inactivo'}</td>
-    <td>
-      <div class="flex-row" style="gap:3px">
-        <button class="btn btn-ghost btn-xs" onclick="editUsuarioInterno('${u.id}')">✏️</button>
-        <button class="btn btn-red btn-xs" onclick="deleteUsuarioInterno('${u.id}')">🗑️</button>
-      </div>
-    </td>
-  </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Sin usuarios creados</td></tr>';
-}
-
-// editUsrId declared globally
-function abrirModalUsuarioInterno(id){
-  editUsrId = id || null;
-  const u = id ? usuariosInternos.find(x=>x.id===id) : null;
-  document.getElementById('ui-title').textContent = id ? 'Editar Usuario' : 'Nuevo Usuario';
-  document.getElementById('ui-nombre').value = u?.nombre||'';
-  document.getElementById('ui-usuario').value = u?.usuario||'';
-  document.getElementById('ui-pin').value = '';
-  document.getElementById('ui-rol').value = u?.rol||'vendedor';
-  document.getElementById('ui-activo').value = u?.activo===false?'0':'1';
-  openM('mo-usuario-interno');
-}
-
-function editUsuarioInterno(id){ abrirModalUsuarioInterno(id); }
-
-async function saveUsuarioInterno(){
-  const nombre   = document.getElementById('ui-nombre').value.trim();
-  const usuario  = document.getElementById('ui-usuario').value.trim().toLowerCase();
-  const pin      = document.getElementById('ui-pin').value.trim();
-  const rol      = document.getElementById('ui-rol').value;
-  const activo   = document.getElementById('ui-activo').value === '1';
-  if(!nombre){ toast('Falta el nombre','err'); return; }
-  if(!usuario){ toast('Falta el usuario','err'); return; }
-  if(!editUsrId && !pin){ toast('Ingresa una contraseña','err'); return; }
-  // Check duplicate username
-  const dup = usuariosInternos.find(u=>u.usuario===usuario && u.id!==editUsrId);
-  if(dup){ toast('Ese usuario ya existe','err'); return; }
-  const data = { nombre, usuario, rol, activo, updatedAt: new Date().toISOString() };
-  if(pin) data.pin = btoa(pin); // simple obfuscation (base64)
-  try{
-    if(editUsrId){
-      await window._fb.setDoc(docRef('usuariosInternos', editUsrId), data, {merge:true});
-    } else {
-      data.createdAt = new Date().toISOString();
-      await window._fb.addDoc(col('usuariosInternos'), data);
-    }
-    closeM('mo-usuario-interno');
-    toast('Usuario guardado ✓');
-    editUsrId = null;
-    await loadUsuariosInternos();
-  }catch(e){ toast('Error: '+e.message,'err'); }
-}
-
-async function deleteUsuarioInterno(id){
-  if(!confirm('¿Eliminar este usuario?')) return;
-  await window._fb.deleteDoc(docRef('usuariosInternos', id));
-  toast('Usuario eliminado');
-  await loadUsuariosInternos();
-}
-
-// ── Pantalla de selección de usuario interno ──
-function mostrarPantallaUsuarios(){
-  const overlay = document.getElementById('usr-overlay');
-  if(!overlay) return;
+  const rolColor = {admin:'b-red', manager:'b-accent', vendedor:'b-purple', bodeguero:'b-orange', lectura:'b-gray'};
   if(!usuariosInternos.length){
-    // No internal users configured — skip selection
-    usuarioActivo = { nombre: currentProfile?.nombre||'Admin', rol:'admin', usuario:'admin' };
-    aplicarPermisosNav();
+    tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Sin usuarios creados. Clic en + Nuevo Usuario.</td></tr>';
     return;
   }
-  // Show user selector
-  overlay.style.display = 'flex';
-  document.getElementById('usr-overlay-lista').innerHTML = usuariosInternos
-    .filter(u=>u.activo!==false)
-    .map(u=>`
-      <div onclick="seleccionarUsuario('${u.id}')" style="padding:14px;background:var(--s2);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .15s" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
-        <div style="font-size:24px;margin-bottom:6px">${{admin:'👑',vendedor:'🏷️',bodeguero:'📦',lectura:'👁️'}[u.rol]||'👤'}</div>
-        <div style="font-weight:600;color:var(--cream)">${u.nombre}</div>
-        <div style="font-size:11px;color:var(--muted)">${u.rol}</div>
-      </div>`).join('');
-  document.getElementById('usr-pin-section').style.display = 'none';
-  window._usrSelId = null;
+  tbody.innerHTML = usuariosInternos.map(u=>{
+    const permsCount = u.permisos ? u.permisos.length : (PERMISOS_ROL_DEFAULT[u.rol]||[]).length;
+    return `<tr>
+      <td style="font-weight:600;color:var(--cream)">${u.nombre}</td>
+      <td style="font-family:var(--mono);color:var(--muted);font-size:12px">${u.usuario||'—'}</td>
+      <td><span class="badge ${rolColor[u.rol]||'b-gray'}">${rolLabel[u.rol]||u.rol}</span></td>
+      <td style="color:var(--muted)">${u.activo!==false?'✅ Activo':'⏸️ Inactivo'}</td>
+      <td>
+        <div class="flex-row" style="gap:4px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-xs" onclick="editUsuarioInterno('${u.id}')">✏️</button>
+          <button class="btn btn-accent btn-xs" onclick="abrirEditorPermisos('${u.id}')" title="${permsCount} módulos habilitados" style="background:var(--blue)">🔐 Módulos (${permsCount})</button>
+          <button class="btn btn-red btn-xs" onclick="deleteUsuarioInterno('${u.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
-function seleccionarUsuario(id){
-  window._usrSelId = id;
-  document.getElementById('usr-pin-section').style.display = 'block';
-  document.getElementById('usr-pin-input').value = '';
-  document.getElementById('usr-pin-input').focus();
-  const u = usuariosInternos.find(x=>x.id===id);
-  document.getElementById('usr-pin-label').textContent = 'Contraseña de '+u?.nombre;
-}
-
-function confirmarPin(){
-  const id = window._usrSelId; if(!id) return;
-  const u  = usuariosInternos.find(x=>x.id===id); if(!u) return;
-  const pin = document.getElementById('usr-pin-input').value.trim();
-  if(btoa(pin) !== u.pin && pin !== atob(u.pin||'')){
-    // Try plain comparison
-    if(pin !== (u.pinPlain||'') && btoa(pin) !== (u.pin||'')){
-      toast('Contraseña incorrecta','err'); return;
-    }
-  }
-  usuarioActivo = u;
-  document.getElementById('usr-overlay').style.display = 'none';
-  aplicarPermisosNav();
-  toast('Bienvenido, '+u.nombre+' ✓');
-  // Update header
-  const rb = document.getElementById('role-badge');
-  if(rb){ rb.textContent = u.nombre+' ('+u.rol+')'; }
-}
-
-function aplicarPermisosNav(){
-  const rol = usuarioActivo?.rol || currentProfile?.rol || 'admin';
-  const perms = getPermisosUsuario(usuarioActivo||{rol});
-  // Hide/show nav items
-  const navMap = {
-    'nav-inv':'inventario','nav-prods':'catalogo','nav-entradas':'entradas',
-    'nav-salidas':'salidas','nav-pos':'pos','nav-hist':'historial',
-    'nav-clientes':'clientes','nav-transfer':'transferencias','nav-cuentas':'cuentas',
-    'nav-gastos':'gastos','nav-corte':'corte','nav-reportes':'reportes',
-    'nav-resumen':'resumen','nav-promociones':'promociones',
-    'nav-catalogos-cfg':'catalogos-cfg','nav-etiquetas':'etiquetas',
-    'nav-sucursales':'sucursales','nav-usuarios':'usuarios','nav-importar':'importar'
-  };
-  Object.entries(navMap).forEach(([navId, page])=>{
-    const el = document.getElementById(navId);
-    if(el) el.style.display = perms.includes(page) ? '' : 'none';
-  });
-}
-
-// ══════════════════ TAREA 4: BITÁCORA DE MOVIMIENTOS ══════════════════
-async function registrarMovimiento(tipo, descripcion, datos){
-  const user = usuarioActivo || currentProfile;
-  try{
-    await window._fb.addDoc(col('bitacora'),{
-      tipo,           // 'nuevo_producto','editar_producto','entrada','salida','ajuste_pendiente'
-      descripcion,
-      datos: datos || {},
-      usuario: user?.nombre || user?.email || '—',
-      usuarioRol: user?.rol || '—',
-      fecha: hoy(),
-      hora:  hora(),
-      estado: tipo.includes('pendiente') ? 'pendiente' : 'aprobado',
-      aprobadoPor: tipo.includes('pendiente') ? '' : (user?.nombre||'—'),
-      createdAt: new Date().toISOString()
-    });
-  }catch(e){ console.warn('bitacora error:', e); }
-}
-
-async function loadBitacora(){
-  try{
-    const snap = await window._fb.getDocs(col('bitacora'));
-    const movs = snap.docs.map(d=>({id:d.id,...d.data()}))
-      .sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
-    renderBitacora(movs);
-  }catch(e){ console.error(e); }
-}
-
-function renderBitacora(movs){
-  const tbody = document.getElementById('bitacora-tbody');
-  if(!tbody) return;
-  const tipoIcon = {
-    nuevo_producto:'➕', editar_producto:'✏️', eliminar_producto:'🗑️',
-    entrada:'📥', salida:'📤', ajuste_pendiente:'⏳', aprobado:'✅', rechazado:'❌'
-  };
-  tbody.innerHTML = movs.length ? movs.map(m=>`<tr>
-    <td style="font-family:var(--mono);font-size:11px">${m.fecha}</td>
-    <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${m.hora||'—'}</td>
-    <td><span class="badge ${m.estado==='pendiente'?'b-gold':m.estado==='rechazado'?'b-red':'b-green'}" style="font-size:10px">
-      ${tipoIcon[m.tipo]||'📝'} ${m.tipo.replace(/_/g,' ')}
-    </span></td>
-    <td style="font-size:12px;color:var(--cream);max-width:200px">${m.descripcion}</td>
-    <td style="font-size:12px;color:var(--muted)">${m.usuario}</td>
-    <td style="font-size:11px;color:var(--muted)">${m.usuarioRol||'—'}</td>
-    <td style="font-size:11px;color:var(--muted)">${m.aprobadoPor||'—'}</td>
-    <td>
-      ${m.estado==='pendiente'?`
-        <button class="btn btn-green btn-xs" onclick="aprobarMovimiento('${m.id}')">✅ Aprobar</button>
-        <button class="btn btn-red btn-xs" onclick="rechazarMovimiento('${m.id}')">❌ Rechazar</button>
-      `:m.estado==='aprobado'?'<span style="color:var(--green);font-size:11px">✅ Aprobado</span>':'<span style="color:var(--red);font-size:11px">❌ Rechazado</span>'}
-    </td>
-  </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Sin movimientos registrados</td></tr>';
-
-  // Stats
-  const pend = movs.filter(m=>m.estado==='pendiente').length;
-  const el = document.getElementById('bitacora-pend');
-  if(el) el.textContent = pend;
-}
-
-async function aprobarMovimiento(id){
-  const user = usuarioActivo || currentProfile;
-  if((user?.rol||'')!=='admin'){ toast('Solo el administrador puede aprobar','err'); return; }
-  // Get bitacora entry to apply changes
-  try{
-    const bSnap = await window._fb.getDoc(docRef('bitacora',id));
-    if(!bSnap.exists()){ toast('Movimiento no encontrado','err'); return; }
-    const mov = bSnap.data();
-    const {updateDoc} = window._fb;
-    // Apply stock changes
-    if(mov.tipo==='entrada'&&mov.datos?.lineas){
-      for(const linea of mov.datos.lineas){
-        const p=productos.find(x=>x.id===linea.prodId); if(!p)continue;
-        const stockActual=(p.stock||{})[linea.talla]||0;
-        await updateDoc(docRef('productos',p.id),{[`stock.${linea.talla}`]:stockActual+linea.cantidad});
-      }
-      // Mark entrada as aprobado too
-      if(mov.datos.entradaId) await window._fb.setDoc(docRef('entradas',mov.datos.entradaId),{estado:'aprobado',aprobadoPor:user?.nombre||'Admin'},{merge:true});
-    }
-    if(mov.tipo==='salida'&&mov.datos?.lineas){
-      for(const linea of mov.datos.lineas){
-        const p=productos.find(x=>x.id===linea.prodId); if(!p)continue;
-        const stockActual=(p.stock||{})[linea.talla]||0;
-        await updateDoc(docRef('productos',p.id),{[`stock.${linea.talla}`]:Math.max(0,stockActual-linea.cantidad)});
-      }
-      if(mov.datos.salidaId) await window._fb.setDoc(docRef('salidas',mov.datos.salidaId),{estado:'aprobado',aprobadoPor:user?.nombre||'Admin'},{merge:true});
-    }
-    // Mark bitacora entry as approved
-    await window._fb.setDoc(docRef('bitacora',id),{
-      estado:'aprobado', aprobadoPor: user?.nombre||'Admin',
-      aprobadoEn: new Date().toISOString()
-    },{merge:true});
-    toast('Movimiento aprobado y aplicado al inventario ✓');
-    loadBitacora();
-  }catch(e){ toast('Error al aprobar: '+e.message,'err'); console.error(e); }
-}
-
-async function rechazarMovimiento(id){
-  const user = usuarioActivo || currentProfile;
-  if((user?.rol||'')!=='admin'){ toast('Solo el administrador puede rechazar','err'); return; }
-  const motivo = prompt('Motivo del rechazo:'); if(!motivo) return;
-  await window._fb.setDoc(docRef('bitacora',id),{
-    estado:'rechazado', aprobadoPor: user?.nombre||'Admin', motivoRechazo: motivo,
-    aprobadoEn: new Date().toISOString()
-  },{merge:true});
-  toast('Movimiento rechazado');
-  loadBitacora();
-}
-
-
-
-// ══════════════════ TAREA 3: EDITOR DE PERMISOS POR USUARIO ══════════════════
-const MODULO_LABELS = {
-  'inventario':'📦 Inventario','catalogo':'🗂️ Catálogo General',
-  'entradas':'📥 Entrada Mercancía','salidas':'📤 Salida Mercancía',
-  'pos':'🛒 Punto de Venta','historial':'📋 Historial Ventas',
-  'clientes':'👤 Clientes','transfer':'↔️ Transferencias',
-  'cuentas':'📒 Apartados/Créditos','gastos':'💸 Gastos',
-  'corte':'🏦 Corte de Caja','reportes':'📈 Reportes',
-  'resumen':'📊 Resumen Anual','promociones':'🎁 Promociones',
-  'catalogos-cfg':'📋 Catálogos','etiquetas':'🏷️ Etiquetas',
-  'sucursales':'🏪 Sucursales','usuarios':'👥 Usuarios y Roles',
-  'importar':'📥 Importar CSV','bitacora':'📜 Bitácora'
-};
-
-let editPermisosUsrId = null;
-
-function abrirEditorPermisos(id){
-  editPermisosUsrId = id;
-  const u = usuariosInternos.find(x=>x.id===id); if(!u) return;
-  const permsActuales = getPermisosUsuario(u);
-  document.getElementById('ep-titulo').textContent = 'Permisos de: '+u.nombre;
-  const grid = document.getElementById('ep-modulos');
-  grid.innerHTML = TODOS_MODULOS.map(m=>`
-    <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
-      <input type="checkbox" id="ep-${m}" value="${m}" ${permsActuales.includes(m)?'checked':''} style="width:15px;height:15px;accent-color:var(--accent)">
-      <span style="font-size:13px;color:var(--cream)">${MODULO_LABELS[m]||m}</span>
-    </label>`).join('');
-  // Pre-check by default based on role
-  openM('mo-permisos');
-}
-
-function seleccionarTodosPermisos(val){
-  TODOS_MODULOS.forEach(m=>{
-    const cb=document.getElementById('ep-'+m); if(cb) cb.checked=val;
-  });
-}
-
-async function guardarPermisos(){
-  if(!editPermisosUsrId) return;
-  const permsSeleccionados = TODOS_MODULOS.filter(m=>{
-    const cb=document.getElementById('ep-'+m); return cb&&cb.checked;
-  });
-  try{
-    await window._fb.setDoc(docRef('usuariosInternos',editPermisosUsrId),
-      {permisos:permsSeleccionados},{merge:true});
-    // Update local cache
-    const idx=usuariosInternos.findIndex(x=>x.id===editPermisosUsrId);
-    if(idx>=0)usuariosInternos[idx].permisos=permsSeleccionados;
-    closeM('mo-permisos');
-    toast('Permisos guardados ✓');
-    // If this is the active user, re-apply nav
-    if(usuarioActivo?.id===editPermisosUsrId){
-      usuarioActivo.permisos=permsSeleccionados;
-      aplicarPermisosNav();
-    }
-  }catch(e){ toast('Error: '+e.message,'err'); }
-}
-
-// Override renderUsuariosInternos to add permisos button
-function renderUsuariosInternos(){
-  const tbody = document.getElementById('usr-interno-tbody');
-  if(!tbody) return;
-  const rolLabel = {admin:'👑 Admin', manager:'⭐ Manager', vendedor:'🏷️ Vendedor', bodeguero:'📦 Bodeguero', lectura:'👁️ Solo Lectura'};
-  tbody.innerHTML = usuariosInternos.map(u=>`<tr>
-    <td style="font-weight:600;color:var(--cream)">${u.nombre}</td>
-    <td style="font-family:var(--mono);color:var(--muted)">${u.usuario}</td>
-    <td><span class="badge b-purple">${rolLabel[u.rol]||u.rol}</span></td>
-    <td style="color:var(--muted)">${u.activo!==false?'✅ Activo':'⏸️ Inactivo'}</td>
-    <td>
-      <div class="flex-row" style="gap:3px">
-        <button class="btn btn-ghost btn-xs" onclick="editUsuarioInterno('${u.id}')">✏️</button>
-        <button class="btn btn-accent btn-xs" onclick="abrirEditorPermisos('${u.id}')">🔐 Permisos</button>
-        <button class="btn btn-red btn-xs" onclick="deleteUsuarioInterno('${u.id}')">🗑️</button>
-      </div>
-    </td>
-  </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Sin usuarios creados</td></tr>';
-}
-
-// ══════════════════ TAREA 4: ETIQUETAS EXTRA ══════════════════
-
-// ── Etiqueta de Muestra: FRENTE y REVERSO ──
 function abrirEtiquetaMuestra(){
   // Get selected product from etiq page if any
   const p = etiqProdSel;
@@ -6496,6 +6233,91 @@ async function deleteVenta(id){
   }catch(e){toast('Error: '+e.message,'err');}
 }
 
+
+// ══════════════════ MÓDULOS ACCESIBLES POR USUARIO ══════════════════
+const MODULO_LABELS = {
+  'inventario':'📦 Inventario',
+  'catalogo':'🗂️ Catálogo General',
+  'entradas':'📥 Entrada Mercancía',
+  'salidas':'📤 Salida Mercancía',
+  'pos':'🛒 Punto de Venta',
+  'historial':'📋 Historial Ventas',
+  'clientes':'👤 Clientes',
+  'transfer':'↔️ Transferencias',
+  'cuentas':'📒 Apartados/Créditos',
+  'gastos':'💸 Gastos',
+  'corte':'🏦 Corte de Caja',
+  'reportes':'📈 Reportes',
+  'resumen':'📊 Resumen Anual',
+  'promociones':'🎁 Promociones',
+  'catalogos-cfg':'⚙️ Configuración',
+  'etiquetas':'🏷️ Etiquetas',
+  'sucursales':'🏪 Sucursales',
+  'usuarios':'👥 Usuarios y Roles',
+  'importar':'📥 Importar CSV',
+  'bitacora':'📜 Bitácora',
+  'costos':'💹 Costos y Utilidad'
+};
+
+let _editPermisosId = null;
+
+function abrirEditorPermisos(uid){
+  _editPermisosId = uid;
+  const u = usuariosInternos.find(x=>x.id===uid);
+  if(!u){ toast('Usuario no encontrado','err'); return; }
+  const permsActuales = u.permisos && u.permisos.length
+    ? u.permisos
+    : (PERMISOS_ROL_DEFAULT[u.rol] || PERMISOS_ROL_DEFAULT.vendedor);
+  const tituloEl = document.getElementById('ep-titulo');
+  if(tituloEl) tituloEl.textContent = '🔐 Módulos de: ' + u.nombre;
+  const grid = document.getElementById('ep-modulos');
+  if(!grid) return;
+  const allMods = Object.keys(MODULO_LABELS);
+  grid.innerHTML = allMods.map(m=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:9px 12px;
+      background:${permsActuales.includes(m)?'rgba(26,158,92,.15)':'var(--s2)'};
+      border:1px solid ${permsActuales.includes(m)?'rgba(26,158,92,.4)':'var(--border)'};
+      border-radius:8px;cursor:pointer;transition:all .15s"
+      onmouseover="this.style.background='var(--s3)'"
+      onmouseout="this.style.background=document.getElementById('ep-${m}')?.checked?'rgba(26,158,92,.15)':'var(--s2)'">
+      <input type="checkbox" id="ep-${m}" value="${m}"
+        ${permsActuales.includes(m)?'checked':''}
+        style="width:16px;height:16px;accent-color:var(--accent)">
+      <span style="font-size:13px;color:var(--cream)">${MODULO_LABELS[m]||m}</span>
+    </label>`).join('');
+  openM('mo-permisos');
+}
+
+function seleccionarTodosPermisos(val){
+  Object.keys(MODULO_LABELS).forEach(m=>{
+    const cb = document.getElementById('ep-'+m);
+    if(cb) cb.checked = val;
+  });
+}
+
+async function guardarPermisos(){
+  if(!_editPermisosId){ toast('Error: no hay usuario seleccionado','err'); return; }
+  const perms = Object.keys(MODULO_LABELS).filter(m=>{
+    const cb = document.getElementById('ep-'+m);
+    return cb && cb.checked;
+  });
+  if(!perms.length){ toast('Selecciona al menos un módulo','err'); return; }
+  try{
+    await window._fb.setDoc(docRef('usuariosInternos',_editPermisosId),{permisos:perms},{merge:true});
+    const idx = usuariosInternos.findIndex(x=>x.id===_editPermisosId);
+    if(idx>=0) usuariosInternos[idx].permisos = perms;
+    // If this is the active user, re-apply nav
+    if(usuarioActivo && usuarioActivo.id===_editPermisosId){
+      usuarioActivo.permisos = perms;
+      aplicarPermisosNav();
+    }
+    closeM('mo-permisos');
+    renderUsuariosInternos();
+    toast('Permisos guardados: '+perms.length+' módulos ✓');
+  }catch(e){ toast('Error al guardar: '+e.message,'err'); }
+}
+
+
 // ══════════════════ NAV ══════════════════
 const PAGE_TITLES={
   dashboard:{t:'Dashboard',sub:'Vista general del negocio',actions:''},
@@ -6519,10 +6341,11 @@ const PAGE_TITLES={
   usuarios:{t:'Usuarios y Roles',sub:'Control de accesos y permisos',actions:''},
   importar:{t:'Importar CSV',sub:'Migrar inventario desde Sizes & Colors',actions:''},
 };
+let _currentPage = '';
 function go(page,el){
-  // Security: show user selector on every module change if users are configured
-  if(usuariosInternos.length>0 && page!=='usuarios'){
-    // Store destination, show selector, then navigate after login
+  // Show user selector only when switching to a DIFFERENT page AND users exist
+  // Don't show when staying on same page or returning after save
+  if(usuariosInternos.length>0 && page!=='usuarios' && page !== _currentPage){
     window._pendingPage = page;
     window._pendingEl = el;
     mostrarPantallaUsuarios();
@@ -6531,6 +6354,7 @@ function go(page,el){
   _navigateTo(page, el);
 }
 function _navigateTo(page, el){
+  _currentPage = page;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));
   document.getElementById('page-'+page).classList.add('on');
