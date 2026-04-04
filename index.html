@@ -1973,7 +1973,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementB
 async function initApp(user){
   currentUser=user;
   document.getElementById('tb-email').textContent=user.email;
-  // Load user profile
+  // Load Firebase user profile (used as admin fallback only)
   try{
     const {getDoc}=window._fb;
     const snap=await getDoc(docRef('usuarios',user.uid));
@@ -1985,6 +1985,17 @@ async function initApp(user){
   loadClientes();
   loadConfigGeneral();
   renderDashboard();
+  // Load internal users and show selector if any exist
+  try{
+    const snap2 = await window._fb.getDocs(col('usuariosInternos'));
+    usuariosInternos = snap2.docs.map(d=>({id:d.id,...d.data()}));
+    const activos = usuariosInternos.filter(u=>u.activo!==false);
+    if(activos.length > 0){
+      // Always show user selector on fresh login
+      usuarioActivo = null;
+      mostrarPantallaUsuarios();
+    }
+  }catch(e){ console.warn('No se pudo cargar usuarios internos:', e); }
 }
 
 function updateRoleBadge(){
@@ -2048,7 +2059,11 @@ function startListeners(){
   push(onSnapshot(col('usuarios'),snap=>{
     usuarios=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderUsuarios();
-    // update h-suc, corte-suc selects with user list
+  }));
+  // Listen for internal users changes (created/edited/deleted in app)
+  push(onSnapshot(col('usuariosInternos'),snap=>{
+    usuariosInternos=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderUsuariosInternos();
   }));
 }
 
@@ -6494,11 +6509,23 @@ const PAGE_TITLES={
 };
 let _currentPage = '';
 function go(page,el){
-  // Supervisor role: only identifies at login, never re-asked on module change
   const rolActivo = usuarioActivo?.rol || '';
   const esSupervisor = ROLES_SIN_REAUTH.includes(rolActivo);
-  // Show user selector when switching to a DIFFERENT page, users exist, and NOT supervisor
-  if(usuariosInternos.length>0 && page!=='usuarios' && page !== _currentPage && !esSupervisor){
+  const activos = usuariosInternos.filter(u=>u.activo!==false);
+  // If there are internal users and no active user — always require selection
+  if(activos.length > 0 && !usuarioActivo){
+    window._pendingPage = page;
+    window._pendingEl = el;
+    mostrarPantallaUsuarios();
+    return;
+  }
+  // If supervisor: navigate freely without re-auth
+  if(esSupervisor){
+    _navigateTo(page, el);
+    return;
+  }
+  // All other roles: require re-auth on every module change
+  if(activos.length > 0 && page !== _currentPage){
     window._pendingPage = page;
     window._pendingEl = el;
     mostrarPantallaUsuarios();
