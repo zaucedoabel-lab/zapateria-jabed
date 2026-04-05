@@ -2257,23 +2257,48 @@ function handlePhoto(inp){
 
 function renderTallasSel(prod){
   const sel=document.getElementById('p-tallas-sel');
-  const have=prod?Object.keys(prod.stock||{}):[];
-  sel.innerHTML='<div class="tg">'+ALL_TALLAS.map(t=>`<button type="button" class="tb ${have.includes(t)?'on':''}" onclick="toggleT(this,'${t}')">${t}</button>`).join('')+'</div>';
+  const prodTallas = prod ? Object.keys(prod.stock||{}) : [];
+  // Combine ALL_TALLAS with any tallas the product already has (in case talla was removed from catalog)
+  const allVisible = [...new Set([...ALL_TALLAS, ...prodTallas])];
+  // Sort: numeric first, then alpha
+  allVisible.sort((a,b)=>{
+    const na=parseFloat(a), nb=parseFloat(b);
+    if(!isNaN(na)&&!isNaN(nb)) return na-nb;
+    if(!isNaN(na)) return -1;
+    if(!isNaN(nb)) return 1;
+    return a.localeCompare(b);
+  });
+  sel.innerHTML='<div class="tg">'+allVisible.map(t=>`<button type="button" class="tb ${prodTallas.includes(t)?'on':''}" onclick="toggleT(this,'${t}')">${t}</button>`).join('')+'</div>';
   renderStockInps(prod?prod.stock:{});
 }
 function toggleT(btn){btn.classList.toggle('on');syncStockInps();}
 function syncStockInps(){
-  const sels=[...document.querySelectorAll('.tb.on')].map(b=>b.textContent.trim());
+  const sels=[...document.querySelectorAll('#p-tallas-sel .tb.on')].map(b=>b.textContent.trim());
   const cur=getStockVals();
   const obj={};sels.forEach(t=>{obj[t]=cur[t]||0;});
   renderStockInps(obj);
+  // Also refresh barcode inputs if modal is open
+  setTimeout(()=>{
+    const prod = editProdId ? productos.find(x=>x.id===editProdId) : null;
+    if(typeof renderBarcodeTallaInputs==='function') renderBarcodeTallaInputs(prod);
+  }, 60);
 }
 function renderStockInps(stock){
   const el=document.getElementById('p-stock-inputs'),keys=Object.keys(stock);
   el.innerHTML=keys.length?`<div class="fg"><label>Cantidad por talla</label><div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:5px">${keys.map(t=>`<div style="display:flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:4px 9px"><span style="font-size:11px;color:var(--muted);min-width:28px;font-family:var(--mono)">${t}</span><input type="number" id="si-${t}" value="${stock[t]||0}" min="0" style="width:48px;padding:3px 5px;font-size:12px;text-align:center"></div>`).join('')}</div></div>`:'';
 }
 function getStockVals(){
-  const r={};document.querySelectorAll('[id^="si-"]').forEach(i=>{r[i.id.replace('si-','')]=parseInt(i.value)||0;});return r;
+  const r={};
+  // Only read inputs inside the product modal stock section
+  const container = document.getElementById('p-stock-inputs');
+  if(!container) return r;
+  container.querySelectorAll('input[type="number"]').forEach(i=>{
+    if(!i.id.startsWith('si-')) return;
+    const talla = i.id.replace('si-','');
+    const qty = parseInt(i.value)||0;
+    if(talla) r[talla] = qty;
+  });
+  return r;
 }
 
 async function saveProducto(){
@@ -2283,7 +2308,24 @@ async function saveProducto(){
   if(isNaN(precio)||precio<0){toast('Precio inválido','err');return;}
   const sucId=document.getElementById('p-suc').value;
   if(!sucId){toast('Selecciona una sucursal','err');return;}
-  const stock=getStockVals();
+  // Get stock from form inputs
+  let stock=getStockVals();
+  // If editing: preserve any existing tallas not shown in current ALL_TALLAS list
+  if(editProdId){
+    const existing=productos.find(p=>p.id===editProdId);
+    if(existing?.stock){
+      // Start with existing stock, then override with form values
+      stock = {...existing.stock, ...stock};
+      // Remove tallas that are deselected (not in .tb.on buttons)
+      const selectedTallas = [...document.querySelectorAll('#p-tallas-sel .tb.on')]
+        .map(b=>b.textContent.trim());
+      // Only keep tallas that are selected
+      const merged={};
+      selectedTallas.forEach(t=>{ merged[t] = stock[t]||0; });
+      stock = merged;
+    }
+  }
+  console.log('saveProducto stock:', stock); // debug
   let foto=null;
   if(photoDataUrl){
     try{
@@ -5513,16 +5555,8 @@ function autoGenerarCodigosTalla(){
   toast('Códigos generados ✓ — puedes editarlos manualmente');
 }
 
-// Hook: when tallas change, refresh barcode inputs
-const _origToggleT = typeof toggleT !== 'undefined' ? toggleT : null;
-
-// Override syncStockInps to also update barcode inputs
-const _origSyncStockInps = syncStockInps;
-function syncStockInps(){
-  _origSyncStockInps();
-  const prod = editProdId ? productos.find(x=>x.id===editProdId) : null;
-  setTimeout(()=>renderBarcodeTallaInputs(prod), 50);
-}
+// syncStockInps is defined once above — barcode refresh integrated directly
+// (removed duplicate override)
 
 // ══════════════════ POS: SCAN INTELIGENTE ══════════════════
 let posInputTimer = null;
