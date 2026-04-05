@@ -336,7 +336,7 @@ select option{background:var(--s2)}
         <div class="nav-item" id="nav-sucursales" onclick="go('sucursales',this)"><span class="ni">🏪</span><span class="nt">Sucursales</span></div>
         <div class="nav-item" id="nav-usuarios" onclick="go('usuarios',this)"><span class="ni">👥</span><span class="nt">Usuarios y Roles</span></div>
         <div class="nav-item" id="nav-importar" onclick="go('importar',this)"><span class="ni">📥</span><span class="nt">Importar CSV</span></div>
-        <div class="nav-item" id="nav-bitacora" onclick="go('bitacora',this)"><span class="ni">📜</span><span class="nt">Bitácora</span></div>
+        <div class="nav-item" id="nav-bitacora" onclick="go('bitacora',this)" style="background:#f0b429;color:#000;font-weight:800;border-radius:8px;margin:2px 6px"><span class="ni">📜</span><span class="nt" style="color:#000;font-weight:800;font-size:14px">Bitácora</span></div>
         <div class="nav-item" id="nav-costos" onclick="go('costos',this)"><span class="ni">💹</span><span class="nt">Costos y Utilidad</span></div>
       </div>
       <div class="sidebar-foot">
@@ -1985,6 +1985,8 @@ async function initApp(user){
   loadClientes();
   loadConfigGeneral();
   renderDashboard();
+  // Pre-load tallas catalog so product modal always has correct tallas
+  loadCatalogos().catch(()=>{});
   // Load internal users — hide ALL nav first, then show selector
   try{
     const snap2 = await window._fb.getDocs(col('usuariosInternos'));
@@ -3312,6 +3314,7 @@ async function loadCatalogos(){
     if(!catalogosData[k])catalogosData[k]=[...CFG_DEFAULTS[k]];
   }
   renderCatalogosCfg();
+  refreshAllTallas();   // ← KEY FIX: update ALL_TALLAS with catalog tallas
   updateProductoSelects();
 }
 
