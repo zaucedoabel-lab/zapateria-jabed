@@ -879,6 +879,57 @@ select option{background:var(--s2)}
         </div>
 
         <!-- ══════════ HISTORIAL ══════════ -->
+        <!-- ══════════ DASHBOARD DE VENTAS ══════════ -->
+        <div id="page-dashboard-ventas" class="page">
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+            <div style="display:flex;gap:4px">
+              <button class="btn btn-accent btn-sm" id="dv-btn-dia"    onclick="setDVPeriodo('dia')">📅 Día</button>
+              <button class="btn btn-ghost btn-sm" id="dv-btn-semana"  onclick="setDVPeriodo('semana')">📆 Semana</button>
+              <button class="btn btn-ghost btn-sm" id="dv-btn-mes"     onclick="setDVPeriodo('mes')">🗓️ Mes</button>
+              <button class="btn btn-ghost btn-sm" id="dv-btn-anual"   onclick="setDVPeriodo('anual')">📈 Año</button>
+            </div>
+            <input type="date" id="dv-fecha" onchange="renderDashboardVentas()" style="width:145px">
+            <select id="dv-suc" onchange="renderDashboardVentas()" style="width:160px"><option value="">Todas sucursales</option></select>
+            <span id="dv-periodo-label" style="font-size:13px;color:var(--muted);margin-left:4px"></span>
+          </div>
+          <!-- Tarjetas resumen -->
+          <div class="stat-grid sg4" style="margin-bottom:16px">
+            <div class="scard gold"><div class="sl">Total Ventas</div><div class="sv gold" id="dv-total">$0</div><div class="ss" id="dv-n-ventas">0 transacciones</div></div>
+            <div class="scard g">  <div class="sl">Efectivo</div>     <div class="sv g"    id="dv-efectivo">$0</div></div>
+            <div class="scard b">  <div class="sl">Tarjeta</div>      <div class="sv b"    id="dv-tarjeta">$0</div></div>
+            <div class="scard">    <div class="sl">Transferencia</div><div class="sv"      id="dv-transferencia">$0</div></div>
+          </div>
+          <!-- Por categoría + por pago -->
+          <div class="sg2 stat-grid" style="margin-bottom:16px">
+            <div class="card">
+              <div class="card-title">🏷️ Ventas por Categoría</div>
+              <div id="dv-por-cat" style="padding:4px 0"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">💳 Desglose por Forma de Pago</div>
+              <div id="dv-por-pago" style="padding:4px 0"></div>
+            </div>
+          </div>
+          <!-- Top artículos -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">🏆 Top Artículos del Período</div>
+            <div class="tw" style="overflow-x:auto">
+              <table style="min-width:600px"><thead><tr>
+                <th>Artículo</th><th>Categoría</th>
+                <th style="text-align:center">Pzas</th>
+                <th style="text-align:right">Ingreso</th>
+                <th>% del total</th>
+              </tr></thead>
+              <tbody id="dv-top-tbody"></tbody>
+            </table></div>
+          </div>
+          <!-- Barras días semana -->
+          <div class="card" id="dv-dias-card" style="display:none">
+            <div class="card-title">📆 Ventas por Día de la Semana</div>
+            <div id="dv-dias-bars"></div>
+          </div>
+        </div>
+
         <div id="page-historial" class="page">
           <!-- Filtros rápidos -->
           <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
