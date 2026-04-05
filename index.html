@@ -440,7 +440,7 @@ select option{background:var(--s2)}
           <!-- VISTA LISTA -->
           <div id="inv-vista-lista" style="display:none">
             <div class="tw">
-              <table><thead><tr><th></th><th>Código</th><th>Descripción</th><th>Cat.</th><th>Línea</th><th>Temporada</th><th>Color</th><th>Tallas/Stock</th><th>Precio</th><th>Sucursal</th><th>Estado</th><th></th></tr></thead>
+              <table><thead><tr><th></th><th>Código</th><th>Descripción</th><th>Cat.</th><th>Línea</th><th>Temporada</th><th>Color</th><th>Tallas/Stock</th><th style="text-align:center">Total</th><th>Precio</th><th>Sucursal</th><th>Estado</th><th></th></tr></thead>
               <tbody id="inv-tbody"></tbody>
             </table></div>
           </div>
@@ -2565,6 +2565,8 @@ function renderInv(){
 }
 
 function renderInvMatriz(agrupados){
+  const rolInv = usuarioActivo?.rol||currentProfile?.rol||'admin';
+  const puedeEditarInv = !['bodeguero','vendedor','lectura'].includes(rolInv);
   // Collect all tallas that exist in this filtered set
   const allTallasSet=new Set();
   agrupados.forEach(p=>Object.keys(p.stock||{}).forEach(t=>allTallasSet.add(t)));
@@ -2624,8 +2626,8 @@ function renderInvMatriz(agrupados){
       <td>
         <div class="flex-row" style="gap:3px">
           <button class="btn btn-ghost btn-xs btn-icon" title="Imprimir etiqueta" onclick="imprimirEtiqueta('${p.id}')">🏷️</button>
-          <button class="btn btn-ghost btn-xs btn-icon" title="Editar" onclick="abrirModalProducto('${p.id}')">✏️</button>
-          <button class="btn btn-red btn-xs btn-icon" title="Eliminar" onclick="deleteProducto('${p.id}')">🗑️</button>
+          ${puedeEditarInv?`<button class="btn btn-ghost btn-xs btn-icon" title="Editar" onclick="abrirModalProducto('${p.id}')">✏️</button>
+          <button class="btn btn-red btn-xs btn-icon" title="Eliminar" onclick="deleteProducto('${p.id}')">🗑️</button>`:''}
         </div>
       </td>
     </tr>`;
@@ -2633,6 +2635,8 @@ function renderInvMatriz(agrupados){
 }
 
 function renderInvLista(agrupados){
+  const rolLista = usuarioActivo?.rol||currentProfile?.rol||'admin';
+  const puedeEditar = !['bodeguero','vendedor','lectura'].includes(rolLista);
   const getSucNombre=id=>sucursales.find(s=>s.id===id)?.nombre||'—';
   document.getElementById('inv-tbody').innerHTML=agrupados.map(p=>{
     const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
@@ -2650,13 +2654,14 @@ function renderInvLista(agrupados){
       <td style="font-size:11px;color:var(--muted)">${p.temporada||'—'}</td>
       <td style="color:var(--muted)">${p.color||'—'}</td>
       <td style="max-width:200px">${ts||'<span style="color:var(--faint)">Sin stock</span>'}</td>
+      <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:15px;color:${tot===0?'var(--red)':tot<=3?'var(--gold)':'var(--cream)'}">${tot}</td>
       <td class="mono">${fmt(p.precio)}</td>
       <td><span class="badge ${isBodega?'b-orange':'b-green'}">${isBodega?'📦':'🏪'} ${suc}</span></td>
       <td>${estado}</td>
       <td><div class="flex-row">
         <button class="btn btn-ghost btn-xs btn-icon" title="Imprimir etiqueta" onclick="imprimirEtiqueta('${p.id}')">🏷️</button>
-        <button class="btn btn-ghost btn-xs btn-icon" title="Editar" onclick="abrirModalProducto('${p.id}')">✏️</button>
-        <button class="btn btn-red btn-xs btn-icon" title="Eliminar" onclick="deleteProducto('${p.id}')">🗑️</button>
+        ${puedeEditar?`<button class="btn btn-ghost btn-xs btn-icon" title="Editar" onclick="abrirModalProducto('${p.id}')">✏️</button>
+        <button class="btn btn-red btn-xs btn-icon" title="Eliminar" onclick="deleteProducto('${p.id}')">🗑️</button>`:''}
       </div></td>
     </tr>`;
   }).join('');
@@ -6769,11 +6774,17 @@ function getPermisosUsuario(u){
   let perms;
   // Custom permissions take priority if set
   if(u.permisos && Array.isArray(u.permisos) && u.permisos.length > 0){
-    perms = u.permisos;
+    perms = [...u.permisos];
+    // For admin and manager: always include ALL modules from TODOS_MODULOS
+    // so new modules added to the system are automatically accessible
+    if(u.rol==='admin' || u.rol==='manager'){
+      const defaults = PERMISOS_ROL_DEFAULT[u.rol] || [];
+      defaults.forEach(m=>{ if(!perms.includes(m)) perms.push(m); });
+    }
   } else {
     perms = PERMISOS_ROL_DEFAULT[u.rol] || PERMISOS_ROL_DEFAULT.vendedor;
   }
-  // Normalize: if 'transfer' is in perms, also allow 'transferencias' (page ID)
+  // Normalize transfer/transferencias alias
   if(perms.includes('transfer') && !perms.includes('transferencias')) perms=[...perms,'transferencias'];
   if(perms.includes('transferencias') && !perms.includes('transfer')) perms=[...perms,'transfer'];
   return perms;
