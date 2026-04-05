@@ -6036,24 +6036,30 @@ function confirmarPin(){
   // Login success
   usuarioActivo = u;
   document.getElementById('usr-overlay').style.display = 'none';
+  // Apply nav permissions — shows only allowed modules
   aplicarPermisosNav();
-  toast('Bienvenido, '+u.nombre+' ✓');
-  // Update sidebar label
-  const lbl = document.getElementById('usr-activo-label');
-  if(lbl) lbl.textContent = '👤 '+u.nombre+' · '+u.rol;
+  toast('Bienvenido, ' + u.nombre + ' ✓');
   // Update role badge
   const rb = document.getElementById('role-badge');
-  if(rb) rb.textContent = u.nombre+' ('+u.rol+')';
-  // Auto-fill sal-usuario
+  if(rb) rb.textContent = u.nombre + ' (' + u.rol + ')';
+  // Auto-fill sal-usuario field
   const uEl = document.getElementById('sal-usuario');
   if(uEl) uEl.value = u.nombre;
-  // Navigate to pending page if any
+  // Navigate to pending page, or go to first permitted module
   if(window._pendingPage){
     const pg = window._pendingPage;
     const elPg = window._pendingEl;
     window._pendingPage = null;
     window._pendingEl = null;
     _navigateTo(pg, elPg);
+  } else {
+    // Navigate to first accessible module automatically
+    const perms = getPermisosUsuario(u);
+    if(perms.length > 0){
+      const firstMod = perms[0];
+      const navEl = document.getElementById(NAV_ID_MAP[firstMod]);
+      _navigateTo(firstMod, navEl);
+    }
   }
 }
 
@@ -6481,6 +6487,71 @@ async function guardarPermisos(){
     renderUsuariosInternos();
     toast('Permisos guardados: '+perms.length+' módulos ✓');
   }catch(e){ toast('Error al guardar: '+e.message,'err'); }
+}
+
+
+
+// ══════════════════ PERMISOS NAV — OCULTAR/MOSTRAR MÓDULOS ══════════════════
+// Map: module key → nav element ID
+const NAV_ID_MAP = {
+  'inventario':    'nav-inv',
+  'catalogo':      'nav-prods',
+  'entradas':      'nav-entradas',
+  'salidas':       'nav-salidas',
+  'pos':           'nav-pos',
+  'historial':     'nav-hist',
+  'clientes':      'nav-clientes',
+  'transfer':      'nav-transfer',
+  'cuentas':       'nav-cuentas',
+  'gastos':        'nav-gastos',
+  'corte':         'nav-corte',
+  'reportes':      'nav-reportes',
+  'resumen':       'nav-resumen',
+  'promociones':   'nav-promociones',
+  'catalogos-cfg': 'nav-catalogos-cfg',
+  'etiquetas':     'nav-etiquetas',
+  'sucursales':    'nav-sucursales',
+  'usuarios':      'nav-usuarios',
+  'importar':      'nav-importar',
+  'bitacora':      'nav-bitacora',
+  'costos':        'nav-costos'
+};
+
+function aplicarPermisosNav(){
+  const u = usuarioActivo;
+  if(!u){
+    // No internal user — show everything (admin Firebase session)
+    Object.values(NAV_ID_MAP).forEach(navId=>{
+      const el=document.getElementById(navId);
+      if(el) el.style.display='';
+    });
+    return;
+  }
+  // Get this user's allowed modules
+  const permsPermitidos = getPermisosUsuario(u);
+  // Show/hide each nav item based on permissions
+  Object.entries(NAV_ID_MAP).forEach(([modulo, navId])=>{
+    const el = document.getElementById(navId);
+    if(!el) return;
+    if(permsPermitidos.includes(modulo)){
+      el.style.display = '';  // show
+    } else {
+      el.style.display = 'none';  // hide completely
+    }
+  });
+  // Update sidebar user label
+  const lbl = document.getElementById('usr-activo-label');
+  if(lbl) lbl.textContent = '👤 ' + u.nombre + ' · ' + u.rol;
+}
+
+function getPermisosUsuario(u){
+  if(!u) return Object.keys(NAV_ID_MAP); // all modules if no user
+  // Custom permissions take priority if set
+  if(u.permisos && Array.isArray(u.permisos) && u.permisos.length > 0){
+    return u.permisos;
+  }
+  // Fall back to role defaults
+  return PERMISOS_ROL_DEFAULT[u.rol] || PERMISOS_ROL_DEFAULT.vendedor;
 }
 
 
