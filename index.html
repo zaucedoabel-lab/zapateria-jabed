@@ -4631,20 +4631,22 @@ function selProdEntrada(id){
   document.getElementById('ent-prod-info').innerHTML=`
     <div style="font-weight:600;color:var(--cream)">${entProdSel.desc}</div>
     <div style="font-size:12px;color:var(--muted)">${entProdSel.barcode||entProdSel.sku||'—'} · ${entProdSel.marca||'—'} · ${entProdSel.color||'—'}</div>`;
-  // Show ALL tallas: product stock keys + ALL_TALLAS catalog (union, sorted)
+  // Show ONLY the tallas that this product has registered in Catálogo General
+  // These are the tallas set when the product was created/edited
   const stockEnt = entProdSel.stock || {};
   const tallasProducto = Object.keys(stockEnt);
-  const allTallas = [...new Set([...tallasProducto, ...ALL_TALLAS])].sort((a,b)=>{
+  // If product has no tallas yet, use ALL_TALLAS as fallback
+  const allTallas = tallasProducto.length > 0 ? tallasProducto.sort((a,b)=>{
     const na=parseFloat(a),nb=parseFloat(b);
     if(!isNaN(na)&&!isNaN(nb))return na-nb;
     if(!isNaN(na))return -1; if(!isNaN(nb))return 1;
     return a.localeCompare(b);
-  });
+  }) : ALL_TALLAS;
   document.getElementById('ent-tallas-grid').innerHTML=allTallas.map(t=>{
-    const tieneStock = t in stockEnt;
-    return `<div style="background:${tieneStock?'var(--s3)':'var(--s2)'};border:1px solid ${tieneStock?'var(--accent)44':'var(--border)'};border-radius:8px;padding:8px;text-align:center;min-width:70px">
+    const stockT = stockEnt[t]||0;
+    return `<div style="background:var(--s3);border:1px solid var(--accent)44;border-radius:8px;padding:8px;text-align:center;min-width:70px">
       <div style="font-weight:700;font-size:13px;color:var(--cream)">${t}</div>
-      <div style="font-size:10px;color:${tieneStock?'var(--green)':'var(--faint)'};margin-bottom:4px">${tieneStock?'Stock: '+stockEnt[t]:'—'}</div>
+      <div style="font-size:10px;color:var(--green);margin-bottom:4px">Stock: ${stockT}</div>
       <input type="number" id="ent-qty-${t.replace(/\./g,'_')}" value="0" min="0" style="width:55px;padding:3px 6px;text-align:center;font-size:13px;font-weight:600" placeholder="0">
     </div>`;
   }).join('');
@@ -6881,43 +6883,64 @@ async function cambiarSucursalMovimiento(id){
 
 // ══════════ HELPER: apply stock to correct sucursal record ══════════
 async function aplicarStockEnSucursal(linea, sucursalId, delta){
-  // +delta = entrada (add stock), -delta = salida (remove stock)
-  const {updateDoc, addDoc, setDoc} = window._fb;
-  // Find product record in the TARGET sucursal
-  let prodTarget = sucursalId
-    ? productos.find(x => x.sucursalId===sucursalId &&
-        (x.id===linea.prodId || x.barcode===linea.sku || x.sku===linea.sku))
-    : productos.find(x => x.id===linea.prodId);
+  // +delta = entrada (add), -delta = salida (remove)
+  const {updateDoc, addDoc} = window._fb;
+  const estilo = linea.sku || linea.barcode || '';
+
+  // STRICT search: must match BOTH estilo/barcode AND sucursal
+  let prodTarget = null;
+  if(sucursalId){
+    prodTarget = productos.find(x =>
+      x.sucursalId === sucursalId &&
+      (x.barcode === estilo || x.sku === estilo || (estilo==='' && x.id===linea.prodId))
+    );
+  } else {
+    // No sucursal specified — update the source product
+    prodTarget = productos.find(x => x.id===linea.prodId);
+  }
 
   if(prodTarget){
-    // Product exists in target sucursal — update its stock
+    // Found in correct sucursal — update stock
     const stockActual = (prodTarget.stock||{})[linea.talla]||0;
     const nuevoStock = delta>0 ? stockActual+delta : Math.max(0,stockActual+delta);
     await updateDoc(docRef('productos',prodTarget.id),{
       [`stock.${linea.talla}`]: nuevoStock
     });
-    // Update local cache
+    // Update local cache immediately
     const idx = productos.findIndex(x=>x.id===prodTarget.id);
     if(idx>=0){
       if(!productos[idx].stock) productos[idx].stock={};
       productos[idx].stock[linea.talla] = nuevoStock;
     }
   } else if(delta>0 && sucursalId){
-    // Product does NOT exist in target sucursal — create new record for that sucursal
+    // NOT found in target sucursal — create a new SEPARATE product record for that sucursal
     const sourceProd = productos.find(x=>x.id===linea.prodId);
-    if(sourceProd){
-      const newProd = {
-        ...sourceProd,
-        id: undefined,
-        sucursalId: sucursalId,
-        stock: {[linea.talla]: delta},
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      delete newProd.id;
-      const ref = await addDoc(col('productos'), newProd);
-      productos.push({...newProd, id:ref.id});
-    }
+    if(!sourceProd){ console.warn('Source product not found:', linea.prodId); return; }
+    const newProd = {
+      barcode: sourceProd.barcode||'',
+      sku: sourceProd.sku||'',
+      desc: sourceProd.desc||linea.desc||'',
+      cat: sourceProd.cat||'',
+      linea: sourceProd.linea||'',
+      temporada: sourceProd.temporada||'',
+      marca: sourceProd.marca||'',
+      color: sourceProd.color||'',
+      precio: sourceProd.precio||0,
+      costo: sourceProd.costo||0,
+      locacion: sourceProd.locacion||'',
+      foto: sourceProd.foto||null,
+      barcodeTallas: sourceProd.barcodeTallas||{},
+      sucursalId: sucursalId,
+      stock: {[linea.talla]: delta},
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const ref = await addDoc(col('productos'), newProd);
+    productos.push({...newProd, id:ref.id});
+    console.log('Created new product record for sucursal:', sucursalId, newProd.desc);
+  } else if(delta<0){
+    // Trying to remove stock but no record found — log warning
+    console.warn('No product found for salida in sucursal:', sucursalId, linea);
   }
 }
 
