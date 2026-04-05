@@ -6789,10 +6789,13 @@ async function loadBitacora(){
           </div>
           ${(m.tipo==='entrada'||m.tipo==='salida')&&puedeModificar?`<button class="btn btn-ghost btn-xs" onclick="cambiarSucursalMovimiento('${m.id}')">🏪 Cambiar sucursal</button>`:''}
         </div>`;
-      } else if(puedeModificar && m.estado==='aprobado' && (m.tipo==='entrada'||m.tipo==='salida')){
+      } else if(puedeModificar && m.estado==='aprobado' && (m.tipo==='entrada'||m.tipo==='salida'||m.tipo==='liquidacion')){
+        const esLiq = m.tipo==='liquidacion';
         acciones = `<div style="display:flex;flex-direction:column;gap:3px">
           <span style="font-size:10px;color:var(--muted)">Aprobó: ${m.aprobadoPor||'—'}</span>
-          <button class="btn btn-red btn-xs" onclick="cancelarMovimientoAprobado('${m.id}')">🔄 Cancelar</button>
+          <button class="btn btn-red btn-xs" onclick="${esLiq?`cancelarLiquidacion('${m.id}')`:`cancelarMovimientoAprobado('${m.id}')`}">
+            🔄 ${esLiq?'Cancelar Liquidación':'Cancelar'}
+          </button>
         </div>`;
       } else {
         acciones = m.aprobadoPor ? '<span style="font-size:11px;color:var(--muted)">Por: '+m.aprobadoPor+'</span>' : '—';
@@ -7380,6 +7383,77 @@ function exportarUtilidadReal(){
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='utilidad_real_'+hoy()+'.csv';a.click();toast('Excel descargado ✓');
+}
+
+
+
+// ══════════════════ CANCELAR LIQUIDACIÓN ══════════════════
+async function cancelarLiquidacion(id){
+  const rolActivo = usuarioActivo?.rol||currentProfile?.rol||'';
+  if(!['admin','manager'].includes(rolActivo)){
+    toast('Solo Admin o Manager pueden cancelar liquidaciones','err'); return;
+  }
+  const motivo = prompt('Motivo de la cancelación de liquidación (opcional):');
+  if(motivo===null) return;
+  const canceladoPor = usuarioActivo?.nombre||currentProfile?.nombre||'Admin';
+  try{
+    const bSnap = await window._fb.getDoc(docRef('bitacora',id));
+    if(!bSnap.exists()){ toast('Movimiento no encontrado','err'); return; }
+    const mov = bSnap.data();
+    const {updateDoc, deleteDoc} = window._fb;
+    const lineas = mov.datos?.lineas||[];
+    const nuevoPrecio = mov.datos?.nuevoPrecio||0;
+
+    for(const linea of lineas){
+      // 1. Restore stock to original product
+      const prodOriginal = productos.find(x=>x.id===linea.prodId);
+      if(prodOriginal){
+        const stockActual = (prodOriginal.stock||{})[linea.talla]||0;
+        await updateDoc(docRef('productos',linea.prodId),{
+          [`stock.${linea.talla}`]: stockActual + linea.cantidad
+        });
+        const idx = productos.findIndex(x=>x.id===linea.prodId);
+        if(idx>=0){
+          if(!productos[idx].stock) productos[idx].stock={};
+          productos[idx].stock[linea.talla] = stockActual + linea.cantidad;
+        }
+      }
+      // 2. Find and remove the LIQ product record
+      const estilo = linea.sku||linea.barcode||'';
+      const liqBarcode = estilo+'_LIQ';
+      const liqProd = productos.find(x=>
+        x.esLiquidacion &&
+        (x.barcode===liqBarcode||x.sku===liqBarcode)
+      );
+      if(liqProd){
+        const liqStock = (liqProd.stock||{})[linea.talla]||0;
+        const nuevoLiqStock = Math.max(0, liqStock - linea.cantidad);
+        if(nuevoLiqStock <= 0){
+          // Remove LIQ product entirely if no more stock
+          await deleteDoc(docRef('productos',liqProd.id));
+          const liqIdx = productos.findIndex(x=>x.id===liqProd.id);
+          if(liqIdx>=0) productos.splice(liqIdx,1);
+        } else {
+          // Just reduce its stock
+          await updateDoc(docRef('productos',liqProd.id),{
+            [`stock.${linea.talla}`]: nuevoLiqStock
+          });
+          const liqIdx = productos.findIndex(x=>x.id===liqProd.id);
+          if(liqIdx>=0) productos[liqIdx].stock[linea.talla] = nuevoLiqStock;
+        }
+      }
+    }
+    // Mark bitacora entry as cancelled
+    await window._fb.setDoc(docRef('bitacora',id),{
+      estado:'cancelado',
+      canceladoPor,
+      motivoCancelacion: motivo||'Sin motivo',
+      canceladoEn: new Date().toISOString()
+    },{merge:true});
+    toast('✅ Liquidación cancelada — stock restaurado al producto original');
+    renderInv(); renderCatalogo(); renderPOS();
+    loadBitacora();
+  }catch(e){ toast('Error al cancelar: '+e.message,'err'); console.error(e); }
 }
 
 
