@@ -311,7 +311,7 @@ select option{background:var(--s2)}
         <div class="nav-label">Principal</div>
         <div class="nav-item on" onclick="go('dashboard',this)"><span class="ni">📊</span><span class="nt">Dashboard</span></div>
         <div class="nav-label">Catálogos</div>
-        <div class="nav-item" id="nav-inv" onclick="go('inventario',this)"><span class="ni">📦</span><span class="nt">Inventario</span></div>
+        <div class="nav-item" id="nav-inv" onclick="go('inventario',this)" style="background:#f0b429;color:#000;font-weight:800;border-radius:8px;margin:2px 6px"><span class="ni">📦</span><span class="nt" style="color:#000;font-weight:800;font-size:14px">Inventario</span></div>
         <div class="nav-item" id="nav-prods" onclick="go('catalogo',this)"><span class="ni">🗂️</span><span class="nt">Catálogo General</span></div>
         <div class="nav-item" id="nav-entradas" onclick="go('entradas',this)"><span class="ni">📥</span><span class="nt">Entrada Mercancía</span></div>
         <div class="nav-item" id="nav-salidas" onclick="go('salidas',this)"><span class="ni">📤</span><span class="nt">Salida Mercancía</span></div>
@@ -4738,11 +4738,23 @@ async function registrarEntrada(){
     if(esAdmin){
       const {updateDoc}=window._fb;
       for(const linea of entLineas){
-        const p=productos.find(x=>x.id===linea.prodId); if(!p)continue;
-        const stockActual=(p.stock||{})[linea.talla]||0;
-        await updateDoc(docRef('productos',p.id),{[`stock.${linea.talla}`]:stockActual+linea.cantidad});
+        // Find product in the SELECTED sucursal (destino)
+        let prodTarget = sucId
+          ? productos.find(x=>x.id===linea.prodId && x.sucursalId===sucId)
+            || productos.find(x=>(x.barcode===linea.sku||x.sku===linea.sku) && x.sucursalId===sucId)
+          : null;
+        if(!prodTarget){
+          // Fall back to product by ID regardless of sucursal
+          prodTarget = productos.find(x=>x.id===linea.prodId);
+        }
+        if(!prodTarget) continue;
+        const stockActual=(prodTarget.stock||{})[linea.talla]||0;
+        await updateDoc(docRef('productos',prodTarget.id),{
+          [`stock.${linea.talla}`]:stockActual+linea.cantidad,
+          sucursalId: sucId||prodTarget.sucursalId  // ensure sucursal is correct
+        });
       }
-      toast(`Entrada registrada y aplicada: ${totalPiezas} piezas ✓`);
+      toast(`Entrada registrada en ${sucursales.find(s=>s.id===sucId)?.nombre||'sucursal'}: ${totalPiezas} piezas ✓`);
     }else{
       toast(`✅ Entrada enviada para aprobación del administrador`);
     }
@@ -6656,7 +6668,9 @@ async function loadBitacora(){
         ? '<span class="badge b-gold">⏳ Pendiente</span>'
         : m.estado==='rechazado'
           ? '<span class="badge b-red">❌ Rechazado</span>'
-          : '<span class="badge b-green">✅ Aprobado</span>';
+          : m.estado==='cancelado'
+            ? '<span class="badge b-gray">🔄 Cancelado</span>'
+            : '<span class="badge b-green">✅ Aprobado</span>';
       const tipoBadge = m.tipo==='entrada'
         ? '<span class="badge b-green">📥 Entrada</span>'
         : m.tipo==='salida'
@@ -6664,12 +6678,24 @@ async function loadBitacora(){
           : m.tipo==='liquidacion'
             ? '<span class="badge b-gold">🏷️ Liquidación</span>'
             : '<span class="badge b-gray">'+m.tipo+'</span>';
-      const acciones = (puedeAprobar && m.estado==='pendiente')
-        ? `<div style="display:flex;gap:4px">
+      const puedeModificar = ['admin','manager'].includes(rolActivo);
+      let acciones;
+      if(puedeAprobar && m.estado==='pendiente'){
+        acciones = `<div style="display:flex;flex-direction:column;gap:3px">
+          <div style="display:flex;gap:3px">
             <button class="btn btn-accent btn-xs" onclick="aprobarMovimiento('${m.id}')">✅ Aprobar</button>
             <button class="btn btn-red btn-xs" onclick="rechazarMovimiento('${m.id}')">❌ Rechazar</button>
-           </div>`
-        : m.aprobadoPor ? '<span style="font-size:11px;color:var(--muted)">Por: '+m.aprobadoPor+'</span>' : '—';
+          </div>
+          ${(m.tipo==='entrada'||m.tipo==='salida')&&puedeModificar?`<button class="btn btn-ghost btn-xs" onclick="cambiarSucursalMovimiento('${m.id}')">🏪 Cambiar sucursal</button>`:''}
+        </div>`;
+      } else if(puedeModificar && m.estado==='aprobado' && (m.tipo==='entrada'||m.tipo==='salida')){
+        acciones = `<div style="display:flex;flex-direction:column;gap:3px">
+          <span style="font-size:10px;color:var(--muted)">Aprobó: ${m.aprobadoPor||'—'}</span>
+          <button class="btn btn-red btn-xs" onclick="cancelarMovimientoAprobado('${m.id}')">🔄 Cancelar</button>
+        </div>`;
+      } else {
+        acciones = m.aprobadoPor ? '<span style="font-size:11px;color:var(--muted)">Por: '+m.aprobadoPor+'</span>' : '—';
+      }
       return `<tr>
         <td style="font-size:11px;color:var(--muted)">${m.fecha||'—'} ${m.hora||''}</td>
         <td>${tipoBadge}</td>
@@ -6696,10 +6722,20 @@ async function aprobarMovimiento(id){
     const {updateDoc} = window._fb;
     // Apply stock changes based on movement type
     if(mov.tipo==='entrada' && mov.datos?.lineas){
+      const destSucId = mov.datos.sucursalId||'';
       for(const linea of mov.datos.lineas){
-        const p=productos.find(x=>x.id===linea.prodId); if(!p)continue;
-        const stockActual=(p.stock||{})[linea.talla]||0;
-        await updateDoc(docRef('productos',p.id),{[`stock.${linea.talla}`]:stockActual+linea.cantidad});
+        // Find product in the CORRECT sucursal destination
+        let prodTarget = destSucId
+          ? productos.find(x=>x.id===linea.prodId && x.sucursalId===destSucId)
+            || productos.find(x=>(x.barcode===linea.sku||x.sku===linea.sku) && x.sucursalId===destSucId)
+          : null;
+        if(!prodTarget) prodTarget = productos.find(x=>x.id===linea.prodId);
+        if(!prodTarget) continue;
+        const stockActual=(prodTarget.stock||{})[linea.talla]||0;
+        await updateDoc(docRef('productos',prodTarget.id),{
+          [`stock.${linea.talla}`]:stockActual+linea.cantidad,
+          sucursalId: destSucId||prodTarget.sucursalId
+        });
       }
       if(mov.datos.entradaId) await window._fb.setDoc(docRef('entradas',mov.datos.entradaId),{estado:'aprobado',aprobadoPor},{merge:true});
     }
@@ -6771,6 +6807,90 @@ async function editarFechaVenta(id, fechaActual, horaActual){
     if(idx>=0){ ventas[idx].fecha=nuevaFecha; if(nuevaHora) ventas[idx].hora=nuevaHora; }
     toast('Fecha actualizada a '+nuevaFecha+' ✓');
     renderHist();
+  }catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+
+
+// ══════════════════ CANCELAR MOVIMIENTO APROBADO ══════════════════
+async function cancelarMovimientoAprobado(id){
+  const rolActivo = usuarioActivo?.rol||currentProfile?.rol||'';
+  if(!['admin','manager'].includes(rolActivo)){
+    toast('Solo Admin o Manager pueden cancelar movimientos aprobados','err'); return;
+  }
+  const motivo = prompt('Motivo de la cancelación:');
+  if(motivo===null) return; // cancelled by user
+  const canceladoPor = usuarioActivo?.nombre||currentProfile?.nombre||'Admin';
+  try{
+    const bSnap = await window._fb.getDoc(docRef('bitacora',id));
+    if(!bSnap.exists()){ toast('Movimiento no encontrado','err'); return; }
+    const mov = bSnap.data();
+    const {updateDoc} = window._fb;
+    // REVERSE the stock changes
+    if(mov.tipo==='entrada' && mov.datos?.lineas){
+      const destSucId = mov.datos.sucursalId||'';
+      for(const linea of mov.datos.lineas){
+        let prodTarget = destSucId
+          ? productos.find(x=>x.id===linea.prodId && x.sucursalId===destSucId)
+            || productos.find(x=>(x.barcode===linea.sku||x.sku===linea.sku) && x.sucursalId===destSucId)
+          : null;
+        if(!prodTarget) prodTarget = productos.find(x=>x.id===linea.prodId);
+        if(!prodTarget) continue;
+        const stockActual=(prodTarget.stock||{})[linea.talla]||0;
+        await updateDoc(docRef('productos',prodTarget.id),{
+          [`stock.${linea.talla}`]:Math.max(0,stockActual-linea.cantidad)
+        });
+      }
+      if(mov.datos.entradaId) await window._fb.setDoc(docRef('entradas',mov.datos.entradaId),{estado:'cancelado',canceladoPor},{merge:true});
+    }
+    if(mov.tipo==='salida' && mov.datos?.lineas){
+      for(const linea of mov.datos.lineas){
+        const prodTarget = productos.find(x=>x.id===linea.prodId);
+        if(!prodTarget) continue;
+        const stockActual=(prodTarget.stock||{})[linea.talla]||0;
+        await updateDoc(docRef('productos',prodTarget.id),{
+          [`stock.${linea.talla}`]:stockActual+linea.cantidad
+        });
+      }
+      if(mov.datos.salidaId) await window._fb.setDoc(docRef('salidas',mov.datos.salidaId),{estado:'cancelado',canceladoPor},{merge:true});
+    }
+    // Mark bitácora as cancelled
+    await window._fb.setDoc(docRef('bitacora',id),{
+      estado:'cancelado',
+      canceladoPor,
+      motivoCancelacion:motivo||'Sin motivo',
+      canceladoEn:new Date().toISOString()
+    },{merge:true});
+    toast('🔄 Movimiento cancelado — stock revertido');
+    loadBitacora();
+  }catch(e){ toast('Error al cancelar: '+e.message,'err'); console.error(e); }
+}
+
+// ══════════════════ CAMBIAR SUCURSAL DE MOVIMIENTO PENDIENTE ══════════════════
+async function cambiarSucursalMovimiento(id){
+  const rolActivo = usuarioActivo?.rol||currentProfile?.rol||'';
+  if(!['admin','manager'].includes(rolActivo)){
+    toast('Solo Admin o Manager pueden modificar movimientos','err'); return;
+  }
+  if(!sucursales.length){ toast('No hay sucursales disponibles','err'); return; }
+  // Build selection prompt
+  const opciones = sucursales.map((s,i)=>`${i+1}. ${s.nombre} (${s.tipo})`).join('\n');
+  const sel = prompt('Selecciona el número de sucursal destino:\n'+opciones);
+  if(sel===null) return;
+  const idx = parseInt(sel)-1;
+  if(isNaN(idx)||idx<0||idx>=sucursales.length){
+    toast('Selección inválida','err'); return;
+  }
+  const nuevaSuc = sucursales[idx];
+  try{
+    // Update bitácora with new sucursal
+    await window._fb.setDoc(docRef('bitacora',id),{
+      datos:{...(await window._fb.getDoc(docRef('bitacora',id))).data()?.datos||{}, sucursalId:nuevaSuc.id},
+      modificadoPor: usuarioActivo?.nombre||'Admin',
+      modificadoEn: new Date().toISOString()
+    },{merge:true});
+    toast('✅ Sucursal actualizada a: '+nuevaSuc.nombre);
+    loadBitacora();
   }catch(e){ toast('Error: '+e.message,'err'); }
 }
 
