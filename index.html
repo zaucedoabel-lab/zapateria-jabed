@@ -4620,36 +4620,40 @@ function selProdEntrada(id){
   document.getElementById('ent-prod-info').innerHTML=`
     <div style="font-weight:600;color:var(--cream)">${entProdSel.desc}</div>
     <div style="font-size:12px;color:var(--muted)">${entProdSel.barcode||entProdSel.sku||'—'} · ${entProdSel.marca||'—'} · ${entProdSel.color||'—'}</div>`;
-  // Show all tallas with current stock + input for qty
-  const tallas=Object.keys(entProdSel.stock||{});
-  const allTallas=tallas.length?tallas:['UNI'];
-  document.getElementById('ent-tallas-grid').innerHTML=allTallas.map(t=>`
-    <div style="background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;min-width:70px">
+  // Show ALL tallas: product stock keys + ALL_TALLAS catalog (union, sorted)
+  const stockEnt = entProdSel.stock || {};
+  const tallasProducto = Object.keys(stockEnt);
+  const allTallas = [...new Set([...tallasProducto, ...ALL_TALLAS])].sort((a,b)=>{
+    const na=parseFloat(a),nb=parseFloat(b);
+    if(!isNaN(na)&&!isNaN(nb))return na-nb;
+    if(!isNaN(na))return -1; if(!isNaN(nb))return 1;
+    return a.localeCompare(b);
+  });
+  document.getElementById('ent-tallas-grid').innerHTML=allTallas.map(t=>{
+    const tieneStock = t in stockEnt;
+    return `<div style="background:${tieneStock?'var(--s3)':'var(--s2)'};border:1px solid ${tieneStock?'var(--accent)44':'var(--border)'};border-radius:8px;padding:8px;text-align:center;min-width:70px">
       <div style="font-weight:700;font-size:13px;color:var(--cream)">${t}</div>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Stock: ${(entProdSel.stock||{})[t]||0}</div>
-      <input type="number" id="ent-qty-${t.replace('.','_')}" value="0" min="0" style="width:55px;padding:3px 6px;text-align:center;font-size:13px;font-weight:600" placeholder="0">
-    </div>`).join('');
+      <div style="font-size:10px;color:${tieneStock?'var(--green)':'var(--faint)'};margin-bottom:4px">${tieneStock?'Stock: '+stockEnt[t]:'—'}</div>
+      <input type="number" id="ent-qty-${t.replace(/\./g,'_')}" value="0" min="0" style="width:55px;padding:3px 6px;text-align:center;font-size:13px;font-weight:600" placeholder="0">
+    </div>`;
+  }).join('');
 }
 
 function agregarLineaEntrada(){
   if(!entProdSel){toast('Selecciona un producto','err');return;}
-  const tallas=Object.keys(entProdSel.stock||{});
-  const allTallas=tallas.length?tallas:['UNI'];
   let agregado=false;
-  allTallas.forEach(t=>{
-    const el=document.getElementById('ent-qty-'+t.replace('.','_'));
-    const qty=parseInt(el?.value||'0')||0;
-    if(qty>0){
-      // Check if already exists
-      const ex=entLineas.find(l=>l.prodId===entProdSel.id&&l.talla===t);
-      if(ex){ex.cantidad+=qty;}
-      else{entLineas.push({prodId:entProdSel.id,desc:entProdSel.desc,sku:entProdSel.barcode||entProdSel.sku,talla:t,cantidad:qty,precio:entProdSel.precio||0});}
-      agregado=true;
-    }
+  // Read directly from all inputs shown in the grid
+  document.querySelectorAll('#ent-tallas-grid input[type="number"]').forEach(el=>{
+    const qty=parseInt(el.value||'0')||0;
+    if(qty<=0) return;
+    const talla=el.id.replace('ent-qty-','').replace(/_/g,'.');
+    const ex=entLineas.find(l=>l.prodId===entProdSel.id&&l.talla===talla);
+    if(ex){ex.cantidad+=qty;}
+    else{entLineas.push({prodId:entProdSel.id,desc:entProdSel.desc,sku:entProdSel.barcode||entProdSel.sku,talla,cantidad:qty,precio:entProdSel.precio||0,precioOriginal:entProdSel.precio||0});}
+    agregado=true;
   });
-  if(!agregado){toast('Ingresa al menos una cantidad','err');return;}
+  if(!agregado){toast('Ingresa al menos una cantidad mayor a 0','err');return;}
   renderListaEntrada();
-  // Reset
   document.getElementById('ent-prod-sel').style.display='none';
   document.getElementById('ent-prod-q').value='';
   entProdSel=null;
@@ -4819,35 +4823,42 @@ function selProdSalida(id){
   document.getElementById('sal-prod-info').innerHTML=`
     <div style="font-weight:600;color:var(--cream)">${salProdSel.desc}</div>
     <div style="font-size:12px;color:var(--muted)">${salProdSel.barcode||salProdSel.sku||'—'} · ${salProdSel.marca||'—'}</div>`;
-  const tallas=Object.entries(salProdSel.stock||{}).filter(([,v])=>v>0);
-  if(!tallas.length){
+  const stockSal=salProdSel.stock||{};
+  const tallasConStock=Object.entries(stockSal).filter(([,v])=>v>0);
+  // Sort numerically then alpha
+  tallasConStock.sort(([a],[b])=>{
+    const na=parseFloat(a),nb=parseFloat(b);
+    if(!isNaN(na)&&!isNaN(nb))return na-nb;
+    if(!isNaN(na))return -1; if(!isNaN(nb))return 1;
+    return a.localeCompare(b);
+  });
+  if(!tallasConStock.length){
     document.getElementById('sal-tallas-grid').innerHTML='<div style="color:var(--red);font-size:12px">Sin stock disponible</div>';
     return;
   }
-  document.getElementById('sal-tallas-grid').innerHTML=tallas.map(([t,s])=>`
-    <div style="background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;min-width:70px">
+  document.getElementById('sal-tallas-grid').innerHTML=tallasConStock.map(([t,s])=>`
+    <div style="background:var(--s3);border:1px solid var(--accent)33;border-radius:8px;padding:8px;text-align:center;min-width:70px">
       <div style="font-weight:700;font-size:13px;color:var(--cream)">${t}</div>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Stock: ${s}</div>
-      <input type="number" id="sal-qty-${t.replace('.','_')}" value="0" min="0" max="${s}" style="width:55px;padding:3px 6px;text-align:center;font-size:13px;font-weight:600" placeholder="0">
+      <div style="font-size:10px;color:var(--green);margin-bottom:4px">Stock: ${s}</div>
+      <input type="number" id="sal-qty-${t.replace(/\./g,'_')}" value="0" min="0" max="${s}" style="width:55px;padding:3px 6px;text-align:center;font-size:13px;font-weight:600" placeholder="0">
     </div>`).join('');
 }
 
 function agregarLineaSalida(){
   if(!salProdSel){toast('Selecciona un producto','err');return;}
-  const tallas=Object.entries(salProdSel.stock||{}).filter(([,v])=>v>0);
   let agregado=false;
-  tallas.forEach(([t,stockMax])=>{
-    const el=document.getElementById('sal-qty-'+t.replace('.','_'));
-    const qty=parseInt(el?.value||'0')||0;
-    if(qty>0){
-      if(qty>stockMax){toast(`Solo hay ${stockMax} en talla ${t}`,'err');return;}
-      const ex=salLineas.find(l=>l.prodId===salProdSel.id&&l.talla===t);
-      if(ex){ex.cantidad+=qty;}
-      else{salLineas.push({prodId:salProdSel.id,desc:salProdSel.desc,sku:salProdSel.barcode||salProdSel.sku,talla:t,cantidad:qty,stockDisp:stockMax});}
-      agregado=true;
-    }
+  document.querySelectorAll('#sal-tallas-grid input[type="number"]').forEach(el=>{
+    const qty=parseInt(el.value||'0')||0;
+    if(qty<=0) return;
+    const talla=el.id.replace('sal-qty-','').replace(/_/g,'.');
+    const stockMax=(salProdSel.stock||{})[talla]||0;
+    if(qty>stockMax){toast('Solo hay '+stockMax+' en talla '+talla,'err');return;}
+    const ex=salLineas.find(l=>l.prodId===salProdSel.id&&l.talla===talla);
+    if(ex){ex.cantidad+=qty;}
+    else{salLineas.push({prodId:salProdSel.id,desc:salProdSel.desc,sku:salProdSel.barcode||salProdSel.sku,talla,cantidad:qty,stockDisp:stockMax});}
+    agregado=true;
   });
-  if(!agregado){toast('Ingresa al menos una cantidad','err');return;}
+  if(!agregado){toast('Ingresa al menos una cantidad mayor a 0','err');return;}
   renderListaSalida();
   document.getElementById('sal-prod-sel').style.display='none';
   document.getElementById('sal-prod-q').value='';
