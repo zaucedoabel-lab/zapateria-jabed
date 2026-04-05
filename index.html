@@ -319,6 +319,7 @@ select option{background:var(--s2)}
         <div class="nav-label">Operaciones</div>
         <div class="nav-item" id="nav-pos" onclick="go('pos',this)" style="background:#f0b429;color:#000;font-weight:800;font-size:15px;border-radius:8px;margin:2px 6px"><span class="ni">🛒</span><span class="nt" style="color:#000;font-weight:800;font-size:14px">Punto de Venta</span></div>
         <div class="nav-item" id="nav-hist" onclick="go('historial',this)"><span class="ni">📋</span><span class="nt">Historial Ventas</span></div>
+        <div class="nav-item" id="nav-dashboard-ventas" onclick="go('dashboard-ventas',this)"><span class="ni">📊</span><span class="nt">Dashboard Ventas</span></div>
         <div class="nav-item" id="nav-clientes" onclick="go('clientes',this)"><span class="ni">👤</span><span class="nt">Clientes</span></div>
         <div class="nav-item" id="nav-transfer" onclick="go('transferencias',this)"><span class="ni">↔️</span><span class="nt">Transferencias</span></div>
         <div class="nav-item" id="nav-cuentas" onclick="go('cuentas',this)"><span class="ni">📒</span><span class="nt">Apartados/Créditos</span></div>
@@ -879,6 +880,20 @@ select option{background:var(--s2)}
 
         <!-- ══════════ HISTORIAL ══════════ -->
         <div id="page-historial" class="page">
+          <!-- Filtros rápidos -->
+          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="filtroHistRapido('hoy')" id="fh-hoy">📅 Hoy</button>
+            <button class="btn btn-ghost btn-sm" onclick="filtroHistRapido('ayer')" id="fh-ayer">⬅️ Ayer</button>
+            <button class="btn btn-ghost btn-sm" onclick="filtroHistRapido('semana')" id="fh-semana">📆 Esta semana</button>
+            <div style="display:flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:3px 8px">
+              <span style="font-size:11px;color:var(--muted)">Sem. #</span>
+              <input type="number" id="fh-num-semana" min="1" max="53" placeholder="N°"
+                style="width:52px;padding:3px 6px;font-size:12px;background:transparent;border:none;color:var(--cream)"
+                onchange="filtroHistRapido('nSemana')">
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="filtroHistRapido('mes')" id="fh-mes">📅 Este mes</button>
+            <button class="btn btn-ghost btn-sm" onclick="limpiarFiltrosHist()" style="color:var(--muted)">✕ Limpiar</button>
+          </div>
           <!-- Filtros -->
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px">
             <div class="flex-row" style="flex-wrap:wrap;gap:10px;align-items:flex-end">
@@ -1384,6 +1399,18 @@ select option{background:var(--s2)}
               <div class="card-title">📍 Locaciones <button class="btn btn-accent btn-xs" onclick="addCatalogItem('locaciones')">＋ Agregar</button></div>
               <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Ej: A-1, A-2, B-1, B-2… Aparecen en el catálogo de productos</div>
               <div id="cfg-locaciones-list"></div>
+            </div>
+            <!-- Tipo de Transacción POS -->
+            <div class="card">
+              <div class="card-title">💵 Tipos de Transacción (POS) <button class="btn btn-accent btn-xs" onclick="addCatalogItem('tipoTransaccion')">＋ Agregar</button></div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Formato: Emoji Nombre|valor (ej: 💵 Venta Normal|venta)</div>
+              <div id="cfg-tipoTransaccion-list"></div>
+            </div>
+            <!-- Forma de Pago POS -->
+            <div class="card">
+              <div class="card-title">💳 Formas de Pago (POS) <button class="btn btn-accent btn-xs" onclick="addCatalogItem('formaPago')">＋ Agregar</button></div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Formato: Emoji Nombre|valor (ej: 💳 Tarjeta BBVA|tarjeta-bbva)</div>
+              <div id="cfg-formaPago-list"></div>
             </div>
             <!-- Tallas -->
             <div class="card" style="grid-column:1/-1">
@@ -3350,7 +3377,9 @@ const CFG_DEFAULTS = {
   vendedores: [],
   gastoCategorias: ['Renta','Servicios','Mercancía','Empaques','Sueldos','Publicidad','Transporte','Limpieza','Pago a Proveedores','Internet','Mantenimiento','Comida','Varios'],
   locaciones: ['A-1','A-2','A-3','B-1','B-2','B-3','C-1','C-2','C-3'],
-  tallas: ['13','14','15','16','17','18','19','20','21','22','22.5','23','23.5','24','24.5','25','25.5','26','26.5','27','27.5','28','29','30','31','32','XS','S','M','L','XL','XXL','XXXL','3XL','4XL','CH','MM','GD','EG','UNI','Único']
+  tallas: ['13','14','15','16','17','18','19','20','21','22','22.5','23','23.5','24','24.5','25','25.5','26','26.5','27','27.5','28','29','30','31','32','XS','S','M','L','XL','XXL','XXXL','3XL','4XL','CH','MM','GD','EG','UNI','Único'],
+  tipoTransaccion: ['💵 Venta Normal|venta','📦 Apartado|apartado','💳 Crédito|credito'],
+  formaPago: ['💵 Efectivo|efectivo','💳 Tarjeta BBVA|tarjeta-bbva','💳 Tarjeta Mercado Pago|tarjeta-mp','📲 Transferencia|transferencia','🔀 Mixto|mixto','🪙 Monedero + Efectivo|monedero']
 };
 // Config general (monedero, cumpleaños)
 let configGeneral = {puntoPorcentaje:5, cumpleanosDesc:10};
@@ -3373,7 +3402,7 @@ async function loadCatalogos(){
 function getCatalogList(key){ return catalogosData[key]||CFG_DEFAULTS[key]||[]; }
 
 function renderCatalogosCfg(){
-  const keys=['categorias','lineas','temporadas','marcas','colores','proveedores','vendedores','gastoCategorias','locaciones'];
+  const keys=['categorias','lineas','temporadas','marcas','colores','proveedores','vendedores','gastoCategorias','locaciones','tipoTransaccion','formaPago'];
   renderTallasCatalogUI();
   keys.forEach(k=>{
     const el=document.getElementById('cfg-'+k+'-list');
@@ -5795,9 +5824,9 @@ function populateLocacionSelect(selectedVal){
 let usuariosInternos = []; // loaded from Firestore
 let usuarioActivo = null;  // {id, nombre, rol, pin}
 
-const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','sucursales','usuarios','importar','bitacora'];
+const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','dashboard-ventas','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','sucursales','usuarios','importar','bitacora'];
 const PERMISOS_ROL_DEFAULT = {
-  admin:      [...TODOS_MODULOS],
+  admin:      [...TODOS_MODULOS,'dashboard-ventas'],
   manager:    [...TODOS_MODULOS],
   supervisor: [],  // Empty by default — Abel assigns modules manually
   vendedor:   ['pos','historial','clientes','cuentas','inventario','catalogo'],
@@ -6704,7 +6733,8 @@ const NAV_ID_MAP = {
   'usuarios':      'nav-usuarios',
   'importar':      'nav-importar',
   'bitacora':      'nav-bitacora',
-  'costos':        'nav-costos'
+  'costos':        'nav-costos',
+  'dashboard-ventas':'nav-dashboard-ventas'
 };
 
 function aplicarPermisosNav(){
@@ -7465,6 +7495,270 @@ async function cancelarLiquidacion(id){
 }
 
 
+
+// ══════════════════ T1: POS Tipo/Pago from catalogos ══════════════════
+function buildPOSButtons(){
+  // Rebuild tipo transaccion buttons from catalog
+  const tipos = getCatalogList('tipoTransaccion');
+  tipos.forEach(entry=>{
+    const [label,value] = entry.split('|');
+    const btn = document.getElementById('ptb-'+value);
+    if(btn) btn.textContent = label;
+  });
+  // Rebuild forma de pago buttons from catalog
+  const pagos = getCatalogList('formaPago');
+  pagos.forEach(entry=>{
+    const [label,value] = entry.split('|');
+    const btn = document.getElementById('ppb-'+value);
+    if(btn) btn.textContent = label;
+  });
+}
+
+// ══════════════════ T2: Historial quick filters ══════════════════
+function filtroHistRapido(tipo){
+  const hoyStr = hoy();
+  const d = new Date();
+  // Reset all button styles
+  ['hoy','ayer','semana','mes'].forEach(t=>{
+    const b=document.getElementById('fh-'+t);
+    if(b){b.className='btn btn-ghost btn-sm';}
+  });
+  let desde='', hasta='';
+  if(tipo==='hoy'){
+    desde=hasta=hoyStr;
+    const b=document.getElementById('fh-hoy'); if(b)b.className='btn btn-accent btn-sm';
+  } else if(tipo==='ayer'){
+    const ay=new Date(d); ay.setDate(d.getDate()-1);
+    const s=ay.getFullYear()+'-'+String(ay.getMonth()+1).padStart(2,'0')+'-'+String(ay.getDate()).padStart(2,'0');
+    desde=hasta=s;
+    const b=document.getElementById('fh-ayer'); if(b)b.className='btn btn-accent btn-sm';
+  } else if(tipo==='semana'){
+    // Current week Mon-Sun
+    const dow=d.getDay()||7; // 1=Mon 7=Sun
+    const mon=new Date(d); mon.setDate(d.getDate()-(dow-1));
+    const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+    const fmt2=dt=>dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+    desde=fmt2(mon); hasta=fmt2(sun);
+    const b=document.getElementById('fh-semana'); if(b)b.className='btn btn-accent btn-sm';
+  } else if(tipo==='nSemana'){
+    // Specific week number
+    const nSem=parseInt(document.getElementById('fh-num-semana')?.value)||1;
+    const year=d.getFullYear();
+    // Get Monday of week nSem
+    const jan1=new Date(year,0,1);
+    const jan1Dow=jan1.getDay()||7;
+    const firstMon=new Date(jan1); firstMon.setDate(jan1.getDate()+(jan1Dow===1?0:8-jan1Dow));
+    const weekStart=new Date(firstMon); weekStart.setDate(firstMon.getDate()+(nSem-1)*7);
+    const weekEnd=new Date(weekStart); weekEnd.setDate(weekStart.getDate()+6);
+    const fmt2=dt=>dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+    desde=fmt2(weekStart); hasta=fmt2(weekEnd);
+  } else if(tipo==='mes'){
+    const y=d.getFullYear(),m=d.getMonth();
+    desde=y+'-'+String(m+1).padStart(2,'0')+'-01';
+    const lastDay=new Date(y,m+1,0).getDate();
+    hasta=y+'-'+String(m+1).padStart(2,'0')+'-'+String(lastDay).padStart(2,'0');
+    const b=document.getElementById('fh-mes'); if(b)b.className='btn btn-accent btn-sm';
+  }
+  const dEl=document.getElementById('h-desde'); if(dEl)dEl.value=desde;
+  const hEl=document.getElementById('h-hasta'); if(hEl)hEl.value=hasta;
+  renderHist();
+}
+
+function limpiarFiltrosHist(){
+  ['h-desde','h-hasta','h-pago','h-tipo'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.value='';
+  });
+  ['hoy','ayer','semana','mes'].forEach(t=>{
+    const b=document.getElementById('fh-'+t);
+    if(b)b.className='btn btn-ghost btn-sm';
+  });
+  renderHist();
+}
+
+// ══════════════════ T3: DASHBOARD DE VENTAS ══════════════════
+let dvPeriodo = 'dia';
+
+function setDVPeriodo(p){
+  dvPeriodo=p;
+  ['dia','semana','mes','anual'].forEach(x=>{
+    const b=document.getElementById('dv-btn-'+x);
+    if(b)b.className=x===p?'btn btn-accent btn-sm':'btn btn-ghost btn-sm';
+  });
+  renderDashboardVentas();
+}
+
+function renderDashboardVentas(){
+  // Populate sucursal select
+  const sucSel=document.getElementById('dv-suc');
+  if(sucSel&&sucSel.options.length<=1){
+    sucursales.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.nombre;sucSel.appendChild(o);});
+  }
+  const sucId=document.getElementById('dv-suc')?.value||'';
+  const fechaBase=document.getElementById('dv-fecha')?.value||hoy();
+  const d=new Date(fechaBase+'T12:00:00');
+  let desde='',hasta='',label='';
+
+  if(dvPeriodo==='dia'){
+    desde=hasta=fechaBase;
+    label=fmtFecha(fechaBase);
+  } else if(dvPeriodo==='semana'){
+    const dow=d.getDay()||7;
+    const mon=new Date(d); mon.setDate(d.getDate()-(dow-1));
+    const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+    const f2=dt=>dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+    desde=f2(mon); hasta=f2(sun);
+    // Week number
+    const startOfYear=new Date(d.getFullYear(),0,1);
+    const weekNum=Math.ceil(((d-startOfYear)/86400000+startOfYear.getDay()+1)/7);
+    label='Semana '+weekNum+' ('+fmtFecha(desde)+' - '+fmtFecha(hasta)+')';
+  } else if(dvPeriodo==='mes'){
+    const y=d.getFullYear(),m=d.getMonth();
+    desde=y+'-'+String(m+1).padStart(2,'0')+'-01';
+    const lastDay=new Date(y,m+1,0).getDate();
+    hasta=y+'-'+String(m+1).padStart(2,'0')+'-'+String(lastDay).padStart(2,'0');
+    const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    label=meses[m]+' '+y;
+  } else if(dvPeriodo==='anual'){
+    const y=d.getFullYear();
+    desde=y+'-01-01'; hasta=y+'-12-31';
+    label='Año '+y;
+  }
+  const lEl=document.getElementById('dv-periodo-label');
+  if(lEl)lEl.textContent=label;
+
+  // Filter ventas
+  const vFilt=ventas.filter(v=>{
+    const inR=(!desde||v.fecha>=desde)&&(!hasta||v.fecha<=hasta);
+    const inS=!sucId||v.sucursalId===sucId;
+    return inR&&inS;
+  });
+
+  // Totals
+  let total=0,efectivo=0,tarjeta=0,transferencia=0;
+  vFilt.forEach(v=>{
+    const monto=v.tipoVenta==='apartado'||v.tipoVenta==='credito'?(v.anticipo||0):v.total||0;
+    total+=monto;
+    const p=v.pago||'';
+    if(p==='efectivo'||p==='monedero')efectivo+=monto;
+    else if(p.startsWith('tarjeta'))tarjeta+=monto;
+    else if(p==='transferencia')transferencia+=monto;
+    else if(p==='mixto')efectivo+=monto; // count mixto as efectivo for simplicity
+  });
+
+  const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  s('dv-total',fmt(total));
+  s('dv-n-ventas',vFilt.length+' transacciones');
+  s('dv-efectivo',fmt(efectivo));
+  s('dv-tarjeta',fmt(tarjeta));
+  s('dv-transferencia',fmt(transferencia));
+
+  // Por categoría
+  const byCat={};
+  vFilt.forEach(v=>{
+    (v.items||[]).forEach(item=>{
+      const cat=item.cat||'Sin categoría';
+      const monto=(item.price||0)*(item.qty||1);
+      if(!byCat[cat])byCat[cat]={total:0,pzas:0};
+      byCat[cat].total+=monto;
+      byCat[cat].pzas+=item.qty||1;
+    });
+  });
+  const catList=Object.entries(byCat).sort((a,b)=>b[1].total-a[1].total);
+  const maxCat=catList[0]?.[1]?.total||1;
+  const catColors={'Calzado':'var(--accent)','Ropa':'var(--blue)','Boutique':'var(--gold)','Niño':'var(--green)','Dama':'var(--red)','Caballero':'var(--muted)'};
+  document.getElementById('dv-por-cat').innerHTML=catList.length?catList.map(([cat,data])=>`
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="font-size:13px;color:var(--cream);font-weight:600">${cat}</span>
+        <span style="font-size:13px;font-family:var(--mono);color:var(--gold)">${fmt(data.total)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="flex:1;height:8px;background:var(--s2);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${(data.total/maxCat*100).toFixed(1)}%;background:${catColors[cat]||'var(--accent)'};border-radius:4px"></div>
+        </div>
+        <span style="font-size:11px;color:var(--muted);min-width:50px">${data.pzas} pzas</span>
+        <span style="font-size:11px;color:var(--muted);min-width:40px">${total>0?(data.total/total*100).toFixed(1)+'%':'0%'}</span>
+      </div>
+    </div>`).join(''):'<div style="color:var(--muted);padding:16px;text-align:center">Sin ventas en este período</div>';
+
+  // Por pago
+  const pagoLabels={efectivo:'💵 Efectivo','tarjeta-bbva':'💳 BBVA','tarjeta-mp':'💳 Mercado Pago',transferencia:'📲 Transferencia',mixto:'🔀 Mixto',monedero:'🪙 Monedero'};
+  const byPago={};
+  vFilt.forEach(v=>{
+    const p=v.pago||'otro';
+    const m=v.tipoVenta==='apartado'||v.tipoVenta==='credito'?(v.anticipo||0):v.total||0;
+    byPago[p]=(byPago[p]||0)+m;
+  });
+  const pagoList=Object.entries(byPago).sort((a,b)=>b[1]-a[1]);
+  const maxPago=pagoList[0]?.[1]||1;
+  document.getElementById('dv-por-pago').innerHTML=pagoList.length?pagoList.map(([p,v])=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:13px;color:var(--cream)">${pagoLabels[p]||p}</div>
+        <div style="height:4px;width:${(v/maxPago*100).toFixed(1)}%;background:var(--accent);border-radius:2px;margin-top:4px;min-width:4px"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:var(--mono);color:var(--gold);font-size:14px">${fmt(v)}</div>
+        <div style="font-size:11px;color:var(--muted)">${total>0?(v/total*100).toFixed(1)+'%':'0%'}</div>
+      </div>
+    </div>`).join(''):'<div style="color:var(--muted);padding:16px;text-align:center">Sin datos</div>';
+
+  // Top artículos
+  const byArt={};
+  vFilt.forEach(v=>{
+    (v.items||[]).forEach(item=>{
+      if(item.sinCodigo)return;
+      const k=item.sku||item.desc||'';
+      if(!byArt[k])byArt[k]={desc:item.desc||'—',cat:item.cat||'—',pzas:0,total:0};
+      byArt[k].pzas+=item.qty||1;
+      byArt[k].total+=(item.price||0)*(item.qty||1);
+    });
+  });
+  const artList=Object.values(byArt).sort((a,b)=>b.total-a.total).slice(0,15);
+  const tbody=document.getElementById('dv-top-tbody');
+  if(tbody){
+    tbody.innerHTML=artList.length?artList.map(a=>`<tr>
+      <td style="font-weight:600;color:var(--cream);font-size:12px">${a.desc}</td>
+      <td><span class="badge b-accent" style="font-size:10px">${a.cat}</span></td>
+      <td style="text-align:center;font-family:var(--mono)">${a.pzas}</td>
+      <td style="text-align:right;font-family:var(--mono);color:var(--gold)">${fmt(a.total)}</td>
+      <td style="text-align:right">
+        <div style="display:flex;align-items:center;gap:4px">
+          <div style="flex:1;height:5px;background:var(--s2);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${total>0?(a.total/total*100).toFixed(1):0}%;background:var(--accent);border-radius:3px"></div>
+          </div>
+          <span style="font-size:11px;color:var(--muted);min-width:36px">${total>0?(a.total/total*100).toFixed(1)+'%':'0%'}</span>
+        </div>
+      </td>
+    </tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin ventas en este período</td></tr>';
+  }
+
+  // Días de la semana (solo en modo semana)
+  const diasCard=document.getElementById('dv-dias-card');
+  if(diasCard) diasCard.style.display=dvPeriodo==='semana'?'block':'none';
+  if(dvPeriodo==='semana'){
+    const diasLabels=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+    const diasData=[0,0,0,0,0,0,0];
+    vFilt.forEach(v=>{
+      const fd=new Date(v.fecha+'T12:00:00');
+      const dow=(fd.getDay()+6)%7; // 0=Lun 6=Dom
+      diasData[dow]+=(v.tipoVenta==='apartado'||v.tipoVenta==='credito'?(v.anticipo||0):v.total||0);
+    });
+    const maxDia=Math.max(...diasData)||1;
+    document.getElementById('dv-dias-bars').innerHTML=`
+      <div style="display:flex;align-items:flex-end;gap:8px;height:100px;padding:0 8px">
+        ${diasLabels.map((dia,i)=>`
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <span style="font-size:10px;color:var(--muted)">${fmt(diasData[i])}</span>
+            <div style="width:100%;background:var(--accent);border-radius:4px 4px 0 0;height:${Math.max(4,(diasData[i]/maxDia*80)).toFixed(0)}px;transition:height .3s"></div>
+            <span style="font-size:11px;color:var(--cream);font-weight:600">${dia}</span>
+          </div>`).join('')}
+      </div>`;
+  }
+}
+
+
 // ══════════════════ NAV ══════════════════
 const PAGE_TITLES={
   dashboard:{t:'Dashboard',sub:'Vista general del negocio',actions:''},
@@ -7473,6 +7767,7 @@ const PAGE_TITLES={
   entradas:{t:'Entrada de Mercancía',sub:'Registrar compras y ajustes de inventario',actions:''},
   salidas:{t:'Salida de Mercancía',sub:'Dar de baja artículos defectuosos, robados o ajustes',actions:''},
   pos:{t:'Punto de Venta',sub:'Registrar ventas',actions:''},
+  'dashboard-ventas':{t:'Dashboard de Ventas',sub:'Día · Semana · Mes · Año · Por categoría',actions:''},
   historial:{t:'Historial de Ventas',sub:'Todas las transacciones',actions:''},
   clientes:{t:'Clientes',sub:'Base de datos de clientes y monedero electrónico',actions:`<button class="btn btn-ghost" onclick="exportarClientesExcel()" style="margin-right:6px">📊 Excel</button><button class="btn btn-accent" onclick="abrirModalCliente()">＋ Nuevo Cliente</button>`},
   transferencias:{t:'Transferencias',sub:'Mover stock entre sucursales y bodega',actions:''},
@@ -7523,6 +7818,11 @@ function _navigateTo(page, el){
   if(page==='reportes')initReportes();
   if(page==='pos'){renderPOS();populatePOSSuc();}
   if(page==='historial')renderHist();
+  if(page==='dashboard-ventas'){
+    const fechaEl=document.getElementById('dv-fecha');
+    if(fechaEl&&!fechaEl.value)fechaEl.value=hoy();
+    renderDashboardVentas();
+  }
   if(page==='clientes'){renderClientes();}
   if(page==='sucursales')renderSucursales();
   if(page==='inventario')renderInv();
