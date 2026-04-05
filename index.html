@@ -2507,10 +2507,11 @@ function renderInv(){
     return mq&&mc&&ml&&mt&&mm&&ms&&mstock;
   });
 
-  // Group by barcode+sucursal
+  // Group by barcode+sucursal+liquidacion flag — LIQ records always separate
   const grupos={};
   lista.forEach(p=>{
-    const key=(p.sku||p.barcode||p.id)+'_'+(p.sucursalId||'');
+    const baseKey=(p.sku||p.barcode||p.id)+'_'+(p.sucursalId||'');
+    const key = p.esLiquidacion ? baseKey+'_LIQ' : baseKey;
     if(!grupos[key]){grupos[key]={...p,_ids:[p.id],stock:{...p.stock}};}
     else{
       grupos[key]._ids.push(p.id);
@@ -6227,7 +6228,11 @@ async function registrarSalidaLiquidacion(){
     const {updateDoc, addDoc} = window._fb;
     // Process each line: reduce original stock + create/update liquidation record
     for(const linea of salLineas){
-      const prodOriginal = productos.find(x=>x.id===linea.prodId);
+      // Always fetch fresh from Firestore to avoid stale cache
+      const freshSnap = await window._fb.getDoc(docRef('productos',linea.prodId));
+      const prodOriginal = freshSnap.exists()
+        ? {id:linea.prodId,...freshSnap.data()}
+        : productos.find(x=>x.id===linea.prodId);
       if(!prodOriginal) continue;
       const precioOriginal = prodOriginal.precio||0;
       const stockActual = (prodOriginal.stock||{})[linea.talla]||0;
@@ -6245,6 +6250,7 @@ async function registrarSalidaLiquidacion(){
       // 2. Find or create a LIQUIDATION record for this product+sucursal
       const sucId = prodOriginal.sucursalId||'';
       const liqBarcode = (prodOriginal.barcode||prodOriginal.sku||linea.prodId)+'_LIQ';
+      // Re-check local cache (may have been updated by onSnapshot)
       let liqProd = productos.find(x=>
         x.esLiquidacion &&
         (x.barcode===liqBarcode || x.sku===liqBarcode) &&
@@ -6294,7 +6300,9 @@ async function registrarSalidaLiquidacion(){
           updatedAt: new Date().toISOString()
         };
         const ref = await addDoc(col('productos'), newLiq);
-        productos.push({...newLiq, id:ref.id});
+        // DON'T push to local cache — onSnapshot will reload productos from Firestore
+        // to avoid double-counting in inventory views
+        console.log('LIQ product created:', ref.id, newLiq.desc);
       }
     }
     // Register in bitacora
