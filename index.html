@@ -3790,46 +3790,53 @@ async function cobrar(){
       createdAt:new Date().toISOString()
     };
     await window._fb.addDoc(col('ventas'),ventaDoc);
-    // Acumular puntos monedero si es venta normal
-    if(clienteId&&tipoVenta==='venta'){
-      await acumularPuntosCliente(clienteId,total);
-    }
-    // Mostrar nota de separo si es apartado/credito
-    if(isAC){
-      mostrarNotaSeparo({...ventaDoc,items:carrito});
-    }
-    // ── Limpiar carrito completo post-cobro ──
+    // ── Venta guardada exitosamente — cerrar modal y limpiar ──
+    // Do this FIRST before any other operations that could throw
     carrito=[];
-    // Reset all form fields
-    ['c-desc','c-anticipo','c-nota-nombre','c-nota-tel','c-nota-folio','c-recibido','c-monedero-monto'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el)el.value=id==='c-desc'?'0':'';
-    });
-    const tipoEl=document.getElementById('c-tipo-venta');if(tipoEl)tipoEl.value='venta';
-    const pagoEl=document.getElementById('c-pago');if(pagoEl){pagoEl.value='efectivo';toggleMonederoField();}
-    const aprtEl=document.getElementById('c-apartado-section');if(aprtEl)aprtEl.style.display='none';
-    const notaEl=document.getElementById('c-nota-section');if(notaEl)notaEl.style.display='none';
-    const cliSel=document.getElementById('c-cliente-sel');if(cliSel)cliSel.value='';
-    const cliInfo=document.getElementById('c-cliente-info');if(cliInfo)cliInfo.style.display='none';
-    const cumpleAl=document.getElementById('c-cumple-alert');if(cumpleAl)cumpleAl.style.display='none';
-    const promoAl=document.getElementById('c-promo-alert');if(promoAl)promoAl.style.display='none';
-    const monSec=document.getElementById('c-monedero-section');if(monSec)monSec.style.display='none';
-    const cambioEl=document.getElementById('c-cambio');if(cambioEl)cambioEl.textContent='$0.00';
-    const monDisp=document.getElementById('c-monedero-disp');if(monDisp)monDisp.textContent='$0.00';
-    const monResto=document.getElementById('c-monedero-resto');if(monResto)monResto.textContent='';
-    // Reset vendedor al usuario activo actual
-    const vSel=document.getElementById('c-vendedor-sel');
-    if(vSel&&usuarioActivo?.nombre){
-      // Try to match vendedor by name
-      const opts=[...vSel.options];
-      const match=opts.find(o=>o.value.toLowerCase()===usuarioActivo.nombre.toLowerCase()||o.text.toLowerCase()===usuarioActivo.nombre.toLowerCase());
-      vSel.value=match?match.value:'';
-    }
-    renderCart();renderPOS();
     cerrarModalCobro();
-    if(!isAC)toast('✅ Venta registrada: '+fmt(total));
+    if(!isAC) toast('✅ Venta registrada: '+fmt(total));
+    // Reset cart panel fields
+    try{
+      ['c-desc','c-anticipo','c-nota-nombre','c-nota-tel','c-nota-folio','c-recibido','c-monedero-monto'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el)el.value=id==='c-desc'?'0':'';
+      });
+      const tipoEl=document.getElementById('c-tipo-venta');if(tipoEl)tipoEl.value='venta';
+      const pagoEl=document.getElementById('c-pago');if(pagoEl)pagoEl.value='efectivo';
+      const aprtEl=document.getElementById('c-apartado-section');if(aprtEl)aprtEl.style.display='none';
+      const notaEl=document.getElementById('c-nota-section');if(notaEl)notaEl.style.display='none';
+      const cliSel=document.getElementById('c-cliente-sel');if(cliSel)cliSel.value='';
+      const cliInfo=document.getElementById('c-cliente-info');if(cliInfo)cliInfo.style.display='none';
+      const cumpleAl=document.getElementById('c-cumple-alert');if(cumpleAl)cumpleAl.style.display='none';
+      const promoAl=document.getElementById('c-promo-alert');if(promoAl)promoAl.style.display='none';
+      const monSec=document.getElementById('c-monedero-section');if(monSec)monSec.style.display='none';
+      const cambioEl=document.getElementById('c-cambio');if(cambioEl)cambioEl.textContent='$0.00';
+      const monDisp=document.getElementById('c-monedero-disp');if(monDisp)monDisp.textContent='$0.00';
+      const monResto=document.getElementById('c-monedero-resto');if(monResto)monResto.textContent='';
+      renderCart();
+      renderPOS();
+      selTipoPos('venta');
+      selPagoPos('efectivo');
+      // Reset vendedor to active user
+      const vSel=document.getElementById('c-vendedor-sel');
+      const vDisplay=document.getElementById('cobro-vendedor-display');
+      const vUser=usuarioActivo||currentProfile;
+      if(vSel&&vUser?.nombre) vSel.value=vUser.nombre;
+      if(vDisplay&&vUser?.nombre) vDisplay.textContent=vUser.nombre;
+    }catch(resetErr){
+      // Reset errors are non-critical — just log them
+      console.warn('cobrar reset error (non-critical):', resetErr);
+    }
+    // Side effects after modal is closed
+    try{
+      if(clienteId&&tipoVenta==='venta') await acumularPuntosCliente(clienteId,total);
+      if(isAC) mostrarNotaSeparo({...ventaDoc,items:ventaDoc.items||[]});
+    }catch(sideErr){
+      console.warn('cobrar side effect error:', sideErr);
+    }
   }catch(e){
-    toast('Error al cobrar: '+e.message,'err');
+    // Only reaches here if the actual SAVE to Firestore failed
+    toast('Error al guardar la venta: '+e.message,'err');
     console.error('cobrar error:',e);
   }
 }
