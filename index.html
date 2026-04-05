@@ -1226,9 +1226,10 @@ select option{background:var(--s2)}
             <button class="btn btn-ghost btn-sm" onclick="loadBitacora()">🔄 Actualizar</button>
           </div>
           <div class="tw" style="overflow-x:auto">
-            <table style="min-width:900px"><thead><tr>
-              <th>Fecha</th><th>Hora</th><th>Tipo</th><th>Descripción</th>
-              <th>Usuario</th><th>Rol</th><th>Aprobó</th><th>Acciones</th>
+            <table style="min-width:1200px"><thead><tr>
+              <th>Fecha/Hora</th><th>Tipo</th><th>Descripción</th>
+              <th>Destino</th><th>Piezas</th><th>Comentario</th>
+              <th>Usuario</th><th>Estado</th><th>Acciones</th>
             </tr></thead>
             <tbody id="bitacora-tbody"></tbody></table>
           </div>
@@ -4726,7 +4727,7 @@ async function registrarEntrada(){
       tipo:'entrada',
       subTipo:tipo,
       descripcion:`Entrada: ${descLineas}${proveedor?' | Prov: '+proveedor:''}`,
-      datos:{entradaId:entRef.id,lineas:JSON.parse(JSON.stringify(entLineas)),sucursalId:sucId},
+      datos:{entradaId:entRef.id,lineas:JSON.parse(JSON.stringify(entLineas)),sucursalId:sucId,proveedor:proveedor,comentario:comentario},
       usuario:usuarioActual?.nombre||'—',
       usuarioRol:usuarioActual?.rol||'—',
       fecha:hoy(),hora:hora(),
@@ -4734,27 +4735,12 @@ async function registrarEntrada(){
       aprobadoPor:esAdmin?(usuarioActual?.nombre||'Admin'):'',
       createdAt:new Date().toISOString()
     });
-    // If admin: apply stock immediately
+    // If admin: apply stock immediately to SELECTED sucursal
     if(esAdmin){
-      const {updateDoc}=window._fb;
       for(const linea of entLineas){
-        // Find product in the SELECTED sucursal (destino)
-        let prodTarget = sucId
-          ? productos.find(x=>x.id===linea.prodId && x.sucursalId===sucId)
-            || productos.find(x=>(x.barcode===linea.sku||x.sku===linea.sku) && x.sucursalId===sucId)
-          : null;
-        if(!prodTarget){
-          // Fall back to product by ID regardless of sucursal
-          prodTarget = productos.find(x=>x.id===linea.prodId);
-        }
-        if(!prodTarget) continue;
-        const stockActual=(prodTarget.stock||{})[linea.talla]||0;
-        await updateDoc(docRef('productos',prodTarget.id),{
-          [`stock.${linea.talla}`]:stockActual+linea.cantidad,
-          sucursalId: sucId||prodTarget.sucursalId  // ensure sucursal is correct
-        });
+        await aplicarStockEnSucursal(linea, sucId, linea.cantidad);
       }
-      toast(`Entrada registrada en ${sucursales.find(s=>s.id===sucId)?.nombre||'sucursal'}: ${totalPiezas} piezas ✓`);
+      toast(`Entrada en ${sucursales.find(s=>s.id===sucId)?.nombre||'sucursal'}: ${totalPiezas} piezas ✓`);
     }else{
       toast(`✅ Entrada enviada para aprobación del administrador`);
     }
@@ -4946,7 +4932,7 @@ async function registrarSalida(){
       tipo:'salida',
       subTipo:tipo,
       descripcion:`Salida (${tipo}): ${descLineas}${comentario?' | '+comentario:''}`,
-      datos:{salidaId:salRef.id,lineas:JSON.parse(JSON.stringify(salLineas)),sucursalId:sucId},
+      datos:{salidaId:salRef.id,lineas:JSON.parse(JSON.stringify(salLineas)),sucursalId:sucId,comentario:comentario},
       usuario:usuarioActual?.nombre||'—',
       usuarioRol:usuarioActual?.rol||'—',
       fecha:hoy(),hora:hora(),
@@ -6696,12 +6682,28 @@ async function loadBitacora(){
       } else {
         acciones = m.aprobadoPor ? '<span style="font-size:11px;color:var(--muted)">Por: '+m.aprobadoPor+'</span>' : '—';
       }
+      // Extra info from datos
+      const destSucNombre = m.datos?.sucursalId
+        ? (sucursales.find(s=>s.id===m.datos.sucursalId)?.nombre||m.datos.sucursalId)
+        : '—';
+      const totalPzas = m.datos?.lineas
+        ? m.datos.lineas.reduce((a,l)=>a+(l.cantidad||0),0)
+        : '—';
+      const comentario = m.datos?.comentario || m.datos?.proveedor
+        ? [m.datos.proveedor, m.datos.comentario].filter(Boolean).join(' | ')
+        : '—';
       return `<tr>
-        <td style="font-size:11px;color:var(--muted)">${m.fecha||'—'} ${m.hora||''}</td>
+        <td style="font-size:11px;color:var(--muted);white-space:nowrap">${m.fecha||'—'}<br>${m.hora||''}</td>
         <td>${tipoBadge}</td>
-        <td style="font-size:11px;color:var(--cream);max-width:200px">${m.descripcion||'—'}</td>
-        <td style="font-size:11px;color:var(--cream)">${m.usuario||'—'}</td>
-        <td style="font-size:11px;color:var(--muted)">${m.usuarioRol||'—'}</td>
+        <td style="font-size:11px;color:var(--cream);max-width:180px">${m.descripcion||'—'}</td>
+        <td style="font-size:12px;color:var(--cream);white-space:nowrap">
+          ${(m.tipo==='entrada'||m.tipo==='salida')
+            ? `<span class="badge ${destSucNombre.toLowerCase().includes('bod')?'b-orange':'b-green'}">${(m.tipo==='entrada'?'📥 ':'📤 ')+destSucNombre}</span>`
+            : '<span style="color:var(--faint)">—</span>'}
+        </td>
+        <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:var(--gold)">${totalPzas}</td>
+        <td style="font-size:11px;color:var(--muted);max-width:140px">${comentario}</td>
+        <td style="font-size:11px;color:var(--cream)">${m.usuario||'—'}<br><span style="color:var(--muted);font-size:10px">${m.usuarioRol||''}</span></td>
         <td>${estadoBadge}</td>
         <td>${acciones}</td>
       </tr>`;
@@ -6724,18 +6726,7 @@ async function aprobarMovimiento(id){
     if(mov.tipo==='entrada' && mov.datos?.lineas){
       const destSucId = mov.datos.sucursalId||'';
       for(const linea of mov.datos.lineas){
-        // Find product in the CORRECT sucursal destination
-        let prodTarget = destSucId
-          ? productos.find(x=>x.id===linea.prodId && x.sucursalId===destSucId)
-            || productos.find(x=>(x.barcode===linea.sku||x.sku===linea.sku) && x.sucursalId===destSucId)
-          : null;
-        if(!prodTarget) prodTarget = productos.find(x=>x.id===linea.prodId);
-        if(!prodTarget) continue;
-        const stockActual=(prodTarget.stock||{})[linea.talla]||0;
-        await updateDoc(docRef('productos',prodTarget.id),{
-          [`stock.${linea.talla}`]:stockActual+linea.cantidad,
-          sucursalId: destSucId||prodTarget.sucursalId
-        });
+        await aplicarStockEnSucursal(linea, destSucId, linea.cantidad);
       }
       if(mov.datos.entradaId) await window._fb.setDoc(docRef('entradas',mov.datos.entradaId),{estado:'aprobado',aprobadoPor},{merge:true});
     }
@@ -6830,16 +6821,8 @@ async function cancelarMovimientoAprobado(id){
     if(mov.tipo==='entrada' && mov.datos?.lineas){
       const destSucId = mov.datos.sucursalId||'';
       for(const linea of mov.datos.lineas){
-        let prodTarget = destSucId
-          ? productos.find(x=>x.id===linea.prodId && x.sucursalId===destSucId)
-            || productos.find(x=>(x.barcode===linea.sku||x.sku===linea.sku) && x.sucursalId===destSucId)
-          : null;
-        if(!prodTarget) prodTarget = productos.find(x=>x.id===linea.prodId);
-        if(!prodTarget) continue;
-        const stockActual=(prodTarget.stock||{})[linea.talla]||0;
-        await updateDoc(docRef('productos',prodTarget.id),{
-          [`stock.${linea.talla}`]:Math.max(0,stockActual-linea.cantidad)
-        });
+        // Reverse: negative delta
+        await aplicarStockEnSucursal(linea, destSucId, -linea.cantidad);
       }
       if(mov.datos.entradaId) await window._fb.setDoc(docRef('entradas',mov.datos.entradaId),{estado:'cancelado',canceladoPor},{merge:true});
     }
@@ -6892,6 +6875,50 @@ async function cambiarSucursalMovimiento(id){
     toast('✅ Sucursal actualizada a: '+nuevaSuc.nombre);
     loadBitacora();
   }catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+
+
+// ══════════ HELPER: apply stock to correct sucursal record ══════════
+async function aplicarStockEnSucursal(linea, sucursalId, delta){
+  // +delta = entrada (add stock), -delta = salida (remove stock)
+  const {updateDoc, addDoc, setDoc} = window._fb;
+  // Find product record in the TARGET sucursal
+  let prodTarget = sucursalId
+    ? productos.find(x => x.sucursalId===sucursalId &&
+        (x.id===linea.prodId || x.barcode===linea.sku || x.sku===linea.sku))
+    : productos.find(x => x.id===linea.prodId);
+
+  if(prodTarget){
+    // Product exists in target sucursal — update its stock
+    const stockActual = (prodTarget.stock||{})[linea.talla]||0;
+    const nuevoStock = delta>0 ? stockActual+delta : Math.max(0,stockActual+delta);
+    await updateDoc(docRef('productos',prodTarget.id),{
+      [`stock.${linea.talla}`]: nuevoStock
+    });
+    // Update local cache
+    const idx = productos.findIndex(x=>x.id===prodTarget.id);
+    if(idx>=0){
+      if(!productos[idx].stock) productos[idx].stock={};
+      productos[idx].stock[linea.talla] = nuevoStock;
+    }
+  } else if(delta>0 && sucursalId){
+    // Product does NOT exist in target sucursal — create new record for that sucursal
+    const sourceProd = productos.find(x=>x.id===linea.prodId);
+    if(sourceProd){
+      const newProd = {
+        ...sourceProd,
+        id: undefined,
+        sucursalId: sucursalId,
+        stock: {[linea.talla]: delta},
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      delete newProd.id;
+      const ref = await addDoc(col('productos'), newProd);
+      productos.push({...newProd, id:ref.id});
+    }
+  }
 }
 
 
