@@ -1145,6 +1145,38 @@ select option{background:var(--s2)}
             <div class="card-title">💳 Ventas por Forma de Pago</div>
             <div id="rep-pagos" style="display:flex;gap:20px;flex-wrap:wrap"></div>
           </div>
+
+          <!-- ═══ UTILIDAD REAL ═══ -->
+          <div class="card" style="margin-top:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+              <div>
+                <div class="card-title" style="margin-bottom:2px">💹 Utilidad Real por Artículo Vendido</div>
+                <div style="font-size:11px;color:var(--muted)">Basado en costo de proveedor registrado en Costos y Utilidad</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="exportarUtilidadReal()">📊 Exportar Excel</button>
+            </div>
+            <!-- Tarjetas resumen utilidad -->
+            <div class="stat-grid sg4" style="margin-bottom:14px">
+              <div class="scard g"><div class="sl">Ingresos por ventas</div><div class="sv g" id="ur-ingresos">$0</div></div>
+              <div class="scard gold"><div class="sl">Costo total vendido</div><div class="sv gold" id="ur-costo">$0</div></div>
+              <div class="scard b"><div class="sl">Utilidad real</div><div class="sv b" id="ur-utilidad">$0</div></div>
+              <div class="scard r"><div class="sl">Pérdidas (vendido bajo costo)</div><div class="sv r" id="ur-perdidas">$0</div></div>
+            </div>
+            <div class="tw" style="overflow-x:auto">
+              <table style="min-width:950px"><thead><tr>
+                <th>Artículo</th>
+                <th style="text-align:center">Pzas<br>vendidas</th>
+                <th style="text-align:right">Costo<br>unitario</th>
+                <th style="text-align:right">Precio<br>promedio</th>
+                <th style="text-align:right">Ingreso<br>total</th>
+                <th style="text-align:right">Costo<br>total</th>
+                <th style="text-align:right">Utilidad<br>real</th>
+                <th style="text-align:right">% Margen<br>real</th>
+                <th style="text-align:center">Estado</th>
+              </tr></thead>
+              <tbody id="ur-tbody"></tbody>
+            </table></div>
+          </div>
         </div>
 
         <!-- ══════════ SUCURSALES ══════════ -->
@@ -3018,6 +3050,8 @@ function calcReportes(){
       <div style="font-family:var(--mono);font-size:18px;margin-top:4px">${fmt(v)}</div>
       <div style="font-size:11px;color:var(--muted);margin-top:2px">${((v/totalV)*100).toFixed(1)}%</div>
     </div>`).join('');
+  // Also calculate real profitability
+  calcUtilidadReal();
 }
 const var_green='var(--green)',var_blue='var(--blue)',var_gold='var(--gold)';
 
@@ -6188,33 +6222,96 @@ async function registrarSalidaLiquidacion(){
   const usuarioActual = usuarioActivo||currentProfile;
   const esAdmin = usuarioActual?.rol==='admin';
   const descLineas = salLineas.map(l=>`${l.desc} T${l.talla} ×${l.cantidad}`).join(', ');
-  if(!confirm('¿Cambiar precio a $'+nuevoPrecio.toFixed(2)+'? El artículo seguirá en inventario.'))return;
+  if(!confirm('¿Registrar '+descLineas+' como liquidación a $'+nuevoPrecio.toFixed(2)+'?\n\nLas piezas dañadas quedarán con precio $'+nuevoPrecio.toFixed(2)+' y el resto mantendrá su precio original.'))return;
   try{
-    const {updateDoc} = window._fb;
-    const prodIds = [...new Set(salLineas.map(l=>l.prodId))];
-    for(const prodId of prodIds){
-      await updateDoc(docRef('productos',prodId),{
-        precio: nuevoPrecio,
-        esLiquidacion: true,
-        precioOriginal: productos.find(x=>x.id===prodId)?.precio||0,
-        razonLiquidacion: razon,
-        liquidadoPor: usuarioActual?.nombre||'—',
-        liquidadoEn: new Date().toISOString()
+    const {updateDoc, addDoc} = window._fb;
+    // Process each line: reduce original stock + create/update liquidation record
+    for(const linea of salLineas){
+      const prodOriginal = productos.find(x=>x.id===linea.prodId);
+      if(!prodOriginal) continue;
+      const precioOriginal = prodOriginal.precio||0;
+      const stockActual = (prodOriginal.stock||{})[linea.talla]||0;
+      // 1. Reduce stock from the ORIGINAL product (keep its price intact)
+      const nuevoStockOriginal = Math.max(0, stockActual - linea.cantidad);
+      await updateDoc(docRef('productos',linea.prodId),{
+        [`stock.${linea.talla}`]: nuevoStockOriginal
       });
+      // Update local cache
+      const idx = productos.findIndex(x=>x.id===linea.prodId);
+      if(idx>=0){
+        if(!productos[idx].stock) productos[idx].stock={};
+        productos[idx].stock[linea.talla] = nuevoStockOriginal;
+      }
+      // 2. Find or create a LIQUIDATION record for this product+sucursal
+      const sucId = prodOriginal.sucursalId||'';
+      const liqBarcode = (prodOriginal.barcode||prodOriginal.sku||linea.prodId)+'_LIQ';
+      let liqProd = productos.find(x=>
+        x.esLiquidacion &&
+        (x.barcode===liqBarcode || x.sku===liqBarcode) &&
+        x.sucursalId===sucId
+      );
+      if(liqProd){
+        // Already has a liquidation record — add to its stock and update price
+        const liqStockActual = (liqProd.stock||{})[linea.talla]||0;
+        await updateDoc(docRef('productos',liqProd.id),{
+          [`stock.${linea.talla}`]: liqStockActual + linea.cantidad,
+          precio: nuevoPrecio,
+          precioOriginal: precioOriginal,
+          razonLiquidacion: razon,
+          liquidadoPor: usuarioActual?.nombre||'—',
+          liquidadoEn: new Date().toISOString()
+        });
+        const liqIdx = productos.findIndex(x=>x.id===liqProd.id);
+        if(liqIdx>=0){
+          if(!productos[liqIdx].stock) productos[liqIdx].stock={};
+          productos[liqIdx].stock[linea.talla] = liqStockActual + linea.cantidad;
+          productos[liqIdx].precio = nuevoPrecio;
+        }
+      } else {
+        // Create new liquidation product record
+        const newLiq = {
+          barcode: liqBarcode,
+          sku: liqBarcode,
+          desc: prodOriginal.desc + ' 🏷️ LIQ',
+          cat: prodOriginal.cat||'',
+          linea: prodOriginal.linea||'',
+          temporada: prodOriginal.temporada||'',
+          marca: prodOriginal.marca||'',
+          color: prodOriginal.color||'',
+          precio: nuevoPrecio,
+          precioOriginal: precioOriginal,
+          costo: prodOriginal.costo||0,
+          locacion: prodOriginal.locacion||'',
+          foto: prodOriginal.foto||null,
+          barcodeTallas: {},
+          sucursalId: sucId,
+          stock: {[linea.talla]: linea.cantidad},
+          esLiquidacion: true,
+          razonLiquidacion: razon,
+          liquidadoPor: usuarioActual?.nombre||'—',
+          liquidadoEn: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        const ref = await addDoc(col('productos'), newLiq);
+        productos.push({...newLiq, id:ref.id});
+      }
     }
+    // Register in bitacora
     await window._fb.addDoc(col('bitacora'),{
       tipo:'liquidacion',
       descripcion:'Liquidación: '+descLineas+' | Nuevo precio: $'+nuevoPrecio+' | Razón: '+razon,
       datos:{lineas:JSON.parse(JSON.stringify(salLineas)),nuevoPrecio,razon},
       usuario:usuarioActual?.nombre||'—',usuarioRol:usuarioActual?.rol||'—',
       fecha:hoy(),hora:hora(),
-      estado:esAdmin?'aprobado':'pendiente',
-      aprobadoPor:esAdmin?(usuarioActual?.nombre||'Admin'):'',
+      estado:'aprobado',
+      aprobadoPor:usuarioActual?.nombre||'—',
       createdAt:new Date().toISOString()
     });
-    toast('Precio actualizado a $'+nuevoPrecio.toFixed(2)+' ✓');
+    toast('✅ Liquidación registrada: '+linea?.cantidad||salLineas[0]?.cantidad+' pza(s) a $'+nuevoPrecio.toFixed(2)+' — resto mantiene precio original');
     limpiarSalida();
     document.getElementById('sal-liquidacion-section').style.display='none';
+    renderInv(); renderCatalogo(); renderPOS();
   }catch(e){toast('Error: '+e.message,'err');console.error(e);}
 }
 
@@ -7104,6 +7201,185 @@ function exportarCostosExcel(){
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='costos_utilidad_'+hoy()+'.csv'; a.click(); toast('Exportado ✓');
+}
+
+
+
+// ══════════════════ UTILIDAD REAL POR ARTÍCULO VENDIDO ══════════════════
+function calcUtilidadReal(){
+  // Build a map: barcode/sku → costo from productos catalog
+  const costoMap={};
+  productos.forEach(p=>{
+    const key = p.barcode||p.sku||p.id;
+    if(key && p.costo>0 && !costoMap[key]){
+      costoMap[key] = {costo:p.costo, desc:p.desc, cat:p.cat||''};
+    }
+  });
+
+  // Get date range from report filters
+  const desde = document.getElementById('rep-desde')?.value||'';
+  const hasta = document.getElementById('rep-hasta')?.value||'';
+  const sucId  = document.getElementById('rep-suc')?.value||'';
+
+  // Filter ventas
+  const ventasFilt = ventas.filter(v=>{
+    const inRange = (!desde||v.fecha>=desde)&&(!hasta||v.fecha<=hasta);
+    const inSuc   = !sucId||v.sucursalId===sucId;
+    return inRange&&inSuc;
+  });
+
+  // Aggregate by barcode/sku
+  const agr={}; // key → {desc, cat, pzas, ingresos, costoTotal, esLiquidacion}
+  ventasFilt.forEach(v=>{
+    (v.items||[]).forEach(item=>{
+      if(item.sinCodigo) return; // skip artículos sin código
+      const key = item.sku||item.id||'';
+      const precio = item.price||0;
+      const qty    = item.qty||1;
+      const prodRef = productos.find(p=>p.barcode===key||p.sku===key||p.id===item.id);
+      const costo  = prodRef?.costo||costoMap[key]?.costo||0;
+      const esLiq  = item.desc?.includes('🏷️ LIQ')||prodRef?.esLiquidacion||false;
+      const desc   = (item.desc||'').replace(' 🏷️ LIQ','');
+      const baseKey = key.replace('_LIQ','');
+
+      if(!agr[baseKey]){
+        agr[baseKey]={
+          desc, cat: prodRef?.cat||costoMap[key]?.cat||'',
+          pzas:0, ingresos:0, costoTotal:0, costo,
+          pzasNormal:0, pzasLiq:0,
+          ingresosNormal:0, ingresosLiq:0
+        };
+      }
+      const a=agr[baseKey];
+      a.pzas      += qty;
+      a.ingresos  += precio*qty;
+      a.costoTotal += (costo>0?costo:0)*qty;
+      if(costo>0) a.costo = costo; // update costo if available
+      if(esLiq){ a.pzasLiq+=qty; a.ingresosLiq+=precio*qty; }
+      else     { a.pzasNormal+=qty; a.ingresosNormal+=precio*qty; }
+    });
+  });
+
+  const lista = Object.values(agr).filter(a=>a.pzas>0)
+    .sort((a,b)=>(a.ingresos-a.costoTotal)-(b.ingresos-b.costoTotal)); // worst first
+
+  // Totals
+  let totIngresos=0,totCosto=0,totPerdidas=0;
+  lista.forEach(a=>{ totIngresos+=a.ingresos; totCosto+=a.costoTotal; if(a.ingresos<a.costoTotal)totPerdidas+=a.costoTotal-a.ingresos; });
+  const totUtilidad = totIngresos-totCosto;
+
+  const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  setEl('ur-ingresos', fmt(totIngresos));
+  setEl('ur-costo',    fmt(totCosto));
+  setEl('ur-utilidad', fmt(totUtilidad));
+  setEl('ur-perdidas', fmt(totPerdidas));
+
+  const tbody=document.getElementById('ur-tbody');
+  if(!tbody) return;
+
+  if(!lista.length){
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted)">Sin ventas en el período seleccionado. Genera el reporte con un rango de fechas.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML=lista.map(a=>{
+    const utilidad   = a.ingresos - a.costoTotal;
+    const margen     = a.ingresos>0 ? (utilidad/a.ingresos*100).toFixed(1) : 0;
+    const precioProm = a.pzas>0 ? a.ingresos/a.pzas : 0;
+    const sinCosto   = a.costo<=0;
+
+    // Estado badge
+    let estadoBadge, rowBg='';
+    if(sinCosto){
+      estadoBadge='<span class="badge b-gray" style="font-size:10px">⚠️ Sin costo</span>';
+    } else if(utilidad<0){
+      estadoBadge='<span class="badge b-red" style="font-size:10px">🔴 Pérdida</span>';
+      rowBg='background:rgba(239,68,68,.06)';
+    } else if(Number(margen)<10){
+      estadoBadge='<span class="badge b-gold" style="font-size:10px">⚠️ Margen bajo</span>';
+      rowBg='background:rgba(240,180,41,.06)';
+    } else if(a.pzasLiq>0){
+      estadoBadge='<span class="badge b-gold" style="font-size:10px">🏷️ Con liquidación</span>';
+    } else {
+      estadoBadge='<span class="badge b-green" style="font-size:10px">✅ Rentable</span>';
+    }
+
+    // Liquidacion sub-info
+    const liqInfo = a.pzasLiq>0
+      ? `<div style="font-size:10px;color:var(--red);margin-top:2px">
+           🏷️ ${a.pzasLiq} pza(s) vendidas en liquidación — dejaste de ganar ${fmt((a.costo>0?(a.ingresosNormal/Math.max(a.pzasNormal,1)):precioProm)*a.pzasLiq - a.ingresosLiq)} aprox.
+         </div>` : '';
+
+    return `<tr style="${rowBg}">
+      <td>
+        <div style="font-weight:600;color:var(--cream);font-size:12px">${a.desc}</div>
+        <div style="font-size:10px;color:var(--muted)">${a.cat}</div>
+        ${liqInfo}
+      </td>
+      <td style="text-align:center;font-family:var(--mono);font-size:13px">${a.pzas}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:12px;color:${sinCosto?'var(--faint)':'var(--muted)'}">
+        ${sinCosto?'<span style="color:var(--red);font-size:11px">No registrado</span>':fmt(a.costo)}
+      </td>
+      <td style="text-align:right;font-family:var(--mono);font-size:13px;color:var(--gold)">${fmt(precioProm)}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:13px;color:var(--green)">${fmt(a.ingresos)}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:13px;color:var(--muted)">${sinCosto?'—':fmt(a.costoTotal)}</td>
+      <td style="text-align:right;font-family:var(--mono);font-weight:700;font-size:14px;color:${utilidad<0?'var(--red)':utilidad===0?'var(--muted)':'var(--green)'}">
+        ${sinCosto?'—':(utilidad<0?'':'')+fmt(utilidad)}
+      </td>
+      <td style="text-align:right;font-weight:700;font-size:13px;color:${Number(margen)<0?'var(--red)':Number(margen)<10?'var(--gold)':'var(--green)'}">
+        ${sinCosto?'—':margen+'%'}
+      </td>
+      <td>${estadoBadge}</td>
+    </tr>`;
+  }).join('');
+
+  // Warning if products without cost
+  const sinCostoCount = lista.filter(a=>a.costo<=0).length;
+  if(sinCostoCount>0){
+    const warn=document.createElement('tr');
+    warn.innerHTML=`<td colspan="9" style="background:rgba(240,180,41,.1);padding:10px;font-size:11px;color:var(--gold);text-align:center">
+      ⚠️ ${sinCostoCount} artículo(s) sin costo registrado — ve a <b>Costos y Utilidad</b> para agregar los costos de proveedor y obtener el análisis completo.
+    </td>`;
+    tbody.appendChild(warn);
+  }
+}
+
+function exportarUtilidadReal(){
+  const headers=['Articulo','Categoria','Pzas_Vendidas','Costo_Unit','Precio_Prom','Ingresos_Total','Costo_Total','Utilidad_Real','Margen_%','Pzas_Liquidacion','Estado'];
+  const tbody=document.getElementById('ur-tbody');
+  if(!tbody||!tbody.rows.length){toast('Genera el reporte primero','err');return;}
+  // Rebuild data from current agr
+  const desde=document.getElementById('rep-desde')?.value||'';
+  const hasta=document.getElementById('rep-hasta')?.value||'';
+  const costoMap={};
+  productos.forEach(p=>{const k=p.barcode||p.sku||p.id;if(k&&p.costo>0&&!costoMap[k])costoMap[k]={costo:p.costo,desc:p.desc,cat:p.cat||''};});
+  const agr={};
+  ventas.filter(v=>(!desde||v.fecha>=desde)&&(!hasta||v.fecha<=hasta)).forEach(v=>{
+    (v.items||[]).forEach(item=>{
+      if(item.sinCodigo)return;
+      const key=(item.sku||item.id||'').replace('_LIQ','');
+      const prodRef=productos.find(p=>p.barcode===item.sku||p.sku===item.sku||p.id===item.id);
+      const costo=prodRef?.costo||costoMap[item.sku||'']?.costo||0;
+      const esLiq=item.desc?.includes('🏷️ LIQ')||prodRef?.esLiquidacion||false;
+      if(!agr[key])agr[key]={desc:(item.desc||'').replace(' 🏷️ LIQ',''),cat:prodRef?.cat||'',pzas:0,ingresos:0,costoTotal:0,costo,pzasLiq:0};
+      const a=agr[key];
+      a.pzas+=item.qty||1;a.ingresos+=(item.price||0)*(item.qty||1);
+      a.costoTotal+=costo*(item.qty||1);if(costo>0)a.costo=costo;
+      if(esLiq)a.pzasLiq+=item.qty||1;
+    });
+  });
+  const rows=Object.values(agr).map(a=>{
+    const util=a.ingresos-a.costoTotal;
+    const marg=a.ingresos>0?(util/a.ingresos*100).toFixed(1):0;
+    const estado=a.costo<=0?'Sin costo':util<0?'Pérdida':Number(marg)<10?'Margen bajo':a.pzasLiq>0?'Con liquidación':'Rentable';
+    return[a.desc,a.cat,a.pzas,a.costo,a.ingresos>0?(a.ingresos/a.pzas).toFixed(2):'—',a.ingresos.toFixed(2),a.costoTotal.toFixed(2),util.toFixed(2),marg,a.pzasLiq,estado];
+  });
+  const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const nl='\n';
+  const csv='\uFEFF'+headers.map(esc).join(',')+nl+rows.map(r=>r.map(esc).join(',')).join(nl);
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='utilidad_real_'+hoy()+'.csv';a.click();toast('Excel descargado ✓');
 }
 
 
