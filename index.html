@@ -6308,7 +6308,7 @@ async function registrarSalidaLiquidacion(){
       aprobadoPor:usuarioActual?.nombre||'—',
       createdAt:new Date().toISOString()
     });
-    toast('✅ Liquidación registrada: '+linea?.cantidad||salLineas[0]?.cantidad+' pza(s) a $'+nuevoPrecio.toFixed(2)+' — resto mantiene precio original');
+    toast('✅ Liquidación registrada: '+salLineas.reduce((a,l)=>a+l.cantidad,0)+' pza(s) a $'+nuevoPrecio.toFixed(2)+' — resto mantiene precio original');
     limpiarSalida();
     document.getElementById('sal-liquidacion-section').style.display='none';
     renderInv(); renderCatalogo(); renderPOS();
