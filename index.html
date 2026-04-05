@@ -563,6 +563,22 @@ select option{background:var(--s2)}
                 <div id="sal-tallas-grid" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
                 <button class="btn btn-accent btn-sm" onclick="agregarLineaSalida()">＋ Agregar a lista</button>
               </div>
+              <!-- Sección Dañado/Liquidación — solo aparece con ese tipo -->
+              <div id="sal-liquidacion-section" style="display:none;background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.3);border-radius:10px;padding:14px;margin-bottom:12px">
+                <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:10px">🏷️ Dañado / Liquidación — El artículo NO sale del inventario, solo cambia de precio</div>
+                <div class="fr fr2">
+                  <div class="fg">
+                    <label>Nuevo Precio de Venta ($) *</label>
+                    <input type="number" id="sal-precio-liq" placeholder="Ej: 40.00" step="0.01" min="0.01"
+                      style="font-size:18px;font-weight:700;padding:10px;border:2px solid var(--gold)44">
+                  </div>
+                  <div class="fg">
+                    <label>Razón del daño / liquidación</label>
+                    <input type="text" id="sal-razon-liq" placeholder="Ej: Despintado, manchado, mucho tiempo en tienda">
+                  </div>
+                </div>
+                <div style="font-size:11px;color:var(--muted);margin-top:6px">⚠️ El producto seguirá visible en el catálogo y POS con el nuevo precio reducido. Se marcará como 🏷️ LIQUIDACIÓN.</div>
+              </div>
               <!-- Lista de salidas -->
               <div id="sal-lista" style="margin-bottom:12px"></div>
               <div style="display:flex;gap:8px;justify-content:flex-end">
@@ -6942,6 +6958,152 @@ async function aplicarStockEnSucursal(linea, sucursalId, delta){
     // Trying to remove stock but no record found — log warning
     console.warn('No product found for salida in sucursal:', sucursalId, linea);
   }
+}
+
+
+
+// ══════════════════ COSTOS Y UTILIDAD ══════════════════
+function renderCostos(){
+  const q     = (document.getElementById('costo-q')?.value||'').toLowerCase();
+  const cat   = document.getElementById('costo-cat')?.value||'';
+  const linea = document.getElementById('costo-linea')?.value||'';
+
+  // Populate category filter if empty
+  const catSel = document.getElementById('costo-cat');
+  if(catSel && catSel.options.length<=1){
+    [...new Set(productos.map(p=>p.cat).filter(Boolean))].sort().forEach(c=>{
+      const o=document.createElement('option'); o.value=c; o.textContent=c; catSel.appendChild(o);
+    });
+  }
+  const lineaSel = document.getElementById('costo-linea');
+  if(lineaSel && lineaSel.options.length<=1){
+    [...new Set(productos.map(p=>p.linea).filter(Boolean))].sort().forEach(l=>{
+      const o=document.createElement('option'); o.value=l; o.textContent=l; lineaSel.appendChild(o);
+    });
+  }
+
+  const sumS = s => Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+
+  const lista = productos.filter(p=>{
+    const mq = !q
+      || (p.desc||'').toLowerCase().includes(q)
+      || (p.barcode||'').toLowerCase().includes(q)
+      || (p.sku||'').toLowerCase().includes(q)
+      || (p.marca||'').toLowerCase().includes(q);
+    const mc = !cat   || p.cat===cat;
+    const ml = !linea || p.linea===linea;
+    return mq&&mc&&ml;
+  });
+
+  // Summary stats
+  let totalCosto=0, totalVenta=0;
+  lista.forEach(p=>{
+    const stock = sumS(p.stock);
+    totalCosto += (p.costo||0)*stock;
+    totalVenta += (p.precio||0)*stock;
+  });
+  const utilidadTotal = totalVenta - totalCosto;
+  const margenProm = totalVenta>0 ? ((utilidadTotal/totalVenta)*100).toFixed(1) : 0;
+
+  const setEl=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  setEl('costo-val-costo', fmt(totalCosto));
+  setEl('costo-val-venta', fmt(totalVenta));
+  setEl('costo-utilidad',  fmt(utilidadTotal));
+  setEl('costo-margen',    margenProm+'%');
+
+  const tbody = document.getElementById('costos-tbody');
+  if(!tbody) return;
+
+  if(!lista.length){
+    tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--muted)">Sin productos. Importa tu inventario primero.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = lista.map(p=>{
+    const stock   = sumS(p.stock);
+    const costo   = p.costo||0;
+    const precio  = p.precio||0;
+    const utilPza = precio - costo;
+    const margen  = precio>0 ? ((utilPza/precio)*100).toFixed(1) : 0;
+    const utilTot = utilPza * stock;
+    const margenColor = Number(margen)<20?'var(--red)':Number(margen)<40?'var(--gold)':'var(--green)';
+    const liqBadge = p.esLiquidacion
+      ? '<span class="badge b-red" style="font-size:9px;margin-left:4px">🏷️LIQ</span>' : '';
+    const sucNom = sucursales.find(s=>s.id===p.sucursalId)?.nombre||'—';
+    return `<tr>
+      <td><div class="mono" style="font-size:11px;color:var(--cream)">${p.barcode||p.sku||'—'}</div></td>
+      <td>
+        <div style="font-weight:600;color:var(--cream);font-size:12px">${p.desc}${liqBadge}</div>
+        <div style="font-size:10px;color:var(--muted)">${p.marca||'—'} · <span class="badge b-accent" style="font-size:9px">${p.cat||'—'}</span></div>
+        ${p.esLiquidacion?`<div style="font-size:10px;color:var(--red)">Original: ${fmt(p.precioOriginal||0)}</div>`:''}
+      </td>
+      <td style="font-size:11px;color:var(--muted)">${sucNom}</td>
+      <td style="text-align:right">
+        ${costo>0
+          ? `<span class="mono" style="color:var(--cream);font-size:13px">${fmt(costo)}</span>
+             <button class="btn btn-ghost btn-xs" style="margin-left:4px" onclick="editarCostoPrecio('${p.id}',${costo},${precio})" title="Editar">✏️</button>`
+          : `<button class="btn btn-accent btn-xs" onclick="editarCostoProducto('${p.id}',${precio})">＋ Agregar</button>`
+        }
+      </td>
+      <td style="text-align:right">
+        <span class="mono" style="color:var(--gold);font-size:13px">${fmt(precio)}</span>
+        <button class="btn btn-ghost btn-xs" style="margin-left:4px" onclick="editarPrecioProducto('${p.id}',${precio})" title="Editar precio">✏️</button>
+      </td>
+      <td style="text-align:right;font-family:var(--mono);color:${utilPza>0?'var(--green)':'var(--red)'};font-size:13px">${fmt(utilPza)}</td>
+      <td style="text-align:right;font-weight:700;font-size:13px;color:${margenColor}">${margen}%</td>
+      <td style="text-align:center;font-family:var(--mono);font-size:13px">${stock}</td>
+      <td style="text-align:right;font-family:var(--mono);font-weight:600;color:${utilTot>0?'var(--green)':'var(--red)'};font-size:13px">${fmt(utilTot)}</td>
+      <td>
+        <button class="btn btn-accent btn-xs" onclick="editarCostoPrecio('${p.id}',${costo},${precio})" title="Editar costo y precio" style="background:var(--blue)">💹</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function editarCostoProducto(id, precioActual){
+  const nuevoCosto = parseFloat(prompt('Costo de compra del producto (precio venta: $'+precioActual+'):')||'0');
+  if(isNaN(nuevoCosto)||nuevoCosto<0){toast('Valor inválido','err');return;}
+  await window._fb.setDoc(docRef('productos',id),{costo:nuevoCosto},{merge:true});
+  const idx=productos.findIndex(p=>p.id===id); if(idx>=0) productos[idx].costo=nuevoCosto;
+  toast('Costo actualizado ✓'); renderCostos();
+}
+
+async function editarPrecioProducto(id, precioActual){
+  const nuevoPrecio = parseFloat(prompt('Nuevo precio de venta (actual: $'+precioActual+'):')||'0');
+  if(isNaN(nuevoPrecio)||nuevoPrecio<=0){toast('Precio inválido','err');return;}
+  await window._fb.setDoc(docRef('productos',id),{precio:nuevoPrecio},{merge:true});
+  const idx=productos.findIndex(p=>p.id===id); if(idx>=0) productos[idx].precio=nuevoPrecio;
+  toast('Precio actualizado ✓'); renderCostos();
+}
+
+async function editarCostoPrecio(id, costoActual, precioActual){
+  const nuevoCosto  = parseFloat(prompt('Costo de compra (actual: $'+costoActual+'):')||String(costoActual));
+  if(isNaN(nuevoCosto)||nuevoCosto<0){toast('Valor inválido','err');return;}
+  const nuevoPrecio = parseFloat(prompt('Precio de venta (actual: $'+precioActual+'):')||String(precioActual));
+  if(isNaN(nuevoPrecio)||nuevoPrecio<=0){toast('Precio inválido','err');return;}
+  const margen = ((nuevoPrecio-nuevoCosto)/nuevoPrecio*100).toFixed(1);
+  await window._fb.setDoc(docRef('productos',id),{costo:nuevoCosto,precio:nuevoPrecio},{merge:true});
+  const idx=productos.findIndex(p=>p.id===id);
+  if(idx>=0){productos[idx].costo=nuevoCosto;productos[idx].precio=nuevoPrecio;}
+  toast('✅ Costo: '+fmt(nuevoCosto)+' | Precio: '+fmt(nuevoPrecio)+' | Margen: '+margen+'%');
+  renderCostos();
+}
+
+function exportarCostosExcel(){
+  const sumS = s => Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+  const headers=['Codigo','Descripcion','Categoria','Linea','Sucursal','Costo_Compra','Precio_Venta','Utilidad_pza','Margen_%','Stock','Utilidad_Total','Liquidacion'];
+  const rows = productos.map(p=>{
+    const stock=sumS(p.stock); const costo=p.costo||0; const precio=p.precio||0;
+    const util=precio-costo; const margen=precio>0?((util/precio)*100).toFixed(1):0;
+    const suc=sucursales.find(s=>s.id===p.sucursalId)?.nombre||'—';
+    return[p.barcode||p.sku||'',p.desc,p.cat||'',p.linea||'',suc,costo,precio,util,margen,stock,util*stock,p.esLiquidacion?'SÍ':'NO'];
+  });
+  const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const nl='\n';
+  const csv='\uFEFF'+headers.map(esc).join(',')+nl+rows.map(r=>r.map(esc).join(',')).join(nl);
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='costos_utilidad_'+hoy()+'.csv'; a.click(); toast('Exportado ✓');
 }
 
 
