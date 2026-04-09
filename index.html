@@ -94,7 +94,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
 .body-wrap{display:flex;flex:1;overflow:hidden}
 
 /* ══ SIDEBAR ══ */
-.sidebar{width:220px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar{display:none!important}
 
 /* ══════ MOBILE MODE ══════ */
 .mobile-toggle-btn{display:none}
@@ -136,42 +136,43 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
   cursor:pointer;font-size:14px;color:var(--cream);font-weight:700;transition:all .15s}
 .gm-back-btn:hover{background:var(--s3);transform:translateX(-2px)}
 .gm-title{font-size:20px;font-weight:800;color:var(--cream)}
-.gm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px}
+.gm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}
+@media(max-width:900px){.gm-grid{grid-template-columns:repeat(3,1fr);gap:16px}}
 @media(max-width:600px){.gm-grid{grid-template-columns:repeat(2,1fr);gap:12px}}
 /* Category cards */
 .gm-cat-card{
   display:flex;flex-direction:column;align-items:flex-start;
-  padding:0;border-radius:20px;cursor:pointer;overflow:hidden;
+  padding:0;border-radius:24px;cursor:pointer;overflow:hidden;
   transition:transform .2s,box-shadow .2s;border:none;
-  box-shadow:0 4px 20px rgba(0,0,0,.3);min-height:160px;
+  box-shadow:0 6px 28px rgba(0,0,0,.35);min-height:200px;
   position:relative;
 }
 .gm-cat-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 12px 40px rgba(0,0,0,.5)}
 .gm-cat-card:active{transform:scale(.97)}
-.gm-cat-bg{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:18px 16px 16px}
-.gm-cat-svg-wrap{width:64px;height:64px;border-radius:16px;
+.gm-cat-bg{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:22px 20px 20px}
+.gm-cat-svg-wrap{width:80px;height:80px;border-radius:20px;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,.18);backdrop-filter:blur(4px);margin-bottom:auto}
-.gm-cat-svg-wrap svg{width:36px;height:36px}
-.gm-cat-bottom{margin-top:12px}
-.gm-cat-name{font-size:16px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:2px;text-shadow:0 1px 4px rgba(0,0,0,.3)}
-.gm-cat-count{font-size:11px;color:rgba(255,255,255,.75);font-weight:600;letter-spacing:.3px}
+  background:rgba(255,255,255,.2);backdrop-filter:blur(4px);margin-bottom:auto}
+.gm-cat-svg-wrap svg{width:46px;height:46px}
+.gm-cat-bottom{margin-top:16px}
+.gm-cat-name{font-size:18px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:3px;text-shadow:0 2px 6px rgba(0,0,0,.3)}
+.gm-cat-count{font-size:12px;color:rgba(255,255,255,.8);font-weight:600;letter-spacing:.3px}
 /* Submodule cards */
 .gm-mod-card{
   display:flex;flex-direction:column;align-items:flex-start;
-  padding:0;border-radius:18px;cursor:pointer;overflow:hidden;
+  padding:0;border-radius:20px;cursor:pointer;overflow:hidden;
   transition:transform .2s,box-shadow .2s;border:none;
-  box-shadow:0 3px 14px rgba(0,0,0,.25);min-height:130px;
+  box-shadow:0 4px 18px rgba(0,0,0,.3);min-height:160px;
 }
 .gm-mod-card:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 10px 30px rgba(0,0,0,.4)}
 .gm-mod-card:active{transform:scale(.97)}
-.gm-mod-bg{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:14px 14px 13px}
-.gm-mod-svg-wrap{width:50px;height:50px;border-radius:13px;
+.gm-mod-bg{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:18px 16px 16px}
+.gm-mod-svg-wrap{width:62px;height:62px;border-radius:16px;
   display:flex;align-items:center;justify-content:center;
   background:rgba(255,255,255,.2);backdrop-filter:blur(4px)}
-.gm-mod-svg-wrap svg{width:28px;height:28px}
-.gm-mod-bottom{margin-top:10px}
-.gm-mod-name{font-size:13px;font-weight:700;color:#fff;line-height:1.3;text-shadow:0 1px 3px rgba(0,0,0,.3)}
+.gm-mod-svg-wrap svg{width:34px;height:34px}
+.gm-mod-bottom{margin-top:12px}
+.gm-mod-name{font-size:15px;font-weight:700;color:#fff;line-height:1.3;text-shadow:0 1px 4px rgba(0,0,0,.3)}
 .gm-mod-icon,.gm-cat-icon{display:none} /* hide old emoji icons */
 .nav-section{padding:8px;flex:1}
 .nav-label{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:1.5px;padding:10px 10px 4px;font-weight:600}
@@ -380,17 +381,15 @@ select option{background:var(--s2)}
     <div class="tb-logo">👟 Zapatería JABED</div>
     <div class="tb-store" id="tb-suc" onclick="showSucursalPicker()">📍 Cargando…</div>
     <div class="tb-spacer"></div>
-    <!-- Mobile toggle button -->
-    <button class="mobile-toggle-btn btn btn-ghost btn-sm" onclick="toggleMobileMode()" id="mob-toggle-btn"
-      style="font-size:16px;padding:6px 10px" title="Cambiar vista PC/Móvil">📱</button>
-    <!-- Grid menu toggle -->
-    <button class="btn btn-ghost btn-sm" onclick="toggleGridMenu()" id="grid-menu-btn"
-      style="font-size:16px;padding:6px 10px" title="Menú en cuadrícula">⊞</button>
-    <div class="tb-user">
-      <span class="online-dot"></span>
-      <span id="tb-email" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;font-size:12px"></span>
-      <span class="role-badge" id="tb-role"></span>
-      <button class="btn btn-ghost btn-sm" onclick="doSignOut()">Salir</button>
+    <!-- User + Menu controls -->
+    <div style="display:flex;align-items:center;gap:6px">
+      <div id="usr-activo-label" style="font-size:12px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+      <button class="btn btn-ghost btn-sm" onclick="cambiarUsuario()" style="font-size:12px;padding:5px 10px" title="Cambiar usuario">🔄 Usuario</button>
+      <span id="tb-role" class="role-badge"></span>
+      <span id="tb-email" style="display:none"></span>
+      <button class="btn btn-accent btn-sm" onclick="toggleGridMenu()" id="grid-menu-btn"
+        style="font-size:15px;padding:7px 12px;font-weight:700" title="Menú principal">☰ Menú</button>
+      <button class="btn btn-ghost btn-sm" onclick="doSignOut()" style="font-size:12px">Salir</button>
     </div>
   </div>
 
@@ -420,61 +419,41 @@ select option{background:var(--s2)}
 
   <div class="body-wrap">
     <!-- SIDEBAR -->
-    <nav class="sidebar">
-      <div class="nav-section">
-        <div class="nav-label">Principal</div>
-        <div class="nav-item on" onclick="go('dashboard',this)"><span class="ni">📊</span><span class="nt">Dashboard</span></div>
-        <div class="nav-label">Catálogos</div>
-        <div class="nav-item" id="nav-inv" onclick="go('inventario',this)" style="background:#f0b429;color:#000;font-weight:800;border-radius:8px;margin:2px 6px"><span class="ni">📦</span><span class="nt" style="color:#000;font-weight:800;font-size:14px">Inventario</span></div>
-        <div class="nav-item" id="nav-prods" onclick="go('catalogo',this)"><span class="ni">🗂️</span><span class="nt">Catálogo General</span></div>
-        <div class="nav-item" id="nav-entradas" onclick="go('entradas',this)"><span class="ni">📥</span><span class="nt">Entrada Mercancía</span></div>
-        <div class="nav-item" id="nav-salidas" onclick="go('salidas',this)"><span class="ni">📤</span><span class="nt">Salida Mercancía</span></div>
-        <div class="nav-divider"></div>
-        <div class="nav-label">Operaciones</div>
-        <div class="nav-item" id="nav-pos" onclick="go('pos',this)" style="background:#f0b429;color:#000;font-weight:800;font-size:15px;border-radius:8px;margin:2px 6px"><span class="ni">🛒</span><span class="nt" style="color:#000;font-weight:800;font-size:14px">Punto de Venta</span></div>
-        <div class="nav-item" id="nav-hist" onclick="go('historial',this)"><span class="ni">📋</span><span class="nt">Historial Ventas</span></div>
-        <div class="nav-item" id="nav-dashboard-ventas" onclick="go('dashboard-ventas',this)"><span class="ni">📊</span><span class="nt">Dashboard Ventas</span></div>
-        <div class="nav-item" id="nav-clientes" onclick="go('clientes',this)"><span class="ni">👤</span><span class="nt">Clientes</span></div>
-        <div class="nav-item" id="nav-transfer" onclick="go('transferencias',this)"><span class="ni">↔️</span><span class="nt">Transferencias</span></div>
-        <div class="nav-item" id="nav-cuentas" onclick="go('cuentas',this)"><span class="ni">📒</span><span class="nt">Apartados/Créditos</span></div>
-        <div class="nav-divider"></div>
-        <div class="nav-label">Finanzas</div>
-        <div class="nav-item" id="nav-gastos" onclick="go('gastos',this)"><span class="ni">💸</span><span class="nt">Gastos</span></div>
-        <div class="nav-item" id="nav-corte" onclick="go('corte',this)"><span class="ni">🏦</span><span class="nt">Corte de Caja</span></div>
-        <div class="nav-item" id="nav-reportes" onclick="go('reportes',this)"><span class="ni">📈</span><span class="nt">Reportes</span></div>
-        <div class="nav-item" id="nav-resumen" onclick="go('resumen',this)"><span class="ni">📊</span><span class="nt">Resumen Anual</span></div>
-        <div class="nav-divider"></div>
-        <div class="nav-label">Configuración</div>
-        <div class="nav-item" id="nav-catalogos-cfg" onclick="go('catalogos-cfg',this)"><span class="ni">📋</span><span class="nt">Catálogos</span></div>
-        <div class="nav-item" id="nav-promociones" onclick="go('promociones',this)"><span class="ni">🎁</span><span class="nt">Promociones</span></div>
-        <div class="nav-item" id="nav-etiquetas" onclick="go('etiquetas',this)"><span class="ni">🏷️</span><span class="nt">Imprimir Etiquetas</span></div>
-        <div class="nav-item" id="nav-sucursales" onclick="go('sucursales',this)"><span class="ni">🏪</span><span class="nt">Sucursales</span></div>
-        <div class="nav-item" id="nav-usuarios" onclick="go('usuarios',this)"><span class="ni">👥</span><span class="nt">Usuarios y Roles</span></div>
-        <div class="nav-item" id="nav-importar" onclick="go('importar',this)"><span class="ni">📥</span><span class="nt">Importar CSV</span></div>
-        <div class="nav-item" id="nav-bitacora" onclick="go('bitacora',this)" style="background:#f0b429;color:#000;font-weight:800;border-radius:8px;margin:2px 6px"><span class="ni">📜</span><span class="nt" style="color:#000;font-weight:800;font-size:14px">Bitácora</span></div>
-        <div class="nav-item" id="nav-costos" onclick="go('costos',this)"><span class="ni">💹</span><span class="nt">Costos y Utilidad</span></div>
-        <div class="nav-item" id="nav-publicaciones" onclick="go('publicaciones',this)"><span class="ni">📣</span><span class="nt">Publicaciones</span></div>
-        <div class="nav-item" id="nav-analisis" onclick="go('analisis',this)"><span class="ni">🔎</span><span class="nt">Análisis de Stock</span></div>
-      </div>
-      <div class="sidebar-foot">
-        <div style="padding:8px 10px;border-top:1px solid var(--border)">
-          <div id="usr-activo-label" style="font-size:11px;color:var(--muted);margin-bottom:6px;text-align:center">—</div>
-          <button onclick="cambiarUsuario()" style="width:100%;padding:6px;background:var(--s3);border:1px solid var(--border);border-radius:7px;color:var(--muted);font-size:11px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'">
-            🔄 Cambiar Usuario
-          </button>
-        </div>
-        <div style="font-size:10px;color:var(--faint);text-align:center;padding:4px">Zapatería JABED</div>
-      </div>
-    </nav>
+    <!-- Hidden nav items — required for JS permission system -->
+    <div style="display:none">
+      <div id="nav-inv"></div><div id="nav-prods"></div><div id="nav-entradas"></div>
+      <div id="nav-salidas"></div><div id="nav-pos"></div><div id="nav-hist"></div>
+      <div id="nav-dashboard-ventas"></div><div id="nav-clientes"></div>
+      <div id="nav-transfer"></div><div id="nav-cuentas"></div><div id="nav-gastos"></div>
+      <div id="nav-corte"></div><div id="nav-reportes"></div><div id="nav-resumen"></div>
+      <div id="nav-catalogos-cfg"></div><div id="nav-promociones"></div>
+      <div id="nav-etiquetas"></div><div id="nav-sucursales"></div>
+      <div id="nav-usuarios"></div><div id="nav-importar"></div>
+      <div id="nav-bitacora"></div><div id="nav-costos"></div>
+      <div id="nav-publicaciones"></div><div id="nav-analisis"></div>
+      <div id="nav-dashboard-ventas"></div>
+      <div id="usr-activo-label"></div>
+    </div>
 
     <!-- MAIN -->
     <div class="main">
 
       <!-- PAGE HEADER -->
       <div class="page-header">
-        <div>
-          <div class="ph-title" id="ph-title">Dashboard</div>
-          <div class="ph-sub" id="ph-sub"></div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <button id="ph-back-btn" onclick="toggleGridMenu()"
+            style="display:none;align-items:center;gap:6px;padding:7px 14px;
+            background:var(--s2);border:1px solid var(--border);border-radius:10px;
+            cursor:pointer;font-size:13px;color:var(--cream);font-weight:700;
+            transition:all .15s;white-space:nowrap"
+            onmouseover="this.style.background='var(--s3)'"
+            onmouseout="this.style.background='var(--s2)'">
+            ← Menú
+          </button>
+          <div>
+            <div class="ph-title" id="ph-title">Dashboard</div>
+            <div class="ph-sub" id="ph-sub"></div>
+          </div>
         </div>
         <div id="ph-actions" class="flex-row"></div>
       </div>
@@ -2556,8 +2535,8 @@ async function initApp(user){
   renderDashboard();
   // Pre-load tallas catalog so product modal always has correct tallas
   loadCatalogos().catch(()=>{});
-  // Init mobile mode
-  setTimeout(initMobileMode, 300);
+  // Auto-open grid menu as home
+  setTimeout(()=>{ toggleGridMenu(); }, 400);
   // Load internal users — hide ALL nav first, then show selector
   try{
     const snap2 = await window._fb.getDocs(col('usuariosInternos'));
@@ -8533,8 +8512,10 @@ function toggleGridMenu(){
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));
     document.getElementById('page-grid-menu').classList.add('on');
-    document.getElementById('ph-title').textContent = 'Menú Principal';
+    document.getElementById('ph-title').textContent = 'Zapatería JABED';
     document.getElementById('ph-sub').textContent = 'Selecciona una categoría';
+    const backBtn = document.getElementById('ph-back-btn');
+    if(backBtn) backBtn.style.display = 'none';
     gmShowCategories();
     if(btn){ btn.style.background='var(--accent-dim)'; btn.style.color='var(--accent2)'; }
     toast('⊞ Menú en cuadrícula activado');
