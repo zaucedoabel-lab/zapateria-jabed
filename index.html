@@ -447,6 +447,30 @@ select option{background:var(--s2)}
 <!-- APP -->
 <div id="app">
   <!-- TOPBAR -->
+  <!-- BACK BUTTON + TABS BAR — shown when inside a module -->
+  <div id="nav-bar" style="display:none;flex-direction:column;background:var(--s1);border-bottom:2px solid var(--border)">
+    <!-- Back button row -->
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--s1)">
+      <button onclick="toggleGridMenu()"
+        style="display:flex;align-items:center;gap:8px;padding:11px 22px;
+        background:#f0b429;border:none;border-radius:12px;
+        cursor:pointer;font-size:17px;font-weight:900;color:#000;
+        box-shadow:0 3px 12px rgba(240,180,41,.5);flex-shrink:0">
+        ⌂ MENÚ
+      </button>
+      <div style="flex:1;min-width:0;overflow:hidden">
+        <div id="ph-title" style="font-size:15px;font-weight:700;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+        <div id="ph-sub" style="font-size:11px;color:var(--muted)"></div>
+      </div>
+      <div id="ph-actions" style="flex-shrink:0;display:flex;gap:6px"></div>
+    </div>
+    <!-- Tabs row -->
+    <div id="ph-tabs" style="display:flex;overflow-x:auto;white-space:nowrap;
+      padding:0 8px;background:var(--s2);scrollbar-width:none;
+      border-top:1px solid var(--border);min-height:0">
+    </div>
+  </div>
+
   <div class="topbar">
     <div class="tb-logo">👟 Zapatería JABED</div>
     <div class="tb-store" id="tb-suc" onclick="showSucursalPicker()">📍 Cargando…</div>
@@ -507,30 +531,7 @@ select option{background:var(--s2)}
     <!-- MAIN -->
     <div class="main">
 
-      <!-- PAGE HEADER -->
-      <div id="page-header-wrap" style="flex-direction:column;gap:0;padding:0;display:none">
-        <!-- BACK BUTTON ROW — big and always visible when in a module -->
-        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--s1);border-bottom:1px solid var(--border)">
-          <button id="ph-back-btn" onclick="toggleGridMenu()"
-            style="display:flex;align-items:center;gap:8px;padding:10px 20px;
-            background:#f0b429;border:none;border-radius:12px;
-            cursor:pointer;font-size:16px;font-weight:900;color:#000;
-            transition:all .15s;white-space:nowrap;flex-shrink:0;
-            box-shadow:0 3px 10px rgba(240,180,41,.4)">
-            ⌂ MENÚ
-          </button>
-          <div style="flex:1;min-width:0">
-            <div class="ph-title" id="ph-title" style="font-size:16px;font-weight:700">—</div>
-            <div class="ph-sub" id="ph-sub" style="font-size:11px;color:var(--muted)"></div>
-          </div>
-          <div id="ph-actions" class="flex-row" style="flex-shrink:0"></div>
-        </div>
-        <!-- TABS ROW -->
-        <div id="ph-tabs" style="overflow-x:auto;white-space:nowrap;padding:0 8px;
-          background:var(--s2);border-bottom:1px solid var(--border);
-          scrollbar-width:none;min-height:38px;display:flex;align-items:center">
-        </div>
-      </div>
+      <!-- PAGE HEADER — handled by #nav-bar above topbar -->
 
       <div class="content">
 
@@ -8542,9 +8543,9 @@ function _navigateTo(page, el){
   if(titleEl) titleEl.textContent = info.t;
   if(subEl)   subEl.textContent   = info.sub||'';
   if(actEl)   actEl.innerHTML     = info.actions||'';
-  // Show header wrap — always visible when in a module
-  const headerWrap = document.getElementById('page-header-wrap');
-  if(headerWrap) headerWrap.style.display = 'flex';
+  // Show nav-bar (back button + tabs) — always when in a module
+  const navBar = document.getElementById('nav-bar');
+  if(navBar) navBar.style.display = 'flex';
   // Track recent pages and render tabs
   if(!_recentPages.includes(page)) _recentPages.unshift(page);
   if(_recentPages.length>MAX_TABS) _recentPages=_recentPages.slice(0,MAX_TABS);
@@ -8635,15 +8636,14 @@ const GM_CATS = {
 };
 
 function toggleGridMenu(){
-  // Always go to grid menu (home screen)
   _gmCurrentCat = null;
   _recentPages = [];
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   const menuPage = document.getElementById('page-grid-menu');
   if(menuPage) menuPage.classList.add('on');
-  // Hide header bar on grid menu
-  const headerWrap = document.getElementById('page-header-wrap');
-  if(headerWrap) headerWrap.style.display = 'none';
+  // Hide nav-bar on grid menu (not needed there)
+  const navBar = document.getElementById('nav-bar');
+  if(navBar) navBar.style.display = 'none';
   gmShowCategories();
 }
 
