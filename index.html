@@ -208,7 +208,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
 @media(max-width:600px){.gm-grid{grid-template-columns:repeat(2,1fr);gap:12px}}
 /* Category cards */
 .gm-cat-card{
-  display:flex;flex-direction:column;align-items:flex-start;
+  display:flex;flex-direction:column;align-items:stretch;
   padding:0;border-radius:24px;cursor:pointer;overflow:hidden;
   transition:transform .2s,box-shadow .2s;border:none;
   box-shadow:0 6px 28px rgba(0,0,0,.35);min-height:220px;
@@ -216,7 +216,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
 }
 .gm-cat-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 12px 40px rgba(0,0,0,.5)}
 .gm-cat-card:active{transform:scale(.97)}
-.gm-cat-bg{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:22px 20px 20px}
+.gm-cat-bg{width:100%;min-height:inherit;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:22px 20px 20px;box-sizing:border-box}
 .gm-cat-svg-wrap{width:90px;height:90px;border-radius:22px;
   display:flex;align-items:center;justify-content:center;
   background:rgba(255,255,255,.22);backdrop-filter:blur(4px);margin-bottom:auto}
@@ -227,7 +227,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
 .gm-cat-count{font-size:12px;color:rgba(255,255,255,.8);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
 /* Submodule cards */
 .gm-mod-card{
-  display:flex;flex-direction:column;align-items:flex-start;
+  display:flex;flex-direction:column;align-items:stretch;
   padding:0;border-radius:20px;cursor:pointer;overflow:hidden;
   transition:transform .2s,box-shadow .2s;border:none;
   box-shadow:0 4px 18px rgba(0,0,0,.3);min-height:180px;
@@ -259,7 +259,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
 .ph-title{font-family:var(--display);font-size:20px;color:var(--cream);font-weight:600}
 .ph-sub{font-size:12px;color:var(--muted);margin-top:1px}
 .content{padding:20px 24px;flex:1}
-.page{display:none}.page.on{display:block}
+.page{display:none!important}.page.on{display:block!important}
+#page-grid-menu.on{display:block!important;min-height:calc(100vh - 110px)}
 
 /* ══ BUTTONS ══ */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;font-family:var(--font);cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
@@ -2606,12 +2607,18 @@ async function initApp(user){
   renderDashboard();
   // Pre-load tallas catalog so product modal always has correct tallas
   loadCatalogos().catch(()=>{});
-  // Grid menu is already the default page — just init it
+  // Show grid menu — delayed to run after all other init
   setTimeout(()=>{
+    // Ensure grid menu page is visible
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+    const gmp = document.getElementById('page-grid-menu');
+    if(gmp) gmp.classList.add('on');
     gmShowCategories();
-    document.getElementById('ph-title').textContent='Zapatería JABED';
-    document.getElementById('ph-sub').textContent='Selecciona una categoría';
-  }, 300);
+    const titleEl = document.getElementById('ph-title');
+    const subEl   = document.getElementById('ph-sub');
+    if(titleEl) titleEl.textContent='Zapatería JABED';
+    if(subEl)   subEl.textContent='Selecciona una categoría';
+  }, 600);
   // Load internal users — hide ALL nav first, then show selector
   try{
     const snap2 = await window._fb.getDocs(col('usuariosInternos'));
