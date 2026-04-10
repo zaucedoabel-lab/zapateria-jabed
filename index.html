@@ -144,35 +144,37 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
   display:flex;flex-direction:column;align-items:flex-start;
   padding:0;border-radius:24px;cursor:pointer;overflow:hidden;
   transition:transform .2s,box-shadow .2s;border:none;
-  box-shadow:0 6px 28px rgba(0,0,0,.35);min-height:200px;
+  box-shadow:0 6px 28px rgba(0,0,0,.35);min-height:220px;
   position:relative;
 }
 .gm-cat-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 12px 40px rgba(0,0,0,.5)}
 .gm-cat-card:active{transform:scale(.97)}
 .gm-cat-bg{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:22px 20px 20px}
-.gm-cat-svg-wrap{width:80px;height:80px;border-radius:20px;
+.gm-cat-svg-wrap{width:90px;height:90px;border-radius:22px;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,.2);backdrop-filter:blur(4px);margin-bottom:auto}
-.gm-cat-svg-wrap svg{width:46px;height:46px}
+  background:rgba(255,255,255,.22);backdrop-filter:blur(4px);margin-bottom:auto}
+.gm-cat-svg-wrap svg{width:54px;height:54px}
 .gm-cat-bottom{margin-top:16px}
-.gm-cat-name{font-size:18px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:3px;text-shadow:0 2px 6px rgba(0,0,0,.3)}
-.gm-cat-count{font-size:12px;color:rgba(255,255,255,.8);font-weight:600;letter-spacing:.3px}
+.gm-cat-name{font-size:20px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:4px;
+  text-shadow:0 2px 8px rgba(0,0,0,.4);text-transform:uppercase;letter-spacing:1px}
+.gm-cat-count{font-size:12px;color:rgba(255,255,255,.8);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
 /* Submodule cards */
 .gm-mod-card{
   display:flex;flex-direction:column;align-items:flex-start;
   padding:0;border-radius:20px;cursor:pointer;overflow:hidden;
   transition:transform .2s,box-shadow .2s;border:none;
-  box-shadow:0 4px 18px rgba(0,0,0,.3);min-height:160px;
+  box-shadow:0 4px 18px rgba(0,0,0,.3);min-height:180px;
 }
 .gm-mod-card:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 10px 30px rgba(0,0,0,.4)}
 .gm-mod-card:active{transform:scale(.97)}
 .gm-mod-bg{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:18px 16px 16px}
-.gm-mod-svg-wrap{width:62px;height:62px;border-radius:16px;
+.gm-mod-svg-wrap{width:70px;height:70px;border-radius:18px;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,.2);backdrop-filter:blur(4px)}
-.gm-mod-svg-wrap svg{width:34px;height:34px}
-.gm-mod-bottom{margin-top:12px}
-.gm-mod-name{font-size:15px;font-weight:700;color:#fff;line-height:1.3;text-shadow:0 1px 4px rgba(0,0,0,.3)}
+  background:rgba(255,255,255,.22);backdrop-filter:blur(4px)}
+.gm-mod-svg-wrap svg{width:40px;height:40px}
+.gm-mod-bottom{margin-top:14px}
+.gm-mod-name{font-size:14px;font-weight:900;color:#fff;line-height:1.3;
+  text-shadow:0 1px 4px rgba(0,0,0,.35);text-transform:uppercase;letter-spacing:.8px}
 .gm-mod-icon,.gm-cat-icon{display:none} /* hide old emoji icons */
 .nav-section{padding:8px;flex:1}
 .nav-label{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:1.5px;padding:10px 10px 4px;font-weight:600}
@@ -8455,21 +8457,56 @@ function toggleMobileSidebar(){
 }
 
 // Sync mobile bottom nav active state with page navigation
-const _origNavigateTo = _navigateTo;
 function _navigateTo(page, el){
-  _origNavigateTo(page, el);
-  if(_mobileMode) setMobActive(page);
-  // Close sidebar overlay if open on mobile
-  if(_mobileMode){
-    const sidebar = document.querySelector('.sidebar');
-    if(sidebar && sidebar.style.position === 'fixed'){
-      sidebar.style.display = '';
-      sidebar.style.position = '';
-      sidebar.style.zIndex = '';
-      sidebar.style.boxShadow = '';
-    }
+  _currentPage = page;
+  // Show/hide pages
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));
+  const pageEl = document.getElementById('page-'+page);
+  if(pageEl) pageEl.classList.add('on');
+  if(el) el.classList.add('on');
+  // Update page header
+  const info = PAGE_TITLES[page]||{t:page,sub:'',actions:''};
+  const titleEl = document.getElementById('ph-title');
+  const subEl   = document.getElementById('ph-sub');
+  const actEl   = document.getElementById('ph-actions');
+  if(titleEl) titleEl.textContent = info.t;
+  if(subEl)   subEl.textContent   = info.sub;
+  if(actEl)   actEl.innerHTML     = info.actions||'';
+  // Show/hide back button
+  const backBtn = document.getElementById('ph-back-btn');
+  if(backBtn) backBtn.style.display = page==='grid-menu' ? 'none' : 'flex';
+  // Mobile bottom nav sync
+  if(typeof setMobActive==='function') setMobActive(page);
+  // Module-specific init calls
+  if(page==='pos'){buildPOSButtons();renderPOS();populatePOSSuc();}
+  if(page==='inventario')renderInv();
+  if(page==='catalogo'){renderCatalogo();}
+  if(page==='historial')renderHist();
+  if(page==='dashboard')renderDashboard();
+  if(page==='clientes')loadClientes();
+  if(page==='gastos')renderGastos();
+  if(page==='cuentas')renderCuentas();
+  if(page==='reportes')initReportes();
+  if(page==='resumen'){renderResumenAnual();initReporteSemanal();}
+  if(page==='corte')calcCorte();
+  if(page==='transferencias'){populateSucursalSelects();}
+  if(page==='entradas'){populateEntSalSucursales();renderHistEntradas();}
+  if(page==='salidas'){populateEntSalSucursales();renderHistSalidas();}
+  if(page==='bitacora')loadBitacora();
+  if(page==='costos')renderCostos();
+  if(page==='publicaciones'){renderPubLista();renderPubSeleccionados();}
+  if(page==='usuarios'){loadUsuariosInternos();renderUsuariosInternos();}
+  if(page==='catalogos-cfg'){loadCatalogos();loadConfigGeneral();}
+  if(page==='promociones'){loadPromociones();}
+  if(page==='etiquetas'){document.getElementById('etiq-desde').value=hoy();}
+  if(page==='analisis'){initAnalisis();}
+  if(page==='dashboard-ventas'){
+    const fechaEl=document.getElementById('dv-fecha');
+    if(fechaEl&&!fechaEl.value)fechaEl.value=hoy();
+    renderDashboardVentas();
   }
-}
+} // end _navigateTo
 
 
 
