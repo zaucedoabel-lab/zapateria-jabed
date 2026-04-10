@@ -541,6 +541,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ DASHBOARD ══════════ -->
         <div id="page-dashboard" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-dashboard"></div>
+</div>
+
           <div class="stat-grid sg4" style="margin-bottom:16px" id="dash-stats"></div>
           <div class="sg2 stat-grid">
             <div class="card"><div class="card-title">Ventas del Día <span id="dash-fecha" style="font-size:12px;color:var(--muted)"></span></div><div id="dash-ventas-hoy"></div></div>
@@ -675,6 +680,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ INVENTARIO ══════════ -->
         <div id="page-inventario" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-inventario"></div>
+</div>
+
           <!-- Filtros estilo Sizes & Colors -->
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px">
             <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
@@ -749,6 +759,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ CATÁLOGO GENERAL ══════════ -->
         <div id="page-catalogo" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-catalogo"></div>
+</div>
+
           <!-- Filtros -->
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px">
             <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
@@ -770,6 +785,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ ENTRADA MERCANCÍA ══════════ -->
         <div id="page-entradas" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-entradas"></div>
+</div>
+
           <div class="sg2 stat-grid" style="margin-bottom:16px">
             <div class="card" style="padding:18px">
               <div class="card-title">📥 Registrar Entrada de Mercancía</div>
@@ -826,6 +846,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ SALIDA MERCANCÍA ══════════ -->
         <div id="page-salidas" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-salidas"></div>
+</div>
+
           <div class="sg2 stat-grid" style="margin-bottom:16px">
             <div class="card" style="padding:18px">
               <div class="card-title">📤 Registrar Salida de Mercancía</div>
@@ -900,6 +925,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ PUNTO DE VENTA ══════════ -->
         <div id="page-pos" class="page" style="padding:0">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-pos"></div>
+</div>
+
 
           <!-- VISTA PRINCIPAL: Buscador + Productos + Carrito -->
           <div id="pos-main-view">
@@ -1084,6 +1114,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ APARTADOS / CRÉDITOS ══════════ -->
         <div id="page-cuentas" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-cuentas"></div>
+</div>
+
           <div class="flex-between" style="margin-bottom:14px">
             <div class="flex-row" style="gap:8px;flex-wrap:wrap">
               <div class="search-wrap" style="width:200px"><span class="search-ico">🔍</span><input type="text" id="cta-q" placeholder="Buscar cliente…" oninput="renderCuentas()"></div>
@@ -1140,6 +1175,11 @@ select option{background:var(--s2)}
         <!-- ══════════ HISTORIAL ══════════ -->
         <!-- ══════════ PUBLICACIONES ══════════ -->
         <div id="page-publicaciones" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-publicaciones"></div>
+</div>
+
           <div style="font-size:12px;color:var(--muted);margin-bottom:16px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
             💡 Selecciona artículos del inventario — el sistema genera el texto con tallas disponibles y precios actualizados. Combina con tu foto de calidad y publica en WhatsApp o Facebook.
           </div>
@@ -1226,6 +1266,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ DASHBOARD DE VENTAS ══════════ -->
         <div id="page-dashboard-ventas" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-dashboard-ventas"></div>
+</div>
+
           <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
             <div style="display:flex;gap:4px">
               <button class="btn btn-accent btn-sm" id="dv-btn-dia"    onclick="setDVPeriodo('dia')">📅 Día</button>
@@ -1276,6 +1321,11 @@ select option{background:var(--s2)}
         </div>
 
         <div id="page-historial" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-historial"></div>
+</div>
+
           <!-- Filtros rápidos -->
           <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
             <button class="btn btn-ghost btn-sm" onclick="filtroHistRapido('hoy')" id="fh-hoy">📅 Hoy</button>
@@ -1352,6 +1402,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ PROMOCIONES ══════════ -->
         <div id="page-promociones" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-promociones"></div>
+</div>
+
           <div class="flex-between" style="margin-bottom:14px">
             <div></div>
             <button class="btn btn-accent" onclick="abrirModalPromocion()">🎁 Nueva Promoción</button>
@@ -1373,6 +1428,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ RESUMEN ANUAL ══════════ -->
         <div id="page-resumen" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-resumen"></div>
+</div>
+
           <div class="flex-between" style="margin-bottom:14px">
             <div class="flex-row" style="gap:12px;align-items:center">
               <div>
@@ -1471,6 +1531,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ TRANSFERENCIAS ══════════ -->
         <div id="page-transferencias" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-transferencias"></div>
+</div>
+
           <div class="sg2 stat-grid" style="margin-bottom:16px">
             <div class="card" style="padding:20px">
               <div class="card-title">Nueva Transferencia</div>
@@ -1499,6 +1564,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ CLIENTES ══════════ -->
         <div id="page-clientes" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-clientes"></div>
+</div>
+
           <div class="flex-between" style="margin-bottom:14px">
             <div class="flex-row" style="gap:8px;flex-wrap:wrap">
               <div class="search-wrap" style="width:220px"><span class="search-ico">🔍</span><input type="text" id="cli-q" placeholder="Buscar cliente…" oninput="renderClientes()"></div>
@@ -1528,6 +1598,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ GASTOS ══════════ -->
         <div id="page-gastos" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-gastos"></div>
+</div>
+
           <div class="stat-grid sg3" style="margin-bottom:16px">
             <div class="scard r"><div class="sl">Gastos Hoy</div><div class="sv r" id="g-hoy">$0</div></div>
             <div class="scard r"><div class="sl">Gastos Este Mes</div><div class="sv r" id="g-mes">$0</div></div>
@@ -1540,6 +1615,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ CORTE DE CAJA ══════════ -->
         <div id="page-corte" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-corte"></div>
+</div>
+
           <div class="flex-between" style="margin-bottom:16px">
             <div class="flex-row">
               <input type="date" id="corte-d" style="width:150px" oninput="calcCorte()">
@@ -1569,6 +1649,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ REPORTES ══════════ -->
         <div id="page-reportes" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-reportes"></div>
+</div>
+
           <div class="flex-row" style="margin-bottom:18px">
             <input type="date" id="rep-desde" style="width:150px">
             <span style="color:var(--muted);font-size:13px">a</span>
@@ -1637,12 +1722,22 @@ select option{background:var(--s2)}
 
         <!-- ══════════ SUCURSALES ══════════ -->
         <div id="page-sucursales" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-sucursales"></div>
+</div>
+
           <div class="tw"><table><thead><tr><th>Nombre</th><th>Tipo</th><th>Dirección</th><th>Stock Total</th><th></th></tr></thead>
           <tbody id="suc-tbody"></tbody></table></div>
         </div>
 
         <!-- ══════════ USUARIOS ══════════ -->
         <div id="page-usuarios" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-usuarios"></div>
+</div>
+
           <div class="sg2 stat-grid" style="margin-bottom:14px">
             <div class="card" style="padding:18px">
               <div class="flex-between" style="margin-bottom:12px">
@@ -1689,6 +1784,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ ANÁLISIS DE STOCK ══════════ -->
         <div id="page-analisis" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-analisis"></div>
+</div>
+
 
           <!-- Filtros -->
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
@@ -1746,6 +1846,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ COSTOS Y UTILIDAD ══════════ -->
         <div id="page-costos" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-costos"></div>
+</div>
+
           <div class="flex-between" style="margin-bottom:14px">
             <div class="flex-row" style="gap:8px">
               <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" id="costo-q" placeholder="Buscar producto…" oninput="renderCostos()"></div>
@@ -1782,6 +1887,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ BITÁCORA ══════════ -->
         <div id="page-bitacora" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-bitacora"></div>
+</div>
+
           <div class="stat-grid sg3" style="margin-bottom:14px">
             <div class="scard gold"><div class="sl">Pendientes de Aprobar</div><div class="sv gold" id="bitacora-pend">0</div></div>
             <div class="scard g"><div class="sl">Total Movimientos</div><div class="sv g" id="bitacora-total">—</div></div>
@@ -1802,6 +1912,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ IMPORTAR CSV ══════════ -->
         <div id="page-importar" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-importar"></div>
+</div>
+
           <div class="warn">⚠️ Esta función importa productos desde un archivo CSV. Los datos existentes <b>no se borran</b>, solo se agregan. Revisa la plantilla antes de importar.</div>
           <div class="sg2 stat-grid">
             <div class="card">
@@ -1855,6 +1970,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ CATÁLOGOS CONFIGURACIÓN ══════════ -->
         <div id="page-catalogos-cfg" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-catalogos-cfg"></div>
+</div>
+
           <div class="sg2 stat-grid" style="gap:16px">
             <!-- Categorías -->
             <div class="card">
@@ -1959,6 +2079,11 @@ select option{background:var(--s2)}
 
         <!-- ══════════ ETIQUETAS ══════════ -->
         <div id="page-etiquetas" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <div class="mod-tabs" id="tabs-etiquetas"></div>
+</div>
+
           <div class="tab-row" style="margin-bottom:16px">
             <button class="tab-btn on" id="etiq-tab-manual" onclick="setEtiqTab('manual')">🏷️ Manual</button>
             <button class="tab-btn" id="etiq-tab-entrada" onclick="setEtiqTab('entrada')">📦 Por Entrada</button>
