@@ -417,6 +417,88 @@ select option{background:var(--s2)}
   .content{padding:14px}
 }
 @media(max-width:600px){.sg4{grid-template-columns:1fr 1fr}.sg3{grid-template-columns:1fr 1fr}.sg2{grid-template-columns:1fr}}
+
+/* ═══════════════════════════════════════
+   BARRA DE NAVEGACIÓN DE MÓDULOS
+═══════════════════════════════════════ */
+.mod-nav-bar{
+  display:flex;
+  align-items:stretch;
+  background:var(--s1);
+  border-bottom:3px solid #f0b429;
+  position:sticky;
+  top:0;
+  z-index:200;
+  flex-shrink:0;
+  overflow:hidden;
+}
+.mod-back-btn{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:14px 28px;
+  background:linear-gradient(135deg,#f0b429 0%,#f97316 100%);
+  border:none;
+  border-right:3px solid rgba(0,0,0,.25);
+  cursor:pointer;
+  font-size:16px;
+  font-weight:900;
+  color:#000;
+  white-space:nowrap;
+  flex-shrink:0;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  box-shadow:4px 0 20px rgba(240,180,41,.35);
+  transition:opacity .15s, box-shadow .15s;
+  line-height:1.2;
+  text-align:center;
+}
+.mod-back-btn:hover{
+  opacity:.9;
+  box-shadow:4px 0 28px rgba(240,180,41,.55);
+}
+.mod-back-btn:active{transform:scale(.97)}
+.mod-back-btn .btn-arrow{font-size:22px;line-height:1}
+.mod-back-btn .btn-label{display:flex;flex-direction:column;align-items:flex-start;gap:1px}
+.mod-back-btn .btn-line1{font-size:11px;font-weight:700;opacity:.7;letter-spacing:2px}
+.mod-back-btn .btn-line2{font-size:17px;font-weight:900;letter-spacing:.5px}
+.mod-tabs{
+  display:flex;
+  overflow-x:auto;
+  flex:1;
+  align-items:stretch;
+  scrollbar-width:none;
+}
+.mod-tabs::-webkit-scrollbar{display:none}
+.mod-tab{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:0 18px;
+  background:transparent;
+  border:none;
+  border-right:1px solid var(--border);
+  border-bottom:3px solid transparent;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:600;
+  color:var(--muted);
+  white-space:nowrap;
+  transition:all .15s;
+}
+.mod-tab:hover{background:var(--s2);color:var(--cream)}
+.mod-tab.active{
+  background:var(--s2);
+  color:var(--accent2);
+  border-bottom-color:var(--accent);
+  font-weight:700;
+}
+@media(max-width:768px){
+  .mod-back-btn{padding:12px 16px;font-size:13px}
+  .mod-back-btn .btn-line2{font-size:13px}
+  .mod-tab{padding:0 12px;font-size:11px}
+}
+
 </style>
 </head>
 <body>
@@ -447,7 +529,7 @@ select option{background:var(--s2)}
 <!-- APP -->
 <div id="app">
   <!-- FIXED FLOATING BACK BUTTON — always on top when in a module -->
-  <button id="fixed-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button id="fixed-back-btn" onclick="toggleGridMenu()">⌂ MENÚ PRINCIPAL</button>
 
   <!-- TOPBAR -->
   <!-- BACK BUTTON + TABS BAR — shown when inside a module -->
@@ -542,7 +624,13 @@ select option{background:var(--s2)}
         <!-- ══════════ DASHBOARD ══════════ -->
         <div id="page-dashboard" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-dashboard"></div>
 </div>
 
@@ -681,7 +769,13 @@ select option{background:var(--s2)}
         <!-- ══════════ INVENTARIO ══════════ -->
         <div id="page-inventario" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-inventario"></div>
 </div>
 
@@ -760,7 +854,13 @@ select option{background:var(--s2)}
         <!-- ══════════ CATÁLOGO GENERAL ══════════ -->
         <div id="page-catalogo" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-catalogo"></div>
 </div>
 
@@ -786,7 +886,13 @@ select option{background:var(--s2)}
         <!-- ══════════ ENTRADA MERCANCÍA ══════════ -->
         <div id="page-entradas" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-entradas"></div>
 </div>
 
@@ -847,7 +953,13 @@ select option{background:var(--s2)}
         <!-- ══════════ SALIDA MERCANCÍA ══════════ -->
         <div id="page-salidas" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-salidas"></div>
 </div>
 
@@ -926,7 +1038,13 @@ select option{background:var(--s2)}
         <!-- ══════════ PUNTO DE VENTA ══════════ -->
         <div id="page-pos" class="page" style="padding:0">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-pos"></div>
 </div>
 
@@ -1115,7 +1233,13 @@ select option{background:var(--s2)}
         <!-- ══════════ APARTADOS / CRÉDITOS ══════════ -->
         <div id="page-cuentas" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-cuentas"></div>
 </div>
 
@@ -1176,7 +1300,13 @@ select option{background:var(--s2)}
         <!-- ══════════ PUBLICACIONES ══════════ -->
         <div id="page-publicaciones" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-publicaciones"></div>
 </div>
 
@@ -1267,7 +1397,13 @@ select option{background:var(--s2)}
         <!-- ══════════ DASHBOARD DE VENTAS ══════════ -->
         <div id="page-dashboard-ventas" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-dashboard-ventas"></div>
 </div>
 
@@ -1322,7 +1458,13 @@ select option{background:var(--s2)}
 
         <div id="page-historial" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-historial"></div>
 </div>
 
@@ -1403,7 +1545,13 @@ select option{background:var(--s2)}
         <!-- ══════════ PROMOCIONES ══════════ -->
         <div id="page-promociones" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-promociones"></div>
 </div>
 
@@ -1429,7 +1577,13 @@ select option{background:var(--s2)}
         <!-- ══════════ RESUMEN ANUAL ══════════ -->
         <div id="page-resumen" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-resumen"></div>
 </div>
 
@@ -1532,7 +1686,13 @@ select option{background:var(--s2)}
         <!-- ══════════ TRANSFERENCIAS ══════════ -->
         <div id="page-transferencias" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-transferencias"></div>
 </div>
 
@@ -1565,7 +1725,13 @@ select option{background:var(--s2)}
         <!-- ══════════ CLIENTES ══════════ -->
         <div id="page-clientes" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-clientes"></div>
 </div>
 
@@ -1599,7 +1765,13 @@ select option{background:var(--s2)}
         <!-- ══════════ GASTOS ══════════ -->
         <div id="page-gastos" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-gastos"></div>
 </div>
 
@@ -1616,7 +1788,13 @@ select option{background:var(--s2)}
         <!-- ══════════ CORTE DE CAJA ══════════ -->
         <div id="page-corte" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-corte"></div>
 </div>
 
@@ -1650,7 +1828,13 @@ select option{background:var(--s2)}
         <!-- ══════════ REPORTES ══════════ -->
         <div id="page-reportes" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-reportes"></div>
 </div>
 
@@ -1723,7 +1907,13 @@ select option{background:var(--s2)}
         <!-- ══════════ SUCURSALES ══════════ -->
         <div id="page-sucursales" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-sucursales"></div>
 </div>
 
@@ -1734,7 +1924,13 @@ select option{background:var(--s2)}
         <!-- ══════════ USUARIOS ══════════ -->
         <div id="page-usuarios" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-usuarios"></div>
 </div>
 
@@ -1785,7 +1981,13 @@ select option{background:var(--s2)}
         <!-- ══════════ ANÁLISIS DE STOCK ══════════ -->
         <div id="page-analisis" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-analisis"></div>
 </div>
 
@@ -1847,7 +2049,13 @@ select option{background:var(--s2)}
         <!-- ══════════ COSTOS Y UTILIDAD ══════════ -->
         <div id="page-costos" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-costos"></div>
 </div>
 
@@ -1888,7 +2096,13 @@ select option{background:var(--s2)}
         <!-- ══════════ BITÁCORA ══════════ -->
         <div id="page-bitacora" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-bitacora"></div>
 </div>
 
@@ -1913,7 +2127,13 @@ select option{background:var(--s2)}
         <!-- ══════════ IMPORTAR CSV ══════════ -->
         <div id="page-importar" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-importar"></div>
 </div>
 
@@ -1971,7 +2191,13 @@ select option{background:var(--s2)}
         <!-- ══════════ CATÁLOGOS CONFIGURACIÓN ══════════ -->
         <div id="page-catalogos-cfg" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-catalogos-cfg"></div>
 </div>
 
@@ -2080,7 +2306,13 @@ select option{background:var(--s2)}
         <!-- ══════════ ETIQUETAS ══════════ -->
         <div id="page-etiquetas" class="page">
 <div class="mod-nav-bar">
-  <button class="mod-back-btn" onclick="toggleGridMenu()">⌂ MENÚ</button>
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
   <div class="mod-tabs" id="tabs-etiquetas"></div>
 </div>
 
