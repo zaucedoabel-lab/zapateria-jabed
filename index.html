@@ -6796,16 +6796,13 @@ function confirmarPin(){
   // Login success
   usuarioActivo = u;
   document.getElementById('usr-overlay').style.display = 'none';
-  // Apply nav permissions — shows only allowed modules
   aplicarPermisosNav();
   toast('Bienvenido, ' + u.nombre + ' ✓');
-  // Update role badge
   const rb = document.getElementById('role-badge');
   if(rb) rb.textContent = u.nombre + ' (' + u.rol + ')';
-  // Auto-fill sal-usuario field
   const uEl = document.getElementById('sal-usuario');
   if(uEl) uEl.value = u.nombre;
-  // Navigate to pending page, or go to first permitted module
+  // Always show grid menu after login
   if(window._pendingPage){
     const pg = window._pendingPage;
     const elPg = window._pendingEl;
@@ -6813,13 +6810,8 @@ function confirmarPin(){
     window._pendingEl = null;
     _navigateTo(pg, elPg);
   } else {
-    // Navigate to first accessible module automatically
-    const perms = getPermisosUsuario(u);
-    if(perms.length > 0){
-      const firstMod = perms[0];
-      const navEl = document.getElementById(NAV_ID_MAP[firstMod]);
-      _navigateTo(firstMod, navEl);
-    }
+    // Show grid menu as home screen
+    toggleGridMenu();
   }
 }
 
