@@ -183,8 +183,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
   .gm-grid{grid-template-columns:repeat(3,1fr)!important}
   .gm-cat-card{min-height:130px!important}
   #pos-main{flex-direction:row!important}
-  .pos-prod{width:55%!important;height:calc(100vh - 140px);overflow-y:auto}
-  .pos-cart{width:45%!important;height:calc(100vh - 140px);overflow-y:auto}
+  .pos-prod{width:52%!important;height:calc(100vh - 140px);overflow-y:auto}
+  .pos-cart{width:48%!important;height:calc(100vh - 140px);overflow-y:auto}
   .page{padding:8px!important}
 }
 
@@ -495,10 +495,11 @@ select option{background:var(--s2)}
 }
 .mod-module-label{
   display:flex;align-items:center;
-  padding:0 20px;font-size:18px;font-weight:800;
+  padding:0 20px;font-size:20px;font-weight:900;
   color:var(--cream);white-space:nowrap;
-  letter-spacing:.5px;border-right:1px solid var(--border);
+  letter-spacing:1px;border-right:1px solid var(--border);
   text-transform:uppercase;
+  text-shadow:0 1px 4px rgba(0,0,0,.3);
 }
 @media(max-width:768px){
   .mod-back-btn{padding:12px 16px;font-size:13px}
@@ -1665,14 +1666,13 @@ select option{background:var(--s2)}
                 <div style="font-size:11px;color:var(--muted)">Ventas por día — Lunes a Domingo</div>
               </div>
               <div style="display:flex;gap:8px;align-items:center">
-                <div style="display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:5px 10px">
-                  <span style="font-size:11px;color:var(--muted)">Semana #</span>
-                  <input type="number" id="semana-num" min="1" max="53" style="width:50px;background:transparent;border:none;color:var(--cream);font-weight:700;font-size:14px"
-                    onchange="renderReporteSemanal()">
-                  <span style="font-size:11px;color:var(--muted)">Año</span>
-                  <input type="number" id="semana-anio" style="width:64px;background:transparent;border:none;color:var(--cream);font-weight:700;font-size:14px"
-                    onchange="renderReporteSemanal()">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <button onclick="cambiarAnioSemana(-1)" style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--cream);cursor:pointer;font-size:16px">‹</button>
+                  <select id="semana-anio" onchange="initReporteSemanal()" style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--cream);font-weight:700;font-size:14px"></select>
+                  <button onclick="cambiarAnioSemana(1)" style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--cream);cursor:pointer;font-size:16px">›</button>
                 </div>
+                <div id="semana-calendar" style="display:flex;flex-wrap:wrap;gap:4px;max-width:400px;margin-top:4px"></div>
+                <input type="hidden" id="semana-num" value="">
                 <button class="btn btn-accent btn-sm" onclick="renderReporteSemanal()">📊 Ver</button>
                 <button class="btn btn-ghost btn-sm" onclick="exportarReporteSemanalExcel()">📥 Excel</button>
               </div>
@@ -2540,7 +2540,11 @@ select option{background:var(--s2)}
   <div class="md">
     <div class="mh"><div class="mt">Agregar al Carrito</div><button class="xbtn" onclick="closeM('mo-cart')">✕</button></div>
     <div class="mb" id="mc-body"></div>
-    <div class="mf"><button class="btn btn-ghost" onclick="closeM('mo-cart')">Cancelar</button><button class="btn btn-gold" onclick="addToCart()">＋ Agregar</button></div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeM('mo-cart')">Cancelar</button><button class="btn btn-accent" onclick="addToCart()"
+    style="width:100%;padding:16px;font-size:18px;font-weight:900;border-radius:14px;
+    letter-spacing:.5px;box-shadow:0 4px 16px rgba(108,99,255,.4);margin-top:8px">
+    🛒 AGREGAR AL CARRITO
+  </button></div>
   </div>
 </div>
 
@@ -3750,8 +3754,9 @@ function renderCart(){
     <div class="ci">
       <div style="width:36px;height:36px;border-radius:6px;overflow:hidden;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${item.foto?`<img src="${item.foto}" style="width:100%;height:100%;object-fit:cover">`:'👟'}</div>
       <div class="ci-info">
+        <div style="font-size:11px;font-weight:800;color:var(--gold);font-family:var(--mono);letter-spacing:.5px;margin-bottom:1px">${item.sku||item.barcode||''}</div>
         <div class="ci-name">${item.desc}</div>
-        <div class="ci-det">T:${item.talla} · ${item.color||'—'}</div>
+        <div class="ci-det"><span style="font-size:13px;font-weight:800;color:var(--cream)">T:${item.talla}</span> · ${item.color||'—'}</div>
       </div>
       <div class="qty-row"><button class="qb" onclick="cqty(${i},-1)">−</button><span class="qn">${item.qty}</span><button class="qb" onclick="cqty(${i},1)">＋</button></div>
       <div style="text-align:right;margin-left:6px"><div class="ci-price">${fmt(item.price*item.qty)}</div><button onclick="cremove(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:10px;margin-top:1px">✕</button></div>
@@ -5662,7 +5667,10 @@ function mostrarNotaSeparo(ventaData){
       <tbody>
         ${(c.items||[]).map(item=>`<tr style="border-bottom:1px solid var(--border)">
           <td style="padding:5px 6px">${item.qty}</td>
-          <td style="padding:5px 6px">${item.desc} T${item.talla}${item.color?' / '+item.color:''}</td>
+          <td style="padding:5px 6px">
+            <span style="font-size:11px;color:var(--gold);font-family:var(--mono);font-weight:800">${item.sku||item.barcode||''}</span>
+            ${item.desc} <strong>T${item.talla}</strong>${item.color?' / '+item.color:''}
+          </td>
           <td style="padding:5px 6px;text-align:right">${fmt(item.price)}</td>
           <td style="padding:5px 6px;text-align:right">${fmt(item.price*item.qty)}</td>
         </tr>`).join('')}
@@ -8170,6 +8178,13 @@ async function aplicarStockEnSucursal(linea, sucursalId, delta){
 
 // ══════════════════ COSTOS Y UTILIDAD ══════════════════
 function renderCostos(){
+  // If products not loaded yet, wait and retry
+  if(!productos || productos.length===0){
+    const tbody = document.getElementById('costos-tbody');
+    if(tbody) tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--muted)">⏳ Cargando productos… <button class="btn btn-ghost btn-sm" onclick="renderCostos()" style="margin-left:8px">🔄 Reintentar</button></td></tr>';
+    setTimeout(renderCostos, 1500);
+    return;
+  }
   const q     = (document.getElementById('costo-q')?.value||'').toLowerCase();
   const cat   = document.getElementById('costo-cat')?.value||'';
   const linea = document.getElementById('costo-linea')?.value||'';
@@ -8221,8 +8236,7 @@ function renderCostos(){
   if(!tbody) return;
 
   if(!lista.length){
-    tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--muted)">Sin productos. Agrega productos en Catálogo General primero.</td></tr>';
-if(!productos.length){const catSel2=document.getElementById('costo-cat');if(catSel2)catSel2.options.length=1;return;}
+    tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--muted)">Sin resultados con esos filtros.</td></tr>';
     return;
   }
 
@@ -8939,6 +8953,36 @@ function toggleMobileSidebar(){
 let _recentPages = [];
 const MAX_TABS = 5;
 
+
+const PAGE_TITLES = {
+  'dashboard':        {t:'Dashboard',          sub:'Resumen general'},
+  'inventario':       {t:'Inventario',          sub:'Stock por talla y sucursal'},
+  'catalogo':         {t:'Catálogo General',    sub:'Alta y edición de productos'},
+  'entradas':         {t:'Entrada de Mercancía',sub:'Registrar entradas de stock'},
+  'salidas':          {t:'Salida de Mercancía', sub:'Registrar salidas de stock'},
+  'pos':              {t:'Punto de Venta',       sub:'Cobrar ventas'},
+  'historial':        {t:'Historial de Ventas', sub:'Consulta de transacciones'},
+  'dashboard-ventas': {t:'Dashboard Ventas',    sub:'Análisis de ventas'},
+  'clientes':         {t:'Clientes',            sub:'Monedero y clientes registrados'},
+  'transferencias':   {t:'Transferencias',      sub:'Mover mercancía entre sucursales'},
+  'cuentas':          {t:'Apartados y Créditos',sub:'Saldos pendientes'},
+  'gastos':           {t:'Gastos',              sub:'Control de egresos'},
+  'corte':            {t:'Corte de Caja',       sub:'Cierre diario'},
+  'reportes':         {t:'Reportes',            sub:'Análisis de ventas y rotación'},
+  'resumen':          {t:'Resumen Anual',        sub:'Vista anual y reporte semanal'},
+  'catalogos-cfg':    {t:'Catálogos',           sub:'Configuración de catálogos'},
+  'promociones':      {t:'Promociones',         sub:'Descuentos y ofertas'},
+  'etiquetas':        {t:'Imprimir Etiquetas',  sub:'Generación de etiquetas'},
+  'sucursales':       {t:'Sucursales',          sub:'Gestión de tiendas y bodegas'},
+  'usuarios':         {t:'Usuarios y Roles',    sub:'Control de acceso'},
+  'importar':         {t:'Importar CSV',        sub:'Carga masiva de productos'},
+  'bitacora':         {t:'Aprobaciones',        sub:'Bitácora de movimientos'},
+  'costos':           {t:'Costos y Utilidad',   sub:'Precios de compra y margen'},
+  'publicaciones':    {t:'Publicaciones',       sub:'Marketing y redes sociales'},
+  'analisis':         {t:'Análisis de Stock',   sub:'Trazabilidad por estilo'},
+  'grid-menu':        {t:'Menú Principal',      sub:''},
+};
+
 function _navigateTo(page, el){
   _currentPage = page;
   // Show/hide pages
@@ -9176,29 +9220,80 @@ function getCurrentWeekNum(){
   return Math.ceil(((d-startYear)/86400000+startYear.getDay()+1)/7);
 }
 
+function cambiarAnioSemana(delta){
+  const elA = document.getElementById('semana-anio');
+  if(!elA) return;
+  const newYear = parseInt(elA.value||new Date().getFullYear()) + delta;
+  elA.value = newYear;
+  initReporteSemanal();
+}
+
 function initReporteSemanal(){
   const d = new Date();
   const currentWeek = getCurrentWeekNum();
   const currentYear = d.getFullYear();
-  // Replace semana-num with a SELECT showing only weeks up to current
-  const container = document.getElementById('semana-num')?.parentElement;
-  const elN = document.getElementById('semana-num');
+  // Populate year selector
   const elA = document.getElementById('semana-anio');
-  if(elA) elA.value = currentYear;
-  if(elN){
-    // Replace number input with a select
-    const sel = document.createElement('select');
-    sel.id = 'semana-num';
-    sel.style.cssText = 'background:var(--s2);border:1px solid var(--border);border-radius:6px;color:var(--cream);font-weight:700;font-size:14px;padding:4px 8px';
-    sel.onchange = renderReporteSemanal;
-    for(let w=1; w<=currentWeek; w++){
-      const opt = document.createElement('option');
-      opt.value = w;
-      opt.textContent = 'Semana ' + w + (w===currentWeek?' (actual)':'');
-      opt.selected = (w===currentWeek);
-      sel.appendChild(opt);
+  if(elA && elA.options.length===0){
+    for(let y=currentYear-2; y<=currentYear; y++){
+      const o=document.createElement('option');
+      o.value=y; o.textContent=y; o.selected=(y===currentYear);
+      elA.appendChild(o);
     }
-    elN.replaceWith(sel);
+  }
+  const selYear = parseInt(elA?.value||currentYear);
+  const maxWeek = selYear===currentYear ? currentWeek : 52;
+  const elN = document.getElementById('semana-num');
+  const activeWeek = parseInt(elN?.value||currentWeek);
+
+  // Render calendar grid
+  const cal = document.getElementById('semana-calendar');
+  if(cal){
+    cal.innerHTML = Array.from({length:maxWeek},(_,i)=>{
+      const w=i+1;
+      const isCurrent=(w===currentWeek&&selYear===currentYear);
+      const isActive=(w===activeWeek);
+      return `<button onclick="selWeek(${w})"
+        style="width:44px;height:44px;border-radius:10px;cursor:pointer;
+        font-size:13px;font-weight:${isActive?'900':'600'};
+        border:2px solid ${isActive?'#f0b429':isCurrent?'rgba(240,180,41,.4)':'var(--border)'};
+        background:${isActive?'#f0b429':isCurrent?'rgba(240,180,41,.1)':'var(--s2)'};
+        color:${isActive?'#000':isCurrent?'var(--gold)':'var(--muted)'};
+        transition:all .15s"
+        title="Semana ${w}${isCurrent?' (semana actual)':''}">
+        ${w}
+      </button>`;
+    }).join('');
+  }
+  if(!elN?.value && elN) elN.value = currentWeek;
+  renderReporteSemanal();
+}
+
+function selWeek(w){
+  const elN = document.getElementById('semana-num');
+  if(elN) elN.value = w;
+  // Re-render calendar to highlight selected week
+  const elA = document.getElementById('semana-anio');
+  const selYear = parseInt(elA?.value||new Date().getFullYear());
+  const currentWeek = getCurrentWeekNum();
+  const currentYear = new Date().getFullYear();
+  const maxWeek = selYear===currentYear ? currentWeek : 52;
+  const cal = document.getElementById('semana-calendar');
+  if(cal){
+    cal.innerHTML = Array.from({length:maxWeek},(_,i)=>{
+      const ww=i+1;
+      const isCurrent=(ww===currentWeek&&selYear===currentYear);
+      const isActive=(ww===w);
+      return `<button onclick="selWeek(${ww})"
+        style="width:44px;height:44px;border-radius:10px;cursor:pointer;
+        font-size:13px;font-weight:${isActive?'900':'600'};
+        border:2px solid ${isActive?'#f0b429':isCurrent?'rgba(240,180,41,.4)':'var(--border)'};
+        background:${isActive?'#f0b429':isCurrent?'rgba(240,180,41,.1)':'var(--s2)'};
+        color:${isActive?'#000':isCurrent?'var(--gold)':'var(--muted)'};
+        transition:all .15s">
+        ${ww}
+      </button>`;
+    }).join('');
   }
   renderReporteSemanal();
 }
