@@ -7296,6 +7296,27 @@ const NAV_ID_MAP = {
   'dashboard-ventas':'nav-dashboard-ventas'
 };
 
+function go(page,el){
+  const activos = usuariosInternos.filter(u=>u.activo!==false);
+  // If internal users exist but nobody logged in yet — show selector
+  if(activos.length > 0 && !usuarioActivo){
+    window._pendingPage = page;
+    window._pendingEl = el;
+    mostrarPantallaUsuarios();
+    return;
+  }
+  // Check if user has permission to access this module
+  if(usuarioActivo){
+    const perms = getPermisosUsuario(usuarioActivo);
+    if(!perms.includes(page) && page!=='grid-menu' && page!=='dashboard'){
+      toast('No tienes acceso a este módulo','err');
+      return;
+    }
+  }
+  // Navigate freely — password was already entered at login
+  _navigateTo(page, el);
+}
+
 function aplicarPermisosNav(){
   const u = usuarioActivo;
   if(!u){
