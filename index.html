@@ -2787,13 +2787,14 @@ function abrirModalProducto(id){
     if(sucursales.length>0)sucSel.value=sucursales[0].id;
     renderTallasSel(null);
   }
-  // Hide tallas editing for vendedor/bodeguero
+  // Vendedor/bodeguero: can select tallas (to register the product) 
+  // but CANNOT edit stock quantities (that goes through Entradas/Salidas)
   const rolM = usuarioActivo?.rol||currentProfile?.rol||'admin';
-  const puedeEditTallas = !['vendedor','bodeguero'].includes(rolM);
+  const puedeEditStock = !['vendedor','bodeguero'].includes(rolM);
   const tallaSec = document.getElementById('p-tallas-section');
   const stockSec = document.getElementById('p-stock-inputs');
-  if(tallaSec) tallaSec.style.display = puedeEditTallas?'':' none';
-  if(stockSec) stockSec.style.display = puedeEditTallas?'':' none';
+  if(tallaSec) tallaSec.style.display = ''; // always visible — they need to select tallas
+  if(stockSec) stockSec.style.display = puedeEditStock ? '' : 'none'; // hide qty inputs for vendedor/bodeguero
   openM('mo-prod');
 }
 
