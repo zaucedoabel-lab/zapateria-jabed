@@ -493,11 +493,30 @@ select option{background:var(--s2)}
   border-bottom-color:var(--accent);
   font-weight:700;
 }
+.mod-module-label{
+  display:flex;align-items:center;
+  padding:0 20px;font-size:18px;font-weight:800;
+  color:var(--cream);white-space:nowrap;
+  letter-spacing:.5px;border-right:1px solid var(--border);
+  text-transform:uppercase;
+}
 @media(max-width:768px){
   .mod-back-btn{padding:12px 16px;font-size:13px}
   .mod-back-btn .btn-line2{font-size:13px}
   .mod-tab{padding:0 12px;font-size:11px}
 }
+
+
+/* Reportes chart bars */
+.chart-bar-wrap{display:flex;flex-direction:column;gap:8px;padding:8px 0}
+.bar-item{display:flex;align-items:center;gap:10px;min-height:36px}
+.bar-item .thumb{width:32px;height:32px;border-radius:6px;overflow:hidden;flex-shrink:0;
+  background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:18px}
+.bar-item .thumb img{width:100%;height:100%;object-fit:cover}
+.bar-item .bar-label{font-size:12px;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
+.bar-item .bar-track{flex:1;height:12px;background:var(--s3);border-radius:6px;overflow:hidden}
+.bar-item .bar-fill{height:100%;border-radius:6px;transition:width .4s}
+.bar-item .bar-val{font-size:12px;font-family:var(--mono);color:var(--muted);flex-shrink:0;min-width:60px;text-align:right}
 
 </style>
 </head>
@@ -631,6 +650,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-dashboard"></div>
 </div>
 
@@ -776,6 +796,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-inventario"></div>
 </div>
 
@@ -861,6 +882,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-catalogo"></div>
 </div>
 
@@ -893,6 +915,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-entradas"></div>
 </div>
 
@@ -960,6 +983,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-salidas"></div>
 </div>
 
@@ -1045,6 +1069,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-pos"></div>
 </div>
 
@@ -1240,6 +1265,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-cuentas"></div>
 </div>
 
@@ -1307,6 +1333,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-publicaciones"></div>
 </div>
 
@@ -1404,6 +1431,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-dashboard-ventas"></div>
 </div>
 
@@ -1465,6 +1493,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-historial"></div>
 </div>
 
@@ -1552,6 +1581,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-promociones"></div>
 </div>
 
@@ -1584,6 +1614,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-resumen"></div>
 </div>
 
@@ -1693,6 +1724,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-transferencias"></div>
 </div>
 
@@ -1732,6 +1764,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-clientes"></div>
 </div>
 
@@ -1772,6 +1805,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-gastos"></div>
 </div>
 
@@ -1795,6 +1829,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-corte"></div>
 </div>
 
@@ -1835,6 +1870,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-reportes"></div>
 </div>
 
@@ -1914,6 +1950,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-sucursales"></div>
 </div>
 
@@ -1931,6 +1968,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-usuarios"></div>
 </div>
 
@@ -1988,6 +2026,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-analisis"></div>
 </div>
 
@@ -2056,6 +2095,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-costos"></div>
 </div>
 
@@ -2103,6 +2143,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-bitacora"></div>
 </div>
 
@@ -2134,6 +2175,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-importar"></div>
 </div>
 
@@ -2198,6 +2240,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-catalogos-cfg"></div>
 </div>
 
@@ -2313,6 +2356,7 @@ select option{background:var(--s2)}
     <span class="btn-line2">MENÚ PRINCIPAL</span>
   </span>
 </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-etiquetas"></div>
 </div>
 
@@ -3643,8 +3687,9 @@ function renderPOS(){
     return`<div class="prod-card" onclick="openAddCart('${p.id}')">
       <div class="prod-img" style="height:100px">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div>
       <div class="prod-info">
-        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:2px">${p.sku||p.barcode||'—'}</div>
-        <div style="font-size:13px;font-weight:600;color:var(--cream);line-height:1.3;margin-bottom:3px">${p.desc}${p.esLiquidacion?'<span class="badge b-red" style="font-size:9px;display:block;margin-top:2px">🏷️ LIQUIDACIÓN</span>':''}</div>
+        <div style="font-size:15px;font-weight:900;color:var(--gold);font-family:var(--mono);
+          margin-bottom:3px;letter-spacing:.5px">${p.sku||p.barcode||'—'}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--cream);line-height:1.3;margin-bottom:3px">${p.desc}${p.esLiquidacion?'<span class="badge b-red" style="font-size:9px;display:block;margin-top:2px">🏷️ LIQUIDACIÓN</span>':''}</div>
         ${suc?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px">${suc.tipo==='bodega'?'📦':'🏪'} ${suc.nombre}</div>`:''}
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="font-family:var(--mono);color:var(--gold);font-size:14px">${fmt(p.precio)}</span>
@@ -3920,6 +3965,7 @@ function initReportes(){
 }
 
 function calcReportes(){
+  try{
   const desde=document.getElementById('rep-desde').value;
   const hasta=document.getElementById('rep-hasta').value;
   const sid=document.getElementById('rep-suc').value;
@@ -3990,7 +4036,8 @@ function calcReportes(){
   vR.forEach(v=>{const s=sucursales.find(x=>x.id===v.sucursalId);const k=s?.nombre||'Sin sucursal';if(!bySuc[k])bySuc[k]=0;bySuc[k]+=v.total;});
   const sucList=Object.entries(bySuc).sort((a,b)=>b[1]-a[1]);
   const maxST=sucList[0]?.[1]||1;
-  document.getElementById('rep-sucursales').innerHTML=sucList.length?`
+  const repSucEl = document.getElementById('rep-sucursales');
+  if(repSucEl) repSucEl.innerHTML=sucList.length?`
     <div class="chart-bar-wrap">${sucList.map(([n,t])=>`<div class="bar-item">
       <div class="bar-label">${n}</div>
       <div class="bar-track"><div class="bar-fill" style="width:${(t/maxST*100).toFixed(1)}%;background:var(--blue)"></div></div>
@@ -4008,7 +4055,8 @@ function calcReportes(){
       <div style="font-size:11px;color:var(--muted);margin-top:2px">${((v/totalV)*100).toFixed(1)}%</div>
     </div>`).join('');
   // Also calculate real profitability
-  calcUtilidadReal();
+  try{ calcUtilidadReal(); }catch(e){}
+}catch(e){ console.error('calcReportes:',e); toast('Error en reportes: '+e.message,'err'); }
 }
 const var_green='var(--green)',var_blue='var(--blue)',var_gold='var(--gold)';
 
@@ -6414,7 +6462,6 @@ function aplicarPromocion(promoId){
 
 // ══════════════════ TAREA 3: RESUMEN ANUAL ══════════════════
 const MESES_LABELS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-
 function renderResumenAnual(){
   const anio=document.getElementById('resumen-anio')?.value||String(new Date().getFullYear());
   const sucFilt=document.getElementById('resumen-suc')?.value||'';
@@ -6760,8 +6807,9 @@ function renderPOS(){
     return`<div class="prod-card" onclick="openAddCart('${p.id}')">
       <div class="prod-img" style="height:100px">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div>
       <div class="prod-info">
-        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:2px">${p.sku||p.barcode||'—'}</div>
-        <div style="font-size:13px;font-weight:600;color:var(--cream);line-height:1.3;margin-bottom:3px">${p.desc}${p.esLiquidacion?'<span class="badge b-red" style="font-size:9px;display:block;margin-top:2px">🏷️ LIQUIDACIÓN</span>':''}</div>
+        <div style="font-size:15px;font-weight:900;color:var(--gold);font-family:var(--mono);
+          margin-bottom:3px;letter-spacing:.5px">${p.sku||p.barcode||'—'}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--cream);line-height:1.3;margin-bottom:3px">${p.desc}${p.esLiquidacion?'<span class="badge b-red" style="font-size:9px;display:block;margin-top:2px">🏷️ LIQUIDACIÓN</span>':''}</div>
         ${suc?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px">${suc.tipo==='bodega'?'📦':'🏪'} ${suc.nombre}</div>`:''}
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="font-family:var(--mono);color:var(--gold);font-size:14px">${fmt(p.precio)}</span>
@@ -8173,7 +8221,8 @@ function renderCostos(){
   if(!tbody) return;
 
   if(!lista.length){
-    tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--muted)">Sin productos. Importa tu inventario primero.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--muted)">Sin productos. Agrega productos en Catálogo General primero.</td></tr>';
+if(!productos.length){const catSel2=document.getElementById('costo-cat');if(catSel2)catSel2.options.length=1;return;}
     return;
   }
 
@@ -8234,11 +8283,13 @@ function renderCostos(){
 }
 
 async function editarCostoProducto(id, precioActual){
-  const nuevoCosto = parseFloat(prompt('Costo de compra del producto (precio venta: $'+precioActual+'):')||'0');
+  const prod = productos.find(p=>p.id===id);
+  const nombre = prod?.desc||'producto';
+  const nuevoCosto = parseFloat(prompt('💲 PRECIO DE COMPRA (costo proveedor) de:\n'+nombre+'\n\nPrecio de venta actual: $'+precioActual)||'0');
   if(isNaN(nuevoCosto)||nuevoCosto<0){toast('Valor inválido','err');return;}
   await window._fb.setDoc(docRef('productos',id),{costo:nuevoCosto},{merge:true});
   const idx=productos.findIndex(p=>p.id===id); if(idx>=0) productos[idx].costo=nuevoCosto;
-  toast('Costo actualizado ✓'); renderCostos();
+  toast('Precio de compra guardado ✓'); renderCostos();
 }
 
 async function editarPrecioProducto(id, precioActual){
@@ -8904,6 +8955,8 @@ function _navigateTo(page, el){
   if(titleEl) titleEl.textContent = info.t;
   if(subEl)   subEl.textContent   = info.sub||'';
   if(actEl)   actEl.innerHTML     = info.actions||'';
+  // Update module name labels in all mod-nav-bars
+  document.querySelectorAll('#mod-cur-name').forEach(el=>{ el.textContent = info.t||page; });
   // Show nav-bar + fixed back button
   const navBar = document.getElementById('nav-bar');
   if(navBar){ navBar.style.display = 'flex'; }
@@ -9117,15 +9170,36 @@ function goFromGrid(page){
 
 
 // ══════════════════ REPORTE SEMANAL ══════════════════
+function getCurrentWeekNum(){
+  const d = new Date();
+  const startYear = new Date(d.getFullYear(),0,1);
+  return Math.ceil(((d-startYear)/86400000+startYear.getDay()+1)/7);
+}
+
 function initReporteSemanal(){
   const d = new Date();
-  // Calculate current week number
-  const startYear = new Date(d.getFullYear(),0,1);
-  const weekNum = Math.ceil(((d-startYear)/86400000+startYear.getDay()+1)/7);
+  const currentWeek = getCurrentWeekNum();
+  const currentYear = d.getFullYear();
+  // Replace semana-num with a SELECT showing only weeks up to current
+  const container = document.getElementById('semana-num')?.parentElement;
   const elN = document.getElementById('semana-num');
   const elA = document.getElementById('semana-anio');
-  if(elN && !elN.value) elN.value = weekNum;
-  if(elA && !elA.value) elA.value = d.getFullYear();
+  if(elA) elA.value = currentYear;
+  if(elN){
+    // Replace number input with a select
+    const sel = document.createElement('select');
+    sel.id = 'semana-num';
+    sel.style.cssText = 'background:var(--s2);border:1px solid var(--border);border-radius:6px;color:var(--cream);font-weight:700;font-size:14px;padding:4px 8px';
+    sel.onchange = renderReporteSemanal;
+    for(let w=1; w<=currentWeek; w++){
+      const opt = document.createElement('option');
+      opt.value = w;
+      opt.textContent = 'Semana ' + w + (w===currentWeek?' (actual)':'');
+      opt.selected = (w===currentWeek);
+      sel.appendChild(opt);
+    }
+    elN.replaceWith(sel);
+  }
   renderReporteSemanal();
 }
 
