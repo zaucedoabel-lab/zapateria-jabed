@@ -508,25 +508,27 @@ select option{background:var(--s2)}
     <div class="main">
 
       <!-- PAGE HEADER -->
-      <div class="page-header" style="flex-direction:column;gap:0;padding:0">
-        <!-- Top bar: back + title + actions -->
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)">
+      <div id="page-header-wrap" style="flex-direction:column;gap:0;padding:0;display:none">
+        <!-- BACK BUTTON ROW — big and always visible when in a module -->
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--s1);border-bottom:1px solid var(--border)">
           <button id="ph-back-btn" onclick="toggleGridMenu()"
-            style="display:none;align-items:center;gap:5px;padding:7px 12px;
-            background:var(--accent-dim);border:1px solid rgba(108,99,255,.3);border-radius:10px;
-            cursor:pointer;font-size:13px;color:var(--accent2);font-weight:700;
-            transition:all .15s;white-space:nowrap;flex-shrink:0">
-            ⌂ Menú
+            style="display:flex;align-items:center;gap:8px;padding:10px 20px;
+            background:#f0b429;border:none;border-radius:12px;
+            cursor:pointer;font-size:16px;font-weight:900;color:#000;
+            transition:all .15s;white-space:nowrap;flex-shrink:0;
+            box-shadow:0 3px 10px rgba(240,180,41,.4)">
+            ⌂ MENÚ
           </button>
           <div style="flex:1;min-width:0">
-            <div class="ph-title" id="ph-title" style="font-size:16px">Dashboard</div>
-            <div class="ph-sub" id="ph-sub" style="font-size:11px"></div>
+            <div class="ph-title" id="ph-title" style="font-size:16px;font-weight:700">—</div>
+            <div class="ph-sub" id="ph-sub" style="font-size:11px;color:var(--muted)"></div>
           </div>
           <div id="ph-actions" class="flex-row" style="flex-shrink:0"></div>
         </div>
-        <!-- Module tabs row -->
-        <div id="ph-tabs" style="display:none;overflow-x:auto;white-space:nowrap;padding:0 12px;
-          background:var(--s1);border-bottom:1px solid var(--border);scrollbar-width:none">
+        <!-- TABS ROW -->
+        <div id="ph-tabs" style="overflow-x:auto;white-space:nowrap;padding:0 8px;
+          background:var(--s2);border-bottom:1px solid var(--border);
+          scrollbar-width:none;min-height:38px;display:flex;align-items:center">
         </div>
       </div>
 
@@ -2607,18 +2609,8 @@ async function initApp(user){
   renderDashboard();
   // Pre-load tallas catalog so product modal always has correct tallas
   loadCatalogos().catch(()=>{});
-  // Show grid menu — delayed to run after all other init
-  setTimeout(()=>{
-    // Ensure grid menu page is visible
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
-    const gmp = document.getElementById('page-grid-menu');
-    if(gmp) gmp.classList.add('on');
-    gmShowCategories();
-    const titleEl = document.getElementById('ph-title');
-    const subEl   = document.getElementById('ph-sub');
-    if(titleEl) titleEl.textContent='Zapatería JABED';
-    if(subEl)   subEl.textContent='Selecciona una categoría';
-  }, 600);
+  // Show grid menu after init
+  setTimeout(()=>{ toggleGridMenu(); }, 600);
   // Load internal users — hide ALL nav first, then show selector
   try{
     const snap2 = await window._fb.getDocs(col('usuariosInternos'));
@@ -8548,18 +8540,15 @@ function _navigateTo(page, el){
   const subEl   = document.getElementById('ph-sub');
   const actEl   = document.getElementById('ph-actions');
   if(titleEl) titleEl.textContent = info.t;
-  if(subEl)   subEl.textContent   = info.sub;
+  if(subEl)   subEl.textContent   = info.sub||'';
   if(actEl)   actEl.innerHTML     = info.actions||'';
-  // Show/hide back button + tabs
-  const backBtn = document.getElementById('ph-back-btn');
-  const isMenu  = page==='grid-menu';
-  if(backBtn) backBtn.style.display = isMenu ? 'none' : 'flex';
-  // Update tabs
-  if(!isMenu){
-    if(!_recentPages.includes(page)) _recentPages.unshift(page);
-    if(_recentPages.length>MAX_TABS) _recentPages=_recentPages.slice(0,MAX_TABS);
-    renderPhTabs(page);
-  }
+  // Show header wrap — always visible when in a module
+  const headerWrap = document.getElementById('page-header-wrap');
+  if(headerWrap) headerWrap.style.display = 'flex';
+  // Track recent pages and render tabs
+  if(!_recentPages.includes(page)) _recentPages.unshift(page);
+  if(_recentPages.length>MAX_TABS) _recentPages=_recentPages.slice(0,MAX_TABS);
+  renderPhTabs(page);
   // Mobile bottom nav sync
   if(typeof setMobActive==='function') setMobActive(page);
   // Module-specific init calls
@@ -8646,28 +8635,16 @@ const GM_CATS = {
 };
 
 function toggleGridMenu(){
-  _gridMenuActive = !_gridMenuActive;
-  const btn = document.getElementById('grid-menu-btn');
-  if(_gridMenuActive){
-    // Show grid menu page
-    _gmCurrentCat = null;
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
-    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));
-    document.getElementById('page-grid-menu').classList.add('on');
-    document.getElementById('ph-title').textContent = 'Zapatería JABED';
-    document.getElementById('ph-sub').textContent = 'Selecciona una categoría';
-    const backBtn = document.getElementById('ph-back-btn');
-    if(backBtn) backBtn.style.display = 'none';
-    gmShowCategories();
-    if(btn){ btn.style.background='var(--accent-dim)'; btn.style.color='var(--accent2)'; }
-    toast('⊞ Menú en cuadrícula activado');
-  } else {
-    // Go back to dashboard
-    _gridMenuActive = false;
-    if(btn){ btn.style.background=''; btn.style.color=''; }
-    go('dashboard', null);
-    toast('Menú lateral activado');
-  }
+  // Always go to grid menu (home screen)
+  _gmCurrentCat = null;
+  _recentPages = [];
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  const menuPage = document.getElementById('page-grid-menu');
+  if(menuPage) menuPage.classList.add('on');
+  // Hide header bar on grid menu
+  const headerWrap = document.getElementById('page-header-wrap');
+  if(headerWrap) headerWrap.style.display = 'none';
+  gmShowCategories();
 }
 
 function gmShowCategories(){
