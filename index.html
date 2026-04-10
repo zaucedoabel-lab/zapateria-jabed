@@ -9300,234 +9300,136 @@ function renderAnalisis(){
   const status  = document.getElementById('an-status')?.value||'';
   const sumS    = s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
 
-  // Group products by base estilo (sku/barcode), excluding _LIQ variants first
+  const tbody = document.getElementById('an-tbody');
+
+  // Populate filter selects if empty
+  const catSel = document.getElementById('an-cat');
+  if(catSel && catSel.options.length<=1)
+    [...new Set(productos.map(p=>p.cat).filter(Boolean))].sort()
+      .forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;catSel.appendChild(o);});
+  const lineaSel = document.getElementById('an-linea');
+  if(lineaSel && lineaSel.options.length<=1)
+    [...new Set(productos.map(p=>p.linea).filter(Boolean))].sort()
+      .forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;lineaSel.appendChild(o);});
+  const sucSel = document.getElementById('an-suc');
+  if(sucSel && sucSel.options.length<=1)
+    sucursales.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.nombre;sucSel.appendChild(o);});
+
+  if(!productos.length){
+    if(tbody) tbody.innerHTML='<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--muted)">Cargando productos… si no aparecen, ve a Catálogo primero.</td></tr>';
+    return;
+  }
+
   const baseProds = productos.filter(p=>!p.esLiquidacion);
   const liqProds  = productos.filter(p=>p.esLiquidacion);
 
-  // Apply filters
   let lista = baseProds.filter(p=>{
-    const mq = !q || (p.desc||'').toLowerCase().includes(q)
-      || (p.barcode||'').toLowerCase().includes(q)
-      || (p.sku||'').toLowerCase().includes(q)
-      || (p.marca||'').toLowerCase().includes(q);
+    const bc = (p.barcode||p.sku||'').toLowerCase();
+    const mq = !q||(p.desc||'').toLowerCase().includes(q)||bc.includes(q)||(p.marca||'').toLowerCase().includes(q);
     const mc = !cat   || p.cat===cat;
     const ml = !linea || p.linea===linea;
     const ms = !sucId || p.sucursalId===sucId;
     return mq&&mc&&ml&&ms;
   });
 
-  // Build analysis per product
   const analisisList = lista.map(p=>{
-    const estilo  = p.barcode||p.sku||p.id;
-    const stockAct= sumS(p.stock);
-    // LIQ variant stock
-    const liqProd = liqProds.find(x=>x.barcode===(estilo+'_LIQ')||x.sku===(estilo+'_LIQ'));
-    const stockLiq= liqProd ? sumS(liqProd.stock) : 0;
+    const estilo   = p.barcode||p.sku||p.id;
+    const stockAct = sumS(p.stock);
+    const liqProd  = liqProds.find(x=>(x.barcode||x.sku||'').replace('_LIQ','')===estilo);
+    const stockLiq = liqProd ? sumS(liqProd.stock) : 0;
 
-    // Sales from ventas array
-    const ventas_estilo = ventas.flatMap(v=>(v.items||[])
-      .filter(item=>(item.sku===estilo||item.barcode===estilo||item.id===p.id))
-      .map(item=>({...item, fecha:v.fecha, ventaId:v.id}))
+    // Match sales — item.sku matches product barcode or sku
+    const ventas_estilo = (ventas||[]).flatMap(v=>(v.items||[])
+      .filter(item=>{
+        const isku = item.sku||item.barcode||item.id||'';
+        return isku===estilo || isku===p.barcode || isku===p.sku || item.id===p.id;
+      })
+      .map(item=>({...item,fecha:v.fecha,ventaId:v.id}))
     );
     const totalVendido = ventas_estilo.reduce((a,i)=>a+(i.qty||1),0);
 
-    // Months sold
     const mesesMap = {};
     ventas_estilo.forEach(i=>{
       if(!i.fecha) return;
-      const mes = i.fecha.slice(0,7); // YYYY-MM
+      const mes = i.fecha.slice(0,7);
       mesesMap[mes] = (mesesMap[mes]||0)+(i.qty||1);
     });
-    const meses = Object.entries(mesesMap)
-      .sort(([a],[b])=>a.localeCompare(b))
-      .map(([m,q])=>{
-        const mAbr=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-        const [y,mo] = m.split('-');
-        return mAbr[parseInt(mo)-1]+'/'+y.slice(2)+'('+q+')';
-      });
+    const mAbr=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    const meses = Object.entries(mesesMap).sort(([a],[b])=>a.localeCompare(b))
+      .map(([m,q])=>{const[y,mo]=m.split('-');return mAbr[parseInt(mo)-1]+'/'+y.slice(2)+'('+q+')';});
 
-    // Entradas
-    const entradas_prod = (typeof entradas!=='undefined'?entradas:[])
-      .filter(e=>e.estado!=='rechazado'&&e.estado!=='cancelado'
-        &&(e.lineas||[]).some(l=>l.prodId===p.id||l.sku===estilo||l.barcode===estilo));
-    const numEntradas = entradas_prod.length;
-    const totalSurtido = entradas_prod
-      .flatMap(e=>e.lineas||[])
-      .filter(l=>l.prodId===p.id||l.sku===estilo||l.barcode===estilo)
-      .reduce((a,l)=>a+(l.cantidad||0),0) || (stockAct+totalVendido); // fallback estimate
+    // Count entries from bitacora movements
+    const bitMovs = (window._bitacoraMovs||[]).filter(m=>
+      m.estado==='aprobado' && m.tipo==='entrada' &&
+      (m.lineas||[]).some(l=>l.sku===estilo||l.barcode===estilo||l.prodId===p.id));
+    const numEntradas = bitMovs.length;
+    const totalSurtido = bitMovs.flatMap(m=>m.lineas||[])
+      .filter(l=>l.sku===estilo||l.barcode===estilo||l.prodId===p.id)
+      .reduce((a,l)=>a+(l.cantidad||0),0) || (stockAct+totalVendido);
 
-    // Transferencias
-    const transf_prod = (typeof transferencias!=='undefined'?transferencias:[])
-      .filter(t=>t.productoId===p.id
-        ||(t.productoDesc||'').toLowerCase().includes((p.desc||'').toLowerCase().slice(0,10)));
-    const numTransf = transf_prod.length;
-
-    // Status
     const sucObj = sucursales.find(s=>s.id===p.sucursalId);
     const esBodega = sucObj?.tipo==='bodega';
     let statusKey, statusBadge;
-    if(p.esLiquidacion){
-      statusKey='liq'; statusBadge='<span class="badge b-red">🏷️ Liquidación</span>';
-    } else if(stockAct===0){
-      statusKey='agotado'; statusBadge='<span class="badge b-red">🔴 Agotado</span>';
-    } else if(esBodega && stockAct>0){
-      statusKey='bodega'; statusBadge='<span class="badge b-orange">📦 Solo Bodega</span>';
-    } else if(stockAct<=3){
-      statusKey='bajo'; statusBadge='<span class="badge b-gold">⚠️ Últimas '+(stockAct)+' pza</span>';
-    } else {
-      statusKey='ok'; statusBadge='<span class="badge b-green">✅ En stock</span>';
-    }
+    if(p.esLiquidacion){statusKey='liq';statusBadge='<span class="badge b-red">🏷️ Liquidación</span>';}
+    else if(stockAct===0){statusKey='agotado';statusBadge='<span class="badge b-red">🔴 Agotado</span>';}
+    else if(esBodega&&stockAct>0){statusKey='bodega';statusBadge='<span class="badge b-orange">📦 Bodega</span>';}
+    else if(stockAct<=3){statusKey='bajo';statusBadge=`<span class="badge b-gold">⚠️ Solo ${stockAct} pza</span>`;}
+    else{statusKey='ok';statusBadge='<span class="badge b-green">✅ En stock</span>';}
 
-    const pctVendido = totalSurtido>0 ? ((totalVendido/totalSurtido)*100).toFixed(0) : 0;
+    const pctVendido = totalSurtido>0?((totalVendido/totalSurtido)*100).toFixed(0):0;
     const pctColor = pctVendido>=80?'var(--green)':pctVendido>=40?'var(--gold)':'var(--muted)';
 
-    return {p, estilo, stockAct, stockLiq, totalVendido, totalSurtido, meses,
-      numEntradas, numTransf, statusKey, statusBadge, pctVendido, pctColor,
-      entradas_prod, transf_prod, ventas_estilo, mesesMap};
+    return {p,estilo,stockAct,stockLiq,totalVendido,totalSurtido,meses,
+      numEntradas,statusKey,statusBadge,pctVendido,pctColor,ventas_estilo,mesesMap};
   });
 
-  // Apply status filter
   const filtered = status ? analisisList.filter(a=>a.statusKey===status) : analisisList;
 
-  // Summary stats
-  document.getElementById('an-total-estilos').textContent = filtered.length;
-  document.getElementById('an-total-vendidas').textContent = filtered.reduce((a,x)=>a+x.totalVendido,0);
-  document.getElementById('an-total-stock').textContent = filtered.reduce((a,x)=>a+x.stockAct,0);
-  document.getElementById('an-agotados').textContent = filtered.filter(x=>x.statusKey==='agotado').length;
+  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setEl('an-total-estilos', filtered.length);
+  setEl('an-total-vendidas', filtered.reduce((a,x)=>a+x.totalVendido,0));
+  setEl('an-total-stock',    filtered.reduce((a,x)=>a+x.stockAct,0));
+  setEl('an-agotados',       filtered.filter(x=>x.statusKey==='agotado').length);
 
-  const tbody = document.getElementById('an-tbody');
   if(!tbody) return;
-
   if(!filtered.length){
     tbody.innerHTML='<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--muted)">Sin artículos con los filtros seleccionados</td></tr>';
     return;
   }
 
   tbody.innerHTML = filtered.map(a=>{
-    const isOpen = _anDetalleId === a.p.id;
+    const isOpen = _anDetalleId===a.p.id;
     const mesesStr = a.meses.length
-      ? a.meses.map(m=>`<span class="tag" style="font-size:10px">${m}</span>`).join(' ')
+      ? a.meses.map(m=>`<span class="badge b-accent" style="font-size:10px">${m}</span>`).join(' ')
       : '<span style="color:var(--faint);font-size:11px">Sin ventas</span>';
-    const liqInfo = a.stockLiq>0
-      ? `<div style="font-size:10px;color:var(--red);margin-top:2px">🏷️ +${a.stockLiq} en liquidación</div>` : '';
+    const liqInfo = a.stockLiq>0?`<div style="font-size:10px;color:var(--red)">🏷️ +${a.stockLiq} en liq.</div>`:'';
     return `<tr id="an-row-${a.p.id}" style="cursor:pointer" onclick="toggleAnDetalle('${a.p.id}')"
       onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background=''">
-      <td style="text-align:center;font-size:14px">${isOpen?'▼':'▶'}</td>
+      <td style="text-align:center;font-size:13px">${isOpen?'▼':'▶'}</td>
       <td><div class="mono" style="font-size:12px;font-weight:700;color:var(--cream)">${a.estilo}</div></td>
       <td>
-        <div style="font-size:12px;font-weight:600;color:var(--cream)">${a.p.desc}</div>
-        <div style="font-size:10px;color:var(--muted)">${a.p.marca||'—'}</div>
-        ${liqInfo}
+        <div style="font-size:12px;font-weight:600;color:var(--cream)">${a.p.desc||'—'}</div>
+        <div style="font-size:10px;color:var(--muted)">${a.p.marca||'—'}</div>${liqInfo}
       </td>
       <td><span class="badge b-accent" style="font-size:10px">${a.p.cat||'—'}</span></td>
       <td style="font-size:11px;color:var(--muted)">${a.p.linea||'—'}</td>
-      <td style="text-align:center;font-family:var(--mono);font-size:14px;color:var(--muted)">${a.totalSurtido||'—'}</td>
+      <td style="text-align:center;font-family:var(--mono);font-size:13px;color:var(--muted)">${a.totalSurtido||'—'}</td>
       <td style="text-align:center;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--gold)">${a.totalVendido}</td>
       <td style="text-align:center;font-family:var(--mono);font-size:15px;font-weight:700;
         color:${a.stockAct===0?'var(--red)':a.stockAct<=3?'var(--gold)':'var(--green)'}">${a.stockAct}</td>
       <td style="text-align:center">
         <div style="font-size:12px;font-weight:700;color:${a.pctColor}">${a.pctVendido}%</div>
-        <div style="width:60px;height:4px;background:var(--s2);border-radius:2px;margin:2px auto">
-          <div style="height:100%;width:${Math.min(100,a.pctVendido)}%;background:${a.pctColor};border-radius:2px"></div>
+        <div style="width:50px;height:5px;background:var(--s3);border-radius:3px;margin:3px auto">
+          <div style="height:100%;width:${Math.min(100,a.pctVendido)}%;background:${a.pctColor};border-radius:3px"></div>
         </div>
       </td>
-      <td style="max-width:200px;font-size:10px">${mesesStr}</td>
-      <td style="text-align:center">
-        <span class="badge ${a.numEntradas>0?'b-green':'b-gray'}" style="font-size:10px">${a.numEntradas}</span>
-      </td>
-      <td style="text-align:center">
-        <span class="badge ${a.numTransf>0?'b-blue':'b-gray'}" style="font-size:10px">${a.numTransf}</span>
-      </td>
+      <td style="max-width:180px">${mesesStr}</td>
+      <td style="text-align:center"><span class="badge ${a.numEntradas>0?'b-green':'b-gray'}" style="font-size:10px">${a.numEntradas}</span></td>
+      <td style="text-align:center"><span class="badge b-gray" style="font-size:10px">—</span></td>
       <td>${a.statusBadge}</td>
     </tr>
-    ${isOpen ? renderAnDetalleRow(a) : ''}`;
+    ${isOpen?renderAnDetalleRow(a):''}`;
   }).join('');
-}
-
-function renderAnDetalleRow(a){
-  // Build detail inline row
-  const mesesLabels=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  // Stock by talla
-  const tallasHtml = Object.entries(a.p.stock||{}).length
-    ? Object.entries(a.p.stock||{}).sort(([ta],[tb])=>{
-        const na=parseFloat(ta),nb=parseFloat(tb);
-        return(!isNaN(na)&&!isNaN(nb))?na-nb:ta.localeCompare(tb);
-      }).map(([t,c])=>`<span class="tag" style="background:${c===0?'var(--s3)':c<=2?'rgba(240,180,41,.15)':'rgba(82,201,122,.12)'}">
-        <span style="font-weight:700">${t}</span>: ${c}
-      </span>`).join(' ')
-    : '<span style="color:var(--faint)">Sin tallas registradas</span>';
-
-  // Entradas timeline
-  const entradasHtml = a.entradas_prod.length
-    ? a.entradas_prod.map(e=>{
-        const total = (e.lineas||[]).filter(l=>l.prodId===a.p.id||l.sku===a.estilo||l.barcode===a.estilo)
-          .reduce((s,l)=>s+(l.cantidad||0),0);
-        return `<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:10px;color:var(--muted);min-width:80px">${fmtFechaCorta(e.fecha)}</span>
-          <span class="badge b-green" style="font-size:10px">+${total} pzas</span>
-          <span style="font-size:10px;color:var(--muted)">${e.proveedor||'—'} · ${e.usuario||'—'}</span>
-        </div>`;
-      }).join('')
-    : '<span style="color:var(--faint);font-size:11px">Sin entradas registradas</span>';
-
-  // Transferencias
-  const transfHtml = a.transf_prod.length
-    ? a.transf_prod.slice(0,5).map(t=>`
-        <div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:10px;color:var(--muted);min-width:80px">${fmtFechaCorta(t.fecha)}</span>
-          <span class="badge b-blue" style="font-size:10px">${t.qty} pza(s) T${t.talla}</span>
-          <span style="font-size:10px;color:var(--muted)">${t.origenNombre||'—'} → ${t.destinoNombre||'—'}</span>
-        </div>`).join('')
-    : '<span style="color:var(--faint);font-size:11px">Sin transferencias</span>';
-
-  // Monthly sales chart
-  const allMonths = Object.keys(a.mesesMap).sort();
-  const monthBarsHtml = allMonths.length
-    ? `<div style="display:flex;align-items:flex-end;gap:4px;height:60px;margin-top:8px">
-        ${allMonths.map(m=>{
-          const qty = a.mesesMap[m];
-          const maxQ = Math.max(...Object.values(a.mesesMap));
-          const h = Math.max(4, Math.round((qty/maxQ)*50));
-          const [y,mo] = m.split('-');
-          const mAbr=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-          return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;max-width:40px">
-            <span style="font-size:9px;color:var(--muted)">${qty}</span>
-            <div style="width:100%;height:${h}px;background:var(--accent);border-radius:3px 3px 0 0"></div>
-            <span style="font-size:9px;color:var(--muted)">${mAbr[parseInt(mo)-1]}</span>
-          </div>`;
-        }).join('')}
-      </div>`
-    : '<span style="color:var(--faint);font-size:11px">Sin historial de ventas</span>';
-
-  return `<tr>
-    <td colspan="13" style="padding:0">
-      <div style="background:var(--s1);border-left:3px solid var(--accent);padding:16px 20px;margin:0">
-        <div class="sg2 stat-grid" style="gap:14px;margin-bottom:14px">
-
-          <div>
-            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">📦 Stock por Talla</div>
-            <div style="display:flex;flex-wrap:wrap;gap:5px">${tallasHtml}</div>
-          </div>
-
-          <div>
-            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">📊 Ventas por Mes</div>
-            ${monthBarsHtml}
-          </div>
-
-          <div>
-            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">📥 Historial de Entradas</div>
-            ${entradasHtml}
-          </div>
-
-          <div>
-            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">↔️ Transferencias</div>
-            ${transfHtml}
-          </div>
-
-        </div>
-      </div>
-    </td>
-  </tr>`;
 }
 
 function toggleAnDetalle(id){
