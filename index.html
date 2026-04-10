@@ -127,6 +127,73 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
 .mob-nav-btn .mni{font-size:20px;line-height:1}
 .mob-nav-btn.on{background:var(--accent-dim);color:var(--accent2)}
 .mob-nav-btn:active{opacity:.7}
+/* ══ TABS NAV ══ */
+.ph-tab{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;
+  font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;
+  background:none;border-top:none;border-left:none;border-right:none}
+.ph-tab:hover{color:var(--cream)}
+.ph-tab.on{color:var(--accent2);border-bottom-color:var(--accent)}
+.ph-tab .tab-icon{font-size:14px}
+#ph-tabs::-webkit-scrollbar{display:none}
+
+/* ══ MOBILE RESPONSIVE ══ */
+@media(max-width:768px){
+  /* Topbar compact */
+  .topbar{padding:0 10px;gap:8px;height:48px}
+  .tb-logo{font-size:13px}
+  /* Content padding */
+  .page{padding:10px!important}
+  /* Cards stack */
+  .sg2,.sg3,.sg4,.stat-grid{grid-template-columns:1fr!important}
+  /* POS layout vertical on mobile */
+  #pos-main{flex-direction:column!important}
+  .pos-prod{width:100%!important;max-height:40vh;overflow-y:auto}
+  .pos-cart{width:100%!important}
+  /* Tables scroll horizontal */
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* Modal full screen */
+  .mo-box{width:95vw!important;max-height:92vh;overflow-y:auto}
+  /* Buttons bigger touch targets */
+  .btn{min-height:38px}
+  .pos-tipo-btn,.pos-pago-btn{min-height:48px!important;font-size:13px!important}
+  /* Grid menu 2 cols on mobile */
+  .gm-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
+  .gm-cat-card{min-height:150px!important}
+  .gm-mod-card{min-height:130px!important}
+  .gm-cat-svg-wrap{width:60px!important;height:60px!important}
+  .gm-cat-svg-wrap svg{width:36px!important;height:36px!important}
+  .gm-cat-name{font-size:14px!important}
+  .gm-mod-svg-wrap{width:52px!important;height:52px!important}
+  .gm-mod-svg-wrap svg{width:30px!important;height:30px!important}
+  .gm-mod-name{font-size:12px!important}
+  /* Page header compact */
+  .ph-title{font-size:14px!important}
+  #ph-back-btn{padding:5px 10px!important;font-size:12px!important}
+  /* Filters wrap */
+  .flex-row,.flex-between{flex-wrap:wrap}
+  /* Search full width */
+  .search-wrap{width:100%!important}
+  /* fr2 stack */
+  .fr2{flex-direction:column}
+}
+
+/* Landscape mobile */
+@media(max-width:900px) and (orientation:landscape){
+  .gm-grid{grid-template-columns:repeat(3,1fr)!important}
+  .gm-cat-card{min-height:130px!important}
+  #pos-main{flex-direction:row!important}
+  .pos-prod{width:55%!important;height:calc(100vh - 140px);overflow-y:auto}
+  .pos-cart{width:45%!important;height:calc(100vh - 140px);overflow-y:auto}
+  .page{padding:8px!important}
+}
+
+/* Touch improvements */
+@media(hover:none){
+  .btn:active{opacity:.8;transform:scale(.97)}
+  .gm-cat-card:active{transform:scale(.96)!important}
+  .gm-mod-card:active{transform:scale(.96)!important}
+}
 
 /* ══════ GRID MENU — Opción B: App Icons ══════ */
 #page-grid-menu{background:var(--bg);min-height:calc(100vh - 100px)}
@@ -389,8 +456,7 @@ select option{background:var(--s2)}
       <button class="btn btn-ghost btn-sm" onclick="cambiarUsuario()" style="font-size:12px;padding:5px 10px" title="Cambiar usuario">🔄 Usuario</button>
       <span id="tb-role" class="role-badge"></span>
       <span id="tb-email" style="display:none"></span>
-      <button class="btn btn-accent btn-sm" onclick="toggleGridMenu()" id="grid-menu-btn"
-        style="font-size:15px;padding:7px 12px;font-weight:700" title="Menú principal">☰ Menú</button>
+      <button id="grid-menu-btn" style="display:none"></button>
       <button class="btn btn-ghost btn-sm" onclick="doSignOut()" style="font-size:12px">Salir</button>
     </div>
   </div>
@@ -441,29 +507,32 @@ select option{background:var(--s2)}
     <div class="main">
 
       <!-- PAGE HEADER -->
-      <div class="page-header">
-        <div style="display:flex;align-items:center;gap:12px">
+      <div class="page-header" style="flex-direction:column;gap:0;padding:0">
+        <!-- Top bar: back + title + actions -->
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)">
           <button id="ph-back-btn" onclick="toggleGridMenu()"
-            style="display:none;align-items:center;gap:6px;padding:7px 14px;
-            background:var(--s2);border:1px solid var(--border);border-radius:10px;
-            cursor:pointer;font-size:13px;color:var(--cream);font-weight:700;
-            transition:all .15s;white-space:nowrap"
-            onmouseover="this.style.background='var(--s3)'"
-            onmouseout="this.style.background='var(--s2)'">
-            ← Menú
+            style="display:none;align-items:center;gap:5px;padding:7px 12px;
+            background:var(--accent-dim);border:1px solid rgba(108,99,255,.3);border-radius:10px;
+            cursor:pointer;font-size:13px;color:var(--accent2);font-weight:700;
+            transition:all .15s;white-space:nowrap;flex-shrink:0">
+            ⌂ Menú
           </button>
-          <div>
-            <div class="ph-title" id="ph-title">Dashboard</div>
-            <div class="ph-sub" id="ph-sub"></div>
+          <div style="flex:1;min-width:0">
+            <div class="ph-title" id="ph-title" style="font-size:16px">Dashboard</div>
+            <div class="ph-sub" id="ph-sub" style="font-size:11px"></div>
           </div>
+          <div id="ph-actions" class="flex-row" style="flex-shrink:0"></div>
         </div>
-        <div id="ph-actions" class="flex-row"></div>
+        <!-- Module tabs row -->
+        <div id="ph-tabs" style="display:none;overflow-x:auto;white-space:nowrap;padding:0 12px;
+          background:var(--s1);border-bottom:1px solid var(--border);scrollbar-width:none">
+        </div>
       </div>
 
       <div class="content">
 
         <!-- ══════════ DASHBOARD ══════════ -->
-        <div id="page-dashboard" class="page on">
+        <div id="page-dashboard" class="page">
           <div class="stat-grid sg4" style="margin-bottom:16px" id="dash-stats"></div>
           <div class="sg2 stat-grid">
             <div class="card"><div class="card-title">Ventas del Día <span id="dash-fecha" style="font-size:12px;color:var(--muted)"></span></div><div id="dash-ventas-hoy"></div></div>
@@ -472,7 +541,7 @@ select option{background:var(--s2)}
         </div>
 
         <!-- ══════════ GRID MENU ══════════ -->
-        <div id="page-grid-menu" class="page" style="padding:16px">
+        <div id="page-grid-menu" class="page on" style="padding:16px">
           <div id="gm-header" class="gm-header" style="display:none">
             <button class="gm-back-btn" onclick="gmBack()">← Regresar</button>
             <div class="gm-title" id="gm-cat-title"></div>
@@ -2537,8 +2606,12 @@ async function initApp(user){
   renderDashboard();
   // Pre-load tallas catalog so product modal always has correct tallas
   loadCatalogos().catch(()=>{});
-  // Auto-open grid menu as home
-  setTimeout(()=>{ toggleGridMenu(); }, 400);
+  // Grid menu is already the default page — just init it
+  setTimeout(()=>{
+    gmShowCategories();
+    document.getElementById('ph-title').textContent='Zapatería JABED';
+    document.getElementById('ph-sub').textContent='Selecciona una categoría';
+  }, 300);
   // Load internal users — hide ALL nav first, then show selector
   try{
     const snap2 = await window._fb.getDocs(col('usuariosInternos'));
@@ -8458,6 +8531,10 @@ function toggleMobileSidebar(){
 }
 
 // Sync mobile bottom nav active state with page navigation
+// Track recent pages for tabs
+let _recentPages = [];
+const MAX_TABS = 5;
+
 function _navigateTo(page, el){
   _currentPage = page;
   // Show/hide pages
@@ -8474,9 +8551,16 @@ function _navigateTo(page, el){
   if(titleEl) titleEl.textContent = info.t;
   if(subEl)   subEl.textContent   = info.sub;
   if(actEl)   actEl.innerHTML     = info.actions||'';
-  // Show/hide back button
+  // Show/hide back button + tabs
   const backBtn = document.getElementById('ph-back-btn');
-  if(backBtn) backBtn.style.display = page==='grid-menu' ? 'none' : 'flex';
+  const isMenu  = page==='grid-menu';
+  if(backBtn) backBtn.style.display = isMenu ? 'none' : 'flex';
+  // Update tabs
+  if(!isMenu){
+    if(!_recentPages.includes(page)) _recentPages.unshift(page);
+    if(_recentPages.length>MAX_TABS) _recentPages=_recentPages.slice(0,MAX_TABS);
+    renderPhTabs(page);
+  }
   // Mobile bottom nav sync
   if(typeof setMobActive==='function') setMobActive(page);
   // Module-specific init calls
@@ -9326,7 +9410,6 @@ let fbInterval=setInterval(()=>{
     }
   });
 },200);
-
 </script>
 </body>
 </html>
