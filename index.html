@@ -2953,7 +2953,7 @@ select option{background:var(--s2)}
 <div class="mo" id="mo-promo">
   <div class="md xl" style="max-width:760px">
     <div class="mh">
-      <div class="mt" id="mp-title">Nueva Promoción</div>
+      <div class="mt" id="mp-promo-title">Nueva Promoción</div>
       <button class="xbtn" onclick="closeM('mo-promo')">✕</button>
     </div>
     <div class="mb">
@@ -6649,7 +6649,7 @@ function abrirModalPromocion(id){
   promoProdsSeleccionados=[];
   promoGatilloProds=[];
   promoRegaloProd=null;
-  document.getElementById('mp-title').textContent=id?'Editar Promoción':'Nueva Promoción';
+  document.getElementById('mp-promo-title').textContent=id?'Editar Promoción':'Nueva Promoción';
   ['pr-nombre','pr-desc-cajero','pr-desde','pr-hasta','pr-gatillo-q','pr-regalo-q'].forEach(f=>{
     const el=document.getElementById(f);if(el)el.value='';
   });
@@ -6867,45 +6867,66 @@ async function savePromocion(){
   const nombre=document.getElementById('pr-nombre').value.trim();
   if(!nombre){toast('Ingresa el nombre de la promoción','err');return;}
   const tipo=document.getElementById('pr-tipo').value;
+
+  // Validation only for regalo_especifico
+  if(tipo==='regalo_especifico' && !promoRegaloProd){
+    toast('⚠️ Selecciona el artículo regalo (sección dorada)','err');
+    return;
+  }
+
   let data={
-    nombre,tipo,
-    desde:document.getElementById('pr-desde').value,
-    hasta:document.getElementById('pr-hasta').value,
-    activa:document.getElementById('pr-activa').value,
+    nombre, tipo,
+    desde:document.getElementById('pr-desde').value||'',
+    hasta:document.getElementById('pr-hasta').value||'',
+    activa:document.getElementById('pr-activa').value||'1',
     updatedAt:new Date().toISOString()
   };
+
   if(tipo==='regalo_especifico'){
-    if(!promoRegaloProd){toast('Selecciona el artículo regalo','err');return;}
     const min=parseInt(document.getElementById('pr-gatillo-min').value)||3;
     const regaloCantidad=parseInt(document.getElementById('pr-regalo-qty').value)||1;
     data.gatilloMin=min;
     data.regaloCantidad=regaloCantidad;
     data.gatilloProds=[...promoGatilloProds];
     data.regaloProd={...promoRegaloProd};
-    // Auto-generate cajero description
     const gatilloNombres=promoGatilloProds.length
       ? promoGatilloProds.map(p=>p.sku||p.desc).join(' o ')
       : 'cualquier artículo';
-    data.descCajero=`Compra ${min}+ pzas de: ${gatilloNombres} → lleva ${regaloCantidad} pza de ${promoRegaloProd.desc} GRATIS`;
+    data.descCajero='Compra '+min+'+ pzas de: '+gatilloNombres+' → lleva '+regaloCantidad+' pza de '+promoRegaloProd.desc+' GRATIS';
     data.prods=[];
   } else {
-    data.descCajero=document.getElementById('pr-desc-cajero').value.trim();
+    const descEl=document.getElementById('pr-desc-cajero');
+    data.descCajero=descEl?descEl.value.trim():'';
     data.prods=[...promoProdsSeleccionados];
-    data.compraN=tipo==='personalizado'?parseInt(document.getElementById('pr-compra-n').value)||3:null;
-    data.gratisN=tipo==='personalizado'?parseInt(document.getElementById('pr-gratis-n').value)||1:null;
-    data.descuentoPct=tipo==='descuento_pct'?parseFloat(document.getElementById('pr-descuento-pct').value)||20:null;
+    data.compraN=tipo==='personalizado'?parseInt(document.getElementById('pr-compra-n')?.value)||3:null;
+    data.gratisN=tipo==='personalizado'?parseInt(document.getElementById('pr-gratis-n')?.value)||1:null;
+    data.descuentoPct=tipo==='descuento_pct'?parseFloat(document.getElementById('pr-descuento-pct')?.value)||20:null;
+    data.gatilloProds=[];
+    data.regaloProd=null;
   }
+
   try{
+    if(!window._fb){toast('Firebase no conectado','err');return;}
     if(editPromoId){
       await window._fb.setDoc(docRef('promociones',editPromoId),data,{merge:true});
+      toast('Promoción actualizada ✓');
     }else{
       data.createdAt=new Date().toISOString();
-      await window._fb.addDoc(col('promociones'),data);
+      const ref=await window._fb.addDoc(col('promociones'),data);
+      // Add to local array immediately (listener will also update)
+      promociones.push({...data, id:ref.id});
     }
     closeM('mo-promo');
     toast('Promoción guardada ✓');
     editPromoId=null;
-  }catch(e){toast('Error: '+e.message,'err');}
+    promoGatilloProds=[];
+    promoRegaloProd=null;
+    promoProdsSeleccionados=[];
+    renderPromociones();
+  }catch(e){
+    console.error('savePromocion error:',e);
+    toast('Error al guardar: '+e.message,'err');
+  }
 }
 
 async function deletePromocion(id){
