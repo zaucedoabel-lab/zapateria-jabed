@@ -1584,7 +1584,7 @@ select option{background:var(--s2)}
             <div class="scard r"><div class="sl">Pendiente (Apart./Cred.)</div><div class="sv r" id="h-total-pendiente">$0</div></div>
           </div>
           <div class="tw" style="overflow-x:auto"><table style="min-width:1300px"><thead><tr>
-            <th>#</th><th>Mes</th><th>Sem.</th><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Vendedor</th>
+            <th>Folio</th><th>#</th><th>Mes</th><th>Sem.</th><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Vendedor</th>
             <th>Estilo</th><th>Producto</th><th>Talla</th><th>Cat.</th><th>Qty</th>
             <th>Sucursal</th><th>Tipo</th><th>Pago</th>
             <th>Total Compra</th><th>Apart./Créd.</th><th>Cobrado</th>
@@ -2679,7 +2679,7 @@ select option{background:var(--s2)}
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <div class="search-wrap" style="flex:1;min-width:180px">
             <span class="search-ico">👤</span>
-            <input type="text" id="dev-buscar-venta" placeholder="Nombre cliente, código, fecha…" oninput="buscarVentaDevolucion()">
+            <input type="text" id="dev-buscar-venta" placeholder="Nombre cliente, folio (#ABC123), código, fecha…" oninput="buscarVentaDevolucion()">
           </div>
           <input type="date" id="dev-fecha-buscar" style="width:145px" oninput="buscarVentaDevolucion()">
         </div>
@@ -3413,6 +3413,14 @@ function startListeners(){
   push(onSnapshot(col('usuariosInternos'),snap=>{
     usuariosInternos=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderUsuariosInternos();
+  }));
+  // ── Promociones — always loaded so POS can detect them ──
+  push(onSnapshot(col('promociones'),snap=>{
+    promociones=snap.docs.map(d=>({id:d.id,...d.data()}));
+    // Refresh promo UI if on that page
+    if(document.getElementById('page-promociones')?.classList.contains('on')) renderPromociones();
+    // Re-check carrito in case a promo just activated
+    if(carrito.length) mostrarAlertaPromo();
   }));
 }
 
@@ -6520,7 +6528,11 @@ function renderHist(){
     const items=v.items||[];
     const rowBg=isAprt?'background:rgba(240,180,41,.05)':isAbono?'background:rgba(82,201,122,.04)':isCredito?'background:rgba(82,168,224,.04)':'';
 
+    // Generate folio from venta ID
+    const folioV = v.folio||v.id.slice(-6).toUpperCase();
     if(!items.length)return`<tr style="${rowBg}">
+      <td class="mono" style="font-size:11px;color:var(--accent2);font-weight:700;white-space:nowrap;cursor:pointer;letter-spacing:.5px"
+        onclick="copiarFolio('${folioV}')" title="Clic para copiar folio">#${folioV}</td>
       <td class="mono">#${lista.length-idx}</td>
       <td style="font-size:11px">${mesStr}</td>
       <td class="mono" style="font-size:11px">${semStr}</td>
@@ -6536,7 +6548,9 @@ function renderHist(){
     </tr>`;
 
     return items.map((item,ii)=>`<tr style="${rowBg}">
-      ${ii===0?`<td class="mono" rowspan="${items.length}">#${lista.length-idx}</td>
+      ${ii===0?`<td class="mono" rowspan="${items.length}" style="font-size:11px;color:var(--accent2);font-weight:700;white-space:nowrap;cursor:pointer;letter-spacing:.5px"
+        onclick="copiarFolio('${folioV}')" title="Clic para copiar folio">#${folioV}</td>
+      <td class="mono" rowspan="${items.length}">#${lista.length-idx}</td>
       <td style="font-size:11px" rowspan="${items.length}">${mesStr}</td>
       <td class="mono" style="font-size:11px" rowspan="${items.length}">${semStr}</td>
       <td rowspan="${items.length}" style="white-space:nowrap">${fmtFechaCorta(v.fecha)}</td>
@@ -7679,23 +7693,41 @@ function abrirEtiquetaMuestra(){
 
 // ── Etiqueta de Texto Libre ──
 function abrirEtiquetaTextoLibre(){
-  const win = window.open('','_blank','width=720,height=680');
+  const win = window.open('','_blank','width=820,height=780');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:Arial,sans-serif;background:#ccc;padding:20px}
     .no-print{background:#fff;border-radius:8px;padding:14px;margin-bottom:14px}
     .controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-    .controls label{display:block;font-size:11px;color:#555;margin-bottom:3px}
-    .controls input,.controls select,.controls textarea{width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:6px;font-size:13px}
-    .controls textarea{height:60px;resize:vertical}
-    .preview-label{width:51mm;height:25mm;background:#fff;border:0.5px solid #999;border-radius:3px;
-      display:flex;flex-direction:column;overflow:hidden;margin-bottom:12px}
-    .pl-header{background:#000;color:#fff;padding:1.5mm 2mm;font-size:5.5pt;font-weight:700;display:flex;justify-content:space-between}
-    .pl-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5mm 2.5mm;text-align:center}
-    .pl-line1{font-size:var(--l1size,9pt);font-weight:800;color:#000;line-height:1.2;margin-bottom:1mm}
-    .pl-line2{font-size:var(--l2size,7pt);font-weight:600;color:#222;line-height:1.3;margin-bottom:1mm}
-    .pl-line3{font-size:var(--l3size,7pt);color:#444;line-height:1.3}
+    .controls label{display:block;font-size:11px;color:#555;margin-bottom:3px;font-weight:600}
+    .controls input,.controls select{width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:6px;font-size:13px}
+    .preview-label{
+      width:51mm;height:25mm;background:#fff;border:0.5px solid #999;border-radius:3px;
+      display:flex;flex-direction:column;overflow:hidden;margin-bottom:12px
+    }
+    .pl-header{
+      background:#000;color:#fff;padding:1mm 2mm;
+      font-size:5.5pt;font-weight:700;display:flex;justify-content:space-between;
+      flex-shrink:0;
+    }
+    .pl-body{
+      flex:1;display:flex;flex-direction:column;
+      align-items:center;justify-content:flex-start;
+      padding:1mm 2mm 0.5mm;text-align:center;
+      overflow:hidden;
+    }
+    .pl-line1{
+      font-size:var(--l1size,9pt);font-weight:800;color:#000;
+      line-height:1.1;margin-top:0.5mm;margin-bottom:0.3mm;
+    }
+    .pl-line2{
+      font-size:var(--l2size,7pt);font-weight:700;color:#111;
+      line-height:1.2;margin-bottom:0.2mm;
+    }
+    .pl-line3{
+      font-size:var(--l3size,6.5pt);color:#333;line-height:1.2;font-weight:600;
+    }
     @media print{
       *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
       body{background:#fff!important;padding:0!important}
@@ -7705,26 +7737,28 @@ function abrirEtiquetaTextoLibre(){
     }
   </style></head><body>
   <div class="no-print">
-    <div style="font-size:14px;font-weight:700;margin-bottom:10px">✏️ Etiqueta de Texto Libre — 51×25mm</div>
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px">✏️ Etiqueta Texto Libre — 51×25mm</div>
     <div class="controls">
       <div>
-        <label>Encabezado (fondo negro)</label>
+        <label>Encabezado izquierdo</label>
         <input id="tl-head" value="ZAPATERÍA JABED" oninput="renderTL()">
       </div>
       <div>
-        <label>Texto derecho (encabezado)</label>
+        <label>Texto derecho encabezado</label>
         <input id="tl-head2" value="" placeholder="Ej: OFERTA" oninput="renderTL()">
       </div>
       <div>
-        <label>Línea 1 (grande)</label>
+        <label>Línea 1 — texto principal</label>
         <input id="tl-l1" placeholder="Ej: SANDALIA DAMA" oninput="renderTL()">
       </div>
       <div>
         <label>Tamaño L1</label>
         <select id="tl-l1s" onchange="renderTL()">
-          <option value="10pt">Muy grande</option>
-          <option value="8pt" selected>Grande</option>
-          <option value="7pt">Mediano</option>
+          <option value="14pt">Ultra Grande (14pt)</option>
+          <option value="12pt">Extra Grande (12pt)</option>
+          <option value="10pt">Muy Grande (10pt)</option>
+          <option value="8pt" selected>Grande (8pt)</option>
+          <option value="7pt">Mediano (7pt)</option>
         </select>
       </div>
       <div>
@@ -7732,8 +7766,28 @@ function abrirEtiquetaTextoLibre(){
         <input id="tl-l2" placeholder="Ej: VARIOS COLORES" oninput="renderTL()">
       </div>
       <div>
+        <label>Tamaño L2</label>
+        <select id="tl-l2s" onchange="renderTL()">
+          <option value="12pt">Ultra Grande (12pt)</option>
+          <option value="10pt">Extra Grande (10pt)</option>
+          <option value="8pt">Muy Grande (8pt)</option>
+          <option value="7pt" selected>Grande (7pt)</option>
+          <option value="6pt">Mediano (6pt)</option>
+        </select>
+      </div>
+      <div>
         <label>Línea 3</label>
         <input id="tl-l3" placeholder="Ej: TALLAS: 4-9" oninput="renderTL()">
+      </div>
+      <div>
+        <label>Tamaño L3</label>
+        <select id="tl-l3s" onchange="renderTL()">
+          <option value="10pt">Ultra Grande (10pt)</option>
+          <option value="8pt">Extra Grande (8pt)</option>
+          <option value="7pt">Muy Grande (7pt)</option>
+          <option value="6.5pt" selected>Grande (6.5pt)</option>
+          <option value="5.5pt">Mediano (5.5pt)</option>
+        </select>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
@@ -7742,26 +7796,27 @@ function abrirEtiquetaTextoLibre(){
       <button onclick="window.print()" style="padding:8px 20px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;margin-left:auto">🖨️ Imprimir</button>
       <button onclick="window.close()" style="padding:8px 14px;background:#eee;border:1px solid #ccc;border-radius:6px;cursor:pointer">✕</button>
     </div>
-    <div style="font-size:11px;color:#888">Vista previa:</div>
+    <div style="font-size:11px;color:#888;margin-bottom:8px">Vista previa (tamaño real 51×25mm):</div>
   </div>
   <div id="tl-preview"></div>
   <script>
   function renderTL(){
-    const head=document.getElementById('tl-head').value||'';
-    const head2=document.getElementById('tl-head2').value||'';
-    const l1=document.getElementById('tl-l1').value||'';
-    const l2=document.getElementById('tl-l2').value||'';
-    const l3=document.getElementById('tl-l3').value||'';
-    const l1s=document.getElementById('tl-l1s').value||'8pt';
-    const copias=parseInt(document.getElementById('tl-copias').value)||1;
-    const lbl=\`<div class="preview-label" style="--l1size:\${l1s}">
-      <div class="pl-header"><span>\${head}</span><span>\${head2}</span></div>
-      <div class="pl-body">
-        <div class="pl-line1">\${l1}</div>
-        <div class="pl-line2">\${l2}</div>
-        <div class="pl-line3">\${l3}</div>
-      </div>
-    </div>\`;
+    const head  = document.getElementById('tl-head').value||'';
+    const head2 = document.getElementById('tl-head2').value||'';
+    const l1    = document.getElementById('tl-l1').value||'';
+    const l2    = document.getElementById('tl-l2').value||'';
+    const l3    = document.getElementById('tl-l3').value||'';
+    const l1s   = document.getElementById('tl-l1s').value||'8pt';
+    const l2s   = document.getElementById('tl-l2s').value||'7pt';
+    const l3s   = document.getElementById('tl-l3s').value||'6.5pt';
+    const copias= parseInt(document.getElementById('tl-copias').value)||1;
+    const lbl   = '<div class="preview-label" style="--l1size:'+l1s+';--l2size:'+l2s+';--l3size:'+l3s+'">'+
+      '<div class="pl-header"><span>'+head+'</span><span>'+head2+'</span></div>'+
+      '<div class="pl-body">'+
+      '<div class="pl-line1">'+l1+'</div>'+
+      '<div class="pl-line2">'+l2+'</div>'+
+      '<div class="pl-line3">'+l3+'</div>'+
+      '</div></div>';
     document.getElementById('tl-preview').innerHTML=Array(copias).fill(lbl).join('');
   }
   renderTL();
@@ -8313,6 +8368,17 @@ function agregarArticuloSinCodigo(){
 }
 
 
+
+function copiarFolio(folio){
+  navigator.clipboard?.writeText(folio).then(()=>toast('Folio #'+folio+' copiado ✓')).catch(()=>toast('Folio: '+folio));
+}
+
+// Buscar venta por folio para devoluciones
+function buscarVentaPorFolio(folio){
+  if(!folio)return null;
+  const f=folio.replace('#','').trim().toUpperCase();
+  return ventas.find(v=>(v.folio||v.id.slice(-6).toUpperCase())===f);
+}
 
 async function deleteVenta(id){
   const rol = usuarioActivo?.rol||currentProfile?.rol||'';
@@ -10713,8 +10779,10 @@ function buscarVentaDevolucion(){
   // Filter ventas — exclude abonos
   const lista=ventas.filter(v=>{
     if(v.tipoVenta==='abono')return false;
+    const folioV=(v.folio||v.id.slice(-6).toUpperCase());
     const mq=!q||(v.cliente||'').toLowerCase().includes(q)||
-      (v.items||[]).some(i=>(i.sku||'').toLowerCase().includes(q)||(i.desc||'').toLowerCase().includes(q));
+      (v.items||[]).some(i=>(i.sku||'').toLowerCase().includes(q)||(i.desc||'').toLowerCase().includes(q))||
+      folioV.toLowerCase().includes(q.replace('#',''));
     const mf=!fecha||v.fecha===fecha;
     return mq&&mf;
   }).slice(0,8);
@@ -10729,6 +10797,7 @@ function buscarVentaDevolucion(){
         <span style="font-size:11px;color:var(--muted)">${v.fecha} ${v.hora||''}</span>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:2px">${itemsStr} · ${fmt(v.total)}</div>
+      <div style="font-size:10px;color:var(--accent2);margin-top:1px">Folio: #${(v.folio||v.id.slice(-6).toUpperCase())}</div>
     </div>`;
   }).join('');
 }
