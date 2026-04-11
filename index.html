@@ -629,7 +629,7 @@ select option{background:var(--s2)}
       <div id="nav-etiquetas"></div><div id="nav-sucursales"></div>
       <div id="nav-usuarios"></div><div id="nav-importar"></div>
       <div id="nav-bitacora"></div><div id="nav-costos"></div>
-      <div id="nav-publicaciones"></div><div id="nav-analisis"></div>
+      <div id="nav-publicaciones"></div><div id="nav-analisis"></div><div id="nav-histcambios"></div>
       <div id="nav-dashboard-ventas"></div>
       <div id="usr-activo-label"></div>
     </div>
@@ -2069,6 +2069,11 @@ select option{background:var(--s2)}
             <div class="scard b">  <div class="sl">Total stock actual</div><div class="sv b" id="an-total-stock">0</div></div>
             <div class="scard r">  <div class="sl">Estilos agotados</div><div class="sv r" id="an-agotados">0</div></div>
           </div>
+          <div class="stat-grid sg3" style="margin-bottom:14px" id="an-antiguedad-stats">
+            <div class="scard g"><div class="sl">Stock Fresco (menos de 30 días)</div><div class="sv g" id="an-fresh">0</div></div>
+            <div class="scard gold"><div class="sl">Stock Medio (1–6 meses)</div><div class="sv gold" id="an-medio">0</div></div>
+            <div class="scard r"><div class="sl">Stock Antiguo (más de 6 meses)</div><div class="sv r" id="an-antiguo">0</div></div>
+          </div>
 
           <!-- Tabla -->
           <div class="tw" style="overflow-x:auto">
@@ -2086,6 +2091,7 @@ select option{background:var(--s2)}
                 <th>Meses vendidos</th>
                 <th style="text-align:center">Entradas</th>
                 <th style="text-align:center">Transf.</th>
+                <th>Antigüedad</th>
                 <th>Status</th>
               </tr></thead>
               <tbody id="an-tbody"></tbody>
@@ -2133,7 +2139,7 @@ select option{background:var(--s2)}
               <th>Descripción</th>
               <th>Cat.</th>
               <th>Línea</th>
-              <th style="text-align:right">Costo Compra ✏️</th>
+              <th style="text-align:right" id="th-costo-compra">Costo Compra ✏️</th>
               <th style="text-align:right">Precio Venta ✏️</th>
               <th style="text-align:center">En Oferta</th>
               <th style="text-align:right">Util/pza</th>
@@ -2522,6 +2528,61 @@ select option{background:var(--s2)}
   </div><!-- /body-wrap -->
 </div><!-- /app -->
 
+
+        <!-- ══════════ HISTORIAL DE CAMBIOS ══════════ -->
+        <div id="page-histcambios" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
+  <div class="mod-tabs" id="tabs-histcambios"></div>
+  <button onclick="loadHistorialCambios()" style="display:flex;align-items:center;gap:6px;margin:6px 10px;padding:8px 16px;background:var(--s2);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:var(--cream)">🔄 Actualizar</button>
+</div>
+          <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
+              <div class="search-wrap" style="flex:2;min-width:160px"><span class="search-ico">🔍</span><input type="text" id="hc-q" placeholder="Buscar producto, código, usuario…" oninput="renderHistorialCambios()"></div>
+              <select id="hc-campo" onchange="renderHistorialCambios()" style="width:150px">
+                <option value="">Todos los campos</option>
+                <option value="Descripción">Descripción</option>
+                <option value="Categoría">Categoría</option>
+                <option value="Línea">Línea</option>
+                <option value="Precio Venta">Precio Venta</option>
+                <option value="Costo">Costo</option>
+                <option value="Código Barras">Código Barras</option>
+                <option value="SKU">SKU</option>
+                <option value="Locación">Locación</option>
+              </select>
+              <input type="date" id="hc-desde" style="width:145px" oninput="renderHistorialCambios()">
+              <input type="date" id="hc-hasta" style="width:145px" oninput="renderHistorialCambios()">
+              <button class="btn btn-ghost btn-sm" onclick="exportarHistorialCambiosExcel()">📊 Excel</button>
+            </div>
+          </div>
+          <div class="stat-grid sg3" style="margin-bottom:14px">
+            <div class="scard gold"><div class="sl">Total Cambios</div><div class="sv gold" id="hc-stat-total">0</div></div>
+            <div class="scard b"><div class="sl">Productos Modificados</div><div class="sv b" id="hc-stat-prods">0</div></div>
+            <div class="scard g"><div class="sl">Último Cambio</div><div class="sv" style="font-size:14px" id="hc-stat-ultimo">—</div></div>
+          </div>
+          <div class="tw" style="overflow-x:auto">
+            <table style="min-width:900px"><thead><tr>
+              <th>Fecha / Hora</th>
+              <th>Producto</th>
+              <th>Código</th>
+              <th>Campo Modificado</th>
+              <th>Valor Anterior</th>
+              <th>Valor Nuevo</th>
+              <th>Usuario</th>
+              <th>Rol</th>
+            </tr></thead>
+            <tbody id="hc-tbody"></tbody>
+          </table></div>
+          <div class="empty" id="hc-empty" style="display:none"><div class="empty-icon">📝</div><div>Sin cambios registrados aún.</div></div>
+        </div>
+
 <!-- ══════════ MODALES ══════════ -->
 
 <!-- Modal Producto -->
@@ -2569,7 +2630,7 @@ select option{background:var(--s2)}
       </div>
       <div class="fr fr2">
         <div class="fg"><label>Sucursal</label><select id="p-suc"><option value="">Cargando…</option></select></div>
-        <div class="fg"><label>Precio de Costo ($) <span style="color:var(--faint)">(opcional)</span></label><input type="number" id="p-costo" step="0.01" placeholder="0.00"></div>
+        <div class="fg" id="p-costo-field"><label>Precio de Costo ($) <span style="color:var(--faint)">(solo Admin/Manager/Supervisor)</span></label><input type="number" id="p-costo" step="0.01" placeholder="0.00"></div>
       </div>
       <div class="fr fr2">
         <div class="fg"><label>📍 Locación <span style="color:var(--faint)">(ej: A-1, B-3…)</span></label>
@@ -3334,6 +3395,7 @@ function abrirModalProducto(id){
   const stockSec = document.getElementById('p-stock-inputs');
   if(tallaSec) tallaSec.style.display = ''; // always visible — they need to select tallas
   if(stockSec) stockSec.style.display = puedeEditStock ? '' : 'none'; // hide qty inputs for vendedor/bodeguero
+  aplicarVisibilidadCosto();
   openM('mo-prod');
 }
 
@@ -3480,12 +3542,36 @@ async function saveProducto(){
   const {setDoc,addDoc}=window._fb;
   try{
     if(editProdId){
+      const prodAnterior = productos.find(p=>p.id===editProdId)||{};
       // Use setDoc WITHOUT merge for clean full replace of product data
-      await setDoc(docRef('productos',editProdId), {...data, createdAt: productos.find(p=>p.id===editProdId)?.createdAt||new Date().toISOString()});
+      await setDoc(docRef('productos',editProdId), {...data, createdAt: prodAnterior.createdAt||new Date().toISOString()});
       // Update local cache immediately
       const idx=productos.findIndex(p=>p.id===editProdId);
       if(idx>=0) productos[idx]={...data, id:editProdId, createdAt:productos[idx].createdAt||new Date().toISOString()};
       else productos.push({...data, id:editProdId});
+      // Log changes to historial-cambios collection
+      const cambios=[];
+      const campos={desc:'Descripción',cat:'Categoría',linea:'Línea',temporada:'Temporada',
+        marca:'Marca',precio:'Precio Venta',costo:'Costo',color:'Color',
+        locacion:'Locación',barcode:'Código Barras',sku:'SKU'};
+      Object.entries(campos).forEach(([k,lbl])=>{
+        const ant=String(prodAnterior[k]||'');
+        const nvo=String(data[k]||'');
+        if(ant!==nvo) cambios.push({campo:lbl,antes:ant,despues:nvo});
+      });
+      if(cambios.length){
+        try{
+          await window._fb.addDoc(col('historialCambios'),{
+            tipo:'producto',productoId:editProdId,
+            desc:data.desc,sku:data.sku||data.barcode||'',
+            cambios,
+            usuario:usuarioActivo?.nombre||currentProfile?.nombre||'Admin',
+            usuarioRol:usuarioActivo?.rol||currentProfile?.rol||'admin',
+            fecha:hoy(),hora:hora(),
+            createdAt:new Date().toISOString()
+          });
+        }catch(e){console.warn('historialCambios error:',e);}
+      }
     } else {
       const altaData = {
         ...data,
@@ -6915,7 +7001,7 @@ function populateLocacionSelect(selectedVal){
 let usuariosInternos = []; // loaded from Firestore
 let usuarioActivo = null;  // {id, nombre, rol, pin}
 
-const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','dashboard-ventas','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','sucursales','usuarios','importar','bitacora','publicaciones','analisis'];
+const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','dashboard-ventas','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','sucursales','usuarios','importar','bitacora','publicaciones','analisis','histcambios'];
 const PERMISOS_ROL_DEFAULT = {
   admin:      [...TODOS_MODULOS,'dashboard-ventas'],
   manager:    [...TODOS_MODULOS],
@@ -7280,6 +7366,7 @@ function confirmarPin(){
   if(rb) rb.textContent = u.nombre + ' (' + u.rol + ')';
   const uEl = document.getElementById('sal-usuario');
   if(uEl) uEl.value = u.nombre;
+  aplicarVisibilidadCosto();
   // Always show grid menu after login
   if(window._pendingPage){
     const pg = window._pendingPage;
@@ -7635,9 +7722,11 @@ function buildPOSButtons(){
     tipoList = ['💵 Venta|venta','📦 Separó|apartado','💳 Crédito|credito'];
   const currentTipo = document.getElementById('c-tipo-venta')?.value||'venta';
   tipoContainer.innerHTML = tipoList.map(entry=>{
-    const [label, value] = entry.split('|');
+    const parts = entry.split('|');
+    const label = parts[0];
+    const value = parts[1]||parts[0];
     const isOn = value===currentTipo;
-    return `<button class="pos-tipo-btn ${isOn?'on':''}" id="ptb-${value}" onclick="selTipoPos('${value}')"
+    return `<button class="pos-tipo-btn ${isOn?'on':''}" data-tipo="${value}" onclick="selTipoPos('${value}')"
       style="flex:1;min-width:100px;padding:12px;border-radius:10px;border:2px solid ${isOn?'var(--accent)':'var(--border)'};
       background:${isOn?'var(--accent)':'var(--s2)'};color:${isOn?'#fff':'var(--muted)'};
       font-size:14px;font-weight:700;cursor:pointer">${label||value}</button>`;
@@ -7650,9 +7739,11 @@ function buildPOSButtons(){
     pagoList = ['💵 Efectivo|efectivo','💳 Tarjeta|tarjeta-bbva','📲 Transferencia|transferencia','🔀 Mixto|mixto','🪙 Monedero|monedero'];
   const currentPago = document.getElementById('c-pago')?.value||'efectivo';
   pagoContainer.innerHTML = pagoList.map(entry=>{
-    const [label, value] = entry.split('|');
+    const parts = entry.split('|');
+    const label = parts[0];
+    const value = parts[1]||parts[0];
     const isOn = value===currentPago;
-    return `<button class="pos-pago-btn ${isOn?'on':''}" id="ppb-${value}" onclick="selPagoPos('${value}')"
+    return `<button class="pos-pago-btn ${isOn?'on':''}" data-pago="${value}" onclick="selPagoPos('${value}')"
       style="padding:11px 6px;border-radius:9px;border:2px solid ${isOn?'var(--accent)':'var(--border)'};
       background:${isOn?'var(--accent)':'var(--s2)'};color:${isOn?'#fff':'var(--muted)'};
       font-size:13px;font-weight:700;cursor:pointer">${label||value}</button>`;
@@ -7661,7 +7752,7 @@ function buildPOSButtons(){
 
 function selTipoPos(tipo){
   document.querySelectorAll('.pos-tipo-btn').forEach(btn=>{
-    const isOn = btn.id==='ptb-'+tipo;
+    const isOn = btn.dataset.tipo === tipo;  // exact match via data attribute
     btn.style.background = isOn ? 'var(--accent)' : 'var(--s2)';
     btn.style.color = isOn ? '#fff' : 'var(--muted)';
     btn.style.borderColor = isOn ? 'var(--accent)' : 'var(--border)';
@@ -7675,10 +7766,11 @@ function selTipoPos(tipo){
 
 function selPagoPos(pago){
   document.querySelectorAll('.pos-pago-btn').forEach(btn=>{
-    const isOn = btn.id==='ppb-'+pago;
+    const isOn = btn.dataset.pago === pago;  // exact match via data attribute
     btn.style.background = isOn ? 'var(--accent)' : 'var(--s2)';
     btn.style.color = isOn ? '#fff' : 'var(--muted)';
     btn.style.borderColor = isOn ? 'var(--accent)' : 'var(--border)';
+    btn.classList.toggle('on', isOn);
   });
   const pagoInput = document.getElementById('c-pago');
   if(pagoInput) pagoInput.value = pago;
@@ -7849,6 +7941,7 @@ const NAV_ID_MAP = {
   'costos':        'nav-costos',
   'publicaciones': 'nav-publicaciones',
   'analisis':      'nav-analisis',
+  'histcambios':   'nav-histcambios',
   'dashboard-ventas':'nav-dashboard-ventas'
 };
 
@@ -8307,10 +8400,10 @@ function renderCostos(){
   if(!tbody) return;
 
   if(!lista.length){
-    tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--muted)">Sin resultados con esos filtros.</td></tr>';
+    const msgFiltros = (q||cat||linea) ? "Sin resultados con esos filtros. Limpia los filtros para ver todos." : "Sin productos en inventario.";
+    tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--muted)">'+msgFiltros+'</td></tr>';
     return;
   }
-
   tbody.innerHTML = lista.map(p=>{
     const stock   = sumS(p.stock);
     const costo   = p.costo||0;
@@ -9035,6 +9128,7 @@ const PAGE_TITLES = {
   'publicaciones':    {t:'Publicaciones',       sub:'Marketing y redes sociales'},
   'analisis':         {t:'Análisis de Stock',   sub:'Trazabilidad por estilo'},
   'grid-menu':        {t:'Menú Principal',      sub:''},
+  'histcambios':      {t:'Historial de Cambios',sub:'Modificaciones en Catálogo General'},
 };
 
 function _navigateTo(page, el){
@@ -9089,6 +9183,7 @@ function _navigateTo(page, el){
   if(page==='promociones'){loadPromociones();}
   if(page==='etiquetas'){document.getElementById('etiq-desde').value=hoy();}
   if(page==='analisis'){initAnalisis();}
+  if(page==='histcambios'){loadHistorialCambios();}
   if(page==='dashboard-ventas'){
     const fechaEl=document.getElementById('dv-fecha');
     if(fechaEl&&!fechaEl.value)fechaEl.value=hoy();
@@ -9112,6 +9207,7 @@ const GM_CATS = {
       {icon:'📤', name:'Salida Mercancía', page:'salidas'},
       {icon:'↔️', name:'Transferencias',  page:'transferencias'},
       {icon:'🔎', name:'Análisis de Stock',page:'analisis'},
+      {icon:'📝', name:'Historial Cambios', page:'histcambios'},
     ]
   },
   ventas: {
@@ -9649,6 +9745,7 @@ function renderAnalisis(){
       <td style="max-width:180px">${mesesStr}</td>
       <td style="text-align:center"><span class="badge ${a.numEntradas>0?'b-green':'b-gray'}" style="font-size:10px">${a.numEntradas}</span></td>
       <td style="text-align:center"><span class="badge b-gray" style="font-size:10px">—</span></td>
+      <td style="text-align:center">${(function(){var ag=calcAntiguedad(a.p.createdAt);return '<span style="font-family:var(--mono);font-size:12px;font-weight:700;color:'+ag.color+'">'+ag.label+'</span><div style="font-size:9px;color:var(--muted)">'+ag.dias+' días</div>';})()}</td>
       <td>${a.statusBadge}</td>
     </tr>
     ${isOpen?renderAnDetalleRow(a):''}`;
@@ -9856,6 +9953,138 @@ function usarPlantilla(tipo){
     const ta=document.getElementById('pub-texto-preview');if(ta)ta.value=lineas.join('\n');
     toast('💬 Respuesta para cliente generada');
   }
+}
+
+
+
+// ══════════════════ T3: HISTORIAL DE CAMBIOS EN CATÁLOGO ══════════════════
+let historialCambiosData = [];
+
+async function loadHistorialCambios(){
+  const tbody = document.getElementById('hc-tbody');
+  if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">⏳ Cargando…</td></tr>';
+  try{
+    const snap = await window._fb.getDocs(col('historialCambios'));
+    historialCambiosData = snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+    renderHistorialCambios();
+  }catch(e){ console.error(e); if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">Error al cargar</td></tr>'; }
+}
+
+function renderHistorialCambios(){
+  const q     = (document.getElementById('hc-q')?.value||'').toLowerCase();
+  const campo = document.getElementById('hc-campo')?.value||'';
+  const desde = document.getElementById('hc-desde')?.value||'';
+  const hasta = document.getElementById('hc-hasta')?.value||'';
+
+  // Flatten: one row per campo changed
+  let rows = [];
+  historialCambiosData.forEach(reg=>{
+    (reg.cambios||[]).forEach(ch=>{
+      rows.push({
+        fecha:reg.fecha, hora:reg.hora||'',
+        desc:reg.desc||'', sku:reg.sku||'',
+        campo:ch.campo, antes:ch.antes, despues:ch.despues,
+        usuario:reg.usuario||'—', rol:reg.usuarioRol||'—',
+        createdAt:reg.createdAt
+      });
+    });
+  });
+
+  // Filter
+  rows = rows.filter(r=>{
+    const mq = !q || r.desc.toLowerCase().includes(q) || r.sku.toLowerCase().includes(q) || r.usuario.toLowerCase().includes(q);
+    const mc = !campo || r.campo===campo;
+    const md = !desde || r.fecha>=desde;
+    const mh = !hasta || r.fecha<=hasta;
+    return mq&&mc&&md&&mh;
+  });
+
+  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const prodsMod = new Set(historialCambiosData.map(r=>r.productoId)).size;
+  setEl('hc-stat-total', rows.length);
+  setEl('hc-stat-prods', prodsMod);
+  setEl('hc-stat-ultimo', historialCambiosData[0]?.fecha||'—');
+
+  const empty = document.getElementById('hc-empty');
+  const tbody = document.getElementById('hc-tbody');
+  if(!rows.length){
+    if(tbody) tbody.innerHTML='';
+    if(empty) empty.style.display='block';
+    return;
+  }
+  if(empty) empty.style.display='none';
+
+  const campoColors = {
+    'Precio Venta':'var(--gold)', 'Costo':'var(--red)',
+    'Categoría':'var(--accent2)', 'Línea':'var(--blue)',
+    'Código Barras':'var(--green)', 'SKU':'var(--green)',
+    'Descripción':'var(--cream)', 'Locación':'var(--orange)'
+  };
+
+  tbody.innerHTML = rows.map(r=>`<tr>
+    <td style="white-space:nowrap;font-size:11px">
+      <div style="color:var(--cream);font-weight:600">${fmtFechaCorta(r.fecha)}</div>
+      <div style="color:var(--muted);font-size:10px">${r.hora}</div>
+    </td>
+    <td>
+      <div style="font-weight:600;color:var(--cream);font-size:12px">${r.desc}</div>
+    </td>
+    <td class="mono" style="font-size:11px;color:var(--muted)">${r.sku||'—'}</td>
+    <td><span class="badge b-accent" style="font-size:11px;color:${campoColors[r.campo]||'var(--cream)'}">${r.campo}</span></td>
+    <td style="font-size:12px;color:var(--red);max-width:150px">
+      <span style="background:rgba(239,68,68,.1);border-radius:4px;padding:2px 6px">${r.antes||'(vacío)'}</span>
+    </td>
+    <td style="font-size:12px;color:var(--green);max-width:150px">
+      <span style="background:rgba(82,201,122,.1);border-radius:4px;padding:2px 6px">${r.despues||'(vacío)'}</span>
+    </td>
+    <td style="font-size:12px;color:var(--cream);font-weight:600">${r.usuario}</td>
+    <td><span class="role-badge role-${r.rol||'lectura'}" style="font-size:10px">${r.rol}</span></td>
+  </tr>`).join('');
+}
+
+function exportarHistorialCambiosExcel(){
+  const headers=['Fecha','Hora','Producto','Codigo','Campo','Antes','Despues','Usuario','Rol'];
+  const rows=[];
+  historialCambiosData.forEach(reg=>{
+    (reg.cambios||[]).forEach(ch=>{
+      rows.push([reg.fecha,reg.hora||'',reg.desc||'',reg.sku||'',ch.campo,ch.antes,ch.despues,reg.usuario||'',reg.usuarioRol||'']);
+    });
+  });
+  const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const nl='\n';
+  const csv='\uFEFF'+headers.map(esc).join(',')+nl+rows.map(r=>r.map(esc).join(',')).join(nl);
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='historial_cambios_'+hoy()+'.csv';a.click();toast('Excel descargado ✓');
+}
+
+// ══════════════════ T4: HIDE COSTO FROM VENDEDOR/BODEGUERO ══════════════════
+function aplicarVisibilidadCosto(){
+  const rol = usuarioActivo?.rol||currentProfile?.rol||'admin';
+  const puedeVerCosto = ['admin','manager','supervisor'].includes(rol);
+  // Hide costo in product modal
+  const costoField = document.getElementById('p-costo-field');
+  if(costoField) costoField.style.display = puedeVerCosto ? '' : 'none';
+  // Hide costo column in costos module
+  const thCosto = document.getElementById('th-costo-compra');
+  if(thCosto) thCosto.style.display = puedeVerCosto ? '' : 'none';
+}
+
+// ══════════════════ T5: ANTIGÜEDAD DE STOCK ══════════════════
+function calcAntiguedad(createdAt){
+  if(!createdAt) return {dias:0, label:'—', color:'var(--muted)'};
+  const fechaCreacion = new Date(createdAt);
+  const hoyDate = new Date();
+  const diffMs = hoyDate - fechaCreacion;
+  const dias = Math.floor(diffMs / (1000*60*60*24));
+  let label, color;
+  if(dias < 30)       { label = dias+'d';          color = 'var(--green)'; }
+  else if(dias < 90)  { label = Math.floor(dias/30)+'m '+( dias%30)+'d'; color = 'var(--accent2)'; }
+  else if(dias < 180) { label = Math.floor(dias/30)+'m';   color = 'var(--gold)'; }
+  else if(dias < 365) { label = Math.floor(dias/30)+'m';   color = 'var(--orange)'; }
+  else                { label = Math.floor(dias/365)+'a '+Math.floor((dias%365)/30)+'m'; color = 'var(--red)'; }
+  return {dias, label, color};
 }
 
 // ══════════════════ FIREBASE AUTH OBSERVER ══════════════════
