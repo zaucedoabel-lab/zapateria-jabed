@@ -7645,7 +7645,9 @@ function buildPOSButtons(){
   // Build Forma de Pago buttons from catalog
   const pagoContainer = document.getElementById('pos-pago-btns');
   if(!pagoContainer) return;
-  const pagoList = getCatalogList('formaPago');
+  let pagoList = getCatalogList('formaPago');
+  if(!pagoList || !pagoList.length)
+    pagoList = ['💵 Efectivo|efectivo','💳 Tarjeta|tarjeta-bbva','📲 Transferencia|transferencia','🔀 Mixto|mixto','🪙 Monedero|monedero'];
   const currentPago = document.getElementById('c-pago')?.value||'efectivo';
   pagoContainer.innerHTML = pagoList.map(entry=>{
     const [label, value] = entry.split('|');
@@ -8666,23 +8668,6 @@ async function cancelarLiquidacion(id){
 
 
 // ══════════════════ T1: POS Tipo/Pago from catalogos ══════════════════
-function buildPOSButtons(){
-  // Rebuild tipo transaccion buttons from catalog
-  const tipos = getCatalogList('tipoTransaccion');
-  tipos.forEach(entry=>{
-    const [label,value] = entry.split('|');
-    const btn = document.getElementById('ptb-'+value);
-    if(btn) btn.textContent = label;
-  });
-  // Rebuild forma de pago buttons from catalog
-  const pagos = getCatalogList('formaPago');
-  pagos.forEach(entry=>{
-    const [label,value] = entry.split('|');
-    const btn = document.getElementById('ppb-'+value);
-    if(btn) btn.textContent = label;
-  });
-}
-
 // ══════════════════ T2: Historial quick filters ══════════════════
 function filtroHistRapido(tipo){
   const hoyStr = hoy();
