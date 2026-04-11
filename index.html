@@ -3002,17 +3002,26 @@ select option{background:var(--s2)}
 
         <!-- Artículos gatillo -->
         <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
-          <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:8px">
+          <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:4px">
             🛒 Artículos GATILLO — el cliente debe comprar de estos
           </div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
-            Agrega todos los estilos que activan la promoción (cualquiera de ellos cuenta)
+            Puedes especificar talla exacta. Si no seleccionas talla, <strong>cualquier talla</strong> del estilo cuenta.
           </div>
           <div class="search-wrap" style="margin-bottom:6px">
             <span class="search-ico">🔍</span>
             <input type="text" id="pr-gatillo-q" placeholder="Buscar estilo, código, descripción…" oninput="buscarProdGatillo()">
           </div>
           <div id="pr-gatillo-res" style="max-height:120px;overflow-y:auto;margin-bottom:8px"></div>
+          <!-- Talla selector para gatillo (aparece al seleccionar producto) -->
+          <div id="pr-gatillo-talla-pick" style="display:none;background:var(--s3);border-radius:8px;padding:10px;margin-bottom:8px">
+            <div style="font-size:11px;color:var(--accent2);font-weight:700;margin-bottom:6px">Selecciona la talla del gatillo (opcional):</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px" id="pr-gatillo-tallas"></div>
+            <div style="display:flex;gap:8px">
+              <button onclick="confirmarGatilloConTalla()" class="btn btn-accent btn-sm">✅ Agregar con talla seleccionada</button>
+              <button onclick="confirmarGatilloSinTalla()" class="btn btn-ghost btn-sm">Cualquier talla</button>
+            </div>
+          </div>
           <div id="pr-gatillo-lista" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px">
             <span style="font-size:12px;color:var(--faint)" id="pr-gatillo-empty">Ningún artículo gatillo — aplica a TODOS</span>
           </div>
@@ -3020,17 +3029,26 @@ select option{background:var(--s2)}
 
         <!-- Artículo regalo -->
         <div style="background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.35);border-radius:10px;padding:12px">
-          <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:8px">
+          <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:4px">
             🎁 Artículo REGALO — este se va gratis al cliente
           </div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
-            Busca el artículo exacto que se regala (puede ser diferente a los gatillo)
+            Especifica también la <strong>talla del regalo</strong> si aplica en talla específica.
           </div>
           <div class="search-wrap" style="margin-bottom:6px">
             <span class="search-ico">🔍</span>
             <input type="text" id="pr-regalo-q" placeholder="Buscar estilo del artículo regalo…" oninput="buscarProdRegalo()">
           </div>
           <div id="pr-regalo-res" style="max-height:120px;overflow-y:auto;margin-bottom:8px"></div>
+          <!-- Talla selector para regalo -->
+          <div id="pr-regalo-talla-pick" style="display:none;background:rgba(240,180,41,.1);border-radius:8px;padding:10px;margin-bottom:8px">
+            <div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:6px">Selecciona la talla del artículo regalo (opcional):</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px" id="pr-regalo-tallas"></div>
+            <div style="display:flex;gap:8px">
+              <button onclick="confirmarRegaloConTalla()" class="btn btn-gold btn-sm">✅ Confirmar con talla</button>
+              <button onclick="confirmarRegaloSinTalla()" class="btn btn-ghost btn-sm">Sin talla específica</button>
+            </div>
+          </div>
           <div id="pr-regalo-sel" style="min-height:40px">
             <span style="font-size:12px;color:var(--faint)">Ningún artículo regalo seleccionado</span>
           </div>
@@ -6754,7 +6772,12 @@ function renderGatilloLista(){
       border:1px solid rgba(26,158,92,.4);border-radius:8px;padding:6px 10px">
       <div>
         <div style="font-size:12px;font-weight:700;color:var(--cream)">${p.desc}</div>
-        <div style="font-size:10px;color:var(--muted);font-family:var(--mono)">${p.sku||'—'}</div>
+        <div style="display:flex;gap:4px;margin-top:2px">
+          <span style="font-size:10px;color:var(--muted);font-family:var(--mono)">${p.sku||'—'}</span>
+          ${p.talla
+            ? `<span class="badge b-accent" style="font-size:10px">T:${p.talla}</span>`
+            : `<span class="badge b-gray" style="font-size:10px">Cualquier talla</span>`}
+        </div>
       </div>
       <button onclick="promoGatilloProds.splice(${i},1);renderGatilloLista();actualizarPreviewCajera()"
         style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px;margin-left:4px">✕</button>
@@ -6799,14 +6822,20 @@ function renderRegaloSel(){
     el.innerHTML='<span style="font-size:12px;color:var(--faint)">Ningún artículo regalo seleccionado</span>';
     return;
   }
+  const tallaLabel = promoRegaloProd.talla
+    ? `<span class="badge b-gold" style="font-size:11px;margin-left:6px">Talla: ${promoRegaloProd.talla}</span>`
+    : `<span class="badge b-gray" style="font-size:11px;margin-left:6px">Cualquier talla</span>`;
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;
       background:rgba(240,180,41,.12);border:2px solid var(--gold);border-radius:10px;padding:10px 14px">
       <div>
         <div style="font-size:14px;font-weight:700;color:var(--gold)">🎁 ${promoRegaloProd.desc}</div>
-        <div style="font-size:11px;color:var(--muted);font-family:var(--mono)">${promoRegaloProd.sku||'—'} · Precio regular: $${promoRegaloProd.precio||0}</div>
+        <div style="display:flex;align-items:center;margin-top:3px">
+          <span style="font-size:11px;color:var(--muted);font-family:var(--mono)">${promoRegaloProd.sku||'—'} · $${promoRegaloProd.precio||0}</span>
+          ${tallaLabel}
+        </div>
       </div>
-      <button onclick="promoRegaloProd=null;renderRegaloSel();actualizarPreviewCajera()"
+      <button onclick="promoRegaloProd=null;document.getElementById('pr-regalo-talla-pick').style.display='none';renderRegaloSel();actualizarPreviewCajera()"
         style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0 4px">✕</button>
     </div>`;
 }
@@ -6823,10 +6852,10 @@ function actualizarPreviewCajera(){
   if(!promoRegaloProd&&!promoGatilloProds.length){previewEl.style.display='none';return;}
   previewEl.style.display='block';
   const gatilloTexto=promoGatilloProds.length
-    ? promoGatilloProds.map(p=>`<strong>${p.sku||p.desc}</strong>`).join(' o ')
+    ? promoGatilloProds.map(p=>`<strong>${p.sku||p.desc}${p.talla?' T:'+p.talla:' (cualquier talla)'}</strong>`).join(' o ')
     : '<strong>cualquier artículo</strong>';
   const regaloTexto=promoRegaloProd
-    ? `<strong style="color:var(--gold)">${promoRegaloProd.desc} (${promoRegaloProd.sku||'—'})</strong>`
+    ? `<strong style="color:var(--gold)">${promoRegaloProd.desc} (${promoRegaloProd.sku||'—'})${promoRegaloProd.talla?' T:'+promoRegaloProd.talla:''}</strong>`
     : '<strong style="color:var(--gold)">artículo regalo</strong>';
   textoEl.innerHTML=`🎁 <strong>${nombre}</strong><br>
     Por comprar <strong>${min} o más piezas</strong> de: ${gatilloTexto}<br>
@@ -6887,8 +6916,8 @@ async function savePromocion(){
     const regaloCantidad=parseInt(document.getElementById('pr-regalo-qty').value)||1;
     data.gatilloMin=min;
     data.regaloCantidad=regaloCantidad;
-    data.gatilloProds=[...promoGatilloProds];
-    data.regaloProd={...promoRegaloProd};
+    data.gatilloProds=promoGatilloProds.map(g=>({id:g.id,desc:g.desc,sku:g.sku,talla:g.talla||''}));
+    data.regaloProd={...promoRegaloProd, talla:promoRegaloProd.talla||''};
     const gatilloNombres=promoGatilloProds.length
       ? promoGatilloProds.map(p=>p.sku||p.desc).join(' o ')
       : 'cualquier artículo';
@@ -6948,11 +6977,16 @@ function checkPromocionesCarrito(){
   const matches=[];
   for(const promo of promosActivas){
     if(promo.tipo==='regalo_especifico'){
-      // Check if carrito has enough gatillo products
-      const gatilloIds=new Set((promo.gatilloProds||[]).map(p=>p.id));
+      // Check if carrito has enough gatillo products (with optional talla matching)
+      const gatilloEntries=promo.gatilloProds||[];
       const itemsGatillo=carrito.filter(item=>{
-        if(!promo.gatilloProds||!promo.gatilloProds.length)return true; // all products qualify
-        return gatilloIds.has(item.id);
+        if(!gatilloEntries.length) return true; // all products qualify
+        return gatilloEntries.some(g=>{
+          if(g.id!==item.id) return false;
+          // If gatillo has specific talla, item must match that talla
+          if(g.talla) return item.talla===g.talla;
+          return true; // no talla restriction
+        });
       });
       const totalGatillo=itemsGatillo.reduce((a,c)=>a+c.qty,0);
       const min=promo.gatilloMin||3;
@@ -6961,7 +6995,7 @@ function checkPromocionesCarrito(){
         const regaloProd=promo.regaloProd;
         const yaEnCarrito=regaloProd&&carrito.some(i=>i.id===regaloProd.id&&i.esGratis&&i.promoId===promo.id);
         if(!yaEnCarrito){
-          matches.push({promo,tipo:'regalo_especifico',totalGatillo,min});
+          matches.push({promo,tipo:'regalo_especifico',totalGatillo,min,itemsGatillo});
         }
       }
     } else {
@@ -7041,6 +7075,18 @@ function aplicarPromocion(promoId){
       return;
     }
     // If only one talla, add directly; if multiple, show picker
+    // If regalo has a specific talla defined, use it directly
+    const tallaPredefinida=rp.talla||'';
+    if(tallaPredefinida&&prodReal){
+      const stk=(prodReal.stock||{})[tallaPredefinida]||0;
+      if(stk>0){
+        _aplicarRegaloCon(promoId, tallaPredefinida);
+        return;
+      } else {
+        toast('⚠️ Sin stock de talla '+tallaPredefinida+' para el regalo','err');
+        return;
+      }
+    }
     const agregarRegaloConTalla=(talla)=>{
       const qty=promo.regaloCantidad||1;
       carrito.push({
