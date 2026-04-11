@@ -22,8 +22,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, si
 // ══════════════════════════════════════
 //  🔧 REEMPLAZA CON TUS DATOS DE FIREBASE
 // ══════════════════════════════════════
-const firebaseConfig = {
-  apiKey: "AIzaSyB-sKJfz-On57bKZpc-mj-mTZC-Y0QnQ9c",
+ apiKey: "AIzaSyB-sKJfz-On57bKZpc-mj-mTZC-Y0QnQ9c",
   authDomain: "zapateria-jabed-df907.firebaseapp.com",
   projectId: "zapateria-jabed-df907",
   storageBucket: "zapateria-jabed-df907.firebasestorage.app",
@@ -885,6 +884,13 @@ select option{background:var(--s2)}
 </button>
   <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-catalogo"></div>
+  <button onclick="abrirModalProducto(null)"
+    style="display:flex;align-items:center;gap:8px;margin:6px 10px;padding:10px 20px;
+    background:var(--accent);border:none;border-radius:12px;cursor:pointer;
+    font-size:15px;font-weight:800;color:#fff;white-space:nowrap;flex-shrink:0;
+    box-shadow:0 3px 12px rgba(108,99,255,.4)">
+    ＋ NUEVO PRODUCTO
+  </button>
 </div>
 
           <!-- Filtros -->
@@ -900,6 +906,10 @@ select option{background:var(--s2)}
                 <option value="liquidacion">Solo liquidación</option>
               </select>
               <span id="cat-count" style="font-size:12px;color:var(--muted);margin-left:auto"></span>
+              <button class="btn btn-accent" onclick="abrirModalProducto(null)"
+                style="padding:10px 20px;font-size:14px;font-weight:700;white-space:nowrap">
+                ＋ Nuevo Producto
+              </button>
             </div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px" id="cat-grid"></div>
@@ -2429,8 +2439,54 @@ select option{background:var(--s2)}
                         <span id="etiq-sz-tienda-val" style="font-size:11px;color:var(--gold);min-width:28px;font-weight:700">4.5pt</span>
                       </div>
                     </div>
+                    <div>
+                      <label style="font-size:11px;color:var(--muted)">Talla</label>
+                      <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+                        <input type="range" id="etiq-sz-talla" min="7" max="18" value="11" step="0.5"
+                          style="flex:1" oninput="etiqPreviewSize('talla',this.value)">
+                        <span id="etiq-sz-talla-val" style="font-size:11px;color:var(--gold);min-width:28px;font-weight:700">11pt</span>
+                      </div>
+                    </div>
                     <div style="display:flex;align-items:flex-end">
                       <button class="btn btn-ghost btn-sm btn-full" onclick="etiqResetSizes()" style="font-size:11px">↺ Restablecer</button>
+                    </div>
+                  </div>
+                </div>
+                <!-- Position controls -->
+                <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
+                  <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:10px">📐 Posición de elementos</div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div>
+                      <label style="font-size:11px;color:var(--muted)">Margen izquierdo</label>
+                      <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+                        <input type="range" id="etiq-pos-left" min="0" max="8" value="3.5" step="0.5"
+                          style="flex:1" oninput="document.getElementById('etiq-pos-left-val').textContent=this.value+'mm'">
+                        <span id="etiq-pos-left-val" style="font-size:11px;color:var(--gold);min-width:32px">3.5mm</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label style="font-size:11px;color:var(--muted)">Margen superior texto</label>
+                      <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+                        <input type="range" id="etiq-pos-top" min="0" max="5" value="0.5" step="0.25"
+                          style="flex:1" oninput="document.getElementById('etiq-pos-top-val').textContent=this.value+'mm'">
+                        <span id="etiq-pos-top-val" style="font-size:11px;color:var(--gold);min-width:32px">0.5mm</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label style="font-size:11px;color:var(--muted)">Ancho QR</label>
+                      <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+                        <input type="range" id="etiq-pos-qr" min="6" max="14" value="10" step="0.5"
+                          style="flex:1" oninput="document.getElementById('etiq-pos-qr-val').textContent=this.value+'mm'">
+                        <span id="etiq-pos-qr-val" style="font-size:11px;color:var(--gold);min-width:32px">10mm</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label style="font-size:11px;color:var(--muted)">Ancho columna talla</label>
+                      <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+                        <input type="range" id="etiq-pos-talla-w" min="6" max="16" value="10" step="0.5"
+                          style="flex:1" oninput="document.getElementById('etiq-pos-talla-w-val').textContent=this.value+'mm'">
+                        <span id="etiq-pos-talla-w-val" style="font-size:11px;color:var(--gold);min-width:32px">10mm</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -4554,6 +4610,7 @@ function getEtiqSizes(){
     desc:   parseFloat(document.getElementById('etiq-sz-desc')?.value||5.5),
     precio: parseFloat(document.getElementById('etiq-sz-precio')?.value||10),
     tienda: parseFloat(document.getElementById('etiq-sz-tienda')?.value||4.5),
+    talla:  parseFloat(document.getElementById('etiq-sz-talla')?.value||11),
   };
 }
 
@@ -4563,7 +4620,7 @@ function etiqPreviewSize(field, val){
 }
 
 function etiqResetSizes(){
-  const defaults = {estilo:9, marca:6.5, desc:5.5, precio:10, tienda:4.5};
+  const defaults = {estilo:9, marca:6.5, desc:5.5, precio:10, tienda:4.5, talla:11};
   Object.entries(defaults).forEach(([k,v])=>{
     const sl = document.getElementById('etiq-sz-'+k);
     const lb = document.getElementById('etiq-sz-'+k+'-val');
@@ -4573,7 +4630,17 @@ function etiqResetSizes(){
   toast('Tamaños restablecidos ✓');
 }
 
+function getEtiqPos(){
+  return {
+    left:   parseFloat(document.getElementById('etiq-pos-left')?.value||3.5),
+    top:    parseFloat(document.getElementById('etiq-pos-top')?.value||0.5),
+    qr:     parseFloat(document.getElementById('etiq-pos-qr')?.value||10),
+    tallaW: parseFloat(document.getElementById('etiq-pos-talla-w')?.value||10),
+  };
+}
+
 function abrirVentanaEtiquetas(items, sz){
+  const pos = getEtiqPos();
   const barcodes = items.map(x => x.p.barcode || x.p.sku || '');
   const now = new Date();
   const fechaImp = String(now.getFullYear()).slice(2) + '/' + String(now.getMonth()+1).padStart(2,'0');
@@ -4620,26 +4687,24 @@ function abrirVentanaEtiquetas(items, sz){
       width:51mm;
       height:25mm;
       background:#fff;
-      border:0.5px solid #999;
+      border:0.5px solid #000;
       display:grid;
-      /* Columnas: texto | QR | talla */
-      grid-template-columns: 1fr 11mm 10mm;
+      grid-template-columns: 1fr ${(pos&&pos.qr)||10}mm ${(pos&&pos.tallaW)||10}mm;
       grid-template-rows: auto 1fr;
       overflow:hidden;
       padding:0;
     }
 
-    /* FILA 1: header — tienda a la izquierda, ESTILO grande a la derecha */
+    /* FILA 1: header — sin relleno negro, todo en negro sobre blanco */
     .e-header{
       grid-column: 1 / 4;
       display:flex;justify-content:space-between;align-items:center;
       border-bottom:0.7mm solid #000;
-      padding:0.5mm 1mm 0.4mm 3.5mm;
-      background:#000;
+      padding:0.5mm 1mm 0.4mm ${(pos&&pos.left)||3.5}mm;
+      background:#fff;
     }
-    /* e-tienda and e-fecha sizes set dynamically above */
-    /* ESTILO en header — grande y visible */
-    .e-estilo-hdr{font-size:${(sz&&sz.estilo)||9}pt;font-weight:900;color:#f0b429;
+    /* ESTILO en header */
+    .e-estilo-hdr{font-size:${(sz&&sz.estilo)||9}pt;font-weight:900;color:#000;
       letter-spacing:0.5pt;font-family:Arial,sans-serif;
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
       max-width:22mm;text-align:right}
@@ -4648,7 +4713,7 @@ function abrirVentanaEtiquetas(items, sz){
     .e-texto{
       grid-column:1;grid-row:2;
       display:flex;flex-direction:column;justify-content:center;
-      padding:0.5mm 0.5mm 0.5mm 3.5mm;
+      padding:${(pos&&pos.top)||0.5}mm 0.5mm 0.5mm ${(pos&&pos.left)||3.5}mm;
       overflow:hidden;
     }
     .e-marca{font-size:${(sz&&sz.marca)||6.5}pt;font-weight:700;color:#000;line-height:1.1;
@@ -4658,8 +4723,8 @@ function abrirVentanaEtiquetas(items, sz){
     .e-color{font-size:4.5pt;color:#555;line-height:1.2}
     .e-estilo{display:none}
     .e-precio{font-size:${(sz&&sz.precio)||10}pt;font-weight:900;color:#000;margin-top:0.5mm}
-    .e-tienda{font-size:${(sz&&sz.tienda)||4.5}pt;font-weight:700;letter-spacing:0.5pt;color:#fff}
-    .e-fecha{font-size:${((sz&&sz.tienda)||4.5)-0.5}pt;color:#ccc;font-weight:600}
+    .e-tienda{font-size:${(sz&&sz.tienda)||4.5}pt;font-weight:700;letter-spacing:0.5pt;color:#000}
+    .e-fecha{font-size:${((sz&&sz.tienda)||4.5)-0.5}pt;color:#333;font-weight:600}
 
     /* COLUMNA CENTRO: QR */
     .e-qr{
@@ -4672,12 +4737,14 @@ function abrirVentanaEtiquetas(items, sz){
       display:block;
     }
 
-    /* COLUMNA DERECHA: talla en cuadro negro */
+    /* COLUMNA DERECHA: talla — sin relleno, borde negro */
     .e-talla{
       grid-column:3;grid-row:2;
-      background:#000;color:#fff;
+      background:#fff;color:#000;
+      border-left:0.5mm solid #000;
       display:flex;align-items:center;justify-content:center;
       font-family:Arial,sans-serif;font-weight:900;line-height:1;
+      font-size:${(sz&&sz.talla)||11}pt;
     }
 
     /* ═══ IMPRESIÓN ═══ */
@@ -4693,7 +4760,7 @@ function abrirVentanaEtiquetas(items, sz){
         margin:0;
       }
       .etiq:last-child{page-break-after:avoid}
-      .e-talla{background:#000!important;color:#fff!important}
+      .e-talla{background:#fff!important;color:#000!important;border-left:0.5mm solid #000!important}
       @page{size:51mm 25mm;margin:0mm}
     }
   <\/style></head><body>
@@ -7559,10 +7626,12 @@ function cerrarModalCobro(){
 }
 
 function buildPOSButtons(){
-  // Build Tipo Transaccion buttons from catalog
   const tipoContainer = document.getElementById('pos-tipo-btns');
   if(!tipoContainer) return;
-  const tipoList = getCatalogList('tipoTransaccion');
+  let tipoList = getCatalogList('tipoTransaccion');
+  // Fallback defaults if catalog not loaded yet
+  if(!tipoList || !tipoList.length)
+    tipoList = ['💵 Venta|venta','📦 Separó|apartado','💳 Crédito|credito'];
   const currentTipo = document.getElementById('c-tipo-venta')?.value||'venta';
   tipoContainer.innerHTML = tipoList.map(entry=>{
     const [label, value] = entry.split('|');
@@ -7588,12 +7657,12 @@ function buildPOSButtons(){
 }
 
 function selTipoPos(tipo){
-  document.querySelectorAll('.pos-tipo-btn').forEach(t=>{
-    if(!btn) return;
-    const isOn = t===tipo;
+  document.querySelectorAll('.pos-tipo-btn').forEach(btn=>{
+    const isOn = btn.id==='ptb-'+tipo;
     btn.style.background = isOn ? 'var(--accent)' : 'var(--s2)';
     btn.style.color = isOn ? '#fff' : 'var(--muted)';
     btn.style.borderColor = isOn ? 'var(--accent)' : 'var(--border)';
+    btn.classList.toggle('on', isOn);
   });
   const tipoInput = document.getElementById('c-tipo-venta');
   if(tipoInput) tipoInput.value = tipo;
@@ -7603,8 +7672,7 @@ function selTipoPos(tipo){
 
 function selPagoPos(pago){
   document.querySelectorAll('.pos-pago-btn').forEach(btn=>{
-    if(!btn) return;
-    const isOn = p===pago;
+    const isOn = btn.id==='ppb-'+pago;
     btn.style.background = isOn ? 'var(--accent)' : 'var(--s2)';
     btn.style.color = isOn ? '#fff' : 'var(--muted)';
     btn.style.borderColor = isOn ? 'var(--accent)' : 'var(--border)';
