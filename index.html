@@ -1830,6 +1830,15 @@ select option{background:var(--s2)}
   <div class="mod-tabs" id="tabs-gastos"></div>
 </div>
 
+          <div class="flex-between" style="margin-bottom:14px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="date" id="g-desde" oninput="renderGastos()" style="width:145px">
+              <input type="date" id="g-hasta" oninput="renderGastos()" style="width:145px">
+            </div>
+            <button class="btn btn-accent" onclick="abrirModalGasto()" style="padding:10px 22px;font-size:15px;font-weight:800">
+              💸 Registrar Gasto
+            </button>
+          </div>
           <div class="stat-grid sg3" style="margin-bottom:16px">
             <div class="scard r"><div class="sl">Gastos Hoy</div><div class="sv r" id="g-hoy">$0</div></div>
             <div class="scard r"><div class="sl">Gastos Este Mes</div><div class="sv r" id="g-mes">$0</div></div>
@@ -6583,7 +6592,7 @@ function renderHist(){
       <td>—</td><td>—</td>
       <td><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
       <td>${fmtPago(v.pago)}</td>
-      <td class="mono" style="color:var(--cream)">${fmt(v.total)}</td>
+      <td class="mono" style="color:var(--cream)">${fmt(cobrado)}</td>
       <td class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
       <td class="mono" style="color:var(--green);font-weight:600">${fmt(cobrado)}</td>
     </tr>`;
@@ -6606,7 +6615,7 @@ function renderHist(){
       ${ii===0?`<td rowspan="${items.length}">${sucObj?`<span class="badge b-green" style="font-size:10px">${sucObj.nombre}</span>`:'—'}</td>
       <td rowspan="${items.length}"><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
       <td rowspan="${items.length}">${fmtPago(v.pago)}</td>
-      <td rowspan="${items.length}" class="mono" style="color:var(--cream)">${fmt(v.total)}</td>
+      <td rowspan="${items.length}" class="mono" style="color:var(--cream)">${fmt(cobrado)}</td>
       <td rowspan="${items.length}" class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
       <td rowspan="${items.length}" class="mono" style="color:var(--green);font-weight:600">${fmt(cobrado)}${isAC&&v.anticipo?`<div style="font-size:10px;color:var(--muted)">Ant: ${fmt(v.anticipo)}</div>`:''}</td>
       ${ii===0&&(usuarioActivo?.rol==='admin'||usuarioActivo?.rol==='manager')?`<td rowspan="${items.length}"><div style="display:flex;flex-direction:column;gap:3px"><button class="btn btn-ghost btn-xs" onclick="editarFechaVenta('${v.id}','${v.fecha}','${v.hora||''}')" title="Editar fecha">📅</button><button class="btn btn-red btn-xs" onclick="deleteVenta('${v.id}')" title="Eliminar">🗑️</button></div></td>`:`${ii===0?`<td rowspan="${items.length}"></td>`:''}`}`:''}
@@ -10102,9 +10111,12 @@ function goFromGrid(page){
 
 // ══════════════════ REPORTE SEMANAL ══════════════════
 function getCurrentWeekNum(){
-  const d = new Date();
-  const startYear = new Date(d.getFullYear(),0,1);
-  return Math.ceil(((d-startYear)/86400000+startYear.getDay()+1)/7);
+  // Use same algorithm as getNumSemana with T12:00:00 to avoid timezone issues
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const dd = String(today.getDate()).padStart(2,'0');
+  return parseInt(getNumSemana(yyyy+'-'+mm+'-'+dd))||1;
 }
 
 function cambiarAnioSemana(delta){
@@ -10129,9 +10141,9 @@ function initReporteSemanal(){
     }
   }
   const selYear = parseInt(elA?.value||currentYear);
-  const maxWeek = selYear===currentYear ? currentWeek : 52;
+  const maxWeek = selYear===currentYear ? Math.max(currentWeek, 1) : 52;
   const elN = document.getElementById('semana-num');
-  const activeWeek = parseInt(elN?.value||currentWeek);
+  const activeWeek = parseInt(elN?.value||currentWeek)||currentWeek;
 
   // Render calendar grid
   const cal = document.getElementById('semana-calendar');
@@ -10164,7 +10176,7 @@ function selWeek(w){
   const selYear = parseInt(elA?.value||new Date().getFullYear());
   const currentWeek = getCurrentWeekNum();
   const currentYear = new Date().getFullYear();
-  const maxWeek = selYear===currentYear ? currentWeek : 52;
+  const maxWeek = selYear===currentYear ? Math.max(currentWeek, 1) : 52;
   const cal = document.getElementById('semana-calendar');
   if(cal){
     cal.innerHTML = Array.from({length:maxWeek},(_,i)=>{
