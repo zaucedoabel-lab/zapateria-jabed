@@ -1138,11 +1138,11 @@ select option{background:var(--s2)}
                 <!-- Cabecera carrito -->
                 <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
                   <span style="font-size:14px;font-weight:700;color:var(--cream)">🛒 Carrito</span>
-                  <div style="display:flex;gap:5px">
+                  <div style="display:flex;gap:6px">
                     <button onclick="abrirModalDevolucion()"
-                      style="background:rgba(82,168,224,.15);color:var(--blue);border:1px solid var(--blue);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer"
+                      style="background:rgba(82,168,224,.2);color:var(--blue);border:2px solid var(--blue);border-radius:8px;padding:8px 13px;font-size:13px;font-weight:800;cursor:pointer"
                       title="Registrar devolución / cambio">↩ Devolución</button>
-                    <button onclick="clearCart()" style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">Vaciar</button>
+                    <button onclick="clearCart()" style="background:var(--red);color:#fff;border:none;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:700;cursor:pointer">🗑 Vaciar</button>
                   </div>
                 </div>
                 <!-- Lista artículos scrolleable -->
@@ -1608,7 +1608,7 @@ select option{background:var(--s2)}
 </div>
 
           <div class="flex-between" style="margin-bottom:14px">
-            <div></div>
+            <button class="btn btn-ghost" onclick="loadPromociones();toast('Promociones actualizadas ✓')">🔄 Actualizar</button>
             <button class="btn btn-accent" onclick="abrirModalPromocion()">🎁 Nueva Promoción</button>
           </div>
           <div class="stat-grid sg3" style="margin-bottom:14px">
@@ -2665,104 +2665,121 @@ select option{background:var(--s2)}
 
 
 <!-- Modal Devolución / Cambio -->
+<!-- Modal Devolución / Cambio -->
 <div class="mo" id="mo-devolucion">
-  <div class="md" style="max-width:620px">
-    <div class="mh">
-      <div class="mt">↩ Devolución / Cambio de Artículo</div>
+  <div class="md" style="max-width:640px;max-height:92vh;overflow-y:auto">
+    <div class="mh" style="position:sticky;top:0;z-index:10;background:var(--s2)">
+      <div class="mt">↩ Devolución / Cambio</div>
       <button class="xbtn" onclick="closeM('mo-devolucion')">✕</button>
     </div>
     <div class="mb">
 
-      <!-- Buscar venta original -->
-      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--cream);margin-bottom:10px">🔍 Buscar venta original del cliente</div>
+      <!-- 1. Buscar venta -->
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;color:var(--cream);margin-bottom:10px">🔍 Busca la venta original del cliente</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <div class="search-wrap" style="flex:1;min-width:180px">
             <span class="search-ico">👤</span>
-            <input type="text" id="dev-buscar-venta" placeholder="Nombre cliente, folio (#ABC123), código, fecha…" oninput="buscarVentaDevolucion()">
+            <input type="text" id="dev-buscar-venta" placeholder="Nombre, folio #ABC123, código de artículo…" oninput="buscarVentaDevolucion()">
           </div>
           <input type="date" id="dev-fecha-buscar" style="width:145px" oninput="buscarVentaDevolucion()">
         </div>
         <div id="dev-ventas-res" style="margin-top:8px;max-height:180px;overflow-y:auto"></div>
       </div>
 
-      <!-- Venta seleccionada -->
+      <!-- 2. Venta seleccionada (oculto hasta seleccionar) -->
       <div id="dev-venta-sel" style="display:none">
+
+        <!-- Info de la venta -->
         <div style="background:rgba(82,168,224,.08);border:1px solid rgba(82,168,224,.3);border-radius:10px;padding:12px;margin-bottom:12px">
           <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:8px">📋 Venta seleccionada</div>
           <div id="dev-venta-info"></div>
-          <!-- Artículos a devolver -->
-          <div style="margin-top:10px">
-            <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:6px">Selecciona el artículo que regresa el cliente:</div>
-            <div id="dev-items-lista"></div>
+          <div style="font-size:12px;font-weight:700;color:var(--cream);margin-top:10px;margin-bottom:6px">Selecciona el artículo que regresa:</div>
+          <div id="dev-items-lista"></div>
+        </div>
+
+        <!-- 3. Tipo de devolución (oculto hasta seleccionar artículo) -->
+        <div id="dev-tipo-section" style="display:none">
+
+          <div class="fg" style="margin-bottom:10px">
+            <label>Tipo de devolución *</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px" id="dev-tipo-btns">
+              <button data-tipo="cambio_talla" onclick="selDevTipo(this,'cambio_talla')"
+                style="flex:1;min-width:150px;padding:12px;border-radius:10px;border:2px solid var(--border);
+                background:var(--s2);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;line-height:1.4">
+                📏 Cambio de Talla<br><span style="font-size:10px;font-weight:400;color:var(--faint)">Mismo artículo, diferente talla</span>
+              </button>
+              <button data-tipo="cambio_articulo" onclick="selDevTipo(this,'cambio_articulo')"
+                style="flex:1;min-width:150px;padding:12px;border-radius:10px;border:2px solid var(--border);
+                background:var(--s2);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;line-height:1.4">
+                🔄 Cambio de Artículo<br><span style="font-size:10px;font-weight:400;color:var(--faint)">Regresa y lleva otro artículo</span>
+              </button>
+              <button data-tipo="defecto" onclick="selDevTipo(this,'defecto')"
+                style="flex:1;min-width:150px;padding:12px;border-radius:10px;border:2px solid var(--border);
+                background:var(--s2);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;line-height:1.4">
+                ⚠️ Defecto / Daño<br><span style="font-size:10px;font-weight:400;color:var(--faint)">Se despegó, dañado</span>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <!-- Tipo de devolución -->
-        <div class="fg">
-          <label>Tipo de devolución *</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px" id="dev-tipo-btns">
-            <button data-tipo="cambio_talla" onclick="selDevTipo(this,'cambio_talla')"
-              style="flex:1;min-width:140px;padding:12px;border-radius:10px;border:2px solid var(--border);
-              background:var(--s2);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer">
-              📏 Cambio de Talla<br><span style="font-size:10px;font-weight:400">Mismo artículo, diferente talla</span>
-            </button>
-            <button data-tipo="cambio_articulo" onclick="selDevTipo(this,'cambio_articulo')"
-              style="flex:1;min-width:140px;padding:12px;border-radius:10px;border:2px solid var(--border);
-              background:var(--s2);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer">
-              🔄 Cambio de Artículo<br><span style="font-size:10px;font-weight:400">Regresa y lleva otro + paga diferencia</span>
-            </button>
-            <button data-tipo="defecto" onclick="selDevTipo(this,'defecto')"
-              style="flex:1;min-width:140px;padding:12px;border-radius:10px;border:2px solid var(--border);
-              background:var(--s2);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer">
-              ⚠️ Defecto / Daño<br><span style="font-size:10px;font-weight:400">Se despegó, dañado, defecto de fábrica</span>
-            </button>
+          <!-- Config: Cambio de talla -->
+          <div id="dev-config-cambio-talla" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:10px">📏 Selecciona la nueva talla para el mismo artículo:</div>
+            <div id="dev-tallas-nuevas" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+            <div id="dev-talla-sin-stock" style="display:none;font-size:12px;color:var(--red);margin-top:8px;padding:8px;background:rgba(239,68,68,.08);border-radius:6px">
+              ⚠️ Sin otras tallas disponibles en stock para este artículo actualmente.
+            </div>
           </div>
-          <input type="hidden" id="dev-tipo" value="">
-        </div>
 
-        <!-- Config por tipo -->
-        <div id="dev-config-cambio-talla" style="display:none;background:var(--s2);border-radius:8px;padding:12px;margin-bottom:10px">
-          <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:8px">Nueva talla para el mismo artículo:</div>
-          <div id="dev-tallas-nuevas" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-        </div>
-
-        <div id="dev-config-cambio-art" style="display:none;background:var(--s2);border-radius:8px;padding:12px;margin-bottom:10px">
-          <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:8px">El artículo devuelto regresa al inventario. Agrega el nuevo artículo al carrito normal y cobra la diferencia.</div>
-          <div style="font-size:11px;color:var(--accent2)">✅ Al confirmar, el artículo devuelto regresa al inventario automáticamente.</div>
-        </div>
-
-        <div id="dev-config-defecto" style="display:none;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:12px;margin-bottom:10px">
-          <div class="fg" style="margin-bottom:8px">
-            <label>Descripción del defecto *</label>
-            <input type="text" id="dev-desc-defecto" placeholder="Ej: Se despegó la suela, daño en la cremallera…" style="font-size:13px">
+          <!-- Config: Cambio de artículo -->
+          <div id="dev-config-cambio-art" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:6px">🔄 Cambio de artículo</div>
+            <div style="font-size:12px;color:var(--accent2);margin-bottom:10px">✅ El artículo devuelto regresará al inventario. El nuevo artículo se agrega al carrito para cobrarle la diferencia.</div>
+            <div class="search-wrap" style="margin-bottom:6px">
+              <span class="search-ico">🔍</span>
+              <input type="text" id="dev-nuevo-art-q" placeholder="Escanea o busca el nuevo artículo que llevará el cliente…" oninput="buscarNuevoArticuloDev()">
+            </div>
+            <div id="dev-nuevo-art-res" style="max-height:140px;overflow-y:auto"></div>
+            <div id="dev-nuevo-art-sel" style="margin-top:6px"></div>
           </div>
-          <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:6px">¿Qué le ofreces al cliente?</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--s3);border-radius:8px;padding:8px 12px">
-              <input type="radio" name="dev-defecto-accion" value="reposicion" id="dev-rep" checked> Reposición (mismo artículo)
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--s3);border-radius:8px;padding:8px 12px">
-              <input type="radio" name="dev-defecto-accion" value="devolucion_dinero" id="dev-din"> Devolución de dinero
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--s3);border-radius:8px;padding:8px 12px">
-              <input type="radio" name="dev-defecto-accion" value="credito_tienda" id="dev-cred"> Crédito en tienda
-            </label>
-          </div>
-        </div>
 
-        <!-- Notas -->
-        <div class="fg">
-          <label>Notas (opcional)</label>
-          <input type="text" id="dev-notas" placeholder="Notas adicionales sobre la devolución…">
-        </div>
-      </div>
+          <!-- Config: Defecto / Daño -->
+          <div id="dev-config-defecto" style="display:none;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:10px">⚠️ Devolución por defecto o daño</div>
+            <div class="fg" style="margin-bottom:10px">
+              <label>Descripción del defecto *</label>
+              <input type="text" id="dev-desc-defecto" placeholder="Ej: Se despegó la suela, daño en cremallera…">
+            </div>
+            <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:8px">¿Qué le ofreces al cliente?</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--s3);border-radius:8px;padding:9px 12px;border:1px solid var(--border)">
+                <input type="radio" name="dev-defecto-accion" value="reposicion" checked> Reposición (mismo artículo)
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--s3);border-radius:8px;padding:9px 12px;border:1px solid var(--border)">
+                <input type="radio" name="dev-defecto-accion" value="devolucion_dinero"> Devolución de dinero
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--s3);border-radius:8px;padding:9px 12px;border:1px solid var(--border)">
+                <input type="radio" name="dev-defecto-accion" value="credito_tienda"> Crédito en tienda
+              </label>
+            </div>
+          </div>
+
+          <!-- Notas -->
+          <div class="fg">
+            <label>Notas (opcional)</label>
+            <input type="text" id="dev-notas" placeholder="Notas adicionales sobre la devolución…">
+          </div>
+
+        </div><!-- end dev-tipo-section -->
+      </div><!-- end dev-venta-sel -->
     </div>
     <div class="mf">
-      <button class="btn btn-ghost" onclick="closeM('mo-devolucion')">Cancelar</button>
-      <button class="btn btn-accent" id="dev-btn-confirmar" onclick="confirmarDevolucion()" style="display:none">✅ Confirmar Devolución</button>
+      <button class="btn btn-ghost" onclick="closeM('mo-devolucion')" style="padding:12px 20px;font-size:14px">Cancelar</button>
+      <button class="btn btn-accent" id="dev-btn-confirmar" onclick="confirmarDevolucion()" style="display:none;padding:12px 24px;font-size:15px;font-weight:800">✅ Confirmar Devolución</button>
     </div>
   </div>
+</div>
+
 </div>
 
 <!-- Modal Add Cart -->
@@ -2951,19 +2968,21 @@ select option{background:var(--s2)}
 
 <!-- Modal Promoción -->
 <div class="mo" id="mo-promo">
-  <div class="md xl" style="max-width:760px">
-    <div class="mh">
+  <div class="md xl" style="max-width:740px;max-height:92vh;overflow-y:auto">
+    <div class="mh" style="position:sticky;top:0;z-index:10;background:var(--s2)">
       <div class="mt" id="mp-promo-title">Nueva Promoción</div>
       <button class="xbtn" onclick="closeM('mo-promo')">✕</button>
     </div>
     <div class="mb">
 
       <!-- Nombre y tipo -->
-      <div class="fr fr2" style="margin-bottom:0">
-        <div class="fg"><label>Nombre de la Promoción *</label>
-          <input type="text" id="pr-nombre" placeholder="Ej: Promo Escolar 3+1 Gratis">
+      <div class="fr fr2" style="margin-bottom:12px">
+        <div class="fg" style="margin-bottom:0">
+          <label>Nombre de la Promoción *</label>
+          <input type="text" id="pr-nombre" placeholder="Ej: Promo 3XL Verano">
         </div>
-        <div class="fg"><label>Tipo</label>
+        <div class="fg" style="margin-bottom:0">
+          <label>Tipo</label>
           <select id="pr-tipo" onchange="onTipoPromoChange()">
             <option value="regalo_especifico">🎁 Artículo de regalo específico</option>
             <option value="2x1">2×1 (lleva 2, paga 1)</option>
@@ -2976,93 +2995,89 @@ select option{background:var(--s2)}
         </div>
       </div>
 
-      <!-- ═══ TIPO: REGALO ESPECÍFICO ═══ -->
-      <div id="pr-regalo-section" style="background:rgba(26,158,92,.06);border:1px solid rgba(26,158,92,.3);border-radius:12px;padding:16px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--accent2);margin-bottom:12px">🎁 Configuración de regalo específico</div>
+      <!-- ═══ SECCIÓN: REGALO ESPECÍFICO CON TALLA ═══ -->
+      <div id="pr-regalo-section" style="border:1px solid rgba(26,158,92,.35);border-radius:12px;padding:14px;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">🎁 Configuración de artículo + talla específica</div>
 
-        <!-- Cantidad mínima -->
-        <div class="fr fr2" style="margin-bottom:10px">
+        <!-- Cantidad mínima / regalo -->
+        <div class="fr fr2" style="margin-bottom:12px">
           <div class="fg" style="margin-bottom:0">
-            <label>Compra mínima de artículos gatillo *</label>
+            <label>El cliente debe comprar mínimo *</label>
             <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-              <input type="number" id="pr-gatillo-min" value="3" min="1"
-                style="width:80px;font-size:20px;font-weight:700;text-align:center;padding:8px">
-              <span style="font-size:13px;color:var(--muted)">piezas o más para activar el regalo</span>
+              <input type="number" id="pr-gatillo-min" value="3" min="1" style="width:70px;font-size:22px;font-weight:800;text-align:center;padding:8px;border-radius:8px;border:2px solid var(--border);background:var(--s3);color:var(--cream)">
+              <span style="font-size:13px;color:var(--muted)">piezas para activar el regalo</span>
             </div>
           </div>
           <div class="fg" style="margin-bottom:0">
             <label>Cantidad de piezas de regalo</label>
             <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-              <input type="number" id="pr-regalo-qty" value="1" min="1"
-                style="width:80px;font-size:20px;font-weight:700;text-align:center;padding:8px">
+              <input type="number" id="pr-regalo-qty" value="1" min="1" style="width:70px;font-size:22px;font-weight:800;text-align:center;padding:8px;border-radius:8px;border:2px solid var(--border);background:var(--s3);color:var(--cream)">
               <span style="font-size:13px;color:var(--muted)">pieza(s) gratis</span>
             </div>
           </div>
         </div>
 
-        <!-- Artículos gatillo -->
-        <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
-          <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:4px">
-            🛒 Artículos GATILLO — el cliente debe comprar de estos
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
-            Puedes especificar talla exacta. Si no seleccionas talla, <strong>cualquier talla</strong> del estilo cuenta.
-          </div>
-          <div class="search-wrap" style="margin-bottom:6px">
-            <span class="search-ico">🔍</span>
-            <input type="text" id="pr-gatillo-q" placeholder="Buscar estilo, código, descripción…" oninput="buscarProdGatillo()">
-          </div>
-          <div id="pr-gatillo-res" style="max-height:120px;overflow-y:auto;margin-bottom:8px"></div>
-          <!-- Talla selector para gatillo (aparece al seleccionar producto) -->
-          <div id="pr-gatillo-talla-pick" style="display:none;background:var(--s3);border-radius:8px;padding:10px;margin-bottom:8px">
-            <div style="font-size:11px;color:var(--accent2);font-weight:700;margin-bottom:6px">Selecciona la talla del gatillo (opcional):</div>
-            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px" id="pr-gatillo-tallas"></div>
-            <div style="display:flex;gap:8px">
-              <button onclick="confirmarGatilloConTalla()" class="btn btn-accent btn-sm">✅ Agregar con talla seleccionada</button>
-              <button onclick="confirmarGatilloSinTalla()" class="btn btn-ghost btn-sm">Cualquier talla</button>
+        <!-- ARTÍCULOS GATILLO -->
+        <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:3px">🛒 ARTÍCULOS GATILLO — los que el cliente debe comprar</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Busca el estilo → selecciona la talla exacta (o "Todas las tallas")</div>
+          <div style="display:flex;gap:8px;margin-bottom:6px">
+            <div class="search-wrap" style="flex:1">
+              <span class="search-ico">🔍</span>
+              <input type="text" id="pr-gatillo-q" placeholder="Escribe estilo o código…" oninput="buscarProdGatillo()">
             </div>
           </div>
-          <div id="pr-gatillo-lista" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px">
-            <span style="font-size:12px;color:var(--faint)" id="pr-gatillo-empty">Ningún artículo gatillo — aplica a TODOS</span>
+          <div id="pr-gatillo-res" style="max-height:130px;overflow-y:auto;margin-bottom:8px"></div>
+          <!-- Selector de talla gatillo (aparece al elegir producto) -->
+          <div id="pr-gtalla-picker" style="display:none;background:var(--s3);border:1px solid var(--accent);border-radius:8px;padding:10px;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:6px" id="pr-gtalla-titulo">Talla para el artículo:</div>
+            <div id="pr-gtalla-lista" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px"></div>
+            <div style="display:flex;gap:6px">
+              <button onclick="confirmarGatilloTalla()" class="btn btn-accent btn-sm">✅ Agregar con talla seleccionada</button>
+              <button onclick="confirmarGatilloTodasTallas()" class="btn btn-ghost btn-sm">📦 Todas las tallas</button>
+              <button onclick="cancelarGatilloTalla()" class="btn btn-ghost btn-sm" style="margin-left:auto;color:var(--red)">Cancelar</button>
+            </div>
+          </div>
+          <!-- Lista de gatillos seleccionados -->
+          <div id="pr-gatillo-lista" style="display:flex;flex-wrap:wrap;gap:6px;min-height:28px">
+            <span id="pr-gatillo-empty" style="font-size:12px;color:var(--faint)">Sin artículos gatillo — aplica a cualquier artículo</span>
           </div>
         </div>
 
-        <!-- Artículo regalo -->
-        <div style="background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.35);border-radius:10px;padding:12px">
-          <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:4px">
-            🎁 Artículo REGALO — este se va gratis al cliente
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
-            Especifica también la <strong>talla del regalo</strong> si aplica en talla específica.
-          </div>
+        <!-- ARTÍCULO REGALO -->
+        <div style="background:rgba(240,180,41,.07);border:1px solid rgba(240,180,41,.4);border-radius:10px;padding:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:3px">🎁 ARTÍCULO REGALO — el que se va gratis</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Busca el estilo → selecciona la talla exacta del regalo (o "Sin talla específica")</div>
           <div class="search-wrap" style="margin-bottom:6px">
             <span class="search-ico">🔍</span>
-            <input type="text" id="pr-regalo-q" placeholder="Buscar estilo del artículo regalo…" oninput="buscarProdRegalo()">
+            <input type="text" id="pr-regalo-q" placeholder="Escribe estilo o código del artículo regalo…" oninput="buscarProdRegalo()">
           </div>
-          <div id="pr-regalo-res" style="max-height:120px;overflow-y:auto;margin-bottom:8px"></div>
-          <!-- Talla selector para regalo -->
-          <div id="pr-regalo-talla-pick" style="display:none;background:rgba(240,180,41,.1);border-radius:8px;padding:10px;margin-bottom:8px">
-            <div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:6px">Selecciona la talla del artículo regalo (opcional):</div>
-            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px" id="pr-regalo-tallas"></div>
-            <div style="display:flex;gap:8px">
-              <button onclick="confirmarRegaloConTalla()" class="btn btn-gold btn-sm">✅ Confirmar con talla</button>
+          <div id="pr-regalo-res" style="max-height:130px;overflow-y:auto;margin-bottom:8px"></div>
+          <!-- Selector de talla regalo -->
+          <div id="pr-rtalla-picker" style="display:none;background:rgba(240,180,41,.1);border:1px solid var(--gold);border-radius:8px;padding:10px;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:6px" id="pr-rtalla-titulo">Talla para el artículo regalo:</div>
+            <div id="pr-rtalla-lista" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px"></div>
+            <div style="display:flex;gap:6px">
+              <button onclick="confirmarRegaloTalla()" class="btn btn-gold btn-sm" style="background:var(--gold);color:#000">✅ Confirmar talla</button>
               <button onclick="confirmarRegaloSinTalla()" class="btn btn-ghost btn-sm">Sin talla específica</button>
+              <button onclick="cancelarRegaloTalla()" class="btn btn-ghost btn-sm" style="margin-left:auto;color:var(--red)">Cancelar</button>
             </div>
           </div>
-          <div id="pr-regalo-sel" style="min-height:40px">
+          <!-- Regalo seleccionado -->
+          <div id="pr-regalo-sel">
             <span style="font-size:12px;color:var(--faint)">Ningún artículo regalo seleccionado</span>
           </div>
         </div>
 
-        <!-- Preview para cajera -->
-        <div id="pr-preview-cajera" style="display:none;background:var(--s1);border:2px solid var(--accent);border-radius:10px;padding:12px;margin-top:12px">
-          <div style="font-size:11px;color:var(--accent2);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">👀 Así verá la cajera la promoción:</div>
-          <div id="pr-preview-texto" style="font-size:14px;color:var(--cream);font-weight:600;line-height:1.5"></div>
+        <!-- Preview cajera -->
+        <div id="pr-preview-cajera" style="display:none;background:var(--s1);border:2px solid var(--accent);border-radius:10px;padding:12px;margin-top:10px">
+          <div style="font-size:10px;color:var(--accent2);font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">👀 Vista previa para cajera:</div>
+          <div id="pr-preview-texto" style="font-size:13px;color:var(--cream);font-weight:600;line-height:1.5"></div>
         </div>
       </div>
 
-      <!-- ═══ TIPO: OTROS (2x1, 3x2, etc.) ═══ -->
-      <div id="pr-tipo-config" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;display:none">
+      <!-- ═══ SECCIÓN: TIPOS CLÁSICOS ═══ -->
+      <div id="pr-tipo-config" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;display:none">
         <div id="pr-tipo-desc" style="font-size:13px;color:var(--muted);margin-bottom:8px"></div>
         <div class="fr fr2" id="pr-personalizado-fields" style="display:none">
           <div class="fg"><label>Compra N artículos</label><input type="number" id="pr-compra-n" value="3" min="1"></div>
@@ -3071,23 +3086,25 @@ select option{background:var(--s2)}
         <div id="pr-descuento-field" style="display:none">
           <div class="fg"><label>% de descuento</label><input type="number" id="pr-descuento-pct" value="20" min="1" max="100"></div>
         </div>
-        <div class="fg"><label>Descripción visible para cajero</label>
+        <div class="fg">
+          <label>Descripción para cajero</label>
           <input type="text" id="pr-desc-cajero" placeholder="Ej: Por cada 3 pares lleva 1 gratis">
         </div>
-        <!-- Productos que aplican (para tipos clásicos) -->
-        <div class="fg" style="margin-top:8px"><label>¿A qué productos aplica? (vacío = todos)</label>
+        <div class="fg" style="margin-top:8px">
+          <label>¿A qué productos aplica? (vacío = todos)</label>
           <input type="text" id="pr-prod-q" placeholder="Busca producto para agregar…" oninput="buscarProdPromo()">
           <div id="pr-prod-res" style="margin-top:4px;max-height:100px;overflow-y:auto"></div>
           <div id="pr-prod-lista" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px"></div>
         </div>
       </div>
 
-      <!-- Vigencia y estado — siempre visible -->
+      <!-- Vigencia y estado -->
       <div class="fr fr2">
         <div class="fg"><label>Vigencia Desde</label><input type="date" id="pr-desde"></div>
         <div class="fg"><label>Vigencia Hasta</label><input type="date" id="pr-hasta"></div>
       </div>
-      <div class="fg"><label>Estado</label>
+      <div class="fg">
+        <label>Estado</label>
         <select id="pr-activa">
           <option value="1">✅ Activa</option>
           <option value="0">⏸️ Pausada</option>
@@ -3100,6 +3117,7 @@ select option{background:var(--s2)}
     </div>
   </div>
 </div>
+
 
 <!-- Modal Usuario Interno -->
 <div class="mo" id="mo-usuario-interno">
@@ -6531,8 +6549,13 @@ function renderHist(){
 
   document.getElementById('h-empty').style.display=lista.length?'none':'block';
 
-  const pi={efectivo:'💵',tarjeta:'💳','tarjeta-bbva':'💳 BBVA','tarjeta-mp':'💳 MP',
-    transferencia:'📲',mixto:'🔀',monedero:'🪙',abono:'💰'};
+  // Build pago labels from catalog + hardcoded fallbacks
+  const pagoEntries=getCatalogList('formaPago')||[];
+  const pi={efectivo:'💵 Efectivo',tarjeta:'💳 Tarjeta','tarjeta-bbva':'💳 BBVA','tarjeta-mp':'💳 Mercado Pago',
+    transferencia:'📲 Transf.',mixto:'🔀 Mixto',monedero:'🪙 Monedero',abono:'💰 Abono',
+    '':'—','undefined':'—','null':'—'};
+  pagoEntries.forEach(e=>{const[lbl,val]=e.split('|');if(val&&lbl)pi[val]=lbl;});
+  const fmtPago=(pago)=>pi[pago||'']||(pago?'💳 '+pago:'—');
 
   document.getElementById('h-tbody').innerHTML=lista.map((v,idx)=>{
     const sucObj=sucursales.find(s=>s.id===v.sucursalId);
@@ -6559,7 +6582,7 @@ function renderHist(){
       <td>—</td><td>—</td><td>—</td><td>—</td>
       <td>—</td><td>—</td>
       <td><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
-      <td>${pi[v.pago]||v.pago}</td>
+      <td>${fmtPago(v.pago)}</td>
       <td class="mono" style="color:var(--cream)">${fmt(v.total)}</td>
       <td class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
       <td class="mono" style="color:var(--green);font-weight:600">${fmt(cobrado)}</td>
@@ -6582,7 +6605,7 @@ function renderHist(){
       <td class="mono" style="text-align:center">${item.qty||1}</td>
       ${ii===0?`<td rowspan="${items.length}">${sucObj?`<span class="badge b-green" style="font-size:10px">${sucObj.nombre}</span>`:'—'}</td>
       <td rowspan="${items.length}"><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
-      <td rowspan="${items.length}">${pi[v.pago]||v.pago}</td>
+      <td rowspan="${items.length}">${fmtPago(v.pago)}</td>
       <td rowspan="${items.length}" class="mono" style="color:var(--cream)">${fmt(v.total)}</td>
       <td rowspan="${items.length}" class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
       <td rowspan="${items.length}" class="mono" style="color:var(--green);font-weight:600">${fmt(cobrado)}${isAC&&v.anticipo?`<div style="font-size:10px;color:var(--muted)">Ant: ${fmt(v.anticipo)}</div>`:''}</td>
@@ -6591,21 +6614,25 @@ function renderHist(){
   }).join('');
 }
 
-// ══════════════════ TAREA 2: PROMOCIONES ══════════════════
+// ══════════════════ PROMOCIONES ══════════════════
 let promociones = [];
 let editPromoId = null;
-let promoProdsSeleccionados = []; // [{id, desc}] — for classic types
-let promoGatilloProds = [];       // [{id, desc, sku, barcode}] — for regalo_especifico
-let promoRegaloProd   = null;     // {id, desc, sku, barcode, precio} — the gift product
+let promoProdsSeleccionados = [];
+let promoGatilloProds   = []; // [{id,desc,sku,talla}]
+let promoRegaloProd     = null; // {id,desc,sku,precio,talla}
+let _tmpGatilloProd     = null; // pending talla selection
+let _tmpGatilloTalla    = '';
+let _tmpRegaloProd      = null;
+let _tmpRegaloTalla     = '';
 
 const TIPO_PROMO_DESC = {
-  'regalo_especifico': 'El cliente compra N piezas de artículos gatillo y recibe de regalo un artículo específico diferente.',
-  '2x1': 'El cliente lleva 2 artículos y paga solo 1. El más barato va GRATIS.',
-  '3x2': 'El cliente lleva 3 artículos y paga solo 2. El más barato va GRATIS.',
-  '3x1': 'El cliente lleva 3 artículos y paga solo 1. Los 2 más baratos van GRATIS.',
-  '4x3': 'El cliente lleva 4 artículos y paga solo 3. El más barato va GRATIS.',
-  'descuento_pct': 'Se aplica un % de descuento sobre los productos seleccionados.',
-  'personalizado': 'Define cuántos debe comprar y cuántos lleva gratis.'
+  'regalo_especifico':'El cliente compra N piezas de artículos gatillo y recibe un artículo regalo gratis.',
+  '2x1':'El cliente lleva 2, paga 1. El más barato va GRATIS.',
+  '3x2':'El cliente lleva 3, paga 2. El más barato va GRATIS.',
+  '3x1':'El cliente lleva 3, paga 1. Los 2 más baratos van GRATIS.',
+  '4x3':'El cliente lleva 4, paga 3. El más barato va GRATIS.',
+  'descuento_pct':'Se aplica un % de descuento sobre los productos.',
+  'personalizado':'Define cuántos debe comprar y cuántos lleva gratis.'
 };
 
 async function loadPromociones(){
@@ -6613,205 +6640,318 @@ async function loadPromociones(){
     const {onSnapshot}=window._fb;
     onSnapshot(col('promociones'),snap=>{
       promociones=snap.docs.map(d=>({id:d.id,...d.data()}));
-      renderPromociones();
+      if(document.getElementById('page-promociones')?.classList.contains('on')) renderPromociones();
+      if(carrito&&carrito.length) mostrarAlertaPromo();
     });
-  }catch(e){console.error(e);}
+  }catch(e){console.error('loadPromociones:',e);}
 }
 
 function renderPromociones(){
   const hoyStr=hoy();
   const activas=promociones.filter(p=>p.activa==='1'&&(!p.hasta||p.hasta>=hoyStr)).length;
-  const totalGratis=ventas.reduce((a,v)=>{
-    return a+(v.items||[]).filter(i=>i.esGratis).reduce((x,i)=>x+(i.qty||1),0);
-  },0);
-  const valorGratis=ventas.reduce((a,v)=>{
-    return a+(v.items||[]).filter(i=>i.esGratis).reduce((x,i)=>x+(i.price||0)*(i.qty||1),0);
-  },0);
-  if(document.getElementById('promo-stat-activas'))document.getElementById('promo-stat-activas').textContent=activas;
-  if(document.getElementById('promo-stat-gratis'))document.getElementById('promo-stat-gratis').textContent=totalGratis+' pzas';
-  if(document.getElementById('promo-stat-valor'))document.getElementById('promo-stat-valor').textContent=fmt(valorGratis);
-  document.getElementById('promo-empty').style.display=promociones.length?'none':'block';
+  const totalGratis=ventas.reduce((a,v)=>a+(v.items||[]).filter(i=>i.esGratis).reduce((s,i)=>s+(i.qty||1),0),0);
+  const valorGratis=ventas.reduce((a,v)=>a+(v.items||[]).filter(i=>i.esGratis).reduce((s,i)=>s+(i.precioOriginal||i.price||0)*(i.qty||1),0),0);
+  const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  se('promo-stat-activas',activas);
+  se('promo-stat-gratis',totalGratis+' pzas');
+  se('promo-stat-valor',fmt(valorGratis));
+
+  const tbody=document.getElementById('promo-tbody');
+  const empty=document.getElementById('promo-empty');
+  if(!tbody)return;
+  if(!promociones.length){
+    tbody.innerHTML='';
+    if(empty)empty.style.display='block';
+    return;
+  }
+  if(empty)empty.style.display='none';
+
   const tipoLabels={'regalo_especifico':'🎁 Regalo esp.','2x1':'2×1','3x2':'3×2','3x1':'3×1','4x3':'4×3','descuento_pct':'% Desc.','personalizado':'Custom'};
-  document.getElementById('promo-tbody').innerHTML=promociones.map(p=>{
+  tbody.innerHTML=promociones.map(p=>{
     const vigente=p.activa==='1'&&(!p.hasta||p.hasta>=hoyStr)&&(!p.desde||p.desde<=hoyStr);
-    const statBadge=vigente?'<span class="badge b-green">✅ Activa</span>':'<span class="badge b-red">⏸️ Pausada</span>';
-    const gratisCount=ventas.reduce((a,v)=>{
-      return a+(v.items||[]).filter(i=>i.promoId===p.id&&i.esGratis).reduce((x,i)=>x+(i.qty||1),0);
-    },0);
+    const badge=vigente?'<span class="badge b-green">✅ Activa</span>':'<span class="badge b-red">⏸️ Pausada</span>';
+    const gratis=ventas.reduce((a,v)=>a+(v.items||[]).filter(i=>i.promoId===p.id&&i.esGratis).reduce((s,i)=>s+(i.qty||1),0),0);
     const esRegalo=p.tipo==='regalo_especifico';
-    const prodsInfo=esRegalo
-      ? (p.gatilloProds&&p.gatilloProds.length
-          ? '🛒 '+p.gatilloProds.map(x=>x.sku||x.desc).join(', ')+' → 🎁 '+(p.regaloProd?.desc||'—')
-          : '🎁 '+( p.regaloProd?.desc||'—'))
-      : (p.prods&&p.prods.length>0?p.prods.map(x=>x.desc).join(', ').slice(0,40)+'…':'Todos los productos');
-    return`<tr>
-      <td style="font-weight:600;color:var(--cream)">${p.nombre}</td>
-      <td><span class="badge ${esRegalo?'b-gold':'b-purple'}">${tipoLabels[p.tipo]||p.tipo}</span></td>
-      <td style="font-size:12px;color:var(--muted);max-width:220px">${p.descCajero||p.nombre}</td>
-      <td style="font-size:12px;color:var(--muted)">${p.desde||'—'} al ${p.hasta||'siempre'}</td>
-      <td style="font-size:11px;color:var(--muted);max-width:200px">${prodsInfo}</td>
-      <td>${statBadge}</td>
-      <td class="mono" style="color:var(--green)">${gratisCount} pzas</td>
-      <td>
-        <div class="flex-row" style="gap:3px">
-          <button class="btn btn-ghost btn-xs" onclick="abrirModalPromocion('${p.id}')">✏️</button>
-          <button class="btn btn-red btn-xs" onclick="deletePromocion('${p.id}')">🗑️</button>
-        </div>
-      </td>
-    </tr>`;
+    let prodsInfo='';
+    if(esRegalo){
+      const gat=(p.gatilloProds||[]).map(g=>g.sku||g.desc).join(', ')||'Cualquier artículo';
+      const reg=p.regaloProd?(p.regaloProd.sku||p.regaloProd.desc)+(p.regaloProd.talla?' T:'+p.regaloProd.talla:''):'—';
+      prodsInfo='🛒 '+gat+' → 🎁 '+reg;
+    } else {
+      prodsInfo=(p.prods&&p.prods.length)?p.prods.map(x=>x.desc).join(', ').slice(0,50):'Todos';
+    }
+    return '<tr>'
+      +'<td style="font-weight:600;color:var(--cream)">'+p.nombre+'</td>'
+      +'<td><span class="badge '+(esRegalo?'b-gold':'b-purple')+'" style="font-size:10px">'+( tipoLabels[p.tipo]||p.tipo)+'</span></td>'
+      +'<td style="font-size:11px;color:var(--muted);max-width:200px">'+(p.descCajero||'—')+'</td>'
+      +'<td style="font-size:11px">'+(p.desde||'Siempre')+' → '+(p.hasta||'∞')+'</td>'
+      +'<td style="font-size:11px;color:var(--muted);max-width:200px">'+prodsInfo+'</td>'
+      +'<td>'+badge+'</td>'
+      +'<td class="mono" style="color:var(--green)">'+gratis+' pzas</td>'
+      +'<td><div class="flex-row" style="gap:3px">'
+      +'<button class="btn btn-ghost btn-xs" onclick="abrirModalPromocion(\''+p.id+'\')">✏️</button>'
+      +'<button class="btn btn-red btn-xs" onclick="deletePromocion(\''+p.id+'\')">🗑️</button>'
+      +'</div></td></tr>';
   }).join('');
 }
 
+// ── Modal open/close ──
 function abrirModalPromocion(id){
   editPromoId=id||null;
   promoProdsSeleccionados=[];
   promoGatilloProds=[];
   promoRegaloProd=null;
+  _tmpGatilloProd=null; _tmpGatilloTalla='';
+  _tmpRegaloProd=null;  _tmpRegaloTalla='';
+  const setVal=(elId,v)=>{const e=document.getElementById(elId);if(e)e.value=v;};
+  setVal('pr-nombre',''); setVal('pr-desde',''); setVal('pr-hasta','');
+  setVal('pr-gatillo-min',3); setVal('pr-regalo-qty',1);
+  setVal('pr-tipo','regalo_especifico'); setVal('pr-activa','1');
+  ['pr-gatillo-q','pr-regalo-q','pr-prod-q','pr-desc-cajero'].forEach(i=>setVal(i,''));
+  ['pr-gatillo-res','pr-regalo-res','pr-prod-res','pr-prod-lista'].forEach(i=>{const e=document.getElementById(i);if(e)e.innerHTML='';});
+  ['pr-gtalla-picker','pr-rtalla-picker'].forEach(i=>{const e=document.getElementById(i);if(e)e.style.display='none';});
   document.getElementById('mp-promo-title').textContent=id?'Editar Promoción':'Nueva Promoción';
-  ['pr-nombre','pr-desc-cajero','pr-desde','pr-hasta','pr-gatillo-q','pr-regalo-q'].forEach(f=>{
-    const el=document.getElementById(f);if(el)el.value='';
-  });
-  document.getElementById('pr-tipo').value='regalo_especifico';
-  document.getElementById('pr-activa').value='1';
-  document.getElementById('pr-gatillo-min').value=3;
-  document.getElementById('pr-regalo-qty').value=1;
+  if(id){
+    const p=promociones.find(x=>x.id===id);
+    if(p){
+      setVal('pr-nombre',p.nombre||'');
+      setVal('pr-tipo',p.tipo||'regalo_especifico');
+      setVal('pr-desde',p.desde||'');
+      setVal('pr-hasta',p.hasta||'');
+      setVal('pr-activa',p.activa||'1');
+      if(p.tipo==='regalo_especifico'){
+        setVal('pr-gatillo-min',p.gatilloMin||3);
+        setVal('pr-regalo-qty',p.regaloCantidad||1);
+        promoGatilloProds=JSON.parse(JSON.stringify(p.gatilloProds||[]));
+        promoRegaloProd=p.regaloProd?{...p.regaloProd}:null;
+      } else {
+        setVal('pr-desc-cajero',p.descCajero||'');
+        setVal('pr-compra-n',p.compraN||3);
+        setVal('pr-gratis-n',p.gratisN||1);
+        setVal('pr-descuento-pct',p.descuentoPct||20);
+        promoProdsSeleccionados=JSON.parse(JSON.stringify(p.prods||[]));
+        renderPromoProdLista();
+      }
+    }
+  }
   renderGatilloLista();
   renderRegaloSel();
   onTipoPromoChange();
-  if(id){
-    const p=promociones.find(x=>x.id===id);if(!p)return;
-    document.getElementById('pr-nombre').value=p.nombre||'';
-    document.getElementById('pr-tipo').value=p.tipo||'regalo_especifico';
-    document.getElementById('pr-activa').value=p.activa||'1';
-    document.getElementById('pr-desde').value=p.desde||'';
-    document.getElementById('pr-hasta').value=p.hasta||'';
-    if(p.tipo==='regalo_especifico'){
-      document.getElementById('pr-gatillo-min').value=p.gatilloMin||3;
-      document.getElementById('pr-regalo-qty').value=p.regaloCantidad||1;
-      promoGatilloProds=p.gatilloProds||[];
-      promoRegaloProd=p.regaloProd||null;
-      renderGatilloLista();
-      renderRegaloSel();
-    } else {
-      document.getElementById('pr-desc-cajero').value=p.descCajero||'';
-      if(p.tipo==='personalizado'){
-        document.getElementById('pr-compra-n').value=p.compraN||3;
-        document.getElementById('pr-gratis-n').value=p.gratisN||1;
-      }
-      if(p.tipo==='descuento_pct') document.getElementById('pr-descuento-pct').value=p.descuentoPct||20;
-      promoProdsSeleccionados=p.prods||[];
-      renderPromoProdLista();
-    }
-    onTipoPromoChange();
-  }
   actualizarPreviewCajera();
   openM('mo-promo');
 }
 
 function onTipoPromoChange(){
-  const tipo=document.getElementById('pr-tipo').value;
-  const esRegalo = tipo==='regalo_especifico';
-  // Show/hide sections
-  const regaloSec = document.getElementById('pr-regalo-section');
-  const tipoConfig = document.getElementById('pr-tipo-config');
-  if(regaloSec) regaloSec.style.display = esRegalo ? 'block' : 'none';
-  if(tipoConfig) tipoConfig.style.display = esRegalo ? 'none' : 'block';
+  const tipo=document.getElementById('pr-tipo')?.value||'regalo_especifico';
+  const esRegalo=tipo==='regalo_especifico';
+  const rs=document.getElementById('pr-regalo-section');
+  const tc=document.getElementById('pr-tipo-config');
+  if(rs) rs.style.display=esRegalo?'block':'none';
+  if(tc) tc.style.display=esRegalo?'none':'block';
   if(!esRegalo){
     const descEl=document.getElementById('pr-tipo-desc');
-    if(descEl)descEl.textContent=TIPO_PROMO_DESC[tipo]||'';
-    document.getElementById('pr-personalizado-fields').style.display=tipo==='personalizado'?'flex':'none';
-    document.getElementById('pr-descuento-field').style.display=tipo==='descuento_pct'?'block':'none';
+    if(descEl) descEl.textContent=TIPO_PROMO_DESC[tipo]||'';
+    const pf=document.getElementById('pr-personalizado-fields');
+    if(pf) pf.style.display=tipo==='personalizado'?'flex':'none';
+    const df=document.getElementById('pr-descuento-field');
+    if(df) df.style.display=tipo==='descuento_pct'?'block':'none';
   }
-  actualizarPreviewCajera();
 }
 
-// ── Búsqueda para artículos GATILLO ──
+// ── Gatillo search & talla picker ──
 function buscarProdGatillo(){
   const q=(document.getElementById('pr-gatillo-q')?.value||'').toLowerCase();
   const res=document.getElementById('pr-gatillo-res');
-  if(!res||!q){if(res)res.innerHTML='';return;}
+  if(!res){return;}
+  if(!q){res.innerHTML='';return;}
   const lista=productos.filter(p=>
     (p.desc||'').toLowerCase().includes(q)||
     (p.barcode||'').toLowerCase().includes(q)||
     (p.sku||'').toLowerCase().includes(q)
   ).slice(0,8);
-  res.innerHTML=lista.map(p=>`
-    <div onclick="agregarGatillo('${p.id}','${(p.desc||'').replace(/'/g,"\\'")}','${p.barcode||p.sku||''}')"
-      style="padding:7px 10px;background:var(--s2);border:1px solid var(--border);border-radius:7px;
-      cursor:pointer;margin-bottom:3px;display:flex;justify-content:space-between;align-items:center"
-      onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
-      <div>
-        <div style="font-size:12px;font-weight:600;color:var(--cream)">${p.desc}</div>
-        <div style="font-size:10px;color:var(--muted)">${p.barcode||p.sku||'—'} · ${p.cat||'—'}</div>
-      </div>
-      <span class="badge b-green" style="font-size:10px">+ Gatillo</span>
-    </div>`).join('');
+  res.innerHTML=lista.map(p=>{
+    const sku=p.barcode||p.sku||'';
+    return '<div onclick="elegirGatillo(\''+p.id+'\')"'
+      +' style="padding:7px 10px;background:var(--s2);border:1px solid var(--border);border-radius:7px;'
+      +'cursor:pointer;margin-bottom:3px;display:flex;justify-content:space-between;align-items:center"'
+      +' onmouseover="this.style.background=\'var(--s3)\'" onmouseout="this.style.background=\'var(--s2)\'">'
+      +'<div><div style="font-size:12px;font-weight:600;color:var(--cream)">'+p.desc+'</div>'
+      +'<div style="font-size:10px;color:var(--muted)">'+sku+' · '+(p.cat||'—')+'</div></div>'
+      +'<span class="badge b-green" style="font-size:10px">+ Agregar</span></div>';
+  }).join('');
 }
 
-function agregarGatillo(id,desc,sku){
-  if(promoGatilloProds.find(x=>x.id===id)){toast('Ya está en la lista de gatillo','err');return;}
-  promoGatilloProds.push({id,desc,sku});
-  renderGatilloLista();
+function elegirGatillo(prodId){
+  const p=productos.find(x=>x.id===prodId);
+  if(!p)return;
+  _tmpGatilloProd={id:p.id,desc:p.desc,sku:p.barcode||p.sku||''};
+  _tmpGatilloTalla='';
+  document.getElementById('pr-gatillo-q').value=p.desc;
+  document.getElementById('pr-gatillo-res').innerHTML='';
+  // Build talla buttons
+  const tallas=Object.entries(p.stock||{})
+    .filter(([,v])=>Number(v)>0)
+    .sort(([a],[b])=>{ const na=parseFloat(a),nb=parseFloat(b); return (!isNaN(na)&&!isNaN(nb))?na-nb:a.localeCompare(b); });
+  const tituloEl=document.getElementById('pr-gtalla-titulo');
+  if(tituloEl) tituloEl.textContent='Talla para "'+p.desc+'":';
+  const listaEl=document.getElementById('pr-gtalla-lista');
+  if(listaEl){
+    listaEl.innerHTML=tallas.length
+      ? tallas.map(([t,s])=>
+          '<button onclick="selTallaGatillo(\''+t+'\')" data-t="'+t+'"'
+          +' style="min-width:48px;padding:6px 10px;border-radius:7px;border:2px solid var(--border);'
+          +'background:var(--s2);color:var(--cream);font-weight:700;font-size:13px;cursor:pointer">'
+          +t+'<br><span style="font-size:9px;color:var(--muted);font-weight:400">'+s+'pz</span></button>'
+        ).join('')
+      : '<span style="font-size:11px;color:var(--muted)">Sin stock registrado</span>';
+  }
+  const picker=document.getElementById('pr-gtalla-picker');
+  if(picker) picker.style.display='block';
+}
+
+function selTallaGatillo(t){
+  _tmpGatilloTalla=t;
+  document.querySelectorAll('#pr-gtalla-lista button').forEach(b=>{
+    const sel=b.dataset.t===t;
+    b.style.background=sel?'var(--accent)':'var(--s2)';
+    b.style.color=sel?'#fff':'var(--cream)';
+    b.style.borderColor=sel?'var(--accent)':'var(--border)';
+  });
+}
+
+function confirmarGatilloTalla(){
+  if(!_tmpGatilloProd){toast('Selecciona un artículo primero','err');return;}
+  if(!_tmpGatilloTalla){toast('Selecciona una talla','err');return;}
+  promoGatilloProds.push({..._tmpGatilloProd, talla:_tmpGatilloTalla});
+  _limpiarGatilloTmp();
+}
+
+function confirmarGatilloTodasTallas(){
+  if(!_tmpGatilloProd){toast('Selecciona un artículo primero','err');return;}
+  promoGatilloProds.push({..._tmpGatilloProd, talla:''});
+  _limpiarGatilloTmp();
+}
+
+function cancelarGatilloTalla(){
+  _limpiarGatilloTmp();
+}
+
+function _limpiarGatilloTmp(){
+  _tmpGatilloProd=null; _tmpGatilloTalla='';
+  document.getElementById('pr-gtalla-picker').style.display='none';
   document.getElementById('pr-gatillo-q').value='';
   document.getElementById('pr-gatillo-res').innerHTML='';
+  renderGatilloLista();
   actualizarPreviewCajera();
 }
 
 function renderGatilloLista(){
   const el=document.getElementById('pr-gatillo-lista');
-  const empty=document.getElementById('pr-gatillo-empty');
+  const em=document.getElementById('pr-gatillo-empty');
   if(!el)return;
   if(!promoGatilloProds.length){
-    el.innerHTML='';
-    if(empty)empty.style.display='inline';
-    return;
+    el.innerHTML=''; if(em)em.style.display='inline'; return;
   }
-  if(empty)empty.style.display='none';
-  el.innerHTML=promoGatilloProds.map((p,i)=>`
-    <div style="display:flex;align-items:center;gap:6px;background:var(--s3);
-      border:1px solid rgba(26,158,92,.4);border-radius:8px;padding:6px 10px">
-      <div>
-        <div style="font-size:12px;font-weight:700;color:var(--cream)">${p.desc}</div>
-        <div style="display:flex;gap:4px;margin-top:2px">
-          <span style="font-size:10px;color:var(--muted);font-family:var(--mono)">${p.sku||'—'}</span>
-          ${p.talla
-            ? `<span class="badge b-accent" style="font-size:10px">T:${p.talla}</span>`
-            : `<span class="badge b-gray" style="font-size:10px">Cualquier talla</span>`}
-        </div>
-      </div>
-      <button onclick="promoGatilloProds.splice(${i},1);renderGatilloLista();actualizarPreviewCajera()"
-        style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px;margin-left:4px">✕</button>
-    </div>`).join('');
+  if(em)em.style.display='none';
+  el.innerHTML=promoGatilloProds.map((g,i)=>
+    '<div style="display:inline-flex;align-items:center;gap:6px;background:var(--s3);'
+    +'border:1px solid rgba(26,158,92,.4);border-radius:8px;padding:5px 10px">'
+    +'<div><div style="font-size:12px;font-weight:700;color:var(--cream)">'+g.desc+'</div>'
+    +'<div style="display:flex;gap:4px;margin-top:2px">'
+    +'<span style="font-size:10px;color:var(--muted)">'+g.sku+'</span>'
+    +(g.talla
+      ? '<span class="badge b-accent" style="font-size:10px">T: '+g.talla+'</span>'
+      : '<span class="badge b-gray" style="font-size:10px">Todas las tallas</span>')
+    +'</div></div>'
+    +'<button onclick="promoGatilloProds.splice('+i+',1);renderGatilloLista();actualizarPreviewCajera()"'
+    +' style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px">✕</button>'
+    +'</div>'
+  ).join('');
 }
 
-// ── Búsqueda para artículo REGALO ──
+// ── Regalo search & talla picker ──
 function buscarProdRegalo(){
   const q=(document.getElementById('pr-regalo-q')?.value||'').toLowerCase();
   const res=document.getElementById('pr-regalo-res');
-  if(!res||!q){if(res)res.innerHTML='';return;}
+  if(!res){return;}
+  if(!q){res.innerHTML='';return;}
   const lista=productos.filter(p=>
     (p.desc||'').toLowerCase().includes(q)||
     (p.barcode||'').toLowerCase().includes(q)||
     (p.sku||'').toLowerCase().includes(q)
   ).slice(0,6);
-  res.innerHTML=lista.map(p=>`
-    <div onclick="seleccionarRegalo('${p.id}','${(p.desc||'').replace(/'/g,"\\'")}','${p.barcode||p.sku||''}',${p.precio||0})"
-      style="padding:7px 10px;background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.3);border-radius:7px;
-      cursor:pointer;margin-bottom:3px;display:flex;justify-content:space-between;align-items:center"
-      onmouseover="this.style.background='rgba(240,180,41,.15)'" onmouseout="this.style.background='rgba(240,180,41,.08)'">
-      <div>
-        <div style="font-size:12px;font-weight:600;color:var(--cream)">${p.desc}</div>
-        <div style="font-size:10px;color:var(--muted)">${p.barcode||p.sku||'—'} · Precio: $${p.precio||0}</div>
-      </div>
-      <span class="badge b-gold" style="font-size:10px">🎁 Elegir</span>
-    </div>`).join('');
+  res.innerHTML=lista.map(p=>{
+    const sku=p.barcode||p.sku||'';
+    return '<div onclick="elegirRegalo(\''+p.id+'\')"'
+      +' style="padding:7px 10px;background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.3);border-radius:7px;'
+      +'cursor:pointer;margin-bottom:3px;display:flex;justify-content:space-between;align-items:center"'
+      +' onmouseover="this.style.background=\'rgba(240,180,41,.15)\'" onmouseout="this.style.background=\'rgba(240,180,41,.08)\'">'
+      +'<div><div style="font-size:12px;font-weight:600;color:var(--cream)">'+p.desc+'</div>'
+      +'<div style="font-size:10px;color:var(--muted)">'+sku+' · $'+(p.precio||0)+'</div></div>'
+      +'<span class="badge b-gold" style="font-size:10px">🎁 Elegir</span></div>';
+  }).join('');
 }
 
-function seleccionarRegalo(id,desc,sku,precio){
-  promoRegaloProd={id,desc,sku,precio};
-  renderRegaloSel();
+function elegirRegalo(prodId){
+  const p=productos.find(x=>x.id===prodId);
+  if(!p)return;
+  _tmpRegaloProd={id:p.id,desc:p.desc,sku:p.barcode||p.sku||'',precio:p.precio||0};
+  _tmpRegaloTalla='';
+  document.getElementById('pr-regalo-q').value=p.desc;
+  document.getElementById('pr-regalo-res').innerHTML='';
+  const tallas=Object.entries(p.stock||{})
+    .filter(([,v])=>Number(v)>0)
+    .sort(([a],[b])=>{ const na=parseFloat(a),nb=parseFloat(b); return (!isNaN(na)&&!isNaN(nb))?na-nb:a.localeCompare(b); });
+  const tituloEl=document.getElementById('pr-rtalla-titulo');
+  if(tituloEl) tituloEl.textContent='Talla del regalo "'+p.desc+'":';
+  const listaEl=document.getElementById('pr-rtalla-lista');
+  if(listaEl){
+    listaEl.innerHTML=tallas.length
+      ? tallas.map(([t,s])=>
+          '<button onclick="selTallaRegalo(\''+t+'\')" data-t="'+t+'"'
+          +' style="min-width:48px;padding:6px 10px;border-radius:7px;border:2px solid rgba(240,180,41,.4);'
+          +'background:rgba(240,180,41,.1);color:var(--cream);font-weight:700;font-size:13px;cursor:pointer">'
+          +t+'<br><span style="font-size:9px;color:var(--muted);font-weight:400">'+s+'pz</span></button>'
+        ).join('')
+      : '<span style="font-size:11px;color:var(--muted)">Sin stock registrado</span>';
+  }
+  const picker=document.getElementById('pr-rtalla-picker');
+  if(picker) picker.style.display='block';
+}
+
+function selTallaRegalo(t){
+  _tmpRegaloTalla=t;
+  document.querySelectorAll('#pr-rtalla-lista button').forEach(b=>{
+    const sel=b.dataset.t===t;
+    b.style.background=sel?'var(--gold)':'rgba(240,180,41,.1)';
+    b.style.color=sel?'#000':'var(--cream)';
+    b.style.borderColor=sel?'var(--gold)':'rgba(240,180,41,.4)';
+  });
+}
+
+function confirmarRegaloTalla(){
+  if(!_tmpRegaloProd){toast('Selecciona un artículo regalo primero','err');return;}
+  if(!_tmpRegaloTalla){toast('Selecciona la talla del regalo','err');return;}
+  promoRegaloProd={..._tmpRegaloProd, talla:_tmpRegaloTalla};
+  _limpiarRegaloTmp();
+}
+
+function confirmarRegaloSinTalla(){
+  if(!_tmpRegaloProd){toast('Selecciona un artículo regalo primero','err');return;}
+  promoRegaloProd={..._tmpRegaloProd, talla:''};
+  _limpiarRegaloTmp();
+}
+
+function cancelarRegaloTalla(){
+  _limpiarRegaloTmp();
+}
+
+function _limpiarRegaloTmp(){
+  _tmpRegaloProd=null; _tmpRegaloTalla='';
+  document.getElementById('pr-rtalla-picker').style.display='none';
   document.getElementById('pr-regalo-q').value='';
   document.getElementById('pr-regalo-res').innerHTML='';
+  renderRegaloSel();
   actualizarPreviewCajera();
 }
 
@@ -6822,22 +6962,18 @@ function renderRegaloSel(){
     el.innerHTML='<span style="font-size:12px;color:var(--faint)">Ningún artículo regalo seleccionado</span>';
     return;
   }
-  const tallaLabel = promoRegaloProd.talla
-    ? `<span class="badge b-gold" style="font-size:11px;margin-left:6px">Talla: ${promoRegaloProd.talla}</span>`
-    : `<span class="badge b-gray" style="font-size:11px;margin-left:6px">Cualquier talla</span>`;
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;
-      background:rgba(240,180,41,.12);border:2px solid var(--gold);border-radius:10px;padding:10px 14px">
-      <div>
-        <div style="font-size:14px;font-weight:700;color:var(--gold)">🎁 ${promoRegaloProd.desc}</div>
-        <div style="display:flex;align-items:center;margin-top:3px">
-          <span style="font-size:11px;color:var(--muted);font-family:var(--mono)">${promoRegaloProd.sku||'—'} · $${promoRegaloProd.precio||0}</span>
-          ${tallaLabel}
-        </div>
-      </div>
-      <button onclick="promoRegaloProd=null;document.getElementById('pr-regalo-talla-pick').style.display='none';renderRegaloSel();actualizarPreviewCajera()"
-        style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0 4px">✕</button>
-    </div>`;
+  const tallaLabel=promoRegaloProd.talla
+    ? '<span class="badge b-gold" style="font-size:11px;margin-left:6px">Talla: '+promoRegaloProd.talla+'</span>'
+    : '<span class="badge b-gray" style="font-size:11px;margin-left:6px">Sin talla específica</span>';
+  el.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;'
+    +'background:rgba(240,180,41,.12);border:2px solid var(--gold);border-radius:10px;padding:10px 14px">'
+    +'<div>'
+    +'<div style="font-size:14px;font-weight:700;color:var(--gold)">🎁 '+promoRegaloProd.desc+'</div>'
+    +'<div style="display:flex;align-items:center;margin-top:3px">'
+    +'<span style="font-size:11px;color:var(--muted)">'+promoRegaloProd.sku+' · $'+promoRegaloProd.precio+'</span>'
+    +tallaLabel+'</div></div>'
+    +'<button onclick="promoRegaloProd=null;document.getElementById(\'pr-rtalla-picker\').style.display=\'none\';renderRegaloSel();actualizarPreviewCajera()"'
+    +' style="background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;padding:0 4px">✕</button></div>';
 }
 
 function actualizarPreviewCajera(){
@@ -6846,37 +6982,38 @@ function actualizarPreviewCajera(){
   if(!previewEl||!textoEl)return;
   const tipo=document.getElementById('pr-tipo')?.value||'';
   if(tipo!=='regalo_especifico'){previewEl.style.display='none';return;}
+  if(!promoRegaloProd&&!promoGatilloProds.length){previewEl.style.display='none';return;}
+  previewEl.style.display='block';
   const min=document.getElementById('pr-gatillo-min')?.value||3;
   const qty=document.getElementById('pr-regalo-qty')?.value||1;
   const nombre=document.getElementById('pr-nombre')?.value||'Promoción';
-  if(!promoRegaloProd&&!promoGatilloProds.length){previewEl.style.display='none';return;}
-  previewEl.style.display='block';
-  const gatilloTexto=promoGatilloProds.length
-    ? promoGatilloProds.map(p=>`<strong>${p.sku||p.desc}${p.talla?' T:'+p.talla:' (cualquier talla)'}</strong>`).join(' o ')
+  const gatText=promoGatilloProds.length
+    ? promoGatilloProds.map(g=>'<strong>'+(g.sku||g.desc)+(g.talla?' T:'+g.talla:' (cualquier talla)')+'</strong>').join(' o ')
     : '<strong>cualquier artículo</strong>';
-  const regaloTexto=promoRegaloProd
-    ? `<strong style="color:var(--gold)">${promoRegaloProd.desc} (${promoRegaloProd.sku||'—'})${promoRegaloProd.talla?' T:'+promoRegaloProd.talla:''}</strong>`
-    : '<strong style="color:var(--gold)">artículo regalo</strong>';
-  textoEl.innerHTML=`🎁 <strong>${nombre}</strong><br>
-    Por comprar <strong>${min} o más piezas</strong> de: ${gatilloTexto}<br>
-    → El cliente se lleva <strong>${qty}</strong> pieza(s) de: ${regaloTexto} ¡GRATIS!`;
+  const regText=promoRegaloProd
+    ? '<strong style="color:var(--gold)">'+promoRegaloProd.desc+(promoRegaloProd.talla?' T:'+promoRegaloProd.talla:'')+'</strong>'
+    : '<strong style="color:var(--gold)">(selecciona artículo regalo)</strong>';
+  textoEl.innerHTML='🎁 <strong>'+nombre+'</strong><br>'
+    +'Compra <strong>'+min+'+</strong> piezas de: '+gatText+'<br>'
+    +'→ '+qty+' pieza(s) de '+regText+' <strong>¡GRATIS!</strong>';
 }
 
-// ── Búsqueda clásica (para tipos no-regalo) ──
+// ── Classic promo product search ──
 function buscarProdPromo(){
   const q=(document.getElementById('pr-prod-q')?.value||'').toLowerCase();
-  const res=document.getElementById('pr-prod-res');if(!res||!q){if(res)res.innerHTML='';return;}
+  const res=document.getElementById('pr-prod-res');
+  if(!res||!q){if(res)res.innerHTML='';return;}
   const lista=productos.filter(p=>(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)).slice(0,6);
-  res.innerHTML=lista.map(p=>`
-    <div onclick="agregarProdPromo('${p.id}','${(p.desc||'').replace(/'/g,"\\'")}','${p.barcode||p.sku||''}')"
-     style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:7px;cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--cream)"
-     onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
-      ${p.desc} <span style="color:var(--muted)">${p.barcode||p.sku||''}</span>
-    </div>`).join('');
+  res.innerHTML=lista.map(p=>
+    '<div onclick="agregarProdPromo(\''+p.id+'\',\''+p.desc.replace(/'/g,"\\'")+'\',' +'\''+( p.barcode||p.sku||'')+'\') "'
+    +' style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:7px;cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--cream)"'
+    +' onmouseover="this.style.background=\'var(--s3)\'" onmouseout="this.style.background=\'var(--s2)\'">'
+    +p.desc+' <span style="color:var(--muted)">'+(p.barcode||p.sku||'')+'</span></div>'
+  ).join('');
 }
 
 function agregarProdPromo(id,desc,sku){
-  if(promoProdsSeleccionados.find(x=>x.id===id)) return;
+  if(promoProdsSeleccionados.find(x=>x.id===id))return;
   promoProdsSeleccionados.push({id,desc,sku});
   renderPromoProdLista();
   document.getElementById('pr-prod-q').value='';
@@ -6885,47 +7022,43 @@ function agregarProdPromo(id,desc,sku){
 
 function renderPromoProdLista(){
   const el=document.getElementById('pr-prod-lista');if(!el)return;
-  el.innerHTML=promoProdsSeleccionados.map((p,i)=>`
-    <span style="display:inline-flex;align-items:center;gap:4px;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--cream)">
-      ${p.desc}
-      <button onclick="promoProdsSeleccionados.splice(${i},1);renderPromoProdLista()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;line-height:1">✕</button>
-    </span>`).join('');
+  el.innerHTML=promoProdsSeleccionados.map((p,i)=>
+    '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--cream)">'
+    +p.desc
+    +'<button onclick="promoProdsSeleccionados.splice('+i+',1);renderPromoProdLista()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;line-height:1">✕</button>'
+    +'</span>'
+  ).join('');
 }
 
+// ── Save ──
 async function savePromocion(){
-  const nombre=document.getElementById('pr-nombre').value.trim();
+  const nombre=(document.getElementById('pr-nombre')?.value||'').trim();
   if(!nombre){toast('Ingresa el nombre de la promoción','err');return;}
-  const tipo=document.getElementById('pr-tipo').value;
-
-  // Validation only for regalo_especifico
-  if(tipo==='regalo_especifico' && !promoRegaloProd){
-    toast('⚠️ Selecciona el artículo regalo (sección dorada)','err');
-    return;
+  const tipo=document.getElementById('pr-tipo')?.value||'regalo_especifico';
+  if(tipo==='regalo_especifico'&&!promoRegaloProd){
+    toast('⚠️ Selecciona el artículo regalo','err');return;
   }
-
-  let data={
-    nombre, tipo,
-    desde:document.getElementById('pr-desde').value||'',
-    hasta:document.getElementById('pr-hasta').value||'',
-    activa:document.getElementById('pr-activa').value||'1',
+  let data={nombre,tipo,
+    desde:document.getElementById('pr-desde')?.value||'',
+    hasta:document.getElementById('pr-hasta')?.value||'',
+    activa:document.getElementById('pr-activa')?.value||'1',
     updatedAt:new Date().toISOString()
   };
-
   if(tipo==='regalo_especifico'){
-    const min=parseInt(document.getElementById('pr-gatillo-min').value)||3;
-    const regaloCantidad=parseInt(document.getElementById('pr-regalo-qty').value)||1;
+    const min=parseInt(document.getElementById('pr-gatillo-min')?.value)||3;
+    const regaloCantidad=parseInt(document.getElementById('pr-regalo-qty')?.value)||1;
     data.gatilloMin=min;
     data.regaloCantidad=regaloCantidad;
     data.gatilloProds=promoGatilloProds.map(g=>({id:g.id,desc:g.desc,sku:g.sku,talla:g.talla||''}));
-    data.regaloProd={...promoRegaloProd, talla:promoRegaloProd.talla||''};
-    const gatilloNombres=promoGatilloProds.length
-      ? promoGatilloProds.map(p=>p.sku||p.desc).join(' o ')
+    data.regaloProd={...promoRegaloProd,talla:promoRegaloProd.talla||''};
+    const gNom=promoGatilloProds.length
+      ? promoGatilloProds.map(g=>(g.sku||g.desc)+(g.talla?' T:'+g.talla:'')).join(' o ')
       : 'cualquier artículo';
-    data.descCajero='Compra '+min+'+ pzas de: '+gatilloNombres+' → lleva '+regaloCantidad+' pza de '+promoRegaloProd.desc+' GRATIS';
+    data.descCajero='Compra '+min+'+ pzas de: '+gNom+' → lleva '+regaloCantidad+' pza de '
+      +promoRegaloProd.desc+(promoRegaloProd.talla?' T:'+promoRegaloProd.talla:'')+' GRATIS';
     data.prods=[];
   } else {
-    const descEl=document.getElementById('pr-desc-cajero');
-    data.descCajero=descEl?descEl.value.trim():'';
+    data.descCajero=document.getElementById('pr-desc-cajero')?.value.trim()||'';
     data.prods=[...promoProdsSeleccionados];
     data.compraN=tipo==='personalizado'?parseInt(document.getElementById('pr-compra-n')?.value)||3:null;
     data.gratisN=tipo==='personalizado'?parseInt(document.getElementById('pr-gratis-n')?.value)||1:null;
@@ -6933,78 +7066,70 @@ async function savePromocion(){
     data.gatilloProds=[];
     data.regaloProd=null;
   }
-
   try{
     if(!window._fb){toast('Firebase no conectado','err');return;}
     if(editPromoId){
       await window._fb.setDoc(docRef('promociones',editPromoId),data,{merge:true});
-      toast('Promoción actualizada ✓');
-    }else{
+      const idx=promociones.findIndex(x=>x.id===editPromoId);
+      if(idx>=0) promociones[idx]={...data,id:editPromoId};
+    } else {
       data.createdAt=new Date().toISOString();
       const ref=await window._fb.addDoc(col('promociones'),data);
-      // Add to local array immediately (listener will also update)
-      promociones.push({...data, id:ref.id});
+      promociones.push({...data,id:ref.id});
     }
     closeM('mo-promo');
     toast('Promoción guardada ✓');
     editPromoId=null;
-    promoGatilloProds=[];
-    promoRegaloProd=null;
-    promoProdsSeleccionados=[];
+    promoGatilloProds=[]; promoRegaloProd=null; promoProdsSeleccionados=[];
     renderPromociones();
   }catch(e){
     console.error('savePromocion error:',e);
-    toast('Error al guardar: '+e.message,'err');
+    toast('Error al guardar: '+(e.message||String(e)),'err');
   }
 }
 
 async function deletePromocion(id){
   if(!confirm('¿Eliminar esta promoción?'))return;
   await window._fb.deleteDoc(docRef('promociones',id));
+  promociones=promociones.filter(x=>x.id!==id);
+  renderPromociones();
   toast('Promoción eliminada');
 }
 
-// ── POS: detectar promociones activas ──
+// ── POS promo detection ──
 function checkPromocionesCarrito(){
   const hoyStr=hoy();
-  const promosActivas=promociones.filter(p=>
+  const activas=promociones.filter(p=>
     p.activa==='1'&&
     (!p.desde||p.desde<=hoyStr)&&
     (!p.hasta||p.hasta>=hoyStr)
   );
-  if(!promosActivas.length||!carrito.length)return[];
-
+  if(!activas.length||!carrito||!carrito.length) return [];
   const matches=[];
-  for(const promo of promosActivas){
+  for(const promo of activas){
     if(promo.tipo==='regalo_especifico'){
-      // Check if carrito has enough gatillo products (with optional talla matching)
-      const gatilloEntries=promo.gatilloProds||[];
+      const gatillos=promo.gatilloProds||[];
       const itemsGatillo=carrito.filter(item=>{
-        if(!gatilloEntries.length) return true; // all products qualify
-        return gatilloEntries.some(g=>{
+        if(!gatillos.length) return true;
+        return gatillos.some(g=>{
           if(g.id!==item.id) return false;
-          // If gatillo has specific talla, item must match that talla
-          if(g.talla) return item.talla===g.talla;
-          return true; // no talla restriction
+          if(g.talla) return item.talla===g.talla; // talla específica
+          return true; // todas las tallas
         });
       });
-      const totalGatillo=itemsGatillo.reduce((a,c)=>a+c.qty,0);
+      const totalGatillo=itemsGatillo.reduce((a,c)=>a+(c.qty||1),0);
       const min=promo.gatilloMin||3;
       if(totalGatillo>=min){
-        // Check if regalo is already in cart
-        const regaloProd=promo.regaloProd;
-        const yaEnCarrito=regaloProd&&carrito.some(i=>i.id===regaloProd.id&&i.esGratis&&i.promoId===promo.id);
-        if(!yaEnCarrito){
-          matches.push({promo,tipo:'regalo_especifico',totalGatillo,min,itemsGatillo});
-        }
+        const rp=promo.regaloProd;
+        const yaEsta=rp&&carrito.some(i=>i.id===rp.id&&i.esGratis&&i.promoId===promo.id);
+        if(!yaEsta) matches.push({promo,tipo:'regalo_especifico',totalGatillo,min});
       }
     } else {
-      // Classic types
       const itemsAplica=carrito.filter(item=>{
-        if(!promo.prods||promo.prods.length===0)return true;
+        if(!promo.prods||!promo.prods.length) return true;
         return promo.prods.some(p=>p.id===item.id);
       });
-      const totalAplica=itemsAplica.reduce((a,c)=>a+c.qty,0);
+      const totalAplica=itemsAplica.reduce((a,c)=>a+(c.qty||1),0);
       let compraN=2;
       if(promo.tipo==='2x1')compraN=2;
       else if(promo.tipo==='3x2')compraN=3;
@@ -7012,9 +7137,7 @@ function checkPromocionesCarrito(){
       else if(promo.tipo==='4x3')compraN=4;
       else if(promo.tipo==='personalizado')compraN=promo.compraN||3;
       else continue;
-      if(totalAplica>=compraN){
-        matches.push({promo,tipo:'clasico',itemsAplica,compraN,totalAplica});
-      }
+      if(totalAplica>=compraN) matches.push({promo,tipo:'clasico',itemsAplica,compraN,totalAplica});
     }
   }
   return matches;
@@ -7024,178 +7147,133 @@ function mostrarAlertaPromo(){
   const matches=checkPromocionesCarrito();
   const alertEl=document.getElementById('c-promo-alert');
   if(!alertEl)return;
-  if(matches.length){
-    alertEl.style.display='block';
-    alertEl.innerHTML=matches.map(m=>{
-      if(m.tipo==='regalo_especifico'){
-        const rp=m.promo.regaloProd;
-        return`<div style="background:rgba(240,180,41,.12);border:2px solid var(--gold);border-radius:10px;
-          padding:10px 14px;margin-bottom:8px">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-            <div>
-              <div style="font-weight:900;color:var(--gold);font-size:15px">🎁 ¡APLICA: ${m.promo.nombre}!</div>
-              <div style="font-size:12px;color:var(--cream);margin-top:4px;font-weight:600">
-                Cliente lleva <strong>${m.totalGatillo}</strong> pza(s) → le corresponde <strong>${m.promo.regaloCantidad||1}</strong> pieza de
-                <strong style="color:var(--gold)">${rp?rp.desc:'artículo regalo'}</strong> ¡GRATIS!
-              </div>
-              <div style="font-size:11px;color:var(--muted);margin-top:3px">${m.promo.descCajero||''}</div>
-            </div>
-            <button class="btn btn-gold btn-sm" style="flex-shrink:0;font-weight:900;font-size:13px"
-              onclick="aplicarPromocion('${m.promo.id}')">✅ Agregar regalo</button>
-          </div>
-        </div>`;
-      } else {
-        return`<div style="background:rgba(26,158,92,.1);border:1px solid rgba(26,158,92,.4);border-radius:8px;padding:8px 12px;margin-bottom:6px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <div style="font-weight:700;color:var(--green);font-size:13px">🎁 ¡Aplica: ${m.promo.nombre}!</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px">${m.promo.descCajero||''}</div>
-            </div>
-            <button class="btn btn-green btn-sm" onclick="aplicarPromocion('${m.promo.id}')">Aplicar</button>
-          </div>
-        </div>`;
-      }
-    }).join('');
-  }else{
-    alertEl.style.display='none';
-  }
+  if(!matches.length){alertEl.style.display='none';return;}
+  alertEl.style.display='block';
+  alertEl.innerHTML=matches.map(m=>{
+    if(m.tipo==='regalo_especifico'){
+      const rp=m.promo.regaloProd;
+      const regNom=rp?(rp.desc+(rp.talla?' T:'+rp.talla:'')):'artículo regalo';
+      return '<div style="background:rgba(240,180,41,.12);border:2px solid var(--gold);border-radius:10px;padding:10px 14px;margin-bottom:6px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+        +'<div><div style="font-weight:900;color:var(--gold);font-size:14px">🎁 ¡APLICA: '+m.promo.nombre+'!</div>'
+        +'<div style="font-size:12px;color:var(--cream);margin-top:3px;font-weight:600">'
+        +'Cliente lleva <strong>'+m.totalGatillo+'</strong> pza(s) → <strong>'+(m.promo.regaloCantidad||1)+' pieza de '+regNom+'</strong> ¡GRATIS!</div>'
+        +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+(m.promo.descCajero||'')+'</div></div>'
+        +'<button class="btn btn-gold btn-sm" style="flex-shrink:0;font-weight:900;background:var(--gold);color:#000" onclick="aplicarPromocion(\''+m.promo.id+'\')">✅ Agregar regalo</button>'
+        +'</div></div>';
+    }
+    return '<div style="background:rgba(26,158,92,.1);border:1px solid rgba(26,158,92,.4);border-radius:8px;padding:8px 12px;margin-bottom:4px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center">'
+      +'<div><div style="font-weight:700;color:var(--green);font-size:13px">🎁 ¡Aplica: '+m.promo.nombre+'!</div>'
+      +'<div style="font-size:11px;color:var(--muted)">'+(m.promo.descCajero||'')+'</div></div>'
+      +'<button class="btn btn-green btn-sm" onclick="aplicarPromocion(\''+m.promo.id+'\')">Aplicar</button>'
+      +'</div></div>';
+  }).join('');
 }
 
 function aplicarPromocion(promoId){
   const promo=promociones.find(x=>x.id===promoId);if(!promo)return;
-
   if(promo.tipo==='regalo_especifico'){
-    // Add the regalo product to carrito at price 0
-    const rp=promo.regaloProd;
-    if(!rp){toast('No hay artículo regalo configurado','err');return;}
+    const rp=promo.regaloProd;if(!rp)return;
     const prodReal=productos.find(x=>x.id===rp.id);
-    const tallas=prodReal?Object.entries(prodReal.stock||{}).filter(([,v])=>v>0):[];
-    if(prodReal&&!tallas.length){
-      toast('⚠️ El artículo regalo ('+rp.desc+') no tiene stock disponible','err');
-      return;
-    }
-    // If only one talla, add directly; if multiple, show picker
-    // If regalo has a specific talla defined, use it directly
     const tallaPredefinida=rp.talla||'';
-    if(tallaPredefinida&&prodReal){
-      const stk=(prodReal.stock||{})[tallaPredefinida]||0;
-      if(stk>0){
-        _aplicarRegaloCon(promoId, tallaPredefinida);
-        return;
-      } else {
-        toast('⚠️ Sin stock de talla '+tallaPredefinida+' para el regalo','err');
-        return;
-      }
+    // If talla predefined and in stock, add directly
+    if(tallaPredefinida){
+      const stk=(prodReal?.stock||{})[tallaPredefinida]||0;
+      if(stk>0){ _addRegaloToCarrito(promo,rp,tallaPredefinida,prodReal); return; }
+      else { toast('⚠️ Sin stock de talla '+tallaPredefinida+' para el regalo','err'); return; }
     }
-    const agregarRegaloConTalla=(talla)=>{
-      const qty=promo.regaloCantidad||1;
-      carrito.push({
-        id:rp.id,
-        desc:rp.desc+' 🎁 GRATIS',
-        talla:talla||'—',
-        color:prodReal?.color||'',
-        price:0,
-        qty,
-        sku:rp.sku||rp.barcode||'',
-        sucursalId:prodReal?.sucursalId||'',
-        foto:prodReal?.foto||null,
-        esGratis:true,
-        promoId,
-        promoNombre:promo.nombre,
-        precioOriginal:rp.precio||0,
-        sinDescuento:true
-      });
-      renderCart();
-      mostrarAlertaPromo();
-      toast('🎁 '+rp.desc+' agregado GRATIS · Promo: '+promo.nombre);
-    };
-    if(!prodReal||tallas.length===0){
-      agregarRegaloConTalla('—');
-    } else if(tallas.length===1){
-      agregarRegaloConTalla(tallas[0][0]);
-    } else {
-      // Show talla picker for regalo
-      const tallaOpts=tallas.map(([t,s])=>`<button onclick="event.stopPropagation();_aplicarRegaloCon('${promoId}','${t}');closeM('mo-regalo-talla')"
-        style="padding:10px 16px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--cream);font-weight:700;font-size:15px;cursor:pointer">
-        ${t} <span style="font-size:10px;color:var(--muted)">(${s})</span>
-      </button>`).join('');
-      // Create or reuse picker modal
-      let tallaModal=document.getElementById('mo-regalo-talla');
-      if(!tallaModal){
-        tallaModal=document.createElement('div');
-        tallaModal.id='mo-regalo-talla';
-        tallaModal.className='mo';
-        document.body.appendChild(tallaModal);
-      }
-      tallaModal.innerHTML=`
-        <div class="md" style="max-width:400px">
-          <div class="mh">
-            <div class="mt">🎁 Talla del artículo regalo</div>
-            <button class="xbtn" onclick="closeM('mo-regalo-talla')">✕</button>
-          </div>
-          <div class="mb">
-            <div style="font-size:13px;color:var(--cream);margin-bottom:12px">
-              Selecciona la talla de: <strong>${rp.desc}</strong>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:8px">${tallaOpts}</div>
-          </div>
-        </div>`;
-      window._regatPromoId=promoId;
-      tallaModal.classList.add('on');
-    }
+    // No predefined talla — show picker or add if single talla
+    const tallas=Object.entries(prodReal?.stock||{}).filter(([,v])=>Number(v)>0);
+    if(!tallas.length){ _addRegaloToCarrito(promo,rp,'—',prodReal); return; }
+    if(tallas.length===1){ _addRegaloToCarrito(promo,rp,tallas[0][0],prodReal); return; }
+    // Multiple tallas — show picker
+    let mo=document.getElementById('mo-regalo-talla');
+    if(!mo){mo=document.createElement('div');mo.id='mo-regalo-talla';mo.className='mo';document.body.appendChild(mo);}
+    mo.innerHTML='<div class="md" style="max-width:380px">'
+      +'<div class="mh"><div class="mt">🎁 Talla del artículo regalo</div>'
+      +'<button class="xbtn" onclick="closeM(\'mo-regalo-talla\')">✕</button></div>'
+      +'<div class="mb"><div style="font-size:13px;color:var(--cream);margin-bottom:12px">Selecciona la talla de: <strong>'+rp.desc+'</strong></div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:8px">'
+      +tallas.map(([t,s])=>'<button onclick="event.stopPropagation();_addRegaloToCarrito(promociones.find(x=>x.id===\''+promoId+'\'),promociones.find(x=>x.id===\''+promoId+'\').regaloProd,\''+t+'\',productos.find(p=>p.id===\''+rp.id+'\'));closeM(\'mo-regalo-talla\')"'
+        +' style="padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--cream);font-weight:700;font-size:15px;cursor:pointer">'
+        +t+' <span style="font-size:10px;color:var(--muted)">('+s+')</span></button>').join('')
+      +'</div></div></div>';
+    mo.classList.add('on');
   } else {
-    // Classic promo — mark cheapest items as free
     let compraN=2,gratisN=1;
     if(promo.tipo==='2x1'){compraN=2;gratisN=1;}
     else if(promo.tipo==='3x2'){compraN=3;gratisN=1;}
     else if(promo.tipo==='3x1'){compraN=3;gratisN=2;}
     else if(promo.tipo==='4x3'){compraN=4;gratisN=1;}
     else if(promo.tipo==='personalizado'){compraN=promo.compraN||3;gratisN=promo.gratisN||1;}
-    const itemsAplica=carrito.filter(item=>{
-      if(!promo.prods||promo.prods.length===0)return true;
-      return promo.prods.some(p=>p.id===item.id);
-    }).sort((a,b)=>a.price-b.price);
-    let gratisRestantes=gratisN;
-    itemsAplica.forEach(item=>{
-      if(gratisRestantes>0){
-        item.esGratis=true;
-        item.promoId=promoId;
-        item.promoNombre=promo.nombre;
-        item.precioOriginal=item.price;
-        item.price=0;
-        gratisRestantes-=item.qty;
-      }
-    });
-    renderCart();
-    mostrarAlertaPromo();
+    const items=carrito.filter(item=>!promo.prods||!promo.prods.length||promo.prods.some(p=>p.id===item.id))
+      .sort((a,b)=>a.price-b.price);
+    let rest=gratisN;
+    items.forEach(item=>{if(rest>0){item.esGratis=true;item.promoId=promoId;item.promoNombre=promo.nombre;item.precioOriginal=item.price;item.price=0;rest-=(item.qty||1);}});
+    renderCart();mostrarAlertaPromo();
     toast('Promoción '+promo.nombre+' aplicada ✓');
   }
 }
 
-function _aplicarRegaloCon(promoId, talla){
-  const promo=promociones.find(x=>x.id===promoId);if(!promo)return;
-  const rp=promo.regaloProd;if(!rp)return;
-  const prodReal=productos.find(x=>x.id===rp.id);
-  const qty=promo.regaloCantidad||1;
+function _addRegaloToCarrito(promo,rp,talla,prodReal){
+  if(!promo||!rp)return;
   carrito.push({
-    id:rp.id,
-    desc:rp.desc+' 🎁 GRATIS',
-    talla,
-    color:prodReal?.color||'',
-    price:0,qty,
-    sku:rp.sku||rp.barcode||'',
-    sucursalId:prodReal?.sucursalId||'',
+    id:rp.id, desc:rp.desc+' 🎁 GRATIS', talla:talla||'—',
+    color:prodReal?.color||'', price:0, qty:promo.regaloCantidad||1,
+    sku:rp.sku||'', sucursalId:prodReal?.sucursalId||'',
     foto:prodReal?.foto||null,
-    esGratis:true,promoId,
-    promoNombre:promo.nombre,
-    precioOriginal:rp.precio||0,
-    sinDescuento:true
+    esGratis:true, promoId:promo.id, promoNombre:promo.nombre,
+    precioOriginal:rp.precio||0, sinDescuento:true
   });
-  renderCart();
-  mostrarAlertaPromo();
-  toast('🎁 '+rp.desc+' T'+talla+' agregado GRATIS · Promo: '+promo.nombre);
+  renderCart();mostrarAlertaPromo();
+  toast('🎁 '+rp.desc+(talla&&talla!=='—'?' T:'+talla:'')+' agregado GRATIS');
 }
 
+function verPromocionesVigentes(){
+  const hoyStr=hoy();
+  const vigentes=promociones.filter(p=>p.activa==='1'&&(!p.desde||p.desde<=hoyStr)&&(!p.hasta||p.hasta>=hoyStr));
+  let mo=document.getElementById('mo-promos-cajera');
+  if(!mo){mo=document.createElement('div');mo.id='mo-promos-cajera';mo.className='mo';document.body.appendChild(mo);}
+  function card(p){
+    const esR=p.tipo==='regalo_especifico';
+    const gratis=ventas.reduce((a,v)=>a+(v.items||[]).filter(i=>i.promoId===p.id&&i.esGratis).reduce((s,i)=>s+(i.qty||1),0),0);
+    let body='';
+    if(esR){
+      const gnom=(p.gatilloProds||[]).length
+        ? (p.gatilloProds||[]).map(g=>'<strong>'+(g.desc||g.sku)+(g.talla?' T:'+g.talla:'')+'</strong>').join('<br>o ')
+        : '(cualquier artículo)';
+      const rnom=p.regaloProd?('<strong style="color:var(--gold)">'+(p.regaloProd.desc||'')+(p.regaloProd.talla?' T:'+p.regaloProd.talla:'')+'</strong>'):'—';
+      body='<div style="background:rgba(240,180,41,.08);border-radius:8px;padding:10px;margin-bottom:8px">'
+        +'<div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:5px">🛒 El cliente debe comprar:</div>'
+        +'<div style="font-size:13px;line-height:1.6;margin-bottom:4px">'+gnom+'</div>'
+        +'<div style="font-size:12px;color:var(--muted)">Mínimo: <strong>'+(p.gatilloMin||3)+' piezas</strong></div>'
+        +'</div>'
+        +'<div style="background:rgba(240,180,41,.12);border:1px solid rgba(240,180,41,.4);border-radius:8px;padding:10px;margin-bottom:8px">'
+        +'<div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:4px">🎁 Recibe GRATIS:</div>'
+        +'<div style="font-size:14px;font-weight:700">'+rnom+'</div>'
+        +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+(p.regaloCantidad||1)+' pieza(s)</div>'
+        +'</div>';
+    } else {
+      body='<div style="font-size:13px;color:var(--muted);margin-bottom:8px">'+(p.descCajero||'')+'</div>';
+    }
+    return '<div style="background:var(--s2);border:'+(esR?'2px solid var(--gold)':'1px solid var(--border)')+';border-radius:14px;padding:16px;margin-bottom:12px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+      +'<div style="font-size:16px;font-weight:900;color:'+(esR?'var(--gold)':'var(--green)')+'"> '+(esR?'🎁':'✨')+' '+p.nombre+'</div>'
+      +'<span class="badge b-green" style="font-size:11px">✅ Activa</span></div>'
+      +body
+      +'<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">'
+      +'<span>Vigencia: '+(p.desde||'Sin inicio')+' → '+(p.hasta||'Sin vencimiento')+'</span>'
+      +'<span style="color:var(--green)">🎁 '+gratis+' entregados</span></div></div>';
+  }
+  const body=vigentes.length?vigentes.map(card).join('')
+    :'<div class="empty"><div class="empty-icon">🎁</div><div>No hay promociones activas hoy</div></div>';
+  mo.innerHTML='<div class="md wide" style="max-width:620px;max-height:85vh;overflow-y:auto">'
+    +'<div class="mh"><div class="mt">🎁 Promociones Vigentes</div>'
+    +'<button class="xbtn" onclick="closeM(\'mo-promos-cajera\')">✕</button></div>'
+    +'<div class="mb">'+body+'</div></div>';
+  mo.classList.add('on');
+}
 
 // ══════════════════ TAREA 3: RESUMEN ANUAL ══════════════════
 const MESES_LABELS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -10816,162 +10894,269 @@ function verPromocionesVigentes(){
 
 
 // ══════════════════ DEVOLUCIÓN / CAMBIO ══════════════════
-let devVentaSel = null;
-let devItemSel  = null;
-let devTipo     = '';
+let devVentaSel  = null;
+let devItemSel   = null;
+let devTipo      = '';
+let devNuevaTalla= '';
+let devNuevoArtSel = null; // for cambio_articulo
 
 function abrirModalDevolucion(){
-  devVentaSel=null; devItemSel=null; devTipo='';
-  ['dev-buscar-venta','dev-fecha-buscar','dev-notas','dev-desc-defecto'].forEach(id=>{
-    const el=document.getElementById(id); if(el)el.value='';
-  });
-  document.getElementById('dev-ventas-res').innerHTML='';
+  devVentaSel=null; devItemSel=null; devTipo=''; devNuevaTalla=''; devNuevoArtSel=null;
+  const ids=['dev-buscar-venta','dev-fecha-buscar','dev-notas','dev-desc-defecto','dev-nuevo-art-q'];
+  ids.forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const divIds=['dev-ventas-res','dev-venta-info','dev-items-lista','dev-nuevo-art-res','dev-nuevo-art-sel'];
+  divIds.forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML='';});
   document.getElementById('dev-venta-sel').style.display='none';
+  document.getElementById('dev-tipo-section').style.display='none';
   document.getElementById('dev-btn-confirmar').style.display='none';
-  // Reset tipo buttons
-  document.querySelectorAll('#dev-tipo-btns button').forEach(b=>{
-    b.style.background='var(--s2)'; b.style.color='var(--muted)'; b.style.borderColor='var(--border)';
-  });
   ['dev-config-cambio-talla','dev-config-cambio-art','dev-config-defecto'].forEach(id=>{
-    const el=document.getElementById(id); if(el)el.style.display='none';
+    const e=document.getElementById(id);if(e)e.style.display='none';
+  });
+  document.querySelectorAll('#dev-tipo-btns button').forEach(b=>{
+    b.style.background='var(--s2)';b.style.color='var(--muted)';b.style.borderColor='var(--border)';
   });
   openM('mo-devolucion');
 }
 
 function buscarVentaDevolucion(){
-  const q=(document.getElementById('dev-buscar-venta')?.value||'').toLowerCase();
+  const q=(document.getElementById('dev-buscar-venta')?.value||'').toLowerCase().replace('#','');
   const fecha=document.getElementById('dev-fecha-buscar')?.value||'';
   const res=document.getElementById('dev-ventas-res');
   if(!q&&!fecha){res.innerHTML='';return;}
-  // Filter ventas — exclude abonos
   const lista=ventas.filter(v=>{
     if(v.tipoVenta==='abono')return false;
-    const folioV=(v.folio||v.id.slice(-6).toUpperCase());
-    const mq=!q||(v.cliente||'').toLowerCase().includes(q)||
-      (v.items||[]).some(i=>(i.sku||'').toLowerCase().includes(q)||(i.desc||'').toLowerCase().includes(q))||
-      folioV.toLowerCase().includes(q.replace('#',''));
+    const folio=(v.folio||v.id.slice(-6).toUpperCase()).toLowerCase();
+    const mq=!q
+      ||(v.cliente||'').toLowerCase().includes(q)
+      ||folio.includes(q)
+      ||(v.items||[]).some(i=>(i.sku||'').toLowerCase().includes(q)||(i.desc||'').toLowerCase().includes(q));
     const mf=!fecha||v.fecha===fecha;
     return mq&&mf;
   }).slice(0,8);
   if(!lista.length){res.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px">Sin ventas encontradas</div>';return;}
   res.innerHTML=lista.map(v=>{
+    const folio=v.folio||v.id.slice(-6).toUpperCase();
     const itemsStr=(v.items||[]).slice(0,3).map(i=>i.desc+' T'+i.talla).join(', ')+(v.items?.length>3?'…':'');
-    return`<div onclick="seleccionarVentaDev('${v.id}')"
-      style="padding:9px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;
-      cursor:pointer;margin-bottom:4px" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
-      <div style="display:flex;justify-content:space-between">
-        <span style="font-weight:600;color:var(--cream);font-size:13px">${v.cliente||'Cliente general'}</span>
-        <span style="font-size:11px;color:var(--muted)">${v.fecha} ${v.hora||''}</span>
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px">${itemsStr} · ${fmt(v.total)}</div>
-      <div style="font-size:10px;color:var(--accent2);margin-top:1px">Folio: #${(v.folio||v.id.slice(-6).toUpperCase())}</div>
-    </div>`;
+    return '<div onclick="seleccionarVentaDev(\''+v.id+'\')"  '
+      +' style="padding:9px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:4px"'
+      +' onmouseover="this.style.background=\'var(--s3)\'" onmouseout="this.style.background=\'var(--s2)\'">'
+      +'<div style="display:flex;justify-content:space-between">'
+      +'<span style="font-weight:600;color:var(--cream);font-size:13px">'+(v.cliente||'Cliente general')+'</span>'
+      +'<span style="font-size:11px;color:var(--muted)">'+v.fecha+' '+(v.hora||'')+'</span>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+itemsStr+' · '+fmt(v.total)+'</div>'
+      +'<div style="font-size:10px;color:var(--accent2);margin-top:1px">Folio: #'+folio+'</div>'
+      +'</div>';
   }).join('');
 }
 
 function seleccionarVentaDev(id){
   devVentaSel=ventas.find(v=>v.id===id);
   if(!devVentaSel)return;
+  devItemSel=null; devTipo=''; devNuevaTalla=''; devNuevoArtSel=null;
   document.getElementById('dev-ventas-res').innerHTML='';
   document.getElementById('dev-buscar-venta').value=devVentaSel.cliente||'';
   document.getElementById('dev-venta-sel').style.display='block';
-  // Venta info
-  document.getElementById('dev-venta-info').innerHTML=`
-    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px">
-      <div><span style="color:var(--muted)">Cliente: </span><strong>${devVentaSel.cliente||'—'}</strong></div>
-      <div><span style="color:var(--muted)">Fecha: </span><strong>${devVentaSel.fecha} ${devVentaSel.hora||''}</strong></div>
-      <div><span style="color:var(--muted)">Total: </span><strong style="color:var(--gold)">${fmt(devVentaSel.total)}</strong></div>
-      <div><span style="color:var(--muted)">Pago: </span><strong>${devVentaSel.pago||'—'}</strong></div>
-    </div>`;
-  // Items to return
-  const items=(devVentaSel.items||[]).filter(i=>!i.sinCodigo);
-  document.getElementById('dev-items-lista').innerHTML=items.map((item,i)=>`
-    <div onclick="seleccionarItemDev(${i})" id="dev-item-${i}"
-      style="padding:9px 12px;background:var(--s3);border:2px solid var(--border);border-radius:8px;
-      cursor:pointer;margin-bottom:5px;display:flex;align-items:center;gap:10px"
-      onmouseover="this.style.borderColor='var(--accent)'" onmouseout="if(devItemSel?.idx!==${i})this.style.borderColor='var(--border)'">
-      <div style="font-size:20px">${item.foto?`<img src="${item.foto}" style="width:40px;height:40px;border-radius:6px;object-fit:cover">`:'👟'}</div>
-      <div style="flex:1">
-        <div style="font-weight:600;color:var(--cream);font-size:13px">${item.desc}</div>
-        <div style="font-size:11px;color:var(--muted)">Talla: <strong>${item.talla}</strong> · ${item.qty} pza · ${fmt(item.price)}</div>
-        ${item.esGratis?'<span class="badge b-green" style="font-size:9px">🎁 GRATIS</span>':''}
-      </div>
-      <div style="font-size:11px;font-family:var(--mono);color:var(--gold)">${fmt(item.price*item.qty)}</div>
-    </div>`).join('')||'<div style="font-size:12px;color:var(--muted)">Sin artículos registrados</div>';
+  document.getElementById('dev-tipo-section').style.display='none';
+  document.getElementById('dev-btn-confirmar').style.display='none';
+  const folio=devVentaSel.folio||devVentaSel.id.slice(-6).toUpperCase();
+  document.getElementById('dev-venta-info').innerHTML=
+    '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px">'
+    +'<div><span style="color:var(--muted)">Cliente: </span><strong>'+(devVentaSel.cliente||'—')+'</strong></div>'
+    +'<div><span style="color:var(--muted)">Fecha: </span><strong>'+devVentaSel.fecha+' '+(devVentaSel.hora||'')+'</strong></div>'
+    +'<div><span style="color:var(--muted)">Total: </span><strong style="color:var(--gold)">'+fmt(devVentaSel.total)+'</strong></div>'
+    +'<div><span style="color:var(--muted)">Folio: </span><strong style="color:var(--accent2)">#'+folio+'</strong></div>'
+    +'</div>';
+  const items=(devVentaSel.items||[]).filter(i=>!i.sinCodigo&&!i.esGratis);
+  document.getElementById('dev-items-lista').innerHTML=items.length
+    ? items.map((item,i)=>
+        '<div onclick="seleccionarItemDev('+i+')" id="dev-item-'+i+'"'
+        +' style="padding:9px 12px;background:var(--s3);border:2px solid var(--border);border-radius:8px;'
+        +'cursor:pointer;margin-bottom:5px;display:flex;align-items:center;gap:10px">'
+        +(item.foto?'<img src="'+item.foto+'" style="width:38px;height:38px;border-radius:6px;object-fit:cover">':'<span style="font-size:22px">👟</span>')
+        +'<div style="flex:1">'
+        +'<div style="font-weight:600;color:var(--cream);font-size:13px">'+item.desc+'</div>'
+        +'<div style="font-size:11px;color:var(--muted)">Talla: <strong>'+item.talla+'</strong> · '+item.qty+' pza · '+fmt(item.price)+'</div>'
+        +'</div>'
+        +'<span style="font-size:13px;font-family:var(--mono);color:var(--gold)">'+fmt((item.price||0)*(item.qty||1))+'</span>'
+        +'</div>'
+      ).join('')
+    : '<div style="font-size:12px;color:var(--muted)">Sin artículos disponibles para devolución</div>';
 }
 
 function seleccionarItemDev(idx){
-  // Unhighlight all
-  (devVentaSel?.items||[]).forEach((_,i)=>{
+  const items=(devVentaSel?.items||[]).filter(i=>!i.sinCodigo&&!i.esGratis);
+  const item=items[idx];if(!item)return;
+  devItemSel={...item,idx};
+  // Highlight
+  items.forEach((_,i)=>{
     const el=document.getElementById('dev-item-'+i);
     if(el){el.style.background='var(--s3)';el.style.borderColor='var(--border)';}
   });
-  const item=(devVentaSel?.items||[])[idx];
-  if(!item)return;
-  devItemSel={...item, idx};
-  // Highlight selected
   const el=document.getElementById('dev-item-'+idx);
-  if(el){el.style.background='rgba(26,158,92,.15)';el.style.borderColor='var(--accent)';}
-  // Show tipo buttons
+  if(el){el.style.background='rgba(26,158,92,.12)';el.style.borderColor='var(--accent)';}
+  // Show tipo section and confirmar button
+  document.getElementById('dev-tipo-section').style.display='block';
   document.getElementById('dev-btn-confirmar').style.display='flex';
-  // Reset tipo config
-  devTipo='';
+  // Reset tipo
+  devTipo=''; devNuevaTalla=''; devNuevoArtSel=null;
   document.querySelectorAll('#dev-tipo-btns button').forEach(b=>{
-    b.style.background='var(--s2)'; b.style.color='var(--muted)'; b.style.borderColor='var(--border)';
+    b.style.background='var(--s2)';b.style.color='var(--muted)';b.style.borderColor='var(--border)';
   });
   ['dev-config-cambio-talla','dev-config-cambio-art','dev-config-defecto'].forEach(id=>{
-    const el=document.getElementById(id); if(el)el.style.display='none';
+    const e=document.getElementById(id);if(e)e.style.display='none';
   });
+  const novoRes=document.getElementById('dev-nuevo-art-res');if(novoRes)novoRes.innerHTML='';
+  const novoSel=document.getElementById('dev-nuevo-art-sel');if(novoSel)novoSel.innerHTML='';
 }
 
-function selDevTipo(btn, tipo){
-  devTipo=tipo;
-  document.getElementById('dev-tipo').value=tipo;
-  // Reset all buttons
+function selDevTipo(btn,tipo){
+  devTipo=tipo; devNuevaTalla=''; devNuevoArtSel=null;
   document.querySelectorAll('#dev-tipo-btns button').forEach(b=>{
-    b.style.background='var(--s2)'; b.style.color='var(--muted)'; b.style.borderColor='var(--border)';
+    b.style.background='var(--s2)';b.style.color='var(--muted)';b.style.borderColor='var(--border)';
   });
-  // Highlight selected
-  btn.style.background='var(--accent)'; btn.style.color='#fff'; btn.style.borderColor='var(--accent)';
-  // Show correct config panel
+  btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.borderColor='var(--accent)';
   ['dev-config-cambio-talla','dev-config-cambio-art','dev-config-defecto'].forEach(id=>{
-    const el=document.getElementById(id); if(el)el.style.display='none';
+    const e=document.getElementById(id);if(e)e.style.display='none';
   });
   if(tipo==='cambio_talla'){
     document.getElementById('dev-config-cambio-talla').style.display='block';
-    // Show tallas of the product
-    const prod=productos.find(p=>p.id===devItemSel?.id);
-    const tallaActual=devItemSel?.talla;
-    const tallasDisp=prod?Object.entries(prod.stock||{}).filter(([t,v])=>v>0&&t!==tallaActual):[];
+    // Find product — try multiple fields
+    const dI=devItemSel||{};
+    let prod=productos.find(p=>p.id===dI.id);
+    if(!prod&&dI.sku)  prod=productos.find(p=>p.barcode===dI.sku||p.sku===dI.sku);
+    if(!prod&&dI.desc) prod=productos.find(p=>(p.desc||'').toLowerCase()===(dI.desc||'').toLowerCase());
+    if(!prod&&dI.id)   prod=productos.find(p=>p.barcode===dI.id||p.sku===dI.id);
+    const tallaActual=devItemSel?.talla||'';
+    const tallasSinStock=document.getElementById('dev-talla-sin-stock');
     const tallasContainer=document.getElementById('dev-tallas-nuevas');
-    if(tallasContainer){
-      tallasContainer.innerHTML=tallasDisp.length
-        ? tallasDisp.map(([t,s])=>`
-          <button onclick="seleccionarNuevaTalla('${t}')" data-talla="${t}"
-            style="min-width:52px;padding:8px 12px;border-radius:8px;border:2px solid var(--border);
-            background:var(--s3);color:var(--cream);font-weight:700;font-size:14px;cursor:pointer;
-            transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'"
-            onmouseout="if(this.dataset.sel!='1')this.style.borderColor='var(--border)'">
-            ${t}<br><span style="font-size:9px;color:var(--muted);font-weight:400">${s} pza</span>
-          </button>`).join('')
-        : '<span style="font-size:12px;color:var(--red)">Sin otras tallas en stock para este artículo</span>';
+    if(!prod){
+      tallasContainer.innerHTML='';
+      if(tallasSinStock) tallasSinStock.style.display='block';
+    } else {
+      const disponibles=Object.entries(prod.stock||{})
+        .filter(([t,v])=>Number(v)>0&&t!==tallaActual)
+        .sort(([a],[b])=>{const na=parseFloat(a),nb=parseFloat(b);return(!isNaN(na)&&!isNaN(nb))?na-nb:a.localeCompare(b);});
+      if(!disponibles.length){
+        // Try to find same style in other sucursales
+        const desc=(dI.desc||'').toLowerCase();
+        const sku=dI.sku||'';
+        const otrosProd=productos.filter(p=>
+          p.id!==prod.id&&(
+            (p.desc||'').toLowerCase()===desc||
+            (sku&&(p.barcode===sku||p.sku===sku))
+          )
+        );
+        let extraTallas=[];
+        otrosProd.forEach(op=>{
+          Object.entries(op.stock||{}).forEach(([t,v])=>{
+            if(Number(v)>0&&t!==tallaActual) extraTallas.push({t,s:Number(v),prodId:op.id,suc:sucursales.find(s=>s.id===op.sucursalId)?.nombre||''});
+          });
+        });
+        if(extraTallas.length){
+          if(tallasSinStock) tallasSinStock.style.display='none';
+          tallasContainer.innerHTML=extraTallas.map(({t,s,suc})=>
+            '<button onclick="selNuevaTalla(\'' + t + '\')" data-talla="' + t + '"'
+            +' style="min-width:58px;padding:10px 14px;border-radius:9px;border:2px solid var(--border);'
+            +'background:var(--s3);color:var(--cream);font-weight:700;font-size:15px;cursor:pointer;text-align:center">'
+            +t+'<br><span style="font-size:9px;color:var(--muted);font-weight:400">'+s+'pz'+(suc?' · '+suc:'')+'</span>'
+            +'</button>'
+          ).join('');
+        } else {
+          tallasContainer.innerHTML='';
+          if(tallasSinStock) tallasSinStock.style.display='block';
+        }
+      } else {
+        if(tallasSinStock) tallasSinStock.style.display='none';
+        tallasContainer.innerHTML=disponibles.map(([t,s])=>
+          '<button onclick="selNuevaTalla(\'' + t + '\')" data-talla="' + t + '"'
+          +' style="min-width:58px;padding:10px 14px;border-radius:9px;border:2px solid var(--border);'
+          +'background:var(--s3);color:var(--cream);font-weight:700;font-size:15px;cursor:pointer;text-align:center">'
+          +t+'<br><span style="font-size:10px;color:var(--muted);font-weight:400">'+s+' pza</span>'
+          +'</button>'
+        ).join('');
+      }
     }
   } else if(tipo==='cambio_articulo'){
     document.getElementById('dev-config-cambio-art').style.display='block';
+    const q=document.getElementById('dev-nuevo-art-q');if(q)q.focus();
   } else if(tipo==='defecto'){
     document.getElementById('dev-config-defecto').style.display='block';
+    const df=document.getElementById('dev-desc-defecto');if(df)df.focus();
   }
 }
 
-let devNuevaTalla='';
-function seleccionarNuevaTalla(talla){
+function selNuevaTalla(talla){
   devNuevaTalla=talla;
   document.querySelectorAll('#dev-tallas-nuevas button').forEach(b=>{
-    b.dataset.sel='0';
-    b.style.background='var(--s3)'; b.style.color='var(--cream)'; b.style.borderColor='var(--border)';
+    const sel=b.dataset.talla===talla;
+    b.style.background=sel?'var(--accent)':'var(--s3)';
+    b.style.color=sel?'#fff':'var(--cream)';
+    b.style.borderColor=sel?'var(--accent)':'var(--border)';
   });
-  const btn=document.querySelector('#dev-tallas-nuevas button[data-talla="'+talla+'"]');
-  if(btn){btn.dataset.sel='1';btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.borderColor='var(--accent)';}
+}
+
+// ── Buscar nuevo artículo para cambio_articulo ──
+function buscarNuevoArticuloDev(){
+  const q=(document.getElementById('dev-nuevo-art-q')?.value||'').toLowerCase();
+  const res=document.getElementById('dev-nuevo-art-res');
+  if(!res||!q){if(res)res.innerHTML='';return;}
+  const lista=productos.filter(p=>{
+    const suc=sucursales.find(s=>s.id===p.sucursalId);
+    if(suc?.tipo==='bodega')return false;
+    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+Number(b),0);
+    if(tot<=0)return false;
+    return (p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').includes(q);
+  }).slice(0,8);
+  res.innerHTML=lista.map(p=>{
+    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+Number(b),0);
+    return '<div onclick="seleccionarNuevoArtDev(\'' + p.id + '\')"'
+      +' style="padding:8px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;'
+      +'cursor:pointer;margin-bottom:4px;display:flex;align-items:center;gap:10px"'
+      +' onmouseover="this.style.background=\'var(--s3)\'" onmouseout="this.style.background=\'var(--s2)\'">' 
+      +(p.foto?'<img src="'+p.foto+'" style="width:36px;height:36px;border-radius:6px;object-fit:cover">':'<span style="font-size:20px">👟</span>')
+      +'<div style="flex:1">'
+      +'<div style="font-weight:600;color:var(--cream);font-size:13px">'+p.desc+'</div>'
+      +'<div style="font-size:10px;color:var(--muted)">'+(p.barcode||p.sku||'—')+' · $'+p.precio+' · Stock: '+tot+' pza</div>'
+      +'</div></div>';
+  }).join('');
+}
+
+let _devNuevoArtId='';
+function seleccionarNuevoArtDev(prodId){
+  const p=productos.find(x=>x.id===prodId);if(!p)return;
+  _devNuevoArtId=prodId;
+  devNuevoArtSel=p;
+  document.getElementById('dev-nuevo-art-q').value=p.desc;
+  document.getElementById('dev-nuevo-art-res').innerHTML='';
+  // Show tallas disponibles para seleccionar
+  const tallas=Object.entries(p.stock||{}).filter(([,v])=>Number(v)>0)
+    .sort(([a],[b])=>{const na=parseFloat(a),nb=parseFloat(b);return(!isNaN(na)&&!isNaN(nb))?na-nb:a.localeCompare(b);});
+  const selEl=document.getElementById('dev-nuevo-art-sel');
+  selEl.innerHTML='<div style="background:rgba(26,158,92,.08);border:1px solid rgba(26,158,92,.3);border-radius:8px;padding:10px;margin-top:6px">'
+    +'<div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:8px">Selecciona la talla del nuevo artículo:</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px" id="dev-nuevo-tallas">'
+    +tallas.map(([t,s])=>'<button onclick="selNuevoArtTalla(\'' + t + '\')" data-talla="' + t + '"'
+      +' style="min-width:52px;padding:8px 12px;border-radius:8px;border:2px solid var(--border);'
+      +'background:var(--s3);color:var(--cream);font-weight:700;font-size:14px;cursor:pointer">'
+      +t+'<br><span style="font-size:9px;color:var(--muted);font-weight:400">'+s+'pz</span>'
+      +'</button>').join('')
+    +'</div>'
+    +'<div id="dev-nuevo-art-elegido" style="margin-top:8px;font-size:12px;color:var(--muted)">Selecciona una talla para confirmar</div>'
+    +'</div>';
+}
+
+let _devNuevoTalla='';
+function selNuevoArtTalla(talla){
+  _devNuevoTalla=talla;
+  document.querySelectorAll('#dev-nuevo-tallas button').forEach(b=>{
+    const sel=b.dataset.talla===talla;
+    b.style.background=sel?'var(--accent)':'var(--s3)';
+    b.style.color=sel?'#fff':'var(--cream)';
+    b.style.borderColor=sel?'var(--accent)':'var(--border)';
+  });
+  const elegido=document.getElementById('dev-nuevo-art-elegido');
+  if(elegido) elegido.innerHTML='<span style="color:var(--green);font-weight:700">✅ '+(devNuevoArtSel?.desc||'')+' T:'+talla+' seleccionado → se agregará al carrito</span>';
 }
 
 async function confirmarDevolucion(){
@@ -10979,40 +11164,40 @@ async function confirmarDevolucion(){
   if(!devItemSel){toast('Selecciona el artículo a devolver','err');return;}
   if(!devTipo){toast('Selecciona el tipo de devolución','err');return;}
   if(devTipo==='cambio_talla'&&!devNuevaTalla){toast('Selecciona la nueva talla','err');return;}
-  if(devTipo==='defecto'&&!document.getElementById('dev-desc-defecto')?.value.trim()){toast('Describe el defecto','err');return;}
-
-  const {updateDoc, addDoc} = window._fb;
-  const item = devItemSel;
-  const notas = document.getElementById('dev-notas')?.value.trim()||'';
-  const usuario = usuarioActivo?.nombre||currentProfile?.nombre||'Admin';
-
+  if(devTipo==='cambio_articulo'){
+    if(!devNuevoArtSel){toast('Busca y selecciona el nuevo artículo','err');return;}
+    if(!_devNuevoTalla){toast('Selecciona la talla del nuevo artículo','err');return;}
+  }
+  if(devTipo==='defecto'&&!(document.getElementById('dev-desc-defecto')?.value.trim())){
+    toast('Describe el defecto del artículo','err');return;
+  }
+  const {updateDoc,addDoc}=window._fb;
+  const item=devItemSel;
+  const notas=document.getElementById('dev-notas')?.value.trim()||'';
+  const usuario=usuarioActivo?.nombre||currentProfile?.nombre||'Admin';
+  const accionDefecto=document.querySelector('input[name="dev-defecto-accion"]:checked')?.value||'reposicion';
+  // Determine if stock should be restored
+  const regresaStock=devTipo!=='defecto'||accionDefecto!=='devolucion_dinero';
   try{
-    // 1. ALWAYS restore stock of returned item (except defecto_dinero)
-    const accionDefecto = document.querySelector('input[name="dev-defecto-accion"]:checked')?.value||'reposicion';
-    const regresaStock = devTipo!=='defecto' || accionDefecto==='reposicion' || accionDefecto==='credito_tienda';
-
-    if(regresaStock && item.id && item.talla && item.talla!=='—' && !item.sinCodigo){
-      const prod=productos.find(p=>p.id===item.id);
+    // 1. Restore stock of returned item
+    if(regresaStock&&item.id&&item.talla&&item.talla!=='—'&&!item.sinCodigo){
+      let prod=productos.find(p=>p.id===item.id);
+      if(!prod&&item.sku) prod=productos.find(p=>p.barcode===item.sku||p.sku===item.sku);
       if(prod){
-        const stockActual=(prod.stock||{})[item.talla]||0;
-        await updateDoc(docRef('productos',item.id),{[`stock.${item.talla}`]:stockActual+(item.qty||1)});
-        const idx=productos.findIndex(p=>p.id===item.id);
-        if(idx>=0){
-          if(!productos[idx].stock)productos[idx].stock={};
-          productos[idx].stock[item.talla]=stockActual+(item.qty||1);
-        }
+        const st=(prod.stock||{})[item.talla]||0;
+        await updateDoc(docRef('productos',prod.id),{['stock.'+item.talla]:st+(item.qty||1)});
+        const idx=productos.findIndex(p=>p.id===prod.id);
+        if(idx>=0){if(!productos[idx].stock)productos[idx].stock={};productos[idx].stock[item.talla]=st+(item.qty||1);}
       }
     }
-
-    // 2. Register devolución in ventas with tipoVenta='devolucion'
+    // 2. Build description
     let descDev='';
-    if(devTipo==='cambio_talla') descDev=`Cambio de talla ${item.talla} → ${devNuevaTalla}`;
-    else if(devTipo==='cambio_articulo') descDev='Devolución para cambio de artículo';
-    else if(devTipo==='defecto') descDev='Defecto/Daño: '+(document.getElementById('dev-desc-defecto')?.value.trim()||'');
-    const accionLabel = devTipo==='defecto' ? ({reposicion:'Reposición',devolucion_dinero:'Devolución de dinero',credito_tienda:'Crédito en tienda'}[accionDefecto]||'') : '';
-
+    if(devTipo==='cambio_talla') descDev='Cambio de talla '+item.talla+' → '+devNuevaTalla;
+    else if(devTipo==='cambio_articulo') descDev='Devolución para cambio por '+(devNuevoArtSel?.desc||'')+ ' T:'+_devNuevoTalla;
+    else descDev='Defecto/Daño: '+(document.getElementById('dev-desc-defecto')?.value.trim()||'');
+    // 3. Register devolución in ventas
     await addDoc(col('ventas'),{
-      fecha:hoy(), hora:hora(),
+      fecha:hoy(),hora:hora(),
       tipoVenta:'devolucion',
       ventaOriginalId:devVentaSel.id,
       cliente:devVentaSel.cliente||'',
@@ -11020,22 +11205,23 @@ async function confirmarDevolucion(){
       vendedor:usuario,
       sucursalId:devVentaSel.sucursalId||'',
       pago:devVentaSel.pago||'',
-      items:[{...item, devuelto:true}],
+      items:[{...item,devuelto:true}],
       subtotal:-(item.price*(item.qty||1)),
       descuento:0,
       total:-(item.price*(item.qty||1)),
       motivo:devTipo,
       descripcion:descDev,
-      accionDefecto:accionLabel||'',
+      accionDefecto:devTipo==='defecto'?accionDefecto:'',
       nuevaTalla:devTipo==='cambio_talla'?devNuevaTalla:'',
       notas,
       stockRestaurado:regresaStock,
       createdAt:new Date().toISOString()
     });
-
-    // 3. If cambio_talla: add new item to cart automatically
+    // 4. Post-actions
     if(devTipo==='cambio_talla'){
-      const prod=productos.find(p=>p.id===item.id);
+      let prod=productos.find(p=>p.id===item.id);
+      if(!prod&&item.sku) prod=productos.find(p=>p.barcode===item.sku||p.sku===item.sku);
+      // Add new talla to cart
       carrito.push({
         id:item.id, desc:item.desc,
         talla:devNuevaTalla,
@@ -11045,31 +11231,44 @@ async function confirmarDevolucion(){
         sku:item.sku||'',
         sucursalId:item.sucursalId||prod?.sucursalId||'',
         foto:item.foto||prod?.foto||null,
-        notaDev:'Cambio talla '+item.talla+' → '+devNuevaTalla
+        notaDev:'Cambio T'+item.talla+' → T'+devNuevaTalla
       });
-      // Reduce stock of new talla
+      // Reduce new talla stock
       if(prod){
         const stN=(prod.stock||{})[devNuevaTalla]||0;
-        await updateDoc(docRef('productos',item.id),{[`stock.${devNuevaTalla}`]:Math.max(0,stN-1)});
+        if(stN>0) await updateDoc(docRef('productos',prod.id),{['stock.'+devNuevaTalla]:Math.max(0,stN-1)});
       }
       closeM('mo-devolucion');
-      renderCart();
-      renderPOS();
-      toast('↩ Talla cambiada. Artículo T'+devNuevaTalla+' agregado al carrito — cobra la venta ✓');
+      renderCart();renderPOS();
+      toast('↩ Talla cambiada: '+item.talla+' → '+devNuevaTalla+'. Artículo en carrito para cobrar ✓');
     } else if(devTipo==='cambio_articulo'){
+      // Add new article to cart
+      const p=devNuevoArtSel;
+      carrito.push({
+        id:p.id, desc:p.desc,
+        talla:_devNuevoTalla,
+        color:p.color||'',
+        price:p.precio||0,
+        qty:1,
+        sku:p.barcode||p.sku||'',
+        sucursalId:p.sucursalId||'',
+        foto:p.foto||null,
+        notaDev:'Cambio por devolución'
+      });
+      // Reduce stock of new article
+      const stN=(p.stock||{})[_devNuevoTalla]||0;
+      if(stN>0) await updateDoc(docRef('productos',p.id),{['stock.'+_devNuevoTalla]:Math.max(0,stN-1)});
       closeM('mo-devolucion');
-      renderPOS();
-      renderCart();
-      toast('↩ Artículo devuelto — stock restaurado. Agrega el nuevo artículo al carrito y cobra la diferencia ✓');
-    } else if(devTipo==='defecto'){
+      renderCart();renderPOS();
+      toast('↩ '+item.desc+' devuelto. '+p.desc+' T:'+_devNuevoTalla+' agregado al carrito — cobra la diferencia ✓');
+    } else {
       closeM('mo-devolucion');
-      renderPOS();
-      toast('↩ Devolución por defecto registrada. Stock '+( regresaStock?'regresó al inventario':'no restaurado (devolución de dinero)')+' ✓');
+      renderPOS();renderInv();
+      const msg={reposicion:'Stock restaurado — dar reposición',devolucion_dinero:'Devolver dinero al cliente',credito_tienda:'Agregar crédito en tienda'}[accionDefecto]||'';
+      toast('↩ Devolución por defecto registrada. '+msg+' ✓');
     }
-
-    devVentaSel=null; devItemSel=null; devTipo=''; devNuevaTalla='';
+    devVentaSel=null;devItemSel=null;devTipo='';devNuevaTalla='';devNuevoArtSel=null;_devNuevoTalla='';
     renderHist();
-    renderInv();
   }catch(e){toast('Error: '+e.message,'err');console.error(e);}
 }
 
