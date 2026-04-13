@@ -2568,8 +2568,9 @@ select option{background:var(--s2)}
               <select id="hc-usuario" onchange="renderHistorialCambios()" style="width:160px">
                 <option value="">👤 Todos los usuarios</option>
               </select>
-              <select id="hc-campo" onchange="renderHistorialCambios()" style="width:150px">
-                <option value="">Todos los campos</option>
+              <select id="hc-campo" onchange="renderHistorialCambios()" style="width:160px">
+                <option value="">Todos los movimientos</option>
+                <option value="Alta de producto">🆕 Alta de producto</option>
                 <option value="Descripción">Descripción</option>
                 <option value="Categoría">Categoría</option>
                 <option value="Línea">Línea</option>
@@ -2578,6 +2579,7 @@ select option{background:var(--s2)}
                 <option value="Código Barras">Código Barras</option>
                 <option value="SKU">SKU</option>
                 <option value="Locación">Locación</option>
+                <option value="Modificación">Modificación general</option>
               </select>
               <input type="date" id="hc-desde" style="width:145px" oninput="renderHistorialCambios()">
               <input type="date" id="hc-hasta" style="width:145px" oninput="renderHistorialCambios()">
@@ -3825,6 +3827,18 @@ async function saveProducto(){
       };
       const ref=await addDoc(col('productos'),altaData);
       productos.push({...altaData,id:ref.id});
+      // Log new product creation in historialCambios
+      try{
+        await window._fb.addDoc(col('historialCambios'),{
+          tipo:'producto_nuevo', productoId:ref.id,
+          desc:data.desc, sku:data.sku||data.barcode||'',
+          cambios:[{campo:'Alta de producto', antes:'', despues:data.desc+' | Precio: $'+data.precio+' | Cat: '+(data.cat||'—')}],
+          usuario:usuarioActivo?.nombre||currentProfile?.nombre||'Admin',
+          usuarioRol:usuarioActivo?.rol||currentProfile?.rol||'admin',
+          fecha:hoy(), hora:hora(),
+          createdAt:new Date().toISOString()
+        });
+      }catch(e){console.warn('historialCambios alta error:',e);}
     }
     const savedId = editProdId;
     closeM('mo-prod');
@@ -10714,27 +10728,49 @@ let historialCambiosData = [];
 
 async function loadHistorialCambios(){
   const tbody = document.getElementById('hc-tbody');
-  if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">⏳ Cargando…</td></tr>';
+  const empty = document.getElementById('hc-empty');
+  if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">⏳ Cargando historial…</td></tr>';
+  if(empty) empty.style.display='none';
+
+  // Wait for Firebase
+  if(!window._fb){ setTimeout(loadHistorialCambios,800); return; }
+
   try{
-    if(!window._fb){setTimeout(loadHistorialCambios,800);return;}
     const snap = await window._fb.getDocs(col('historialCambios'));
     historialCambiosData = snap.docs.map(d=>({id:d.id,...d.data()}))
       .sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
-    // Populate usuario selector
+
+    // Populate usuario selector from actual data
     const usuarioSel = document.getElementById('hc-usuario');
     if(usuarioSel){
       const savedVal = usuarioSel.value;
-      const usuarios = [...new Set(historialCambiosData.map(r=>r.usuario||'').filter(Boolean))].sort();
+      const usuariosUniq = [...new Set(historialCambiosData.map(r=>r.usuario||'').filter(Boolean))].sort();
       usuarioSel.innerHTML = '<option value="">👤 Todos los usuarios</option>' +
-        usuarios.map(u=>`<option value="${u}"${u===savedVal?' selected':''}>${u}</option>`).join('');
+        usuariosUniq.map(u=>`<option value="${u}"${u===savedVal?' selected':''}>${u}</option>`).join('');
     }
-    renderHistorialCambios();
+
     if(historialCambiosData.length===0){
-      toast('Sin cambios registrados aún. Los cambios se registran al editar productos en Catálogo General.');
+      // No data yet — show helpful empty state
+      if(tbody) tbody.innerHTML='';
+      if(empty){
+        empty.style.display='block';
+        empty.innerHTML='<div style="text-align:center;padding:40px 20px">'
+          +'<div style="font-size:48px;margin-bottom:12px">📝</div>'
+          +'<div style="font-size:16px;font-weight:700;color:var(--cream);margin-bottom:8px">Sin cambios registrados aún</div>'
+          +'<div style="font-size:13px;color:var(--muted);max-width:400px;margin:0 auto;line-height:1.6">'
+          +'A partir de ahora, cada vez que alguien edite o cree un artículo en <strong>Catálogo General</strong>, '
+          +'el cambio quedará registrado aquí con la fecha, hora y nombre del usuario.<br><br>'
+          +'<span style="color:var(--accent2)">Los cambios anteriores no se pueden recuperar.</span>'
+          +'</div></div>';
+      }
+      return;
     }
+
+    renderHistorialCambios();
   }catch(e){
     console.error('loadHistorialCambios error:',e);
-    if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--red)">Error al cargar: '+e.message+'</td></tr>';
+    if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--red)">'
+      +'❌ Error al cargar: '+e.message+'<br><button class="btn btn-ghost btn-sm" onclick="loadHistorialCambios()" style="margin-top:8px">🔄 Reintentar</button></td></tr>';
   }
 }
 
@@ -10748,15 +10784,30 @@ function renderHistorialCambios(){
   // Flatten: one row per campo changed
   let rows = [];
   historialCambiosData.forEach(reg=>{
-    (reg.cambios||[]).forEach(ch=>{
+    const cambiosArr = reg.cambios||[];
+    if(cambiosArr.length===0){
+      // Record exists but has no cambios detail — show as single row
       rows.push({
-        fecha:reg.fecha||reg.createdAt?.slice(0,10)||'', hora:reg.hora||reg.createdAt?.slice(11,16)||'',
+        fecha:reg.fecha||reg.createdAt?.slice(0,10)||'',
+        hora:reg.hora||reg.createdAt?.slice(11,16)||'',
         desc:reg.desc||'', sku:reg.sku||'',
-        campo:ch.campo, antes:ch.antes, despues:ch.despues,
+        campo: reg.tipo==='producto_nuevo'?'Alta de producto':'Modificación',
+        antes:'', despues:reg.desc||'',
         usuario:reg.usuario||'—', rol:reg.usuarioRol||'—',
         createdAt:reg.createdAt
       });
-    });
+    } else {
+      cambiosArr.forEach(ch=>{
+        rows.push({
+          fecha:reg.fecha||reg.createdAt?.slice(0,10)||'',
+          hora:reg.hora||reg.createdAt?.slice(11,16)||'',
+          desc:reg.desc||'', sku:reg.sku||'',
+          campo:ch.campo||'Cambio', antes:ch.antes||'', despues:ch.despues||'',
+          usuario:reg.usuario||'—', rol:reg.usuarioRol||'—',
+          createdAt:reg.createdAt
+        });
+      });
+    }
   });
 
   // Filter
