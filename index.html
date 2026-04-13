@@ -2564,48 +2564,48 @@ select option{background:var(--s2)}
 </div>
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px">
             <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
-              <div class="search-wrap" style="flex:2;min-width:160px"><span class="search-ico">🔍</span><input type="text" id="hc-q" placeholder="Buscar producto, código, usuario…" oninput="renderHistorialCambios()"></div>
-              <select id="hc-usuario" onchange="renderHistorialCambios()" style="width:160px">
+              <div class="search-wrap" style="flex:2;min-width:180px">
+                <span class="search-ico">🔍</span>
+                <input type="text" id="hc-q" placeholder="Buscar artículo, código, usuario…" oninput="renderHistorialCambios()">
+              </div>
+              <select id="hc-usuario" onchange="renderHistorialCambios()" style="min-width:160px">
                 <option value="">👤 Todos los usuarios</option>
               </select>
-              <select id="hc-campo" onchange="renderHistorialCambios()" style="width:160px">
+              <select id="hc-tipo" onchange="renderHistorialCambios()" style="min-width:160px">
                 <option value="">Todos los movimientos</option>
-                <option value="Alta de producto">🆕 Alta de producto</option>
-                <option value="Descripción">Descripción</option>
-                <option value="Categoría">Categoría</option>
-                <option value="Línea">Línea</option>
-                <option value="Precio Venta">Precio Venta</option>
-                <option value="Costo">Costo</option>
-                <option value="Código Barras">Código Barras</option>
-                <option value="SKU">SKU</option>
-                <option value="Locación">Locación</option>
-                <option value="Modificación">Modificación general</option>
+                <option value="alta">🆕 Alta de artículo</option>
+                <option value="edicion">✏️ Edición en catálogo</option>
+                <option value="entrada">📥 Entrada de mercancía</option>
+                <option value="bitacora">✅ Aprobación bitácora</option>
               </select>
               <input type="date" id="hc-desde" style="width:145px" oninput="renderHistorialCambios()">
               <input type="date" id="hc-hasta" style="width:145px" oninput="renderHistorialCambios()">
-              <button class="btn btn-ghost btn-sm" onclick="loadHistorialCambios();toast('Actualizando…')">🔄 Actualizar</button>
               <button class="btn btn-ghost btn-sm" onclick="exportarHistorialCambiosExcel()">📊 Excel</button>
             </div>
           </div>
           <div class="stat-grid sg3" style="margin-bottom:14px">
-            <div class="scard gold"><div class="sl">Total Cambios</div><div class="sv gold" id="hc-stat-total">0</div></div>
-            <div class="scard b"><div class="sl">Productos Modificados</div><div class="sv b" id="hc-stat-prods">0</div></div>
-            <div class="scard g"><div class="sl">Último Cambio</div><div class="sv" style="font-size:14px" id="hc-stat-ultimo">—</div></div>
+            <div class="scard gold"><div class="sl">Total registros</div><div class="sv gold" id="hc-stat-total">0</div></div>
+            <div class="scard b"><div class="sl">Artículos involucrados</div><div class="sv b" id="hc-stat-prods">0</div></div>
+            <div class="scard g"><div class="sl">Último movimiento</div><div class="sv" style="font-size:13px" id="hc-stat-ultimo">—</div></div>
           </div>
           <div class="tw" style="overflow-x:auto">
             <table style="min-width:900px"><thead><tr>
               <th>Fecha / Hora</th>
-              <th>Producto</th>
+              <th>Tipo</th>
+              <th>Artículo / Detalle</th>
               <th>Código</th>
-              <th>Campo Modificado</th>
-              <th>Valor Anterior</th>
-              <th>Valor Nuevo</th>
+              <th>Movimiento</th>
+              <th>Valor anterior</th>
+              <th>Valor nuevo</th>
               <th>Usuario</th>
-              <th>Rol</th>
             </tr></thead>
             <tbody id="hc-tbody"></tbody>
           </table></div>
-          <div class="empty" id="hc-empty" style="display:none"><div class="empty-icon">📝</div><div>Sin cambios registrados aún.</div></div>
+          <div id="hc-empty" style="display:none;text-align:center;padding:40px 20px">
+            <div style="font-size:48px;margin-bottom:12px">📝</div>
+            <div style="font-size:16px;font-weight:700;color:var(--cream);margin-bottom:8px">Sin registros</div>
+            <div style="font-size:13px;color:var(--muted)">Ajusta los filtros o da clic en Actualizar</div>
+          </div>
         </div>
 
 <!-- ══════════ MODALES ══════════ -->
@@ -10723,160 +10723,177 @@ function usarPlantilla(tipo){
 
 
 
-// ══════════════════ T3: HISTORIAL DE CAMBIOS EN CATÁLOGO ══════════════════
+// ══════════════════ HISTORIAL DE CAMBIOS / ACTIVIDAD ══════════════════
 let historialCambiosData = [];
 
 async function loadHistorialCambios(){
   const tbody = document.getElementById('hc-tbody');
   const empty = document.getElementById('hc-empty');
-  if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">⏳ Cargando historial…</td></tr>';
-  if(empty) empty.style.display='none';
-
-  // Wait for Firebase
-  if(!window._fb){ setTimeout(loadHistorialCambios,800); return; }
+  if(tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--muted)">⏳ Cargando actividad…</td></tr>';
+  if(empty) empty.style.display = 'none';
+  if(!window._fb){ setTimeout(loadHistorialCambios, 800); return; }
 
   try{
-    const snap = await window._fb.getDocs(col('historialCambios'));
-    historialCambiosData = snap.docs.map(d=>({id:d.id,...d.data()}))
-      .sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+    const rows = [];
 
-    // Populate usuario selector from actual data
+    // SOURCE 1: historialCambios collection (edits logged by saveProducto)
+    try{
+      const hcSnap = await window._fb.getDocs(col('historialCambios'));
+      hcSnap.docs.forEach(d=>{
+        const reg = d.data();
+        const fecha = reg.fecha || (reg.createdAt||'').slice(0,10) || '';
+        const hora  = reg.hora  || (reg.createdAt||'').slice(11,16) || '';
+        const cambiosArr = reg.cambios || [];
+        if(cambiosArr.length === 0){
+          rows.push({ fecha, hora, createdAt: reg.createdAt||fecha,
+            tipo: reg.tipo==='producto_nuevo' ? 'alta' : 'edicion',
+            desc: reg.desc||'', sku: reg.sku||'',
+            movimiento: reg.tipo==='producto_nuevo' ? 'Nuevo artículo dado de alta' : 'Modificación en catálogo',
+            antes: '', despues: reg.desc||'', usuario: reg.usuario||'—' });
+        } else {
+          cambiosArr.forEach(ch=>{
+            rows.push({ fecha, hora, createdAt: reg.createdAt||fecha,
+              tipo: 'edicion', desc: reg.desc||'', sku: reg.sku||'',
+              movimiento: ch.campo||'Cambio', antes: ch.antes||'', despues: ch.despues||'',
+              usuario: reg.usuario||'—' });
+          });
+        }
+      });
+    }catch(e){ console.warn('historialCambios read:',e); }
+
+    // SOURCE 2: productos array — registros con creadoPor (altas)
+    productos.forEach(p=>{
+      if(!p.creadoPor) return;
+      const fecha = (p.createdAt||'').slice(0,10) || '';
+      const hora  = (p.createdAt||'').slice(11,16) || '';
+      const yaExiste = rows.some(r=>r.tipo==='alta' && r.sku===(p.barcode||p.sku||''));
+      if(!yaExiste && fecha){
+        rows.push({ fecha, hora, createdAt: p.createdAt||fecha,
+          tipo: 'alta', desc: p.desc||'', sku: p.barcode||p.sku||'',
+          movimiento: 'Alta de artículo', antes: '',
+          despues: 'Precio: $'+p.precio+' | Cat: '+(p.cat||'—'),
+          usuario: p.creadoPor||'—' });
+      }
+    });
+
+    // SOURCE 3: entradas collection
+    try{
+      const entSnap = await window._fb.getDocs(col('entradas'));
+      entSnap.docs.forEach(d=>{
+        const ent = d.data();
+        const fecha = ent.fecha || (ent.createdAt||'').slice(0,10) || '';
+        const hora  = ent.hora  || (ent.createdAt||'').slice(11,16) || '';
+        const usuario = ent.creadoPor || ent.usuario || ent.vendedor || '—';
+        (ent.lineas||[]).forEach(linea=>{
+          rows.push({ fecha, hora, createdAt: ent.createdAt||fecha,
+            tipo: 'entrada', desc: linea.desc||linea.sku||'', sku: linea.sku||linea.barcode||'',
+            movimiento: 'Entrada mercancía'+(ent.estado?' ('+ent.estado+')':''),
+            antes: '', despues: linea.cantidad+' pzas · T:'+linea.talla,
+            usuario });
+        });
+      });
+    }catch(e){ console.warn('entradas read:',e); }
+
+    // SOURCE 4: bitacora — aprobaciones
+    try{
+      const bitSnap = await window._fb.getDocs(col('bitacora'));
+      bitSnap.docs.forEach(d=>{
+        const mov = d.data();
+        if(mov.estado!=='aprobado') return;
+        const fecha = (mov.aprobadoEn||mov.createdAt||'').slice(0,10) || mov.fecha || '';
+        const hora  = (mov.aprobadoEn||mov.createdAt||'').slice(11,16) || '';
+        const usuario = mov.aprobadoPor || mov.creadoPor || '—';
+        (mov.datos?.lineas||[]).forEach(linea=>{
+          rows.push({ fecha, hora, createdAt: mov.aprobadoEn||mov.createdAt||fecha,
+            tipo: 'bitacora', desc: linea.desc||linea.sku||'', sku: linea.sku||linea.barcode||'',
+            movimiento: (mov.tipo==='entrada'?'Entrada':'Salida')+' aprobada',
+            antes: '', despues: linea.cantidad+' pzas · T:'+linea.talla,
+            usuario });
+        });
+      });
+    }catch(e){ console.warn('bitacora read:',e); }
+
+    // Sort newest first
+    rows.sort((a,b)=>(b.createdAt||b.fecha||'').localeCompare(a.createdAt||a.fecha||''));
+    historialCambiosData = rows;
+
+    // Populate usuario selector
     const usuarioSel = document.getElementById('hc-usuario');
     if(usuarioSel){
-      const savedVal = usuarioSel.value;
-      const usuariosUniq = [...new Set(historialCambiosData.map(r=>r.usuario||'').filter(Boolean))].sort();
+      const saved = usuarioSel.value;
+      const usrs = [...new Set(rows.map(r=>r.usuario).filter(u=>u&&u!=='—'))].sort();
       usuarioSel.innerHTML = '<option value="">👤 Todos los usuarios</option>' +
-        usuariosUniq.map(u=>`<option value="${u}"${u===savedVal?' selected':''}>${u}</option>`).join('');
-    }
-
-    if(historialCambiosData.length===0){
-      // No data yet — show helpful empty state
-      if(tbody) tbody.innerHTML='';
-      if(empty){
-        empty.style.display='block';
-        empty.innerHTML='<div style="text-align:center;padding:40px 20px">'
-          +'<div style="font-size:48px;margin-bottom:12px">📝</div>'
-          +'<div style="font-size:16px;font-weight:700;color:var(--cream);margin-bottom:8px">Sin cambios registrados aún</div>'
-          +'<div style="font-size:13px;color:var(--muted);max-width:400px;margin:0 auto;line-height:1.6">'
-          +'A partir de ahora, cada vez que alguien edite o cree un artículo en <strong>Catálogo General</strong>, '
-          +'el cambio quedará registrado aquí con la fecha, hora y nombre del usuario.<br><br>'
-          +'<span style="color:var(--accent2)">Los cambios anteriores no se pueden recuperar.</span>'
-          +'</div></div>';
-      }
-      return;
+        usrs.map(u=>`<option value="${u}"${u===saved?' selected':''}>${u}</option>`).join('');
     }
 
     renderHistorialCambios();
+    if(rows.length===0) toast('Sin actividad registrada aún.');
   }catch(e){
     console.error('loadHistorialCambios error:',e);
-    if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--red)">'
-      +'❌ Error al cargar: '+e.message+'<br><button class="btn btn-ghost btn-sm" onclick="loadHistorialCambios()" style="margin-top:8px">🔄 Reintentar</button></td></tr>';
+    if(tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--red)">❌ Error: '+e.message+'<br><button class="btn btn-ghost btn-sm" onclick="loadHistorialCambios()" style="margin-top:8px">🔄 Reintentar</button></td></tr>';
   }
 }
 
 function renderHistorialCambios(){
   const q       = (document.getElementById('hc-q')?.value||'').toLowerCase();
-  const campo   = document.getElementById('hc-campo')?.value||'';
   const usuario = document.getElementById('hc-usuario')?.value||'';
+  const tipo    = document.getElementById('hc-tipo')?.value||'';
   const desde   = document.getElementById('hc-desde')?.value||'';
   const hasta   = document.getElementById('hc-hasta')?.value||'';
 
-  // Flatten: one row per campo changed
-  let rows = [];
-  historialCambiosData.forEach(reg=>{
-    const cambiosArr = reg.cambios||[];
-    if(cambiosArr.length===0){
-      // Record exists but has no cambios detail — show as single row
-      rows.push({
-        fecha:reg.fecha||reg.createdAt?.slice(0,10)||'',
-        hora:reg.hora||reg.createdAt?.slice(11,16)||'',
-        desc:reg.desc||'', sku:reg.sku||'',
-        campo: reg.tipo==='producto_nuevo'?'Alta de producto':'Modificación',
-        antes:'', despues:reg.desc||'',
-        usuario:reg.usuario||'—', rol:reg.usuarioRol||'—',
-        createdAt:reg.createdAt
-      });
-    } else {
-      cambiosArr.forEach(ch=>{
-        rows.push({
-          fecha:reg.fecha||reg.createdAt?.slice(0,10)||'',
-          hora:reg.hora||reg.createdAt?.slice(11,16)||'',
-          desc:reg.desc||'', sku:reg.sku||'',
-          campo:ch.campo||'Cambio', antes:ch.antes||'', despues:ch.despues||'',
-          usuario:reg.usuario||'—', rol:reg.usuarioRol||'—',
-          createdAt:reg.createdAt
-        });
-      });
-    }
-  });
-
-  // Filter
-  rows = rows.filter(r=>{
-    const mq = !q || r.desc.toLowerCase().includes(q) || r.sku.toLowerCase().includes(q) || r.usuario.toLowerCase().includes(q);
-    const mc = !campo || r.campo===campo;
+  let rows = historialCambiosData.filter(r=>{
+    const mq = !q || (r.desc||'').toLowerCase().includes(q) || (r.sku||'').toLowerCase().includes(q) || (r.usuario||'').toLowerCase().includes(q) || (r.movimiento||'').toLowerCase().includes(q);
     const mu = !usuario || r.usuario===usuario;
-    const md = !desde || r.fecha>=desde;
-    const mh = !hasta || r.fecha<=hasta;
-    return mq&&mc&&mu&&md&&mh;
+    const mt = !tipo || r.tipo===tipo;
+    const md = !desde || (r.fecha||'')>=desde;
+    const mh = !hasta || (r.fecha||'')<=hasta;
+    return mq&&mu&&mt&&md&&mh;
   });
 
   const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  const prodsMod = new Set(historialCambiosData.map(r=>r.productoId)).size;
-  setEl('hc-stat-total', rows.length);
-  setEl('hc-stat-prods', prodsMod);
-  setEl('hc-stat-ultimo', historialCambiosData[0]?.fecha||'—');
+  const prodsUniq = new Set(rows.map(r=>r.sku||r.desc).filter(Boolean)).size;
+  setEl('hc-stat-total',  rows.length);
+  setEl('hc-stat-prods',  prodsUniq);
+  setEl('hc-stat-ultimo', rows[0] ? (rows[0].fecha||'—')+' · '+(rows[0].usuario||'') : '—');
 
-  const empty = document.getElementById('hc-empty');
   const tbody = document.getElementById('hc-tbody');
-  if(!rows.length){
-    if(tbody) tbody.innerHTML='';
-    if(empty) empty.style.display='block';
-    return;
-  }
+  const empty = document.getElementById('hc-empty');
+  if(!rows.length){ if(tbody)tbody.innerHTML=''; if(empty)empty.style.display='block'; return; }
   if(empty) empty.style.display='none';
 
-  const campoColors = {
-    'Precio Venta':'var(--gold)', 'Costo':'var(--red)',
-    'Categoría':'var(--accent2)', 'Línea':'var(--blue)',
-    'Código Barras':'var(--green)', 'SKU':'var(--green)',
-    'Descripción':'var(--cream)', 'Locación':'var(--orange)'
+  const tipoBadge={
+    alta:    '<span class="badge b-green"  style="font-size:10px">🆕 Alta</span>',
+    edicion: '<span class="badge b-accent" style="font-size:10px">✏️ Edición</span>',
+    entrada: '<span class="badge b-blue"   style="font-size:10px">📥 Entrada</span>',
+    bitacora:'<span class="badge b-gold"   style="font-size:10px">✅ Aprobado</span>'
   };
 
   tbody.innerHTML = rows.map(r=>`<tr>
     <td style="white-space:nowrap;font-size:11px">
-      <div style="color:var(--cream);font-weight:600">${fmtFechaCorta(r.fecha)}</div>
-      <div style="color:var(--muted);font-size:10px">${r.hora}</div>
+      <div style="font-weight:600;color:var(--cream)">${r.fecha||'—'}</div>
+      <div style="color:var(--muted);font-size:10px">${r.hora||''}</div>
     </td>
-    <td>
-      <div style="font-weight:600;color:var(--cream);font-size:12px">${r.desc}</div>
+    <td>${tipoBadge[r.tipo]||('<span class="badge b-gray" style="font-size:10px">'+r.tipo+'</span>')}</td>
+    <td style="max-width:180px">
+      <div style="font-weight:600;color:var(--cream);font-size:12px">${r.desc||'—'}</div>
     </td>
     <td class="mono" style="font-size:11px;color:var(--muted)">${r.sku||'—'}</td>
-    <td><span class="badge b-accent" style="font-size:11px;color:${campoColors[r.campo]||'var(--cream)'}">${r.campo}</span></td>
-    <td style="font-size:12px;color:var(--red);max-width:150px">
-      <span style="background:rgba(239,68,68,.1);border-radius:4px;padding:2px 6px">${r.antes||'(vacío)'}</span>
-    </td>
-    <td style="font-size:12px;color:var(--green);max-width:150px">
-      <span style="background:rgba(82,201,122,.1);border-radius:4px;padding:2px 6px">${r.despues||'(vacío)'}</span>
-    </td>
-    <td style="font-size:12px;color:var(--cream);font-weight:600">${r.usuario}</td>
-    <td><span class="role-badge role-${r.rol||'lectura'}" style="font-size:10px">${r.rol}</span></td>
+    <td style="font-size:12px;color:var(--cream)">${r.movimiento||'—'}</td>
+    <td style="font-size:12px;max-width:130px">${r.antes?('<span style="background:rgba(239,68,68,.1);border-radius:4px;padding:2px 6px;color:var(--red)">'+r.antes+'</span>'):'<span style="color:var(--faint)">—</span>'}</td>
+    <td style="font-size:12px;max-width:150px">${r.despues?('<span style="background:rgba(82,201,122,.1);border-radius:4px;padding:2px 6px;color:var(--green)">'+r.despues+'</span>'):'<span style="color:var(--faint)">—</span>'}</td>
+    <td style="font-size:12px;font-weight:600;color:var(--cream);white-space:nowrap">${r.usuario||'—'}</td>
   </tr>`).join('');
 }
 
 function exportarHistorialCambiosExcel(){
-  const headers=['Fecha','Hora','Producto','Codigo','Campo','Antes','Despues','Usuario','Rol'];
-  const rows=[];
-  historialCambiosData.forEach(reg=>{
-    (reg.cambios||[]).forEach(ch=>{
-      rows.push([reg.fecha,reg.hora||'',reg.desc||'',reg.sku||'',ch.campo,ch.antes,ch.despues,reg.usuario||'',reg.usuarioRol||'']);
-    });
-  });
+  const headers=['Fecha','Hora','Tipo','Articulo','Codigo','Movimiento','Antes','Despues','Usuario'];
+  const rows = historialCambiosData.map(r=>[r.fecha||'',r.hora||'',r.tipo||'',r.desc||'',r.sku||'',r.movimiento||'',r.antes||'',r.despues||'',r.usuario||'']);
   const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
   const nl='\n';
   const csv='\uFEFF'+headers.map(esc).join(',')+nl+rows.map(r=>r.map(esc).join(',')).join(nl);
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='historial_cambios_'+hoy()+'.csv';a.click();toast('Excel descargado ✓');
+  a.download='actividad_'+hoy()+'.csv';a.click();toast('Excel descargado ✓');
 }
 
 // ══════════════════ T4: HIDE COSTO FROM VENDEDOR/BODEGUERO ══════════════════
