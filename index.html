@@ -2565,6 +2565,9 @@ select option{background:var(--s2)}
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px">
             <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
               <div class="search-wrap" style="flex:2;min-width:160px"><span class="search-ico">🔍</span><input type="text" id="hc-q" placeholder="Buscar producto, código, usuario…" oninput="renderHistorialCambios()"></div>
+              <select id="hc-usuario" onchange="renderHistorialCambios()" style="width:160px">
+                <option value="">👤 Todos los usuarios</option>
+              </select>
               <select id="hc-campo" onchange="renderHistorialCambios()" style="width:150px">
                 <option value="">Todos los campos</option>
                 <option value="Descripción">Descripción</option>
@@ -2578,6 +2581,7 @@ select option{background:var(--s2)}
               </select>
               <input type="date" id="hc-desde" style="width:145px" oninput="renderHistorialCambios()">
               <input type="date" id="hc-hasta" style="width:145px" oninput="renderHistorialCambios()">
+              <button class="btn btn-ghost btn-sm" onclick="loadHistorialCambios();toast('Actualizando…')">🔄 Actualizar</button>
               <button class="btn btn-ghost btn-sm" onclick="exportarHistorialCambiosExcel()">📊 Excel</button>
             </div>
           </div>
@@ -3837,16 +3841,8 @@ async function saveProducto(){
     console.error('saveProducto error:',e);
     // Common fix: if quota exceeded, try without photo
     if(msg.includes('exceed')||msg.includes('size')||msg.includes('RESOURCE_EXHAUSTED')){
-      toast('Foto muy grande — guardando sin foto…','err');
-      data.foto=null;
-      try{
-        if(editProdId)await setDoc(docRef('productos',editProdId),data,{merge:true});
-        else await addDoc(col('productos'),{...data,createdAt:new Date().toISOString()});
-        closeM('mo-prod');
-        toast('Guardado sin foto ✓ (sube una foto más pequeña)');
-        editProdId=null; photoDataUrl=null;
-        renderCatalogo();renderInv();
-      }catch(e2){toast('Error definitivo: '+e2.message,'err');}
+      toast('Foto muy grande — guarda primero sin foto','err');
+      // Do NOT retry with addDoc — would create duplicate. User must reduce photo size.
     }
   }
 }
@@ -6113,7 +6109,20 @@ function buscarProdEntrada(){
   const q=(document.getElementById('ent-prod-q')?.value||'').toLowerCase();
   const res=document.getElementById('ent-prod-res'); if(!res)return;
   if(!q){res.innerHTML='';return;}
-  const lista=productos.filter(p=>(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q)).slice(0,8);
+  const raw=productos.filter(p=>(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q));
+  // Deduplicate by barcode/sku — keep the one with most stock or most recent
+  const seen=new Map();
+  raw.forEach(p=>{
+    const key=(p.barcode||p.sku||p.desc||'').trim().toLowerCase();
+    if(!key)return;
+    const prev=seen.get(key);
+    if(!prev){seen.set(key,p);return;}
+    // Prefer product with stock > 0, then by createdAt (newest)
+    const stockP=Object.values(p.stock||{}).reduce((a,b)=>a+Number(b),0);
+    const stockPrev=Object.values(prev.stock||{}).reduce((a,b)=>a+Number(b),0);
+    if(stockP>stockPrev||(stockP===stockPrev&&(p.createdAt||'')>(prev.createdAt||''))) seen.set(key,p);
+  });
+  const lista=[...seen.values()].slice(0,8);
   res.innerHTML=lista.map(p=>`
     <div onclick="selProdEntrada('${p.id}')" style="padding:8px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:4px" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
       <div style="font-weight:600;font-size:13px;color:var(--cream)">${p.desc}</div>
@@ -9024,23 +9033,40 @@ async function cambiarSucursalMovimiento(id){
 // ══════════ HELPER: apply stock to correct sucursal record ══════════
 async function aplicarStockEnSucursal(linea, sucursalId, delta){
   // +delta = entrada (add), -delta = salida (remove)
-  const {updateDoc, addDoc} = window._fb;
-  const estilo = linea.sku || linea.barcode || '';
+  const {updateDoc} = window._fb;
+  const estilo = (linea.sku || linea.barcode || '').trim();
 
-  // STRICT search: must match BOTH estilo/barcode AND sucursal
-  let prodTarget = null;
-  if(sucursalId){
+  // PRIORITY 1: direct product ID match (most reliable)
+  let prodTarget = linea.prodId ? productos.find(x => x.id === linea.prodId) : null;
+
+  // PRIORITY 2: match by code + sucursal (flexible: barcode OR sku)
+  if(!prodTarget && estilo && sucursalId){
     prodTarget = productos.find(x =>
       x.sucursalId === sucursalId &&
-      (x.barcode === estilo || x.sku === estilo || (estilo==='' && x.id===linea.prodId))
+      (x.barcode === estilo || x.sku === estilo ||
+       x.barcode === linea.barcode || x.sku === linea.sku ||
+       x.sku === linea.barcode || x.barcode === linea.sku)
     );
-  } else {
-    // No sucursal specified — update the source product
-    prodTarget = productos.find(x => x.id===linea.prodId);
+  }
+
+  // PRIORITY 3: if still not found by sucursal, find by code in any sucursal
+  // (handles cases where product was created in a different sucursal)
+  if(!prodTarget && estilo){
+    prodTarget = productos.find(x =>
+      x.barcode === estilo || x.sku === estilo
+    );
+  }
+
+  // PRIORITY 4: match by desc + sucursal (last resort)
+  if(!prodTarget && linea.desc && sucursalId){
+    prodTarget = productos.find(x =>
+      x.sucursalId === sucursalId &&
+      (x.desc||'').toLowerCase().trim() === (linea.desc||'').toLowerCase().trim()
+    );
   }
 
   if(prodTarget){
-    // Found in correct sucursal — update stock
+    // Found — update stock
     const stockActual = (prodTarget.stock||{})[linea.talla]||0;
     const nuevoStock = delta>0 ? stockActual+delta : Math.max(0,stockActual+delta);
     await updateDoc(docRef('productos',prodTarget.id),{
@@ -9052,35 +9078,12 @@ async function aplicarStockEnSucursal(linea, sucursalId, delta){
       if(!productos[idx].stock) productos[idx].stock={};
       productos[idx].stock[linea.talla] = nuevoStock;
     }
-  } else if(delta>0 && sucursalId){
-    // NOT found in target sucursal — create a new SEPARATE product record for that sucursal
-    const sourceProd = productos.find(x=>x.id===linea.prodId);
-    if(!sourceProd){ console.warn('Source product not found:', linea.prodId); return; }
-    const newProd = {
-      barcode: sourceProd.barcode||'',
-      sku: sourceProd.sku||'',
-      desc: sourceProd.desc||linea.desc||'',
-      cat: sourceProd.cat||'',
-      linea: sourceProd.linea||'',
-      temporada: sourceProd.temporada||'',
-      marca: sourceProd.marca||'',
-      color: sourceProd.color||'',
-      precio: sourceProd.precio||0,
-      costo: sourceProd.costo||0,
-      locacion: sourceProd.locacion||'',
-      foto: sourceProd.foto||null,
-      barcodeTallas: sourceProd.barcodeTallas||{},
-      sucursalId: sucursalId,
-      stock: {[linea.talla]: delta},
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    const ref = await addDoc(col('productos'), newProd);
-    productos.push({...newProd, id:ref.id});
-    console.log('Created new product record for sucursal:', sucursalId, newProd.desc);
-  } else if(delta<0){
-    // Trying to remove stock but no record found — log warning
-    console.warn('No product found for salida in sucursal:', sucursalId, linea);
+    console.log('Stock updated:', prodTarget.desc, linea.talla, stockActual, '->', nuevoStock);
+  } else {
+    // No product found — NEVER create a new one automatically (avoids duplicates)
+    // This means the product must be created in Catálogos first
+    console.warn('aplicarStockEnSucursal: product NOT found for', estilo, linea.desc, '— skipping to avoid duplicate');
+    toast('⚠️ No se encontró el artículo "'+( linea.desc||estilo)+'" en inventario. Verifica que esté dado de alta en Catálogos.','err');
   }
 }
 
@@ -10713,25 +10716,41 @@ async function loadHistorialCambios(){
   const tbody = document.getElementById('hc-tbody');
   if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">⏳ Cargando…</td></tr>';
   try{
+    if(!window._fb){setTimeout(loadHistorialCambios,800);return;}
     const snap = await window._fb.getDocs(col('historialCambios'));
     historialCambiosData = snap.docs.map(d=>({id:d.id,...d.data()}))
       .sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+    // Populate usuario selector
+    const usuarioSel = document.getElementById('hc-usuario');
+    if(usuarioSel){
+      const savedVal = usuarioSel.value;
+      const usuarios = [...new Set(historialCambiosData.map(r=>r.usuario||'').filter(Boolean))].sort();
+      usuarioSel.innerHTML = '<option value="">👤 Todos los usuarios</option>' +
+        usuarios.map(u=>`<option value="${u}"${u===savedVal?' selected':''}>${u}</option>`).join('');
+    }
     renderHistorialCambios();
-  }catch(e){ console.error(e); if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">Error al cargar</td></tr>'; }
+    if(historialCambiosData.length===0){
+      toast('Sin cambios registrados aún. Los cambios se registran al editar productos en Catálogo General.');
+    }
+  }catch(e){
+    console.error('loadHistorialCambios error:',e);
+    if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--red)">Error al cargar: '+e.message+'</td></tr>';
+  }
 }
 
 function renderHistorialCambios(){
-  const q     = (document.getElementById('hc-q')?.value||'').toLowerCase();
-  const campo = document.getElementById('hc-campo')?.value||'';
-  const desde = document.getElementById('hc-desde')?.value||'';
-  const hasta = document.getElementById('hc-hasta')?.value||'';
+  const q       = (document.getElementById('hc-q')?.value||'').toLowerCase();
+  const campo   = document.getElementById('hc-campo')?.value||'';
+  const usuario = document.getElementById('hc-usuario')?.value||'';
+  const desde   = document.getElementById('hc-desde')?.value||'';
+  const hasta   = document.getElementById('hc-hasta')?.value||'';
 
   // Flatten: one row per campo changed
   let rows = [];
   historialCambiosData.forEach(reg=>{
     (reg.cambios||[]).forEach(ch=>{
       rows.push({
-        fecha:reg.fecha, hora:reg.hora||'',
+        fecha:reg.fecha||reg.createdAt?.slice(0,10)||'', hora:reg.hora||reg.createdAt?.slice(11,16)||'',
         desc:reg.desc||'', sku:reg.sku||'',
         campo:ch.campo, antes:ch.antes, despues:ch.despues,
         usuario:reg.usuario||'—', rol:reg.usuarioRol||'—',
@@ -10744,9 +10763,10 @@ function renderHistorialCambios(){
   rows = rows.filter(r=>{
     const mq = !q || r.desc.toLowerCase().includes(q) || r.sku.toLowerCase().includes(q) || r.usuario.toLowerCase().includes(q);
     const mc = !campo || r.campo===campo;
+    const mu = !usuario || r.usuario===usuario;
     const md = !desde || r.fecha>=desde;
     const mh = !hasta || r.fecha<=hasta;
-    return mq&&mc&&md&&mh;
+    return mq&&mc&&mu&&md&&mh;
   });
 
   const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
