@@ -1684,8 +1684,9 @@ select option{background:var(--s2)}
   <div class="mod-tabs" id="tabs-resumen"></div>
 </div>
 
+          <!-- ── FILTROS ANUALES ── -->
           <div class="flex-between" style="margin-bottom:14px">
-            <div class="flex-row" style="gap:12px;align-items:center">
+            <div class="flex-row" style="gap:12px;align-items:center;flex-wrap:wrap">
               <div>
                 <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Año</label>
                 <select id="resumen-anio" onchange="renderResumenAnual()" style="width:100px">
@@ -1721,6 +1722,73 @@ select option{background:var(--s2)}
               <thead id="resumen-thead"></thead>
               <tbody id="resumen-tbody"></tbody>
             </table>
+          </div>
+
+          <!-- GRÁFICA INGRESOS VS GASTOS -->
+          <div class="card" style="padding:16px;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+              <div class="card-title">📊 Ingresos vs Gastos por Mes</div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <span style="display:flex;align-items:center;gap:4px;font-size:12px"><span style="width:12px;height:12px;background:var(--green);border-radius:2px;display:inline-block"></span>Ingresos</span>
+                <span style="display:flex;align-items:center;gap:4px;font-size:12px"><span style="width:12px;height:12px;background:var(--red);border-radius:2px;display:inline-block"></span>Gastos</span>
+                <span style="display:flex;align-items:center;gap:4px;font-size:12px"><span style="width:12px;height:12px;background:var(--gold);border-radius:2px;display:inline-block"></span>Utilidad</span>
+              </div>
+            </div>
+            <div id="resumen-grafica" style="display:flex;align-items:flex-end;gap:6px;height:180px;padding:10px 0;overflow-x:auto;min-height:60px"></div>
+            <div id="resumen-grafica-empty" style="display:none;text-align:center;padding:24px;color:var(--muted);font-size:13px">Sin datos para el año seleccionado</div>
+          </div>
+
+          <!-- ══ CONSULTA POR MES ══ -->
+          <div class="card" style="margin-bottom:16px;padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+              <div>
+                <div class="card-title" style="margin-bottom:2px">📅 Detalle por Mes</div>
+                <div style="font-size:11px;color:var(--muted)">Consulta ingresos, gastos y ventas de un mes específico</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <select id="mes-consulta-anio" onchange="renderResumenMes()" style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--cream);font-weight:700;font-size:14px">
+                  <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+                </select>
+                <select id="mes-consulta-mes" onchange="renderResumenMes()" style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--cream);font-weight:700;font-size:14px;width:150px"></select>
+                <button class="btn btn-ghost btn-sm" onclick="exportarMesExcel()">📥 Excel</button>
+              </div>
+            </div>
+            <!-- Tarjetas mes -->
+            <div class="stat-grid sg4" style="margin-bottom:14px">
+              <div class="scard gold"><div class="sl">Total Ingresos Mes</div><div class="sv gold" id="mes-total">$0</div></div>
+              <div class="scard g"><div class="sl">Efectivo Mes</div><div class="sv g" id="mes-efectivo">$0</div></div>
+              <div class="scard r"><div class="sl">Gastos Mes</div><div class="sv r" id="mes-gastos">$0</div></div>
+              <div class="scard a"><div class="sl">Utilidad Mes</div><div class="sv a" id="mes-utilidad">$0</div></div>
+            </div>
+            <div class="stat-grid sg4" style="margin-bottom:14px">
+              <div class="scard b"><div class="sl">Tarjeta / Transf.</div><div class="sv b" id="mes-tarjeta">$0</div></div>
+              <div class="scard gold"><div class="sl"># Ventas</div><div class="sv gold" id="mes-num-ventas">0</div></div>
+              <div class="scard g"><div class="sl">Ticket Promedio</div><div class="sv g" id="mes-ticket">$0</div></div>
+              <div class="scard r"><div class="sl">Separos / Anticipos</div><div class="sv r" id="mes-separos">$0</div></div>
+            </div>
+            <!-- Tabla días del mes -->
+            <div style="overflow-x:auto">
+              <table style="min-width:600px;width:100%">
+                <thead>
+                  <tr>
+                    <th style="text-align:left">Día</th>
+                    <th style="text-align:left">Fecha</th>
+                    <th style="text-align:right;color:var(--green)">Efectivo</th>
+                    <th style="text-align:right;color:var(--blue)">Tarjeta/Transf.</th>
+                    <th style="text-align:right;color:var(--gold)">Total Ingresos</th>
+                    <th style="text-align:right;color:var(--red)">Gastos</th>
+                    <th style="text-align:right;color:var(--accent2)">Utilidad Día</th>
+                    <th style="text-align:right;color:var(--muted)"># Ventas</th>
+                  </tr>
+                </thead>
+                <tbody id="mes-tbody"></tbody>
+              </table>
+            </div>
+            <!-- Mini gráfica del mes -->
+            <div style="margin-top:14px">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px">Ingresos diarios del mes</div>
+              <div id="mes-grafica" style="display:flex;align-items:flex-end;gap:3px;height:80px;overflow-x:auto"></div>
+            </div>
           </div>
 
           <!-- ══ REPORTE SEMANAL ══ -->
@@ -1767,16 +1835,6 @@ select option{background:var(--s2)}
             </table></div>
           </div>
 
-          <!-- GRÁFICA SIMPLE DE BARRAS -->
-          <div class="card" style="padding:16px">
-            <div class="card-title">📊 Ingresos vs Gastos por Mes</div>
-            <div id="resumen-grafica" style="display:flex;align-items:flex-end;gap:6px;height:160px;padding:10px 0;overflow-x:auto"></div>
-            <div style="display:flex;gap:16px;margin-top:8px;font-size:12px">
-              <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:var(--green);border-radius:2px;display:inline-block"></span>Ingresos</span>
-              <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:var(--red);border-radius:2px;display:inline-block"></span>Gastos</span>
-              <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:var(--gold);border-radius:2px;display:inline-block"></span>Utilidad</span>
-            </div>
-          </div>
         </div>
 
         <!-- ══════════ TRANSFERENCIAS ══════════ -->
@@ -5500,11 +5558,23 @@ function getNombreMes(fecha){
 }
 
 function getNumSemana(fecha){
+  // Algoritmo ISO-like: semana 1 = semana que contiene el primer lunes del año
   if(!fecha)return'—';
   const d=new Date(fecha+'T12:00:00');
-  const startYear=new Date(d.getFullYear(),0,1);
-  const week=Math.ceil(((d-startYear)/86400000+startYear.getDay()+1)/7);
-  return String(week);
+  const jan1=new Date(d.getFullYear(),0,1);
+  const jan1Dow=jan1.getDay()||7; // 1=Lun … 7=Dom
+  const firstMon=new Date(jan1);
+  firstMon.setDate(jan1.getDate()+(jan1Dow===1?0:8-jan1Dow));
+  if(d<firstMon) return'1'; // antes del primer lunes → semana 1
+  const diffDays=Math.floor((d-firstMon)/86400000);
+  return String(Math.floor(diffDays/7)+1);
+}
+
+function getCurrentWeekNum(){
+  const today=new Date();
+  const mm=String(today.getMonth()+1).padStart(2,'0');
+  const dd=String(today.getDate()).padStart(2,'0');
+  return parseInt(getNumSemana(today.getFullYear()+'-'+mm+'-'+dd))||1;
 }
 
 function renderCuentas(){
@@ -7591,24 +7661,188 @@ function renderResumenAnual(){
     <td style="padding:9px 10px;text-align:right;color:var(--muted)">${ventasAnio.length}</td>
   </tr>`;
 
-  // Gráfica de barras
+  // Gráfica de barras — siempre reconstruir con datos actuales
   const maxVal=Math.max(...meses.map(m=>Math.max(m.totalIngresos,m.totalGastos)),1);
   const grafEl=document.getElementById('resumen-grafica');
+  const grafEmpty=document.getElementById('resumen-grafica-empty');
+  const hayDatos=meses.some(m=>m.totalIngresos>0||m.totalGastos>0);
   if(grafEl){
-    grafEl.innerHTML=meses.map((m,i)=>{
-      const hI=Math.round((m.totalIngresos/maxVal)*130);
-      const hG=Math.round((m.totalGastos/maxVal)*130);
-      const hU=m.utilidad>0?Math.round((m.utilidad/maxVal)*130):0;
-      return`<div style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:50px;flex:1">
-        <div style="display:flex;gap:2px;align-items:flex-end;height:130px">
-          <div style="width:12px;background:var(--green);border-radius:3px 3px 0 0;height:${hI}px;min-height:${m.totalIngresos>0?2:0}px" title="Ingresos: ${fmt(m.totalIngresos)}"></div>
-          <div style="width:12px;background:var(--red);border-radius:3px 3px 0 0;height:${hG}px;min-height:${m.totalGastos>0?2:0}px" title="Gastos: ${fmt(m.totalGastos)}"></div>
-          <div style="width:12px;background:var(--gold);border-radius:3px 3px 0 0;height:${hU}px;min-height:${m.utilidad>0?2:0}px" title="Utilidad: ${fmt(m.utilidad)}"></div>
-        </div>
-        <div style="font-size:9px;color:var(--muted);text-align:center">${m.mes.slice(0,3)}</div>
-      </div>`;
-    }).join('');
+    grafEl.style.display=hayDatos?'flex':'none';
+    if(grafEmpty) grafEmpty.style.display=hayDatos?'none':'block';
+    if(hayDatos){
+      grafEl.innerHTML=meses.map((m,i)=>{
+        const hI=Math.max(Math.round((m.totalIngresos/maxVal)*150),m.totalIngresos>0?3:0);
+        const hG=Math.max(Math.round((m.totalGastos/maxVal)*150),m.totalGastos>0?3:0);
+        const hU=m.utilidad>0?Math.max(Math.round((m.utilidad/maxVal)*150),3):0;
+        const hasD=m.totalIngresos>0||m.totalGastos>0;
+        return`<div style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:48px;flex:1;cursor:pointer"
+          onclick="selMesDesdeGrafica(${i+1})" title="${m.mes}\nIngresos: ${fmt(m.totalIngresos)}\nGastos: ${fmt(m.totalGastos)}\nUtilidad: ${fmt(m.utilidad)}">
+          <div style="display:flex;gap:3px;align-items:flex-end;height:150px">
+            <div style="width:13px;background:var(--green);border-radius:3px 3px 0 0;height:${hI}px;opacity:${hasD?1:.2};transition:opacity .2s" title="Ingresos: ${fmt(m.totalIngresos)}"></div>
+            <div style="width:13px;background:var(--red);border-radius:3px 3px 0 0;height:${hG}px;opacity:${hasD?1:.2};transition:opacity .2s" title="Gastos: ${fmt(m.totalGastos)}"></div>
+            <div style="width:13px;background:var(--gold);border-radius:3px 3px 0 0;height:${hU}px;opacity:${hasD?1:.2};transition:opacity .2s" title="Utilidad: ${fmt(m.utilidad)}"></div>
+          </div>
+          <div style="font-size:9px;color:${hasD?'var(--cream)':'var(--faint)'};text-align:center;font-weight:${hasD?'700':'400'}">${m.mes.slice(0,3)}</div>
+        </div>`;
+      }).join('');
+    }
   }
+
+  // Inicializar selector de mes después de renderizar la tabla
+  initMesConsultaSelector();
+}
+
+function selMesDesdeGrafica(mesNum){
+  // Sync el selector de mes y hacer scroll al detalle por mes
+  const anio=document.getElementById('resumen-anio')?.value||String(new Date().getFullYear());
+  const selAnio=document.getElementById('mes-consulta-anio');
+  const selMes=document.getElementById('mes-consulta-mes');
+  if(selAnio) selAnio.value=anio;
+  if(selMes) selMes.value=String(mesNum).padStart(2,'0');
+  renderResumenMes();
+  // Scroll suave al detalle de mes
+  const card=document.querySelector('#page-resumen .card:nth-of-type(2)');
+  if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function initMesConsultaSelector(){
+  const sel=document.getElementById('mes-consulta-mes');
+  if(!sel) return;
+  if(sel.options.length===0){
+    MESES_LABELS.forEach((m,i)=>{
+      const o=document.createElement('option');
+      o.value=String(i+1).padStart(2,'0');
+      o.textContent=m;
+      sel.appendChild(o);
+    });
+    // Seleccionar mes actual por defecto
+    sel.value=String(new Date().getMonth()+1).padStart(2,'0');
+  }
+  renderResumenMes();
+}
+
+function renderResumenMes(){
+  const anio=document.getElementById('mes-consulta-anio')?.value||String(new Date().getFullYear());
+  const mesNum=document.getElementById('mes-consulta-mes')?.value||String(new Date().getMonth()+1).padStart(2,'0');
+  const mesStr=anio+'-'+mesNum;
+  const mesIdx=parseInt(mesNum)-1;
+  const diasEnMes=new Date(parseInt(anio),parseInt(mesNum),0).getDate();
+
+  const vMes=ventas.filter(v=>(v.fecha||'').startsWith(mesStr)&&v.tipoVenta!=='abono');
+  const gMes=gastos.filter(g=>(g.fecha||'').startsWith(mesStr));
+
+  const getCobrado=v=>{const isAC=v.tipoVenta==='apartado'||v.tipoVenta==='credito';return isAC?(v.anticipo||0):(v.total||0);};
+  const efectivo=vMes.filter(v=>v.pago==='efectivo'||v.pago==='monedero').reduce((a,v)=>a+getCobrado(v),0);
+  const tarjeta=vMes.filter(v=>v.pago!=='efectivo'&&v.pago!=='monedero').reduce((a,v)=>a+getCobrado(v),0);
+  const separos=vMes.filter(v=>v.tipoVenta==='apartado').reduce((a,v)=>a+(v.anticipo||0),0);
+  const totalIngresos=efectivo+tarjeta;
+  const totalGastos=gMes.reduce((a,g)=>a+g.monto,0);
+  const utilidad=totalIngresos-totalGastos;
+  const numVentas=vMes.filter(v=>v.tipoVenta!=='devolucion').length;
+  const ticket=numVentas>0?totalIngresos/numVentas:0;
+
+  const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  s('mes-total',fmt(totalIngresos));
+  s('mes-efectivo',fmt(efectivo));
+  s('mes-gastos',fmt(totalGastos));
+  const utilEl=document.getElementById('mes-utilidad');
+  if(utilEl){utilEl.textContent=fmt(utilidad);utilEl.style.color=utilidad>=0?'var(--green)':'var(--red)';}
+  s('mes-tarjeta',fmt(tarjeta));
+  s('mes-num-ventas',numVentas);
+  s('mes-ticket',fmt(ticket));
+  s('mes-separos',fmt(separos));
+
+  // Tabla por día
+  const diasLabels=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const tbody=document.getElementById('mes-tbody');
+  if(tbody){
+    let rows='';
+    let maxDiario=0;
+    const diasData=[];
+    for(let d=1;d<=diasEnMes;d++){
+      const fechaDia=mesStr+'-'+String(d).padStart(2,'0');
+      const vDia=vMes.filter(v=>v.fecha===fechaDia);
+      const gDia=gMes.filter(g=>g.fecha===fechaDia);
+      const ef=vDia.filter(v=>v.pago==='efectivo'||v.pago==='monedero').reduce((a,v)=>a+getCobrado(v),0);
+      const tj=vDia.filter(v=>v.pago!=='efectivo'&&v.pago!=='monedero').reduce((a,v)=>a+getCobrado(v),0);
+      const tot=ef+tj;
+      const gas=gDia.reduce((a,g)=>a+g.monto,0);
+      const util=tot-gas;
+      const dow=new Date(fechaDia+'T12:00:00').getDay();
+      const esFinde=dow===0||dow===6;
+      if(tot>maxDiario) maxDiario=tot;
+      diasData.push({d,fechaDia,ef,tj,tot,gas,util,dow,numV:vDia.length,esFinde});
+      const hasD=tot>0||gas>0;
+      rows+=`<tr style="opacity:${hasD?1:.5}${esFinde?';background:rgba(240,180,41,.04)':''}">
+        <td style="font-size:11px;color:var(--muted);font-weight:700">${diasLabels[dow]}</td>
+        <td style="font-size:12px;white-space:nowrap">${fechaDia}</td>
+        <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--green)">${ef>0?fmt(ef):'—'}</td>
+        <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--blue)">${tj>0?fmt(tj):'—'}</td>
+        <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--gold)">${tot>0?fmt(tot):'—'}</td>
+        <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--red)">${gas>0?fmt(gas):'—'}</td>
+        <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:${util>=0?'var(--accent2)':'var(--red)'}">${hasD?fmt(util):'—'}</td>
+        <td style="text-align:right;font-size:12px;color:var(--muted)">${vDia.length||'—'}</td>
+      </tr>`;
+    }
+    // Fila de totales
+    rows+=`<tr style="border-top:2px solid var(--border);font-weight:700;background:var(--s2)">
+      <td colspan="2" style="padding:8px 14px;color:var(--cream)">TOTAL ${MESES_LABELS[mesIdx]}</td>
+      <td style="text-align:right;font-family:var(--mono);color:var(--green)">${fmt(efectivo)}</td>
+      <td style="text-align:right;font-family:var(--mono);color:var(--blue)">${fmt(tarjeta)}</td>
+      <td style="text-align:right;font-family:var(--mono);color:var(--gold)">${fmt(totalIngresos)}</td>
+      <td style="text-align:right;font-family:var(--mono);color:var(--red)">${fmt(totalGastos)}</td>
+      <td style="text-align:right;font-family:var(--mono);color:${utilidad>=0?'var(--accent2)':'var(--red)'};">${fmt(utilidad)}</td>
+      <td style="text-align:right;color:var(--muted)">${numVentas}</td>
+    </tr>`;
+    tbody.innerHTML=rows;
+
+    // Mini gráfica diaria
+    const grafMes=document.getElementById('mes-grafica');
+    if(grafMes){
+      const mv=Math.max(...diasData.map(d=>d.tot),1);
+      grafMes.innerHTML=diasData.map(dd=>{
+        const h=Math.max(Math.round((dd.tot/mv)*70),dd.tot>0?3:0);
+        return`<div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;min-width:20px"
+          title="${dd.fechaDia}: ${fmt(dd.tot)}">
+          <div style="width:100%;max-width:20px;background:${dd.esFinde?'var(--gold)':'var(--accent)'};border-radius:2px 2px 0 0;
+            height:${h}px;opacity:${dd.tot>0?1:.2};transition:height .4s"></div>
+          <div style="font-size:8px;color:var(--faint);text-align:center">${dd.d}</div>
+        </div>`;
+      }).join('');
+    }
+  }
+}
+
+function exportarMesExcel(){
+  const anio=document.getElementById('mes-consulta-anio')?.value||String(new Date().getFullYear());
+  const mesNum=document.getElementById('mes-consulta-mes')?.value||'01';
+  const mesStr=anio+'-'+mesNum;
+  const mesIdx=parseInt(mesNum)-1;
+  const diasEnMes=new Date(parseInt(anio),parseInt(mesNum),0).getDate();
+  const vMes=ventas.filter(v=>(v.fecha||'').startsWith(mesStr)&&v.tipoVenta!=='abono');
+  const gMes=gastos.filter(g=>(g.fecha||'').startsWith(mesStr));
+  const getCobrado=v=>{const isAC=v.tipoVenta==='apartado'||v.tipoVenta==='credito';return isAC?(v.anticipo||0):(v.total||0);};
+  const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const nl='\n';
+  const headers=['Fecha','Día','Efectivo','Tarjeta/Transf.','Total Ingresos','Gastos','Utilidad','# Ventas'];
+  const diasLabels=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const rows=[];
+  for(let d=1;d<=diasEnMes;d++){
+    const fechaDia=mesStr+'-'+String(d).padStart(2,'0');
+    const vDia=vMes.filter(v=>v.fecha===fechaDia);
+    const gDia=gMes.filter(g=>g.fecha===fechaDia);
+    const ef=vDia.filter(v=>v.pago==='efectivo'||v.pago==='monedero').reduce((a,v)=>a+getCobrado(v),0);
+    const tj=vDia.filter(v=>v.pago!=='efectivo'&&v.pago!=='monedero').reduce((a,v)=>a+getCobrado(v),0);
+    const tot=ef+tj;
+    const gas=gDia.reduce((a,g)=>a+g.monto,0);
+    const dow=new Date(fechaDia+'T12:00:00').getDay();
+    rows.push([fechaDia,diasLabels[dow],ef.toFixed(2),tj.toFixed(2),tot.toFixed(2),gas.toFixed(2),(tot-gas).toFixed(2),vDia.length]);
+  }
+  const csv='\uFEFF'+headers.map(esc).join(',')+nl+rows.map(r=>r.map(esc).join(',')).join(nl);
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='detalle_mes_'+mesStr+'.csv';a.click();
+  toast('Excel del mes exportado ✓');
 }
 
 function exportarResumenExcel(){
@@ -10137,7 +10371,7 @@ function _navigateTo(page, el){
   if(page==='gastos')renderGastos();
   if(page==='cuentas')renderCuentas();
   if(page==='reportes')initReportes();
-  if(page==='resumen'){renderResumenAnual();initReporteSemanal();}
+  if(page==='resumen'){renderResumenAnual();initReporteSemanal();initMesConsultaSelector();}
   if(page==='corte')calcCorte();
   if(page==='transferencias'){populateSucursalSelects();}
   if(page==='entradas'){populateEntSalSucursales();renderHistEntradas();}
@@ -10331,14 +10565,7 @@ function goFromGrid(page){
 
 
 // ══════════════════ REPORTE SEMANAL ══════════════════
-function getCurrentWeekNum(){
-  // Use same algorithm as getNumSemana with T12:00:00 to avoid timezone issues
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth()+1).padStart(2,'0');
-  const dd = String(today.getDate()).padStart(2,'0');
-  return parseInt(getNumSemana(yyyy+'-'+mm+'-'+dd))||1;
-}
+// getCurrentWeekNum defined above with getNumSemana (algoritmo unificado)
 
 function cambiarAnioSemana(delta){
   const elA = document.getElementById('semana-anio');
@@ -10419,9 +10646,9 @@ function selWeek(w){
 }
 
 function getWeekDates(weekNum, year){
-  // Returns array of 7 date strings Mon-Sun for given week
+  // Mismo algoritmo que getNumSemana: semana 1 = semana del primer lunes
   const jan1 = new Date(year, 0, 1);
-  const jan1Dow = jan1.getDay() || 7; // 1=Mon
+  const jan1Dow = jan1.getDay() || 7; // 1=Lun … 7=Dom
   const firstMon = new Date(jan1);
   firstMon.setDate(jan1.getDate() + (jan1Dow===1 ? 0 : 8-jan1Dow));
   const weekStart = new Date(firstMon);
