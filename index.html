@@ -1630,8 +1630,8 @@ select option{background:var(--s2)}
           <div class="tw" style="overflow-x:auto"><table style="min-width:1300px"><thead><tr>
             <th>Folio</th><th>#</th><th>Mes</th><th>Sem.</th><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Vendedor</th>
             <th>Estilo</th><th>Producto</th><th>Talla</th><th>Cat.</th><th>Qty</th>
-            <th>Sucursal</th><th>Tipo</th><th>Pago</th>
-            <th>Costo Art.</th><th>Total Compra</th><th>Apart./Créd.</th><th>Cobrado</th>
+            <th>Sucursal</th><th>Tipo</th><th>Pago / Detalle</th>
+            <th>Descuento</th><th>Costo Art.</th><th>Total Compra</th><th>Apart./Créd.</th><th>Cobrado</th>
           </tr></thead>
           <tbody id="h-tbody"></tbody></table></div>
           <div class="empty" id="h-empty" style="display:none"><div class="empty-icon">📋</div><div>Sin ventas.</div></div>
@@ -6687,12 +6687,22 @@ function renderHist(){
   let totalCobrado=0, totalEfectivo=0, totalTarjeta=0, totalPendiente=0;
   lista.forEach(v=>{
     const isAC=v.tipoVenta==='apartado'||v.tipoVenta==='credito';
-    const isAbono=v.tipoVenta==='abono';
     const cobrado=isAC?(v.anticipo||0):(v.total||0);
     totalCobrado+=cobrado;
     const p=v.pago||'';
-    if(p==='efectivo'||p==='monedero') totalEfectivo+=cobrado;
-    else if(p.startsWith('tarjeta')||p==='transferencia') totalTarjeta+=cobrado;
+    if(p==='mixto'){
+      // Pago mixto: split into efectivo + tarjeta using saved breakdown
+      totalEfectivo += v.mixtoEfectivo||0;
+      totalTarjeta  += v.mixtoTarjeta||0;
+      // If no breakdown saved, count full amount as cobrado only (not double-count)
+    } else if(p==='efectivo'||p==='monedero'||p==='caja') {
+      totalEfectivo+=cobrado;
+    } else if(p.startsWith('tarjeta')||p==='transferencia'||p.includes('bbva')||p.includes('mp')||p.includes('mercado')) {
+      totalTarjeta+=cobrado;
+    } else if(p==='') {
+      // unknown — add to efectivo as default
+      totalEfectivo+=cobrado;
+    }
     if(isAC) totalPendiente+=Math.max(0,(v.total||0)-(v.anticipo||0));
   });
 
@@ -6714,7 +6724,18 @@ function renderHist(){
     transferencia:'📲 Transf.',mixto:'🔀 Mixto',monedero:'🪙 Monedero',abono:'💰 Abono',
     '':'—','undefined':'—','null':'—'};
   pagoEntries.forEach(e=>{const[lbl,val]=e.split('|');if(val&&lbl)pi[val]=lbl;});
-  const fmtPago=(pago)=>pi[pago||'']||(pago?'💳 '+pago:'—');
+  const fmtPago=(pago,venta)=>{
+    if(pago==='mixto'&&venta&&(venta.mixtoEfectivo||venta.mixtoTarjeta)){
+      const ef=venta.mixtoEfectivo||0;
+      const tar=venta.mixtoTarjeta||0;
+      return'<div style="font-size:11px;line-height:1.5">'
+        +'<div>🔀 Mixto</div>'
+        +(ef>0?'<div style="color:var(--green)">💵 Ef: '+fmt(ef)+'</div>':'')
+        +(tar>0?'<div style="color:var(--blue)">💳 Tar: '+fmt(tar)+'</div>':'')
+        +'</div>';
+    }
+    return pi[pago||'']||(pago?'💳 '+pago:'—');
+  };
 
   document.getElementById('h-tbody').innerHTML=lista.map((v,idx)=>{
     const sucObj=sucursales.find(s=>s.id===v.sucursalId);
@@ -6741,7 +6762,8 @@ function renderHist(){
       <td>—</td><td>—</td><td>—</td><td>—</td>
       <td>—</td><td>—</td>
       <td><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
-      <td>${fmtPago(v.pago)}</td>
+      <td>${fmtPago(v.pago,v)}</td>
+      <td class="mono" style="color:var(--red);font-size:11px">${v.descuento>0?'-'+fmt(v.descuento):'—'}</td>
       <td class="mono" style="color:var(--muted);font-size:11px">—</td>
       <td class="mono" style="color:var(--cream)">${fmt(cobrado)}</td>
       <td class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
@@ -6770,7 +6792,8 @@ function renderHist(){
       })()}</td>`:''}
       ${ii===0?`<td rowspan="${items.length}">${sucObj?`<span class="badge b-green" style="font-size:10px">${sucObj.nombre}</span>`:'—'}</td>
       <td rowspan="${items.length}"><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
-      <td rowspan="${items.length}">${fmtPago(v.pago)}</td>
+      <td rowspan="${items.length}">${fmtPago(v.pago,v)}</td>
+      <td rowspan="${items.length}" class="mono" style="color:var(--red);font-size:11px">${v.descuento>0?'-'+fmt(v.descuento):'—'}</td>
       <td rowspan="${items.length}" class="mono" style="color:var(--cream)">${fmt(cobrado)}</td>
       <td rowspan="${items.length}" class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
       <td rowspan="${items.length}" class="mono" style="color:var(--green);font-weight:600">${fmt(cobrado)}${isAC&&v.anticipo?`<div style="font-size:10px;color:var(--muted)">Ant: ${fmt(v.anticipo)}</div>`:''}</td>
