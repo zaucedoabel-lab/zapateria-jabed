@@ -1749,7 +1749,15 @@ select option{background:var(--s2)}
                 <select id="mes-consulta-anio" onchange="renderResumenMes()" style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--cream);font-weight:700;font-size:14px">
                   <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
                 </select>
-                <select id="mes-consulta-mes" onchange="renderResumenMes()" style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--cream);font-weight:700;font-size:14px;width:150px"></select>
+                <select id="mes-consulta-mes" onchange="renderResumenMes()" style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--cream);font-weight:700;font-size:14px;width:160px">
+                  <option value="">— Todos los meses —</option>
+                  <option value="01">Enero</option><option value="02">Febrero</option>
+                  <option value="03">Marzo</option><option value="04">Abril</option>
+                  <option value="05">Mayo</option><option value="06">Junio</option>
+                  <option value="07">Julio</option><option value="08">Agosto</option>
+                  <option value="09">Septiembre</option><option value="10">Octubre</option>
+                  <option value="11">Noviembre</option><option value="12">Diciembre</option>
+                </select>
                 <button class="btn btn-ghost btn-sm" onclick="exportarMesExcel()">📥 Excel</button>
               </div>
             </div>
@@ -1833,6 +1841,34 @@ select option{background:var(--s2)}
               </thead>
               <tbody id="semana-tbody"></tbody>
             </table></div>
+          </div>
+
+          <!-- ══ VENTAS POR LÍNEA Y CATEGORÍA ══ -->
+          <div class="card" style="margin-bottom:16px;padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+              <div>
+                <div class="card-title" style="margin-bottom:2px">📦 Ventas por Línea y Categoría</div>
+                <div style="font-size:11px;color:var(--muted)">Efectivo y tarjeta desglosado por Línea (Calzado/Ropa/Otros) y Categoría (Dama/Caballero/etc.)</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <select id="lc-periodo" onchange="renderVentasLinCat()" style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--cream);font-size:13px">
+                  <option value="semana">Esta semana</option>
+                  <option value="mes" selected>Este mes</option>
+                  <option value="anio">Este año</option>
+                  <option value="custom">Rango manual</option>
+                </select>
+                <div id="lc-custom-range" style="display:none;gap:6px;align-items:center">
+                  <input type="date" id="lc-desde" onchange="renderVentasLinCat()" style="padding:5px 8px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--cream);font-size:12px">
+                  <span style="color:var(--muted);font-size:12px">–</span>
+                  <input type="date" id="lc-hasta" onchange="renderVentasLinCat()" style="padding:5px 8px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--cream);font-size:12px">
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="exportarLinCatExcel()">📥 Excel</button>
+              </div>
+            </div>
+            <!-- Resumen de tarjetas por agrupación -->
+            <div id="lc-stats" style="margin-bottom:14px"></div>
+            <!-- Tabla Línea -->
+            <div style="display:grid;gap:14px" id="lc-tablas"></div>
           </div>
 
         </div>
@@ -7708,34 +7744,52 @@ function selMesDesdeGrafica(mesNum){
 function initMesConsultaSelector(){
   const sel=document.getElementById('mes-consulta-mes');
   if(!sel) return;
-  if(sel.options.length===0){
-    MESES_LABELS.forEach((m,i)=>{
-      const o=document.createElement('option');
-      o.value=String(i+1).padStart(2,'0');
-      o.textContent=m;
-      sel.appendChild(o);
-    });
-    // Seleccionar mes actual por defecto
-    sel.value=String(new Date().getMonth()+1).padStart(2,'0');
-  }
+  // Set default to current month if not already set
+  if(!sel.value) sel.value=String(new Date().getMonth()+1).padStart(2,'0');
   renderResumenMes();
+}
+
+function getCobroDesglose(v){
+  // Unified payment classifier — same logic as renderHist
+  const isAC=v.tipoVenta==='apartado'||v.tipoVenta==='credito';
+  const isAbo=v.tipoVenta==='abono';
+  let cobrado=0;
+  if(isAC) cobrado=v.anticipo||0;
+  else if(isAbo) cobrado=v.monto||v.total||0;
+  else cobrado=v.total||0;
+  const p=(v.pago||'').toLowerCase().trim();
+  let ef=0,tj=0;
+  if(p==='mixto'){
+    const mef=v.mixtoEfectivo||0, mtar=v.mixtoTarjeta||0;
+    if(mef+mtar>0){ef=mef;tj=mtar;}else{ef=cobrado/2;tj=cobrado/2;}
+  } else if(p.includes('tarjeta')||p.includes('bbva')||p.includes('mp')||
+            p.includes('mercado')||p==='transferencia'||p.includes('transfer')){
+    tj=cobrado;
+  } else {
+    // efectivo, monedero, caja, '', cualquier otro
+    ef=cobrado;
+  }
+  return{cobrado,ef,tj,isAC,isAbo,pendiente:isAC?Math.max(0,(v.total||0)-(v.anticipo||0)):0};
 }
 
 function renderResumenMes(){
   const anio=document.getElementById('mes-consulta-anio')?.value||String(new Date().getFullYear());
-  const mesNum=document.getElementById('mes-consulta-mes')?.value||String(new Date().getMonth()+1).padStart(2,'0');
-  const mesStr=anio+'-'+mesNum;
-  const mesIdx=parseInt(mesNum)-1;
-  const diasEnMes=new Date(parseInt(anio),parseInt(mesNum),0).getDate();
+  const mesNum=document.getElementById('mes-consulta-mes')?.value||'';
+  const todosMeses=!mesNum;
+  const prefijo=todosMeses?(anio+'-'):(anio+'-'+mesNum);
+  const mesIdx=mesNum?parseInt(mesNum)-1:null;
+  const tituloMes=todosMeses?('Todo '+anio):(MESES_LABELS[mesIdx]||'');
 
-  const vMes=ventas.filter(v=>(v.fecha||'').startsWith(mesStr)&&v.tipoVenta!=='abono');
-  const gMes=gastos.filter(g=>(g.fecha||'').startsWith(mesStr));
+  // Filter ventas & gastos (exclude abonos from totals — they're already counted in the original venta's anticipo)
+  const vMes=ventas.filter(v=>(v.fecha||'').startsWith(prefijo)&&v.tipoVenta!=='abono');
+  const gMes=gastos.filter(g=>(g.fecha||'').startsWith(prefijo));
 
-  const getCobrado=v=>{const isAC=v.tipoVenta==='apartado'||v.tipoVenta==='credito';return isAC?(v.anticipo||0):(v.total||0);};
-  const efectivo=vMes.filter(v=>v.pago==='efectivo'||v.pago==='monedero').reduce((a,v)=>a+getCobrado(v),0);
-  const tarjeta=vMes.filter(v=>v.pago!=='efectivo'&&v.pago!=='monedero').reduce((a,v)=>a+getCobrado(v),0);
-  const separos=vMes.filter(v=>v.tipoVenta==='apartado').reduce((a,v)=>a+(v.anticipo||0),0);
-  const totalIngresos=efectivo+tarjeta;
+  let totalEfectivo=0,totalTarjeta=0,totalPendiente=0,totalCobrado=0;
+  vMes.forEach(v=>{
+    const {cobrado,ef,tj,pendiente}=getCobroDesglose(v);
+    totalCobrado+=cobrado; totalEfectivo+=ef; totalTarjeta+=tj; totalPendiente+=pendiente;
+  });
+  const totalIngresos=totalEfectivo+totalTarjeta;
   const totalGastos=gMes.reduce((a,g)=>a+g.monto,0);
   const utilidad=totalIngresos-totalGastos;
   const numVentas=vMes.filter(v=>v.tipoVenta!=='devolucion').length;
@@ -7743,76 +7797,123 @@ function renderResumenMes(){
 
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   s('mes-total',fmt(totalIngresos));
-  s('mes-efectivo',fmt(efectivo));
+  s('mes-efectivo',fmt(totalEfectivo));
   s('mes-gastos',fmt(totalGastos));
   const utilEl=document.getElementById('mes-utilidad');
   if(utilEl){utilEl.textContent=fmt(utilidad);utilEl.style.color=utilidad>=0?'var(--green)':'var(--red)';}
-  s('mes-tarjeta',fmt(tarjeta));
+  s('mes-tarjeta',fmt(totalTarjeta));
   s('mes-num-ventas',numVentas);
   s('mes-ticket',fmt(ticket));
-  s('mes-separos',fmt(separos));
+  s('mes-separos',fmt(totalPendiente));
 
-  // Tabla por día
   const diasLabels=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   const tbody=document.getElementById('mes-tbody');
-  if(tbody){
+  if(!tbody) return;
+
+  if(todosMeses){
+    // Mostrar tabla por MES cuando se elige "Todos los meses"
     let rows='';
-    let maxDiario=0;
     const diasData=[];
-    for(let d=1;d<=diasEnMes;d++){
-      const fechaDia=mesStr+'-'+String(d).padStart(2,'0');
-      const vDia=vMes.filter(v=>v.fecha===fechaDia);
-      const gDia=gMes.filter(g=>g.fecha===fechaDia);
-      const ef=vDia.filter(v=>v.pago==='efectivo'||v.pago==='monedero').reduce((a,v)=>a+getCobrado(v),0);
-      const tj=vDia.filter(v=>v.pago!=='efectivo'&&v.pago!=='monedero').reduce((a,v)=>a+getCobrado(v),0);
-      const tot=ef+tj;
-      const gas=gDia.reduce((a,g)=>a+g.monto,0);
-      const util=tot-gas;
-      const dow=new Date(fechaDia+'T12:00:00').getDay();
-      const esFinde=dow===0||dow===6;
-      if(tot>maxDiario) maxDiario=tot;
-      diasData.push({d,fechaDia,ef,tj,tot,gas,util,dow,numV:vDia.length,esFinde});
-      const hasD=tot>0||gas>0;
-      rows+=`<tr style="opacity:${hasD?1:.5}${esFinde?';background:rgba(240,180,41,.04)':''}">
-        <td style="font-size:11px;color:var(--muted);font-weight:700">${diasLabels[dow]}</td>
-        <td style="font-size:12px;white-space:nowrap">${fechaDia}</td>
-        <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--green)">${ef>0?fmt(ef):'—'}</td>
-        <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--blue)">${tj>0?fmt(tj):'—'}</td>
-        <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--gold)">${tot>0?fmt(tot):'—'}</td>
-        <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--red)">${gas>0?fmt(gas):'—'}</td>
-        <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:${util>=0?'var(--accent2)':'var(--red)'}">${hasD?fmt(util):'—'}</td>
-        <td style="text-align:right;font-size:12px;color:var(--muted)">${vDia.length||'—'}</td>
+    MESES_LABELS.forEach((mesLabel,mi)=>{
+      const mp=anio+'-'+String(mi+1).padStart(2,'0');
+      const vM=vMes.filter(v=>(v.fecha||'').startsWith(mp));
+      const gM=gMes.filter(g=>(g.fecha||'').startsWith(mp));
+      let ef2=0,tj2=0;
+      vM.forEach(v=>{const d=getCobroDesglose(v);ef2+=d.ef;tj2+=d.tj;});
+      const tot2=ef2+tj2;
+      const gas2=gM.reduce((a,g)=>a+g.monto,0);
+      const util2=tot2-gas2;
+      const hasD=tot2>0||gas2>0;
+      diasData.push({label:mesLabel,ef:ef2,tj:tj2,tot:tot2,gas:gas2,util:util2,num:vM.length,hasD});
+      rows+=`<tr style="opacity:${hasD?1:.45}">
+        <td style="font-size:12px;font-weight:700;color:var(--cream)" colspan="2">${mesLabel}</td>
+        <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--green)">${ef2>0?fmt(ef2):'—'}</td>
+        <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--blue)">${tj2>0?fmt(tj2):'—'}</td>
+        <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--gold)">${tot2>0?fmt(tot2):'—'}</td>
+        <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--red)">${gas2>0?fmt(gas2):'—'}</td>
+        <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:${util2>=0?'var(--accent2)':'var(--red)'}">${hasD?fmt(util2):'—'}</td>
+        <td style="text-align:right;font-size:12px;color:var(--muted)">${vM.filter(v=>v.tipoVenta!=='devolucion').length||'—'}</td>
       </tr>`;
-    }
-    // Fila de totales
+    });
     rows+=`<tr style="border-top:2px solid var(--border);font-weight:700;background:var(--s2)">
-      <td colspan="2" style="padding:8px 14px;color:var(--cream)">TOTAL ${MESES_LABELS[mesIdx]}</td>
-      <td style="text-align:right;font-family:var(--mono);color:var(--green)">${fmt(efectivo)}</td>
-      <td style="text-align:right;font-family:var(--mono);color:var(--blue)">${fmt(tarjeta)}</td>
+      <td colspan="2" style="padding:8px 14px;color:var(--cream)">TOTAL ${anio}</td>
+      <td style="text-align:right;font-family:var(--mono);color:var(--green)">${fmt(totalEfectivo)}</td>
+      <td style="text-align:right;font-family:var(--mono);color:var(--blue)">${fmt(totalTarjeta)}</td>
       <td style="text-align:right;font-family:var(--mono);color:var(--gold)">${fmt(totalIngresos)}</td>
       <td style="text-align:right;font-family:var(--mono);color:var(--red)">${fmt(totalGastos)}</td>
       <td style="text-align:right;font-family:var(--mono);color:${utilidad>=0?'var(--accent2)':'var(--red)'};">${fmt(utilidad)}</td>
       <td style="text-align:right;color:var(--muted)">${numVentas}</td>
     </tr>`;
     tbody.innerHTML=rows;
-
-    // Mini gráfica diaria
+    // Mini gráfica mensual
     const grafMes=document.getElementById('mes-grafica');
     if(grafMes){
       const mv=Math.max(...diasData.map(d=>d.tot),1);
       grafMes.innerHTML=diasData.map(dd=>{
         const h=Math.max(Math.round((dd.tot/mv)*70),dd.tot>0?3:0);
-        return`<div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;min-width:20px"
-          title="${dd.fechaDia}: ${fmt(dd.tot)}">
-          <div style="width:100%;max-width:20px;background:${dd.esFinde?'var(--gold)':'var(--accent)'};border-radius:2px 2px 0 0;
+        return`<div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;min-width:22px"
+          title="${dd.label}: ${fmt(dd.tot)}">
+          <div style="width:100%;max-width:22px;background:var(--accent);border-radius:2px 2px 0 0;
             height:${h}px;opacity:${dd.tot>0?1:.2};transition:height .4s"></div>
-          <div style="font-size:8px;color:var(--faint);text-align:center">${dd.d}</div>
+          <div style="font-size:8px;color:var(--faint);text-align:center">${dd.label.slice(0,3)}</div>
         </div>`;
       }).join('');
     }
+    return;
+  }
+
+  // === Vista diaria (mes específico) ===
+  const diasEnMes=new Date(parseInt(anio),parseInt(mesNum),0).getDate();
+  let rows='';
+  const diasData=[];
+  for(let d=1;d<=diasEnMes;d++){
+    const fechaDia=prefijo+'-'+String(d).padStart(2,'0');
+    const vDia=vMes.filter(v=>v.fecha===fechaDia);
+    const gDia=gMes.filter(g=>g.fecha===fechaDia);
+    let ef=0,tj=0;
+    vDia.forEach(v=>{const dg=getCobroDesglose(v);ef+=dg.ef;tj+=dg.tj;});
+    const tot=ef+tj;
+    const gas=gDia.reduce((a,g)=>a+g.monto,0);
+    const util=tot-gas;
+    const dow=new Date(fechaDia+'T12:00:00').getDay();
+    const esFinde=dow===0||dow===6;
+    diasData.push({d,fechaDia,ef,tj,tot,gas,util,dow,numV:vDia.length,esFinde});
+    const hasD=tot>0||gas>0;
+    rows+=`<tr style="opacity:${hasD?1:.5}${esFinde?';background:rgba(240,180,41,.04)':''}">
+      <td style="font-size:11px;color:var(--muted);font-weight:700">${diasLabels[dow]}</td>
+      <td style="font-size:12px;white-space:nowrap">${fechaDia}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--green)">${ef>0?fmt(ef):'—'}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--blue)">${tj>0?fmt(tj):'—'}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--gold)">${tot>0?fmt(tot):'—'}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--red)">${gas>0?fmt(gas):'—'}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:${util>=0?'var(--accent2)':'var(--red)'}">${hasD?fmt(util):'—'}</td>
+      <td style="text-align:right;font-size:12px;color:var(--muted)">${vDia.length||'—'}</td>
+    </tr>`;
+  }
+  rows+=`<tr style="border-top:2px solid var(--border);font-weight:700;background:var(--s2)">
+    <td colspan="2" style="padding:8px 14px;color:var(--cream)">TOTAL ${tituloMes}</td>
+    <td style="text-align:right;font-family:var(--mono);color:var(--green)">${fmt(totalEfectivo)}</td>
+    <td style="text-align:right;font-family:var(--mono);color:var(--blue)">${fmt(totalTarjeta)}</td>
+    <td style="text-align:right;font-family:var(--mono);color:var(--gold)">${fmt(totalIngresos)}</td>
+    <td style="text-align:right;font-family:var(--mono);color:var(--red)">${fmt(totalGastos)}</td>
+    <td style="text-align:right;font-family:var(--mono);color:${utilidad>=0?'var(--accent2)':'var(--red)'};">${fmt(utilidad)}</td>
+    <td style="text-align:right;color:var(--muted)">${numVentas}</td>
+  </tr>`;
+  tbody.innerHTML=rows;
+  const grafMes=document.getElementById('mes-grafica');
+  if(grafMes){
+    const mv=Math.max(...diasData.map(d=>d.tot),1);
+    grafMes.innerHTML=diasData.map(dd=>{
+      const h=Math.max(Math.round((dd.tot/mv)*70),dd.tot>0?3:0);
+      return`<div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;min-width:20px"
+        title="${dd.fechaDia}: ${fmt(dd.tot)}">
+        <div style="width:100%;max-width:20px;background:${dd.esFinde?'var(--gold)':'var(--accent)'};border-radius:2px 2px 0 0;
+          height:${h}px;opacity:${dd.tot>0?1:.2};transition:height .4s"></div>
+        <div style="font-size:8px;color:var(--faint);text-align:center">${dd.d}</div>
+      </div>`;
+    }).join('');
   }
 }
-
 function exportarMesExcel(){
   const anio=document.getElementById('mes-consulta-anio')?.value||String(new Date().getFullYear());
   const mesNum=document.getElementById('mes-consulta-mes')?.value||'01';
@@ -10371,7 +10472,7 @@ function _navigateTo(page, el){
   if(page==='gastos')renderGastos();
   if(page==='cuentas')renderCuentas();
   if(page==='reportes')initReportes();
-  if(page==='resumen'){renderResumenAnual();initReporteSemanal();initMesConsultaSelector();}
+  if(page==='resumen'){renderResumenAnual();initReporteSemanal();initMesConsultaSelector();renderVentasLinCat();}
   if(page==='corte')calcCorte();
   if(page==='transferencias'){populateSucursalSelects();}
   if(page==='entradas'){populateEntSalSucursales();renderHistEntradas();}
@@ -10666,51 +10767,41 @@ function renderReporteSemanal(){
   const dates   = getWeekDates(weekNum, year);
   const diasLabels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 
-  // Build data per day
+  // Build data per day — same payment logic as renderHist
   const dias = dates.map(fecha=>{
-    const vDia = ventas.filter(v=>v.fecha===fecha);
-    let efectivo=0, tarjeta=0, separos=0, creditos=0, total=0;
+    const vDia = ventas.filter(v=>v.fecha===fecha && v.tipoVenta!=='abono');
+    let efectivo=0, tarjeta=0, pendiente=0, total=0;
     vDia.forEach(v=>{
-      const isAC = v.tipoVenta==='apartado'||v.tipoVenta==='credito';
-      const cobrado = isAC ? (v.anticipo||0) : (v.total||0);
-      const p = v.pago||'';
-      if(p==='efectivo'||p==='monedero') efectivo+=cobrado;
-      else if(p.startsWith('tarjeta')||p==='transferencia') tarjeta+=cobrado;
-      else if(p==='mixto') efectivo+=cobrado;
-      total+=cobrado;
-      if(v.tipoVenta==='apartado') separos+=(v.anticipo||0);
+      const {cobrado,ef,tj,pendiente:pend} = getCobroDesglose(v);
+      efectivo+=ef; tarjeta+=tj; total+=cobrado; pendiente+=pend;
     });
-    return {fecha, efectivo, tarjeta, separos, total};
+    return {fecha, efectivo, tarjeta, pendiente, total};
   });
 
-  // Creditos pendientes (all time, filtered by week for context)
-  const creditosPendientes = ventas
-    .filter(v=>v.tipoVenta==='credito'&&getSaldo(v)>0)
-    .reduce((a,v)=>a+getSaldo(v),0);
+  // Pendientes acumulados (Apart. + Créditos no liquidados)
+  const pendAcum = ventas
+    .filter(v=>v.tipoVenta==='apartado'||v.tipoVenta==='credito')
+    .reduce((a,v)=>a+Math.max(0,(v.total||0)-(v.anticipo||0)-getAbonado(v)),0);
 
-  // Totals
-  const totEfectivo   = dias.reduce((a,d)=>a+d.efectivo,0);
-  const totTarjeta    = dias.reduce((a,d)=>a+d.tarjeta,0);
-  const totSeparos    = dias.reduce((a,d)=>a+d.separos,0);
-  const totTotal      = dias.reduce((a,d)=>a+d.total,0);
+  const totEfectivo = dias.reduce((a,d)=>a+d.efectivo,0);
+  const totTarjeta  = dias.reduce((a,d)=>a+d.tarjeta,0);
+  const totPend     = dias.reduce((a,d)=>a+d.pendiente,0);
+  const totTotal    = dias.reduce((a,d)=>a+d.total,0);
 
-  // Update stat cards
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   s('sem-total',    fmt(totTotal));
   s('sem-efectivo', fmt(totEfectivo));
   s('sem-tarjeta',  fmt(totTarjeta));
-  s('sem-creditos', fmt(creditosPendientes));
+  s('sem-creditos', fmt(pendAcum));
 
   const tbody = document.getElementById('semana-tbody');
   if(!tbody) return;
 
-  // Date range label
   const desde = fmtFechaCorta(dates[0]);
-  const hasta = fmtFechaCorta(dates[6]);
+  const hasta  = fmtFechaCorta(dates[6]);
 
-  // Row helper
-  const mkRow=(label, color, vals, tot, isCurrency=true)=>{
-    const fmt2 = v => v===0 ? '<span style="color:var(--faint)">—</span>' : (isCurrency?fmt(v):v);
+  const mkRow=(label, color, vals, tot)=>{
+    const fmt2 = v => v===0 ? '<span style="color:var(--faint)">—</span>' : fmt(v);
     return `<tr>
       <td style="font-weight:700;font-size:12px;color:${color||'var(--cream)'};padding:8px 6px;white-space:nowrap">${label}</td>
       ${vals.map(v=>`<td style="text-align:right;font-family:var(--mono);font-size:12px;padding:8px 6px">${fmt2(v)}</td>`).join('')}
@@ -10719,7 +10810,6 @@ function renderReporteSemanal(){
     </tr>`;
   };
 
-  // Header row with dates
   const headDates = `<tr style="background:var(--s2)">
     <td style="font-size:11px;color:var(--muted);padding:6px">📅 Sem. ${weekNum} · ${desde} — ${hasta}</td>
     ${dates.map((d,i)=>`<td style="text-align:center;font-size:11px;font-weight:700;color:var(--cream);padding:6px">
@@ -10729,9 +10819,9 @@ function renderReporteSemanal(){
   </tr>`;
 
   tbody.innerHTML = headDates
-    + mkRow('💵 Efectivo',      'var(--green)',  dias.map(d=>d.efectivo), totEfectivo)
-    + mkRow('💳 Tarjeta/Transf.','var(--blue)',  dias.map(d=>d.tarjeta), totTarjeta)
-    + mkRow('📦 Separó (anticipo)','var(--gold)',dias.map(d=>d.separos), totSeparos)
+    + mkRow('💵 Efectivo',              'var(--green)', dias.map(d=>d.efectivo), totEfectivo)
+    + mkRow('💳 Tarjeta/Transf.',       'var(--blue)',  dias.map(d=>d.tarjeta),  totTarjeta)
+    + mkRow('⏳ Pendiente (Apart./Créd.)','var(--gold)', dias.map(d=>d.pendiente),totPend)
     + `<tr style="border-top:2px solid var(--border)">
         <td style="font-weight:700;font-size:13px;color:var(--cream);padding:8px 6px">TOTAL DÍA</td>
         ${dias.map(d=>`<td style="text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;
@@ -10741,9 +10831,9 @@ function renderReporteSemanal(){
       </tr>`
     + `<tr style="background:rgba(239,68,68,.05)">
         <td colspan="9" style="padding:10px 6px;font-size:12px">
-          <span style="color:var(--red);font-weight:700">💳 Créditos pendientes de cobro (acumulado): </span>
-          <span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--red)">${fmt(creditosPendientes)}</span>
-          <span style="color:var(--muted);font-size:11px;margin-left:8px">— Ventas a crédito no liquidadas hasta hoy</span>
+          <span style="color:var(--red);font-weight:700">⏳ Pendiente acumulado Apart./Cred.: </span>
+          <span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--red)">${fmt(pendAcum)}</span>
+          <span style="color:var(--muted);font-size:11px;margin-left:8px">— Saldo sin cobrar de apartados y ventas a crédito</span>
         </td>
       </tr>`;
 }
@@ -10754,16 +10844,11 @@ function exportarReporteSemanalExcel(){
   const dates   = getWeekDates(weekNum, year);
   const diasLabels = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
   const dias = dates.map(fecha=>{
-    const vDia = ventas.filter(v=>v.fecha===fecha);
+    const vDia = ventas.filter(v=>v.fecha===fecha && v.tipoVenta!=='abono');
     let ef=0,tj=0,sep=0,tot=0;
     vDia.forEach(v=>{
-      const isAC=v.tipoVenta==='apartado'||v.tipoVenta==='credito';
-      const c=isAC?(v.anticipo||0):(v.total||0);
-      const p=v.pago||'';
-      if(p==='efectivo'||p==='monedero'||p==='mixto')ef+=c;
-      else if(p.startsWith('tarjeta')||p==='transferencia')tj+=c;
-      tot+=c;
-      if(v.tipoVenta==='apartado')sep+=(v.anticipo||0);
+      const {cobrado,ef:e,tj:t,pendiente:p}=getCobroDesglose(v);
+      ef+=e; tj+=t; tot+=cobrado; sep+=p;
     });
     return{fecha,ef,tj,sep,tot};
   });
@@ -10772,7 +10857,7 @@ function exportarReporteSemanalExcel(){
   const rows = [
     ['💵 Efectivo',...dias.map(d=>d.ef.toFixed(2)),(dias.reduce((a,d)=>a+d.ef,0)).toFixed(2)],
     ['💳 Tarjeta/Transferencia',...dias.map(d=>d.tj.toFixed(2)),(dias.reduce((a,d)=>a+d.tj,0)).toFixed(2)],
-    ['📦 Separó (anticipo)',...dias.map(d=>d.sep.toFixed(2)),(dias.reduce((a,d)=>a+d.sep,0)).toFixed(2)],
+    ['⏳ Pendiente (Apart./Créd.)',...dias.map(d=>d.sep.toFixed(2)),(dias.reduce((a,d)=>a+d.sep,0)).toFixed(2)],
     ['TOTAL DÍA',...dias.map(d=>d.tot.toFixed(2)),(dias.reduce((a,d)=>a+d.tot,0)).toFixed(2)],
     ['💳 Créditos pendientes (acumulado)','','','','','','','',creditosPend.toFixed(2)],
   ];
@@ -11801,6 +11886,210 @@ async function confirmarDevolucion(){
     devVentaSel=null;devItemSel=null;devTipo='';devNuevaTalla='';devNuevoArtSel=null;_devNuevoTalla='';
     renderHist();
   }catch(e){toast('Error: '+e.message,'err');console.error(e);}
+}
+
+
+// ══════════════════ VENTAS POR LÍNEA Y CATEGORÍA ══════════════════
+function renderVentasLinCat(){
+  const periodo=document.getElementById('lc-periodo')?.value||'mes';
+  const customRange=document.getElementById('lc-custom-range');
+  if(customRange) customRange.style.display=periodo==='custom'?'flex':'none';
+
+  // Determine date range
+  const hoyStr=hoy();
+  const hoyD=new Date(hoyStr+'T12:00:00');
+  let desde='', hasta='';
+  if(periodo==='semana'){
+    const wn=getCurrentWeekNum(); const yr=hoyD.getFullYear();
+    const dates=getWeekDates(wn,yr); desde=dates[0]; hasta=dates[6];
+  } else if(periodo==='mes'){
+    const yr=hoyD.getFullYear(); const mm=String(hoyD.getMonth()+1).padStart(2,'0');
+    desde=yr+'-'+mm+'-01'; hasta=yr+'-'+mm+'-'+String(new Date(yr,hoyD.getMonth()+1,0).getDate()).padStart(2,'0');
+  } else if(periodo==='anio'){
+    const yr=hoyD.getFullYear(); desde=yr+'-01-01'; hasta=yr+'-12-31';
+  } else {
+    desde=document.getElementById('lc-desde')?.value||'';
+    hasta=document.getElementById('lc-hasta')?.value||'';
+  }
+
+  const vFilt=ventas.filter(v=>{
+    if(v.tipoVenta==='abono') return false;
+    if(desde&&v.fecha<desde) return false;
+    if(hasta&&v.fecha>hasta) return false;
+    return true;
+  });
+
+  // Build stats per linea and categoria from items
+  const linMap={};   // linea → {ef,tj,cobrado,numVentas,cats:{}}
+  const catMap={};   // categoria → {ef,tj,cobrado,numVentas,lineas:{}}
+
+  vFilt.forEach(v=>{
+    const {ef,tj,cobrado}=getCobroDesglose(v);
+    const items=v.items||[];
+    if(!items.length){
+      // Venta sin items detallados → contabilizar en "Sin clasificar"
+      _lcAdd(linMap,'Sin línea',ef,tj,cobrado);
+      _lcAdd(catMap,'Sin categoría',ef,tj,cobrado);
+      return;
+    }
+    // Split cobrado proportionally among items
+    const totalItems=items.reduce((a,it)=>(it.price||0)*(it.qty||1)+a,0)||1;
+    items.forEach(it=>{
+      const prod=productos.find(p=>p.id===it.id)||{};
+      const linea=(prod.linea||it.linea||'Sin línea').trim()||'Sin línea';
+      const cat=(prod.categoria||it.categoria||'Sin categoría').trim()||'Sin categoría';
+      const ratio=((it.price||0)*(it.qty||1))/totalItems;
+      const iEf=ef*ratio, iTj=tj*ratio, iCob=cobrado*ratio;
+      _lcAdd(linMap,linea,iEf,iTj,iCob,cat);
+      _lcAdd(catMap,cat,iEf,iTj,iCob,linea);
+    });
+  });
+
+  // Render stats cards
+  const statsEl=document.getElementById('lc-stats');
+  const tablasEl=document.getElementById('lc-tablas');
+  if(!statsEl||!tablasEl) return;
+
+  const lineas=Object.entries(linMap).sort((a,b)=>b[1].cobrado-a[1].cobrado);
+  const cats=Object.entries(catMap).sort((a,b)=>b[1].cobrado-a[1].cobrado);
+  const grandTotal=lineas.reduce((a,[,d])=>a+d.cobrado,0)||1;
+
+  // Tarjetas resumen por línea
+  statsEl.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:4px">'
+    +lineas.map(([lin,d])=>{
+      const pct=(d.cobrado/grandTotal*100).toFixed(1);
+      return`<div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">${lin}</div>
+        <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--gold)">${fmt(d.cobrado)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">${pct}% del total</div>
+        <div style="height:3px;background:var(--s4);border-radius:2px;margin-top:6px">
+          <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:2px"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px">
+          <span style="color:var(--green)">💵 ${fmt(d.ef)}</span>
+          <span style="color:var(--blue)">💳 ${fmt(d.tj)}</span>
+        </div>
+      </div>`;
+    }).join('')+'</div>';
+
+  // Tables: first by Línea (with category breakdown), then by Category (with linea breakdown)
+  tablasEl.innerHTML = _lcTable('📦 Por Línea de Producto',lineas,'cats',grandTotal)
+    + _lcTable('🏷️ Por Categoría',cats,'lineas',grandTotal);
+}
+
+function _lcAdd(map,key,ef,tj,cobrado,subKey){
+  if(!map[key]) map[key]={ef:0,tj:0,cobrado:0,cats:{},lineas:{}};
+  map[key].ef+=ef; map[key].tj+=tj; map[key].cobrado+=cobrado;
+  if(subKey){
+    if(!map[key].cats) map[key].cats={};
+    if(!map[key].lineas) map[key].lineas={};
+    const sub=map[key].cats||map[key].lineas;
+    // store under both cats and lineas (caller decides which is which)
+    if(!map[key]._subs) map[key]._subs={};
+    if(!map[key]._subs[subKey]) map[key]._subs[subKey]={ef:0,tj:0,cobrado:0};
+    map[key]._subs[subKey].ef+=ef;
+    map[key]._subs[subKey].tj+=tj;
+    map[key]._subs[subKey].cobrado+=cobrado;
+  }
+}
+
+function _lcTable(titulo,entries,_subfield,grandTotal){
+  if(!entries.length) return'';
+  const rows=entries.map(([key,d])=>{
+    const pct=(d.cobrado/grandTotal*100).toFixed(1);
+    const subRows=d._subs?Object.entries(d._subs).sort((a,b)=>b[1].cobrado-a[1].cobrado).map(([sk,sd])=>
+      `<tr style="background:var(--s2)">
+        <td style="padding:5px 14px 5px 28px;font-size:11px;color:var(--muted)">↳ ${sk}</td>
+        <td style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--green);padding:5px 10px">${fmt(sd.ef)}</td>
+        <td style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--blue);padding:5px 10px">${fmt(sd.tj)}</td>
+        <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--gold);padding:5px 10px">${fmt(sd.cobrado)}</td>
+        <td style="text-align:right;font-size:11px;color:var(--muted);padding:5px 10px">${(sd.cobrado/grandTotal*100).toFixed(1)}%</td>
+      </tr>`
+    ).join(''):'';
+    return`<tr>
+      <td style="padding:9px 14px;font-weight:700;color:var(--cream)">${key}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:13px;color:var(--green);padding:9px 10px">${fmt(d.ef)}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:13px;color:var(--blue);padding:9px 10px">${fmt(d.tj)}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--gold);padding:9px 10px">${fmt(d.cobrado)}</td>
+      <td style="padding:9px 10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:6px;background:var(--s4);border-radius:3px;min-width:60px">
+            <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:3px"></div>
+          </div>
+          <span style="font-size:11px;color:var(--muted);white-space:nowrap">${pct}%</span>
+        </div>
+      </td>
+    </tr>${subRows}`;
+  }).join('');
+  const tot=entries.reduce((a,[,d])=>a+d.cobrado,0);
+  const totEf=entries.reduce((a,[,d])=>a+d.ef,0);
+  const totTj=entries.reduce((a,[,d])=>a+d.tj,0);
+  return`<div>
+    <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:8px">${titulo}</div>
+    <div class="tw">
+    <table style="min-width:500px">
+      <thead><tr>
+        <th style="text-align:left">Grupo</th>
+        <th style="text-align:right;color:var(--green)">💵 Efectivo</th>
+        <th style="text-align:right;color:var(--blue)">💳 Tarjeta</th>
+        <th style="text-align:right;color:var(--gold)">Total</th>
+        <th style="text-align:left">Participación</th>
+      </tr></thead>
+      <tbody>${rows}
+        <tr style="border-top:2px solid var(--border);font-weight:700;background:var(--s2)">
+          <td style="padding:8px 14px">TOTAL</td>
+          <td style="text-align:right;font-family:var(--mono);color:var(--green)">${fmt(totEf)}</td>
+          <td style="text-align:right;font-family:var(--mono);color:var(--blue)">${fmt(totTj)}</td>
+          <td style="text-align:right;font-family:var(--mono);font-weight:700;color:var(--gold)">${fmt(tot)}</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>`;
+}
+
+function exportarLinCatExcel(){
+  const periodo=document.getElementById('lc-periodo')?.value||'mes';
+  const hoyStr=hoy();const hoyD=new Date(hoyStr+'T12:00:00');
+  let desde='',hasta='';
+  if(periodo==='semana'){const d=getWeekDates(getCurrentWeekNum(),hoyD.getFullYear());desde=d[0];hasta=d[6];}
+  else if(periodo==='mes'){const yr=hoyD.getFullYear();const mm=String(hoyD.getMonth()+1).padStart(2,'0');desde=yr+'-'+mm+'-01';hasta=yr+'-'+mm+'-'+String(new Date(yr,hoyD.getMonth()+1,0).getDate()).padStart(2,'0');}
+  else if(periodo==='anio'){const yr=hoyD.getFullYear();desde=yr+'-01-01';hasta=yr+'-12-31';}
+  else{desde=document.getElementById('lc-desde')?.value||'';hasta=document.getElementById('lc-hasta')?.value||'';}
+  const vFilt=ventas.filter(v=>v.tipoVenta!=='abono'&&(!desde||v.fecha>=desde)&&(!hasta||v.fecha<=hasta));
+  const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const nl='\n';
+  const rows=[['Tipo','Grupo','Efectivo','Tarjeta','Total']];
+  const linMap={};const catMap={};
+  vFilt.forEach(v=>{
+    const {ef,tj,cobrado}=getCobroDesglose(v);
+    const items=v.items||[];
+    if(!items.length){
+      if(!linMap['Sin línea'])linMap['Sin línea']={ef:0,tj:0,c:0};
+      linMap['Sin línea'].ef+=ef;linMap['Sin línea'].tj+=tj;linMap['Sin línea'].c+=cobrado;
+      if(!catMap['Sin categoría'])catMap['Sin categoría']={ef:0,tj:0,c:0};
+      catMap['Sin categoría'].ef+=ef;catMap['Sin categoría'].tj+=tj;catMap['Sin categoría'].c+=cobrado;
+      return;
+    }
+    const totalItems=items.reduce((a,it)=>(it.price||0)*(it.qty||1)+a,0)||1;
+    items.forEach(it=>{
+      const prod=productos.find(p=>p.id===it.id)||{};
+      const lin=(prod.linea||it.linea||'Sin línea').trim()||'Sin línea';
+      const cat=(prod.categoria||it.categoria||'Sin categoría').trim()||'Sin categoría';
+      const r=((it.price||0)*(it.qty||1))/totalItems;
+      if(!linMap[lin])linMap[lin]={ef:0,tj:0,c:0};
+      linMap[lin].ef+=ef*r;linMap[lin].tj+=tj*r;linMap[lin].c+=cobrado*r;
+      if(!catMap[cat])catMap[cat]={ef:0,tj:0,c:0};
+      catMap[cat].ef+=ef*r;catMap[cat].tj+=tj*r;catMap[cat].c+=cobrado*r;
+    });
+  });
+  Object.entries(linMap).sort((a,b)=>b[1].c-a[1].c).forEach(([k,d])=>rows.push(['Línea',k,d.ef.toFixed(2),d.tj.toFixed(2),d.c.toFixed(2)]));
+  Object.entries(catMap).sort((a,b)=>b[1].c-a[1].c).forEach(([k,d])=>rows.push(['Categoría',k,d.ef.toFixed(2),d.tj.toFixed(2),d.c.toFixed(2)]));
+  const csv='\uFEFF'+rows.map(r=>r.map(esc).join(',')).join(nl);
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ventas_linea_cat.csv';a.click();
+  toast('Excel exportado ✓');
 }
 
 // ══════════════════ FIREBASE AUTH OBSERVER ══════════════════
