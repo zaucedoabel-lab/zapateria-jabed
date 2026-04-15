@@ -1182,15 +1182,18 @@ select option{background:var(--s2)}
               <div style="background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(239,68,68,.05));border:2px solid rgba(239,68,68,.4);border-radius:12px;padding:14px 16px;margin-bottom:14px">
                 <div style="font-size:13px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🏷️ Aplicar Descuento</div>
                 <div style="display:flex;gap:8px;align-items:center">
-                  <input type="number" id="c-desc" value="0" min="0"
-                    style="flex:1;font-size:24px;font-weight:900;padding:10px 14px;border-radius:10px;
-                    border:2px solid rgba(239,68,68,.4);background:var(--s2);color:var(--red);text-align:center"
+                  <input type="number" id="c-desc-modal" value="0" min="0"
+                    placeholder="0"
+                    style="flex:1;font-size:36px;font-weight:900;padding:14px 18px;border-radius:12px;
+                    border:2px solid rgba(239,68,68,.5);background:var(--s2);color:var(--red);
+                    text-align:center;height:70px"
                     oninput="calcCartFromModal()">
-                  <select id="c-desc-t" onchange="calcCartFromModal()"
-                    style="font-size:18px;font-weight:700;padding:10px 12px;border-radius:10px;
-                    border:2px solid rgba(239,68,68,.4);background:var(--s2);color:var(--red);cursor:pointer">
-                    <option value="$">$ Pesos</option>
-                    <option value="%">% Porcentaje</option>
+                  <select id="c-desc-t-modal" onchange="calcCartFromModal()"
+                    style="width:80px;font-size:14px;font-weight:700;padding:8px 6px;border-radius:10px;
+                    border:2px solid rgba(239,68,68,.4);background:var(--s2);color:var(--red);cursor:pointer;
+                    height:70px">
+                    <option value="$">$</option>
+                    <option value="%">%</option>
                   </select>
                 </div>
                 <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--muted)">
@@ -5807,8 +5810,12 @@ function onClienteSelect(){
 
 function aplicarDescCumple(){
   const pct=configGeneral.cumpleanosDesc||10;
-  document.getElementById('c-desc').value=pct;
-  document.getElementById('c-desc-t').value='%';
+  // Set discount in modal inputs
+  const dm = document.getElementById('c-desc-modal');
+  const dt = document.getElementById('c-desc-t-modal');
+  if(dm) dm.value=pct; else document.getElementById('c-desc').value=pct;
+  if(dt) dt.value='%'; else document.getElementById('c-desc-t').value='%';
+  calcCartFromModal();
   calcCart();
   document.getElementById('c-cumple-alert').style.display='none';
   toast('Descuento de cumpleaños aplicado: '+pct+'% ✓');
@@ -8540,11 +8547,16 @@ function abrirModalCobro(){
         <span style="font-size:15px;font-weight:700;color:var(--gold)">${fmt(item.price*item.qty)}</span>
       </div>`).join('');
   }
-  // Reset discount fields when opening modal
-  const descEl = document.getElementById('c-desc');
-  const descTEl = document.getElementById('c-desc-t');
-  if(descEl) descEl.value='0';
-  if(descTEl) descTEl.value='$';
+  // Reset discount fields when opening modal (modal-specific IDs)
+  const descModal  = document.getElementById('c-desc-modal');
+  const descTModal = document.getElementById('c-desc-t-modal');
+  if(descModal)  descModal.value  = '0';
+  if(descTModal) descTModal.value = '$';
+  // Also reset hidden inputs
+  const hiddenDesc  = document.getElementById('c-desc');
+  const hiddenDescT = document.getElementById('c-desc-t');
+  if(hiddenDesc)  hiddenDesc.value  = '0';
+  if(hiddenDescT) hiddenDescT.value = '$';
   // Compute subtotal and update discount display
   calcCartFromModal();
   // Reset tipo & pago to defaults
@@ -8570,11 +8582,17 @@ function abrirModalCobro(){
 // ── Recalculate total from cobro modal discount inputs ──
 function calcCartFromModal(){
   const sub = carrito.reduce((a,item)=>a+(item.price*(item.qty||1)),0);
-  const dv  = parseFloat(document.getElementById('c-desc')?.value)||0;
-  const dt  = document.getElementById('c-desc-t')?.value||'$';
+  // Read from MODAL inputs (unique IDs, no conflict with hidden ones)
+  const dv  = parseFloat(document.getElementById('c-desc-modal')?.value)||0;
+  const dt  = document.getElementById('c-desc-t-modal')?.value||'$';
   const dm  = dt==='%' ? sub*(dv/100) : Math.min(dv, sub);
   const total = Math.max(0, sub-dm);
-  // Update cart total display (c-total) so cobrar() reads correct value
+  // Sync hidden inputs so cobrar() can read them
+  const hiddenDesc  = document.getElementById('c-desc');
+  const hiddenDescT = document.getElementById('c-desc-t');
+  if(hiddenDesc)  hiddenDesc.value  = dv;
+  if(hiddenDescT) hiddenDescT.value = dt;
+  // Update cart total display
   const cTotal = document.getElementById('c-total');
   if(cTotal) cTotal.textContent = fmt(total);
   // Update cobro modal displays
@@ -8584,8 +8602,8 @@ function calcCartFromModal(){
   const descPreview = document.getElementById('c-desc-preview');
   if(cobroTotal) cobroTotal.textContent = fmt(total);
   if(cobroSub)   cobroSub.textContent   = fmt(sub);
-  if(cobroDesc)  cobroDesc.textContent  = dm>0?'-'+fmt(dm):'$0.00';
-  if(descPreview)descPreview.textContent= dm>0?'-'+fmt(dm):'$0.00';
+  if(cobroDesc)  cobroDesc.textContent  = dm>0?'- '+fmt(dm):'$0.00';
+  if(descPreview)descPreview.textContent= dm>0?'- '+fmt(dm):'$0.00';
   calcCambio();
 }
 
