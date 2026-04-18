@@ -3568,9 +3568,24 @@ function startListeners(){
     renderInv();
     renderCatalogo();
   }));
+  let _migracionEjecutada = false;
   push(onSnapshot(col('productos'),snap=>{
     productos=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderInv();renderPOS();renderCatalogo();renderDashboard();
+    // Auto-migrar tallas decimales → fracciones en silencio (solo una vez por sesión)
+    if(!_migracionEjecutada){
+      _migracionEjecutada = true;
+      const conDecimales = productos.filter(p=>
+        p.stock && Object.keys(p.stock).some(k=>
+          DECIMAL_A_FRACCION[k] !== undefined ||
+          (typeof p.stock[k]==='object' && p.stock[k]!==null)
+        )
+      );
+      if(conDecimales.length > 0){
+        console.log(`⚡ Auto-migración: ${conDecimales.length} productos con tallas decimales detectados`);
+        autoMigrarStockDecimales(conDecimales);
+      }
+    }
   }));
   push(onSnapshot(query(col('ventas'),orderBy('createdAt','desc')),snap=>{
     ventas=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -9629,6 +9644,52 @@ async function aplicarStockEnSucursal(linea, sucursalId, delta){
 }
 
 
+
+// ══════════════════ AUTO-MIGRACIÓN SILENCIOSA DE STOCK ══════════════════
+// Se ejecuta automáticamente al cargar si detecta tallas decimales.
+// NO requiere intervención del usuario.
+async function autoMigrarStockDecimales(lista){
+  if(!lista || !lista.length) return;
+  let count = 0;
+  for(const prod of lista){
+    try{
+      // Leer fresh de Firestore
+      const snap = await window._fb.getDoc(docRef('productos', prod.id));
+      if(!snap.exists()) continue;
+      const stockViejo = snap.data().stock || {};
+      let necesitaCambio = false;
+      const stockNuevo = {};
+
+      Object.entries(stockViejo).forEach(([talla, val])=>{
+        // Sanear objetos anidados (dato corrupto por dot-notation bug)
+        let cantidad;
+        if(val !== null && typeof val === 'object'){
+          cantidad = Object.values(val).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+          necesitaCambio = true;
+        } else {
+          cantidad = isNaN(Number(val)) ? 0 : Number(val);
+        }
+        // Convertir clave decimal a fracción
+        const tallaFinal = DECIMAL_A_FRACCION[talla] || talla;
+        if(tallaFinal !== talla) necesitaCambio = true;
+        stockNuevo[tallaFinal] = (stockNuevo[tallaFinal]||0) + cantidad;
+      });
+
+      if(necesitaCambio){
+        await window._fb.updateDoc(docRef('productos', prod.id), {stock: stockNuevo});
+        // Actualizar cache local
+        const idx = productos.findIndex(x=>x.id===prod.id);
+        if(idx>=0) productos[idx].stock = stockNuevo;
+        count++;
+      }
+    }catch(e){ console.warn('autoMigrar error en', prod.id, e); }
+  }
+  if(count > 0){
+    console.log(`✅ Auto-migración completada: ${count} productos actualizados`);
+    renderInv(); renderPOS(); renderCatalogo();
+    toast(`✅ ${count} producto(s) migrados a tallas fracción automáticamente`);
+  }
+}
 
 // ══════════════════ MIGRACIÓN: DECIMALES → FRACCIONES ══════════════════
 // Convierte claves de stock "22.5" → "22 1/2" en todos los productos de Firestore.
