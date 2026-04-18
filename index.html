@@ -5693,16 +5693,15 @@ function abrirVentanaEtiquetas(items, sz){
     .preview-grid{display:flex;flex-wrap:wrap;gap:10px}
 
     /*
-    ┌──────────────────────────────────────────────────────┐
-    │ ZAPATERIA JABED                           26/04      │
-    │──────────────────────────────────────────────────────│
-    │ NAVARROS          ┌──────┐                           │
-    │ ESCOLAR NINA      │  QR  │              $235.00      │
-    │ NEGRO             │      │                           │
-    │ Estilo: 505       └──────┘                  ┌────┐  │
-    │ 505                                          │ 17 │  │
-    └──────────────────────────────────────────────┴────┘  │
-    Tamaño: 51mm × 25mm
+    ╔══════════════════════════════════════════════════════╗
+    ║ ZAPATERIA JABED   26/04          LOMAR (marca grande)║
+    ╠══════════════════════════════════════════════════════╣
+    ║ LOMAR (grande)                          27 1/2       ║
+    ║ BOTAS CABALLERO         ┌──────┐                     ║
+    ║ CAFE                    │  QR  │                     ║
+    ║ $390.00 (grande)        └──────┘                     ║
+    ╚══════════════════════════════════════════════════════╝
+    Tamaño: 51mm × 25mm  — Layout MEJORA
     */
 
     .etiq{
@@ -5711,62 +5710,69 @@ function abrirVentanaEtiquetas(items, sz){
       background:#fff;
       border:0.5px solid #000;
       display:grid;
-      grid-template-columns: 1fr ${(pos&&pos.qr)||10}mm ${(pos&&pos.tallaW)||10}mm;
+      grid-template-columns: 1fr 13mm;
       grid-template-rows: auto 1fr;
       overflow:hidden;
       padding:0;
     }
 
-    /* FILA 1: header — sin relleno negro, todo en negro sobre blanco */
+    /* FILA 1: header — tienda+fecha izq, MARCA grande der */
     .e-header{
-      grid-column: 1 / 4;
+      grid-column: 1 / 3;
       display:flex;justify-content:space-between;align-items:center;
       border-bottom:0.7mm solid #000;
-      padding:0.5mm 1mm 0.4mm ${(pos&&pos.left)||3.5}mm;
+      padding:0.4mm 1.5mm 0.3mm 1.5mm;
       background:#fff;
     }
-    /* ESTILO en header */
-    .e-estilo-hdr{font-size:${(sz&&sz.estilo)||9}pt;font-weight:900;color:#000;
+    .e-header-left{display:flex;flex-direction:column;justify-content:center}
+    .e-tienda{font-size:4.5pt;font-weight:700;letter-spacing:0.5pt;color:#000}
+    .e-fecha{font-size:4pt;color:#333;font-weight:600}
+    /* MARCA grande en el header (lado derecho) */
+    .e-estilo-hdr{font-size:10pt;font-weight:900;color:#000;
       letter-spacing:0.5pt;font-family:Arial,sans-serif;
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-      max-width:22mm;text-align:right}
+      max-width:28mm;text-align:right}
 
-    /* COLUMNA IZQUIERDA: texto del producto */
+    /* COLUMNA IZQUIERDA FILA 2: marca grande + desc + color + precio */
     .e-texto{
       grid-column:1;grid-row:2;
-      display:flex;flex-direction:column;justify-content:center;
-      padding:${(pos&&pos.top)||0.5}mm 0.5mm 0.5mm ${(pos&&pos.left)||3.5}mm;
+      display:flex;flex-direction:column;justify-content:space-between;
+      padding:0.8mm 0.5mm 0.8mm 1.5mm;
       overflow:hidden;
     }
-    .e-marca{font-size:${(sz&&sz.marca)||6.5}pt;font-weight:700;color:#000;line-height:1.1;
+    /* Marca repetida grande en el cuerpo */
+    .e-marca{font-size:7.5pt;font-weight:900;color:#000;line-height:1.1;
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .e-desc{font-size:${(sz&&sz.desc)||5.5}pt;font-weight:600;color:#333;line-height:1.15;
-      overflow:hidden;max-height:2.8em}
-    .e-color{font-size:4.5pt;color:#555;line-height:1.2}
+    .e-desc{font-size:5.5pt;font-weight:700;color:#000;line-height:1.15;
+      overflow:hidden;max-height:2.5em}
+    .e-color{font-size:5pt;color:#333;font-weight:600;line-height:1.2}
+    .e-precio{font-size:11pt;font-weight:900;color:#000;line-height:1;margin-top:0.3mm}
     .e-estilo{display:none}
-    .e-precio{font-size:${(sz&&sz.precio)||10}pt;font-weight:900;color:#000;margin-top:0.5mm}
-    .e-tienda{font-size:${(sz&&sz.tienda)||4.5}pt;font-weight:700;letter-spacing:0.5pt;color:#000}
-    .e-fecha{font-size:${((sz&&sz.tienda)||4.5)-0.5}pt;color:#333;font-weight:600}
 
-    /* COLUMNA CENTRO: QR */
-    .e-qr{
+    /* COLUMNA DERECHA FILA 2: talla arriba grande + QR abajo */
+    .e-right{
       grid-column:2;grid-row:2;
+      border-left:0.5mm solid #000;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:space-between;
+      padding:0.5mm 0.5mm;
+      overflow:hidden;
+    }
+    /* Talla grande */
+    .e-talla{
+      font-family:Arial,sans-serif;font-weight:900;color:#000;
+      line-height:1;text-align:center;
+      font-size:11pt;
+      width:100%;text-align:center;
+    }
+    /* QR más grande */
+    .e-qr{
       display:flex;align-items:center;justify-content:center;
-      padding:0.5mm;
+      flex:1;
     }
     .e-qr canvas, .e-qr img{
-      width:10mm!important;height:10mm!important;
+      width:11mm!important;height:11mm!important;
       display:block;
-    }
-
-    /* COLUMNA DERECHA: talla — sin relleno, borde negro */
-    .e-talla{
-      grid-column:3;grid-row:2;
-      background:#fff;color:#000;
-      border-left:0.5mm solid #000;
-      display:flex;align-items:center;justify-content:center;
-      font-family:Arial,sans-serif;font-weight:900;line-height:1;
-      font-size:${(sz&&sz.talla)||11}pt;
     }
 
     /* ═══ IMPRESIÓN ═══ */
@@ -5782,7 +5788,7 @@ function abrirVentanaEtiquetas(items, sz){
         margin:0;
       }
       .etiq:last-child{page-break-after:avoid}
-      .e-talla{background:#fff!important;color:#000!important;border-left:0.5mm solid #000!important}
+      .e-right{border-left:0.5mm solid #000!important}
       @page{size:51mm 25mm;margin:0mm}
     }
   <\/style></head><body>
@@ -5793,19 +5799,20 @@ function abrirVentanaEtiquetas(items, sz){
   </div>
   <div class="preview-grid">
   ${prodData.map((p,i) => {
-    const tf = p.talla.length <= 2 ? '12px' : p.talla.length === 3 ? '10px' : '8px';
+    const tallaStr = p.talla||'';
+    const tf = tallaStr.length <= 2 ? '11pt' : tallaStr.length === 3 ? '9pt' : '7.5pt';
     return `<div class="etiq">
 
-      <!-- HEADER: tienda izq, ESTILO grande der -->
+      <!-- HEADER: tienda+fecha izq, MARCA grande der -->
       <div class="e-header">
-        <div>
-          <span class="e-tienda">ZAPATERIA JABED</span><br>
+        <div class="e-header-left">
+          <span class="e-tienda">ZAPATERIA JABED</span>
           <span class="e-fecha">${fechaImp}</span>
         </div>
-        <span class="e-estilo-hdr">${p.estilo||p.sku||'—'}</span>
+        <span class="e-estilo-hdr">${p.marca||p.estilo||p.sku||'—'}</span>
       </div>
 
-      <!-- TEXTO -->
+      <!-- TEXTO IZQUIERDO: marca grande + desc + color + precio -->
       <div class="e-texto">
         <div class="e-marca">${p.marca}</div>
         <div class="e-desc">${p.desc}</div>
@@ -5813,11 +5820,11 @@ function abrirVentanaEtiquetas(items, sz){
         <div class="e-precio">$${Number(p.precio).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
       </div>
 
-      <!-- QR -->
-      <div class="e-qr" id="qr-wrap-${i}"></div>
-
-      <!-- TALLA -->
-      <div class="e-talla" style="font-size:${tf}">${p.talla}</div>
+      <!-- DERECHA: talla grande + QR -->
+      <div class="e-right">
+        <div class="e-talla" style="font-size:${tf}">${tallaStr}</div>
+        <div class="e-qr" id="qr-wrap-${i}"></div>
+      </div>
 
     </div>`;
   }).join('')}
