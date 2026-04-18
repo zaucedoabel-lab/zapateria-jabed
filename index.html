@@ -3389,16 +3389,25 @@ const DECIMAL_A_FRACCION={'12.5':'12 1/2','13.5':'13 1/2','14.5':'14 1/2','15.5'
 
 function tallaToId(t){ return t.replace(/ /g,'_').replace(/\//g,'F'); }
 function idToTalla(s){ return s.replace(/F/g,'/').replace(/_/g,' '); }
+// Orden explícito para tallas no-numéricas (ropa + especiales)
+const TALLA_ORDEN_ALFA = {
+  'CH':1,'MM':2,'GD':3,'EG':4,
+  'XS':5,'S':6,'M':7,'L':8,'XL':9,'XXL':10,'XXXL':11,'3XL':12,'4XL':13,
+  'UNI':14,'Único':15
+};
 function tallaNumerica(t){
   if(t && t.includes(' 1/2')) return parseFloat(t) + 0.5;
   const n = parseFloat(t);
-  return isNaN(n) ? 999 : n;
+  if(!isNaN(n)) return n;
+  // Tallas no-numéricas: usar orden explícito o 900+posición alfabética
+  const orden = TALLA_ORDEN_ALFA[t];
+  return orden ? 900 + orden : 950;
 }
 function sortTallas(arr){
   return [...arr].sort((a,b)=>{
     const na=tallaNumerica(a), nb=tallaNumerica(b);
-    if(na!==999&&nb!==999) return na-nb;
-    if(na!==999) return -1; if(nb!==999) return 1;
+    if(na!==950&&nb!==950) return na-nb;
+    if(na!==950) return -1; if(nb!==950) return 1;
     return a.localeCompare(b);
   });
 }
@@ -4162,7 +4171,7 @@ function renderInvLista(agrupados){
   document.getElementById('inv-tbody').innerHTML=agrupados.map(p=>{
     const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
     const tot=sumS(p.stock);
-    const ts=Object.entries(p.stock||{}).filter(([,v])=>v>0).map(([t,c])=>`<span class="tag">${t}(${c})</span>`).join('');
+    const ts=sortTallas(Object.keys(p.stock||{}).filter(t=>(p.stock[t]||0)>0)).map(t=>`<span class="tag">${t}(${p.stock[t]})</span>`).join('');
     const estado=tot===0?'<span class="badge b-red">Sin stock</span>':tot<=3?'<span class="badge b-gold">Bajo</span>':'<span class="badge b-green">OK</span>';
     const suc=getSucNombre(p.sucursalId);
     const isBodega=sucursales.find(s=>s.id===p.sucursalId)?.tipo==='bodega';
@@ -9619,15 +9628,19 @@ async function aplicarStockEnSucursal(linea, sucursalId, delta){
     // Found — re-leer el stock actual DIRECTAMENTE de Firestore para evitar
     // que el cache local tenga datos desactualizados (FIX: race condition)
     let stockActual;
+    let stockBase = prodTarget.stock || {}; // fallback si falla getDoc
     try{
       const freshSnap = await fbGetDoc(docRef('productos', prodTarget.id));
-      const freshData = freshSnap.exists() ? freshSnap.data() : prodTarget;
-      stockActual = (freshData.stock||{})[linea.talla]||0;
+      if(freshSnap.exists()){
+        stockBase = freshSnap.data().stock || {};
+      }
+      stockActual = stockBase[linea.talla] || 0;
     } catch(e){
-      stockActual = (prodTarget.stock||{})[linea.talla]||0;
+      stockActual = (prodTarget.stock||{})[linea.talla] || 0;
+      stockBase   = prodTarget.stock || {};
     }
     const nuevoStock = delta>0 ? stockActual+delta : Math.max(0,stockActual+delta);
-    await setStockTalla(prodTarget.id, freshData.stock, linea.talla, nuevoStock);
+    await setStockTalla(prodTarget.id, stockBase, linea.talla, nuevoStock);
     // Actualizar cache local inmediatamente
     const idx = productos.findIndex(x=>x.id===prodTarget.id);
     if(idx>=0){
