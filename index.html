@@ -2728,6 +2728,34 @@ select option{background:var(--s2)}
 </div>
 
 
+
+<!-- Modal Ajuste Directo de Stock -->
+<div class="mo" id="mo-ajuste-stock">
+  <div class="md" style="max-width:520px">
+    <div class="mh">
+      <div class="mt">🔢 Ajuste Directo de Stock</div>
+      <button class="xbtn" onclick="closeM('mo-ajuste-stock')">✕</button>
+    </div>
+    <div class="mb">
+      <div id="ajuste-stock-desc" style="font-size:15px;font-weight:700;color:var(--accent2);margin-bottom:4px"></div>
+      <div class="warn" style="margin-bottom:14px">
+        ⚠️ Este ajuste modifica el stock directamente. Úsalo solo para corregir
+        discrepancias verificadas. Queda registrado en bitácora con tu usuario.
+      </div>
+      <div id="ajuste-stock-tallas" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:14px">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">Motivo del ajuste (requerido)</label>
+        <input id="ajuste-motivo" type="text" placeholder="Ej: Corrección entrada AIR 720 aprobada 2026-04-17"
+          style="width:100%;padding:8px 12px;font-size:13px">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeM('mo-ajuste-stock')">Cancelar</button>
+        <button class="btn btn-accent" onclick="confirmarAjusteStock()">💾 Guardar Ajuste</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Devolución / Cambio -->
 <!-- Modal Devolución / Cambio -->
 <div class="mo" id="mo-devolucion">
@@ -3335,7 +3363,19 @@ select option{background:var(--s2)}
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ══════════════════ CONSTANTS ══════════════════
-const TALLAS_CALZADO=['13','14','15','16','17','18','19','20','21','22','22.5','23','23.5','24','24.5','25','25.5','26','26.5','27','27.5','28','29','30','31','32'];
+// ══════════════════════════════════════════════════════════════════
+//  🔧 HELPER: Actualizar talla de stock de forma segura
+//  CRÍTICO: Firestore usa el punto (.) como separador de ruta anidada
+//  en field paths. Usar ["stock.22.5"] crea stock→22→5 en lugar de
+//  stock["22.5"]. Esta función usa el objeto completo para evitar el bug.
+// ══════════════════════════════════════════════════════════════════
+async function setStockTalla(prodId, stockCompleto, talla, nuevoValor){
+  const nuevoStock = {...(stockCompleto||{}), [talla]: nuevoValor};
+  await window._fb.updateDoc(docRef('productos', prodId), {stock: nuevoStock});
+  return nuevoStock;
+}
+
+['13','14','15','16','17','18','19','20','21','22','22.5','23','23.5','24','24.5','25','25.5','26','26.5','27','27.5','28','29','30','31','32'];
 const TALLAS_ROPA=['XS','S','M','L','XL','XXL','XXXL'];
 // ALL_TALLAS is now dynamic — rebuilt from catalogos on load
 let ALL_TALLAS=[...TALLAS_CALZADO,...TALLAS_ROPA,'Único','UNI'];
@@ -4055,7 +4095,8 @@ function renderInvMatriz(agrupados){
       <td>
         <div class="flex-row" style="gap:3px">
           <button class="btn btn-ghost btn-xs btn-icon" title="Imprimir etiqueta" onclick="imprimirEtiqueta('${p.id}')">🏷️</button>
-          ${puedeEditarInv?`<button class="btn btn-ghost btn-xs btn-icon" title="Editar" onclick="abrirModalProducto('${p.id}')">✏️</button>
+          ${puedeEditarInv?`<button class="btn btn-ghost btn-xs btn-icon" title="Editar producto" onclick="abrirModalProducto('${p.id}')">✏️</button>
+          <button class="btn btn-green btn-xs btn-icon" title="Ajustar stock por talla" onclick="abrirAjusteStock('${p._ids[0]}','${(p.desc||'').replace(/'/g,'')}')">🔢</button>
           <button class="btn btn-red btn-xs btn-icon" title="Eliminar" onclick="deleteProducto('${p.id}')">🗑️</button>`:''}
         </div>
       </td>
@@ -4090,13 +4131,128 @@ function renderInvLista(agrupados){
       <td><div class="flex-row">
         <button class="btn btn-ghost btn-xs btn-icon" title="Imprimir etiqueta" onclick="imprimirEtiqueta('${p.id}')">🏷️</button>
         ${puedeEditar?`<button class="btn btn-ghost btn-xs btn-icon" title="Editar" onclick="abrirModalProducto('${p.id}')">✏️</button>
+        <button class="btn btn-green btn-xs btn-icon" title="Ajustar stock por talla" onclick="abrirAjusteStock('${p._ids[0]}','${(p.desc||'').replace(/'/g,'')}')">🔢</button>
         <button class="btn btn-red btn-xs btn-icon" title="Eliminar" onclick="deleteProducto('${p.id}')">🗑️</button>`:''}
       </div></td>
     </tr>`;
   }).join('');
 }
 
-// ══════════════════ CATÁLOGO GENERAL ══════════════════
+// ══════════════════ AJUSTE DIRECTO DE STOCK ══════════════════
+let _ajusteProdId = null;
+
+async function abrirAjusteStock(prodId, descHint){
+  const rolActivo = usuarioActivo?.rol||currentProfile?.rol||'';
+  if(!['admin','manager'].includes(rolActivo)){
+    toast('Solo Admin o Manager pueden ajustar stock directamente','err'); return;
+  }
+  _ajusteProdId = prodId;
+
+  // Always read fresh from Firestore so we show real current values
+  let prod;
+  try{
+    const snap = await window._fb.getDoc(docRef('productos', prodId));
+    prod = snap.exists() ? {id:snap.id,...snap.data()} : productos.find(x=>x.id===prodId);
+  }catch(e){ prod = productos.find(x=>x.id===prodId); }
+
+  if(!prod){ toast('Producto no encontrado','err'); return; }
+
+  document.getElementById('ajuste-stock-desc').textContent =
+    (prod.barcode||prod.sku||'—') + ' — ' + (prod.desc||descHint||'');
+
+  // Build all tallas: merge existing stock keys + ALL_TALLAS for this product type
+  const stockActual = prod.stock || {};
+  const tallasExistentes = Object.keys(stockActual);
+  const todasTallas = [...new Set([...tallasExistentes, ...ALL_TALLAS])].sort((a,b)=>{
+    const na=parseFloat(a),nb=parseFloat(b);
+    if(!isNaN(na)&&!isNaN(nb)) return na-nb;
+    if(!isNaN(na)) return -1; if(!isNaN(nb)) return 1;
+    return a.localeCompare(b);
+  });
+
+  document.getElementById('ajuste-stock-tallas').innerHTML = todasTallas.map(t => {
+    const qty = stockActual[t] || 0;
+    const highlight = qty > 0 ? 'border-color:var(--accent);background:rgba(26,158,92,.08)' : '';
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;
+              background:var(--s3);border:1px solid var(--border);border-radius:8px;
+              padding:7px 8px;min-width:62px;${highlight}">
+      <span style="font-size:11px;color:var(--muted);font-weight:600">${t}</span>
+      <span style="font-size:9px;color:var(--faint)">actual: ${qty}</span>
+      <input type="number" id="adj-${t.replace(/\./g,'_')}" value="${qty}" min="0"
+        style="width:52px;padding:3px 5px;text-align:center;font-size:13px;font-weight:700;
+               ${qty>0?'color:var(--accent2)':''}">
+    </div>`;
+  }).join('');
+
+  document.getElementById('ajuste-motivo').value = '';
+  openM('mo-ajuste-stock');
+}
+
+async function confirmarAjusteStock(){
+  const rolActivo = usuarioActivo?.rol||currentProfile?.rol||'';
+  if(!['admin','manager'].includes(rolActivo)){
+    toast('Sin permiso','err'); return;
+  }
+  const motivo = document.getElementById('ajuste-motivo')?.value.trim();
+  if(!motivo){ toast('Escribe el motivo del ajuste','err'); return; }
+  if(!_ajusteProdId){ toast('Error: producto no identificado','err'); return; }
+
+  // Collect new stock values from form
+  const nuevoStock = {};
+  document.querySelectorAll('#ajuste-stock-tallas input[type="number"]').forEach(inp=>{
+    const t = inp.id.replace('adj-','').replace(/_/g,'.');
+    const v = parseInt(inp.value)||0;
+    if(v > 0 || (inp.value !== '' && parseInt(inp.value) === 0)) nuevoStock[t] = v;
+  });
+
+  // Get current stock for diff log
+  let stockAnterior = {};
+  try{
+    const snap = await window._fb.getDoc(docRef('productos', _ajusteProdId));
+    stockAnterior = snap.exists() ? (snap.data().stock||{}) : {};
+  }catch(e){ stockAnterior = {}; }
+
+  const usuario = usuarioActivo?.nombre||currentProfile?.nombre||'Admin';
+
+  try{
+    // Write using full stock object — safe for all tallas including half-sizes
+    await window._fb.updateDoc(docRef('productos', _ajusteProdId), {stock: nuevoStock});
+
+    // Update local cache
+    const idx = productos.findIndex(x=>x.id===_ajusteProdId);
+    if(idx>=0) productos[idx].stock = nuevoStock;
+
+    // Build diff summary for bitácora
+    const totalAntes = Object.values(stockAnterior).reduce((a,b)=>a+(Number(b)||0),0);
+    const totalDespues = Object.values(nuevoStock).reduce((a,b)=>a+(Number(b)||0),0);
+    const diff = totalDespues - totalAntes;
+    const diffStr = diff>=0?'+'+diff:String(diff);
+
+    // Log in bitácora
+    await window._fb.addDoc(col('bitacora'),{
+      tipo:'ajuste_stock',
+      subTipo:'ajuste_directo',
+      descripcion:`Ajuste directo de stock: ${motivo}`,
+      datos:{
+        prodId: _ajusteProdId,
+        stockAntes: stockAnterior,
+        stockDespues: nuevoStock,
+        motivo
+      },
+      usuario, usuarioRol: rolActivo,
+      fecha:hoy(), hora:hora(),
+      estado:'aprobado',
+      aprobadoPor: usuario,
+      createdAt: new Date().toISOString()
+    });
+
+    closeM('mo-ajuste-stock');
+    renderInv(); renderPOS(); renderCatalogo();
+    toast(`✅ Stock ajustado (${diffStr} piezas). Bitácora registrada ✓`);
+    _ajusteProdId = null;
+  }catch(e){ toast('Error al ajustar: '+e.message,'err'); console.error(e); }
+}
+
 function renderCatalogo(){
   const q=(document.getElementById('cat-q')?.value||'').toLowerCase();
   const lista=productos.filter(p=>!q||(p.desc||'').toLowerCase().includes(q)||(p.cat||'').toLowerCase().includes(q)||(p.marca||'').toLowerCase().includes(q)||(p.linea||'').toLowerCase().includes(q));
@@ -4305,11 +4461,11 @@ async function hacerTransferencia(){
   const prodDestino=productos.find(p=>p.id!==trProdSel.id&&(p.barcode===trProdSel.barcode||p.sku===trProdSel.sku)&&p.sucursalId===destino);
   const {updateDoc,addDoc,setDoc}=window._fb;
   // Resta en origen
-  await updateDoc(docRef('productos',trProdSel.id),{[`stock.${talla}`]:Math.max(0,stockActual-qty)});
+  await setStockTalla(trProdSel.id, trProdSel.stock, talla, Math.max(0,stockActual-qty));
   // Suma en destino
   if(prodDestino){
     const curD=prodDestino.stock?.[talla]||0;
-    await updateDoc(docRef('productos',prodDestino.id),{[`stock.${talla}`]:curD+qty});
+    await setStockTalla(prodDestino.id, prodDestino.stock, talla, curD+qty);
   }else{
     // Create copy in destino
     const newStock={[talla]:qty};
@@ -5368,7 +5524,7 @@ async function cobrar(){
       if(item.sinCodigo)continue; // artículo sin código — no afecta inventario
       const p=productos.find(x=>x.id===item.id);
       if(p&&p.stock&&p.stock[item.talla]!==undefined){
-        await updateDoc(docRef('productos',p.id),{[`stock.${item.talla}`]:Math.max(0,p.stock[item.talla]-item.qty)});
+        await setStockTalla(p.id, p.stock, item.talla, Math.max(0,p.stock[item.talla]-item.qty));
       }
     }
     const folioFisico=document.getElementById('c-nota-folio')?.value.trim()||'';
@@ -6592,11 +6748,10 @@ async function registrarSalida(){
     });
     // If admin: apply stock immediately
     if(esAdmin){
-      const {updateDoc}=window._fb;
       for(const linea of salLineas){
         const p=productos.find(x=>x.id===linea.prodId); if(!p)continue;
         const stockActual=(p.stock||{})[linea.talla]||0;
-        await updateDoc(docRef('productos',p.id),{[`stock.${linea.talla}`]:Math.max(0,stockActual-linea.cantidad)});
+        await setStockTalla(p.id, p.stock, linea.talla, Math.max(0,stockActual-linea.cantidad));
       }
       toast(`Salida registrada y aplicada: ${totalBaja} piezas ✓`);
     }else{
@@ -8333,9 +8488,7 @@ async function registrarSalidaLiquidacion(){
       const stockActual = (prodOriginal.stock||{})[linea.talla]||0;
       // 1. Reduce stock from the ORIGINAL product (keep its price intact)
       const nuevoStockOriginal = Math.max(0, stockActual - linea.cantidad);
-      await updateDoc(docRef('productos',linea.prodId),{
-        [`stock.${linea.talla}`]: nuevoStockOriginal
-      });
+      await setStockTalla(linea.prodId, prodOriginal.stock, linea.talla, nuevoStockOriginal);
       // Update local cache
       const idx = productos.findIndex(x=>x.id===linea.prodId);
       if(idx>=0){
@@ -8354,8 +8507,8 @@ async function registrarSalidaLiquidacion(){
       if(liqProd){
         // Already has a liquidation record — add to its stock and update price
         const liqStockActual = (liqProd.stock||{})[linea.talla]||0;
-        await updateDoc(docRef('productos',liqProd.id),{
-          [`stock.${linea.talla}`]: liqStockActual + linea.cantidad,
+        await window._fb.updateDoc(docRef('productos',liqProd.id),{
+          stock: {...(liqProd.stock||{}), [linea.talla]: liqStockActual + linea.cantidad},
           precio: nuevoPrecio,
           precioOriginal: precioOriginal,
           razonLiquidacion: razon,
@@ -8784,7 +8937,7 @@ async function deleteVenta(id){
         const p = productos.find(x=>x.id===item.id||(item.sku&&x.barcode===item.sku)||(item.sku&&x.sku===item.sku));
         if(!p||!item.talla||item.talla==='—')continue;
         const stockActual = (p.stock||{})[item.talla]||0;
-        await updateDoc(docRef('productos',p.id),{[`stock.${item.talla}`]: stockActual+(item.qty||1)});
+        await setStockTalla(p.id, p.stock, item.talla, stockActual+(item.qty||1));
         // Update local cache
         const idx=productos.findIndex(x=>x.id===p.id);
         if(idx>=0){
@@ -9106,7 +9259,7 @@ async function aprobarMovimiento(id){
       for(const linea of mov.datos.lineas){
         const p=productos.find(x=>x.id===linea.prodId); if(!p)continue;
         const stockActual=(p.stock||{})[linea.talla]||0;
-        await updateDoc(docRef('productos',p.id),{[`stock.${linea.talla}`]:Math.max(0,stockActual-linea.cantidad)});
+        await setStockTalla(p.id, p.stock, linea.talla, Math.max(0,stockActual-linea.cantidad));
       }
       if(mov.datos.salidaId) await window._fb.setDoc(docRef('salidas',mov.datos.salidaId),{estado:'aprobado',aprobadoPor},{merge:true});
     }
@@ -9260,9 +9413,7 @@ async function cancelarMovimientoAprobado(id){
         const prodTarget = productos.find(x=>x.id===linea.prodId);
         if(!prodTarget) continue;
         const stockActual=(prodTarget.stock||{})[linea.talla]||0;
-        await updateDoc(docRef('productos',prodTarget.id),{
-          [`stock.${linea.talla}`]:stockActual+linea.cantidad
-        });
+        await setStockTalla(prodTarget.id, prodTarget.stock, linea.talla, stockActual+linea.cantidad);
       }
       if(mov.datos.salidaId) await window._fb.setDoc(docRef('salidas',mov.datos.salidaId),{estado:'cancelado',canceladoPor},{merge:true});
     }
@@ -9370,9 +9521,7 @@ async function aplicarStockEnSucursal(linea, sucursalId, delta){
       stockActual = (prodTarget.stock||{})[linea.talla]||0;
     }
     const nuevoStock = delta>0 ? stockActual+delta : Math.max(0,stockActual+delta);
-    await updateDoc(docRef('productos',prodTarget.id),{
-      [`stock.${linea.talla}`]: nuevoStock
-    });
+    await setStockTalla(prodTarget.id, freshData.stock, linea.talla, nuevoStock);
     // Actualizar cache local inmediatamente
     const idx = productos.findIndex(x=>x.id===prodTarget.id);
     if(idx>=0){
@@ -9761,9 +9910,7 @@ async function cancelarLiquidacion(id){
       const prodOriginal = productos.find(x=>x.id===linea.prodId);
       if(prodOriginal){
         const stockActual = (prodOriginal.stock||{})[linea.talla]||0;
-        await updateDoc(docRef('productos',linea.prodId),{
-          [`stock.${linea.talla}`]: stockActual + linea.cantidad
-        });
+        await setStockTalla(linea.prodId, prodOriginal.stock, linea.talla, stockActual + linea.cantidad);
         const idx = productos.findIndex(x=>x.id===linea.prodId);
         if(idx>=0){
           if(!productos[idx].stock) productos[idx].stock={};
@@ -9787,9 +9934,7 @@ async function cancelarLiquidacion(id){
           if(liqIdx>=0) productos.splice(liqIdx,1);
         } else {
           // Just reduce its stock
-          await updateDoc(docRef('productos',liqProd.id),{
-            [`stock.${linea.talla}`]: nuevoLiqStock
-          });
+          await setStockTalla(liqProd.id, liqProd.stock, linea.talla, nuevoLiqStock);
           const liqIdx = productos.findIndex(x=>x.id===liqProd.id);
           if(liqIdx>=0) productos[liqIdx].stock[linea.talla] = nuevoLiqStock;
         }
@@ -11572,7 +11717,7 @@ async function confirmarDevolucion(){
       if(!prod&&item.sku) prod=productos.find(p=>p.barcode===item.sku||p.sku===item.sku);
       if(prod){
         const st=(prod.stock||{})[item.talla]||0;
-        await updateDoc(docRef('productos',prod.id),{['stock.'+item.talla]:st+(item.qty||1)});
+        await setStockTalla(prod.id, prod.stock, item.talla, st+(item.qty||1));
         const idx=productos.findIndex(p=>p.id===prod.id);
         if(idx>=0){if(!productos[idx].stock)productos[idx].stock={};productos[idx].stock[item.talla]=st+(item.qty||1);}
       }
@@ -11623,7 +11768,7 @@ async function confirmarDevolucion(){
       // Reduce new talla stock
       if(prod){
         const stN=(prod.stock||{})[devNuevaTalla]||0;
-        if(stN>0) await updateDoc(docRef('productos',prod.id),{['stock.'+devNuevaTalla]:Math.max(0,stN-1)});
+        if(stN>0) await setStockTalla(prod.id, prod.stock, devNuevaTalla, Math.max(0,stN-1));
       }
       closeM('mo-devolucion');
       renderCart();renderPOS();
@@ -11644,7 +11789,7 @@ async function confirmarDevolucion(){
       });
       // Reduce stock of new article
       const stN=(p.stock||{})[_devNuevoTalla]||0;
-      if(stN>0) await updateDoc(docRef('productos',p.id),{['stock.'+_devNuevoTalla]:Math.max(0,stN-1)});
+      if(stN>0) await setStockTalla(p.id, p.stock, _devNuevoTalla, Math.max(0,stN-1));
       closeM('mo-devolucion');
       renderCart();renderPOS();
       toast('↩ '+item.desc+' devuelto. '+p.desc+' T:'+_devNuevoTalla+' agregado al carrito — cobra la diferencia ✓');
