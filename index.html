@@ -9682,46 +9682,88 @@ async function cambiarSucursalMovimiento(id){
 // ══════════ HELPER: apply stock to correct sucursal record ══════════
 async function aplicarStockEnSucursal(linea, sucursalId, delta){
   // +delta = entrada (add), -delta = salida (remove)
-  const {updateDoc, getDoc: fbGetDoc} = window._fb;
+  const {getDoc: fbGetDoc} = window._fb;
   const estilo = (linea.sku || linea.barcode || '').trim();
 
-  // PRIORITY 1: direct product ID match in local cache
-  let prodTarget = linea.prodId ? productos.find(x => x.id === linea.prodId) : null;
+  // ── PRIORIDAD 1: buscar por prodId en la sucursal CORRECTA ──────────
+  // Si prodId apunta a un producto de otra sucursal (ej: tienda), buscar el
+  // gemelo en la sucursal de destino (ej: bodega). Esto evita que una entrada
+  // a Bodega actualice el registro de Tienda por error.
+  let prodTarget = null;
+  if(linea.prodId){
+    const porId = productos.find(x => x.id === linea.prodId);
+    // ¿El prodId ya corresponde a la sucursal de destino?
+    if(porId && porId.sucursalId === sucursalId){
+      prodTarget = porId;
+    } else if(porId && sucursalId){
+      // El prodId es de otra sucursal → buscar gemelo con mismo código en sucursalId
+      const codigoRef = (porId.barcode || porId.sku || estilo || '').trim();
+      if(codigoRef){
+        prodTarget = productos.find(x =>
+          x.sucursalId === sucursalId &&
+          (x.barcode === codigoRef || x.sku === codigoRef)
+        );
+      }
+      // Si no encontró gemelo en cache, buscar en Firestore (código igual, sucursal destino)
+      if(!prodTarget && codigoRef){
+        try{
+          const snap = await window._fb.getDocs(
+            window._fb.query(col('productos'),
+              window._fb.where('sucursalId','==',sucursalId)
+            )
+          );
+          const encontrado = snap.docs.find(d=>{
+            const d2=d.data();
+            return d2.barcode===codigoRef || d2.sku===codigoRef;
+          });
+          if(encontrado) prodTarget = {id:encontrado.id, ...encontrado.data()};
+        }catch(e){ console.warn('Firestore query gemelo error:', e); }
+      }
+      // Si definitivamente no existe el gemelo, usar el prodId original como fallback
+      if(!prodTarget) prodTarget = porId;
+    } else if(porId){
+      prodTarget = porId; // sin sucursalId especificada, usar directo
+    }
+  }
 
-  // PRIORITY 1b: *** FIX *** Si prodId existe pero no está en cache local,
-  // lo buscamos DIRECTAMENTE en Firestore para no depender del cache
+  // ── PRIORIDAD 1b: prodId no está en cache, leer de Firestore ────────
   if(!prodTarget && linea.prodId){
     try{
       const snap = await fbGetDoc(docRef('productos', linea.prodId));
       if(snap.exists()){
-        prodTarget = {id:snap.id, ...snap.data()};
-        // Actualizar cache local con el dato fresco
+        const data = {id:snap.id, ...snap.data()};
+        // Verificar sucursal igual que arriba
+        if(data.sucursalId === sucursalId || !sucursalId){
+          prodTarget = data;
+        } else {
+          const codigoRef = (data.barcode || data.sku || estilo || '').trim();
+          prodTarget = codigoRef
+            ? productos.find(x => x.sucursalId===sucursalId && (x.barcode===codigoRef||x.sku===codigoRef))
+            : null;
+          if(!prodTarget) prodTarget = data; // fallback al prodId original
+        }
         const existIdx = productos.findIndex(x=>x.id===snap.id);
-        if(existIdx>=0) productos[existIdx] = prodTarget;
-        else productos.push(prodTarget);
-        console.log('aplicarStockEnSucursal: producto obtenido de Firestore (no estaba en cache):', prodTarget.desc);
+        if(existIdx>=0) productos[existIdx] = data;
+        else productos.push(data);
       }
-    } catch(e){ console.warn('aplicarStockEnSucursal: error en getDoc fallback:', e); }
+    } catch(e){ console.warn('aplicarStockEnSucursal: error en getDoc:', e); }
   }
 
-  // PRIORITY 2: match by code + sucursal (flexible: barcode OR sku)
+  // ── PRIORIDAD 2: código + sucursal ──────────────────────────────────
   if(!prodTarget && estilo && sucursalId){
     prodTarget = productos.find(x =>
       x.sucursalId === sucursalId &&
       (x.barcode === estilo || x.sku === estilo ||
-       x.barcode === linea.barcode || x.sku === linea.sku ||
-       x.sku === linea.barcode || x.barcode === linea.sku)
+       x.barcode === linea.barcode || x.sku === linea.sku)
     );
   }
 
-  // PRIORITY 3: if still not found by sucursal, find by code in any sucursal
+  // ── PRIORIDAD 3: código en cualquier sucursal ────────────────────────
   if(!prodTarget && estilo){
-    prodTarget = productos.find(x =>
-      x.barcode === estilo || x.sku === estilo
-    );
+    prodTarget = productos.find(x => x.barcode === estilo || x.sku === estilo);
   }
 
-  // PRIORITY 4: match by desc + sucursal (last resort)
+  // ── PRIORIDAD 4: descripción + sucursal (último recurso) ────────────
   if(!prodTarget && linea.desc && sucursalId){
     prodTarget = productos.find(x =>
       x.sucursalId === sucursalId &&
@@ -9730,10 +9772,8 @@ async function aplicarStockEnSucursal(linea, sucursalId, delta){
   }
 
   if(prodTarget){
-    // Found — re-leer el stock actual DIRECTAMENTE de Firestore para evitar
-    // que el cache local tenga datos desactualizados (FIX: race condition)
     let stockActual;
-    let stockBase = prodTarget.stock || {}; // fallback si falla getDoc
+    let stockBase = prodTarget.stock || {};
     try{
       const freshSnap = await fbGetDoc(docRef('productos', prodTarget.id));
       if(freshSnap.exists()){
@@ -9746,18 +9786,18 @@ async function aplicarStockEnSucursal(linea, sucursalId, delta){
     }
     const nuevoStock = delta>0 ? stockActual+delta : Math.max(0,stockActual+delta);
     await setStockTalla(prodTarget.id, stockBase, linea.talla, nuevoStock);
-    // Actualizar cache local inmediatamente
     const idx = productos.findIndex(x=>x.id===prodTarget.id);
     if(idx>=0){
       if(!productos[idx].stock) productos[idx].stock={};
       productos[idx].stock[linea.talla] = nuevoStock;
     }
-    console.log('✅ Stock actualizado:', prodTarget.desc, 'T'+linea.talla, stockActual, '->', nuevoStock);
-    return true; // Éxito
+    const sucNombre = sucursales.find(s=>s.id===prodTarget.sucursalId)?.nombre || prodTarget.sucursalId;
+    console.log('✅ Stock actualizado:', prodTarget.desc, 'T'+linea.talla, stockActual, '->', nuevoStock, '| Sucursal:', sucNombre);
+    return true;
   } else {
     console.warn('aplicarStockEnSucursal: artículo NO encontrado para', estilo, linea.desc);
     toast('⚠️ No se encontró "'+( linea.desc||estilo)+'" en inventario. Verifica que esté dado de alta en Catálogos.','err');
-    return false; // Fallo
+    return false;
   }
 }
 
