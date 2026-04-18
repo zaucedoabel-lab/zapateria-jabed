@@ -5727,7 +5727,7 @@ function abrirVentanaEtiquetas(items, sz){
     .e-header-left{display:flex;flex-direction:column;justify-content:center}
     .e-tienda{font-size:4.5pt;font-weight:700;letter-spacing:0.5pt;color:#000}
     .e-fecha{font-size:4pt;color:#333;font-weight:600}
-    /* MARCA grande en el header (lado derecho) */
+    /* ESTILO/SKU en el header (lado derecho) */
     .e-estilo-hdr{font-size:10pt;font-weight:900;color:#000;
       letter-spacing:0.5pt;font-family:Arial,sans-serif;
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -5749,29 +5749,32 @@ function abrirVentanaEtiquetas(items, sz){
     .e-precio{font-size:11pt;font-weight:900;color:#000;line-height:1;margin-top:0.3mm}
     .e-estilo{display:none}
 
-    /* COLUMNA DERECHA FILA 2: talla arriba grande + QR abajo */
+    /* COLUMNA DERECHA FILA 2: talla ENORME arriba + QR grande abajo */
     .e-right{
       grid-column:2;grid-row:2;
       border-left:0.5mm solid #000;
       display:flex;flex-direction:column;
-      align-items:center;justify-content:space-between;
-      padding:0.5mm 0.5mm;
+      align-items:center;justify-content:flex-start;
+      padding:0;
       overflow:hidden;
     }
-    /* Talla grande */
+    /* Talla enorme — bien visible para la empleada */
     .e-talla{
       font-family:Arial,sans-serif;font-weight:900;color:#000;
       line-height:1;text-align:center;
-      font-size:11pt;
-      width:100%;text-align:center;
+      font-size:14pt;
+      width:100%;
+      padding:0.8mm 0.5mm 0.5mm;
+      border-bottom:0.4mm solid #000;
+      flex-shrink:0;
     }
-    /* QR más grande */
+    /* QR ocupa el resto */
     .e-qr{
       display:flex;align-items:center;justify-content:center;
-      flex:1;
+      flex:1;width:100%;padding:0.3mm;
     }
     .e-qr canvas, .e-qr img{
-      width:11mm!important;height:11mm!important;
+      width:12mm!important;height:12mm!important;
       display:block;
     }
 
@@ -5800,16 +5803,16 @@ function abrirVentanaEtiquetas(items, sz){
   <div class="preview-grid">
   ${prodData.map((p,i) => {
     const tallaStr = p.talla||'';
-    const tf = tallaStr.length <= 2 ? '11pt' : tallaStr.length === 3 ? '9pt' : '7.5pt';
+    const tf = tallaStr.length <= 2 ? '14pt' : tallaStr.length === 3 ? '12pt' : '9pt';
     return `<div class="etiq">
 
-      <!-- HEADER: tienda+fecha izq, MARCA grande der -->
+      <!-- HEADER: tienda+fecha izq, ESTILO/SKU der -->
       <div class="e-header">
         <div class="e-header-left">
           <span class="e-tienda">ZAPATERIA JABED</span>
           <span class="e-fecha">${fechaImp}</span>
         </div>
-        <span class="e-estilo-hdr">${p.marca||p.estilo||p.sku||'—'}</span>
+        <span class="e-estilo-hdr">${p.estilo||p.sku||'—'}</span>
       </div>
 
       <!-- TEXTO IZQUIERDO: marca grande + desc + color + precio -->
