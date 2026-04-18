@@ -6855,61 +6855,105 @@ function buscarProdEntrada(){
   const q=(document.getElementById('ent-prod-q')?.value||'').toLowerCase();
   const res=document.getElementById('ent-prod-res'); if(!res)return;
   if(!q){res.innerHTML='';return;}
+
+  // Paso 1: filtrar todos los productos que coinciden con la búsqueda
   const raw=productos.filter(p=>
     (p.desc||'').toLowerCase().includes(q)||
-    (p.barcode||'').includes(q)||
+    (p.barcode||'').toLowerCase().includes(q)||
     (p.sku||'').toLowerCase().includes(q)
   );
 
-  // ── NUEVO: agrupar por código mostrando Tienda y Bodega por separado ──
-  // Cada código puede tener 1 fila de tienda + 1 o más filas de bodega.
-  // Se muestran como entradas independientes para que el usuario elija dónde entra la mercancía.
-  const grupos = new Map(); // key: codigoBase → [{prod, esBodega}]
+  // Paso 2: agrupar por código normalizado para detectar qué códigos existen
+  // Clave: usamos prodId base (tienda) O creadoDesde para vincular gemelos
+  // Esto garantiza que tienda + bodega gemelo siempre aparezcan juntos
+  const porCodigo = new Map(); // codigo_norm → [prod, ...]
   raw.forEach(p=>{
-    const codigoBase = (p.barcode||p.sku||p.desc||p.id).trim().toLowerCase();
-    if(!grupos.has(codigoBase)) grupos.set(codigoBase, []);
-    grupos.get(codigoBase).push(p);
+    // Prioridad de clave: barcode > sku > (creadoDesde para gemelos) > desc > id
+    const codigoNorm = (
+      (p.barcode||p.sku||'').trim().toLowerCase() ||
+      (p.creadoDesde ? 'gemelo_'+p.creadoDesde : '') ||
+      (p.desc||'').trim().toLowerCase() ||
+      p.id
+    );
+    if(!porCodigo.has(codigoNorm)) porCodigo.set(codigoNorm,[]);
+    porCodigo.get(codigoNorm).push(p);
   });
 
-  const resultados = [];
-  grupos.forEach(prods=>{
-    // Separar tienda y bodega
-    const tienda  = prods.filter(p=> sucursales.find(s=>s.id===p.sucursalId)?.tipo !== 'bodega');
-    const bodegas = prods.filter(p=> sucursales.find(s=>s.id===p.sucursalId)?.tipo === 'bodega');
-    // Agregar el mejor representante de tienda (más stock o más reciente)
-    if(tienda.length){
-      const best = tienda.reduce((a,b)=>{
-        const sa=Object.values(a.stock||{}).reduce((x,y)=>x+(Number(y)||0),0);
-        const sb=Object.values(b.stock||{}).reduce((x,y)=>x+(Number(y)||0),0);
-        return sb>sa?b:a;
-      });
-      resultados.push(best);
+  // Paso 3: también vincular gemelos mediante creadoDesde
+  // Si un gemelo tiene barcode vacío, asegurarse que quede en el mismo grupo que su tienda
+  raw.forEach(p=>{
+    if(!p.creadoDesde) return;
+    const tiendaOrig = raw.find(x=>x.id===p.creadoDesde);
+    if(!tiendaOrig) return;
+    const codigoTienda = (tiendaOrig.barcode||tiendaOrig.sku||'').trim().toLowerCase() || tiendaOrig.desc.trim().toLowerCase() || tiendaOrig.id;
+    const codigoGemelo = (p.barcode||p.sku||'').trim().toLowerCase() || ('gemelo_'+p.creadoDesde) || p.desc.trim().toLowerCase();
+    if(codigoTienda !== codigoGemelo){
+      // El gemelo tiene clave diferente — moverlo al grupo de la tienda
+      const grupoGemelo = porCodigo.get(codigoGemelo)||[];
+      const grupoTienda = porCodigo.get(codigoTienda)||[];
+      // Solo mover este gemelo si no está ya en el grupo tienda
+      if(!grupoTienda.find(x=>x.id===p.id)){
+        grupoTienda.push(p);
+        porCodigo.set(codigoTienda, grupoTienda);
+        // Quitar del grupo gemelo
+        const sinGemelo = grupoGemelo.filter(x=>x.id!==p.id);
+        if(sinGemelo.length) porCodigo.set(codigoGemelo, sinGemelo);
+        else porCodigo.delete(codigoGemelo);
+      }
     }
-    // Agregar cada bodega por separado
-    bodegas.forEach(b=>resultados.push(b));
   });
 
-  const lista = resultados.slice(0,10);
-  res.innerHTML=lista.map(p=>{
-    const suc   = sucursales.find(s=>s.id===p.sucursalId);
-    const esBod = suc?.tipo==='bodega';
-    const tot   = Object.values(p.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
-    const stockLabel = tot===0&&esBod
-      ? '<span style="font-size:10px;color:var(--blue)">⏳ Sin stock — ingresarás la primera entrada</span>'
+  // Paso 4: construir resultados mostrando CADA sucursal por separado
+  const resultados = [];
+  porCodigo.forEach(prods=>{
+    // Ordenar: tiendas primero, luego bodegas
+    const sorted = [...prods].sort((a,b)=>{
+      const aEsBod = sucursales.find(s=>s.id===a.sucursalId)?.tipo==='bodega';
+      const bEsBod = sucursales.find(s=>s.id===b.sucursalId)?.tipo==='bodega';
+      if(aEsBod===bEsBod) return 0;
+      return aEsBod ? 1 : -1; // tienda primero
+    });
+    // Deduplicar por sucursal: si hay 2 registros en la MISMA sucursal, mantener el de más stock
+    const porSuc = new Map();
+    sorted.forEach(p=>{
+      const sucId = p.sucursalId||'sin_suc';
+      const prev = porSuc.get(sucId);
+      if(!prev){
+        porSuc.set(sucId, p);
+      } else {
+        const totP = Object.values(p.stock||{}).reduce((a,b)=>a+(Number(b)||0),0);
+        const totPrev = Object.values(prev.stock||{}).reduce((a,b)=>a+(Number(b)||0),0);
+        if(totP > totPrev) porSuc.set(sucId, p);
+      }
+    });
+    porSuc.forEach(p=>resultados.push(p));
+  });
+
+  // Paso 5: renderizar
+  const lista = resultados.slice(0,12);
+  res.innerHTML = lista.length ? lista.map(p=>{
+    const suc    = sucursales.find(s=>s.id===p.sucursalId);
+    const esBod  = suc?.tipo==='bodega';
+    const tot    = Object.values(p.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    const esGemEspera = !!p.creadoDesde && esBod && tot===0;
+    const stockLabel = esGemEspera
+      ? `<span style="font-size:10px;color:var(--blue)">⏳ Sin entrada aún</span>`
       : `<span class="badge ${tot>0?'b-green':'b-red'}" style="font-size:10px">${tot} pzas</span>`;
-    const sucBadge = esBod
-      ? `<span class="badge b-orange" style="font-size:10px">📦 ${suc?.nombre||'Bodega'}</span>`
-      : `<span class="badge b-green" style="font-size:10px">🏪 ${suc?.nombre||'Tienda'}</span>`;
+    const sucNombre = suc?.nombre || (esBod?'Bodega':'Tienda');
+    const sucBadge  = esBod
+      ? `<span class="badge b-orange" style="font-size:10px">📦 ${sucNombre}</span>`
+      : `<span class="badge b-green"  style="font-size:10px">🏪 ${sucNombre}</span>`;
+    const border = esGemEspera ? 'var(--blue)' : esBod ? 'var(--gold)' : 'var(--border)';
     return`<div onclick="selProdEntrada('${p.id}')"
-      style="padding:8px 12px;background:var(--s2);border:1px solid ${esBod?'var(--gold)':'var(--border)'};border-radius:8px;cursor:pointer;margin-bottom:4px"
+      style="padding:8px 12px;background:var(--s2);border:1px solid ${border};border-radius:8px;cursor:pointer;margin-bottom:4px"
       onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
         <div style="font-weight:600;font-size:13px;color:var(--cream)">${p.desc}</div>
-        <div style="display:flex;gap:4px;align-items:center">${sucBadge} ${stockLabel}</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${sucBadge} ${stockLabel}</div>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:2px">${p.barcode||p.sku||'—'} · ${p.cat||'—'} · ${p.color||'—'}</div>
     </div>`;
-  }).join('');
+  }).join('') : '<div style="padding:8px;color:var(--muted);font-size:12px">Sin resultados</div>';
 }
 
 function selProdEntrada(id){
@@ -7400,15 +7444,18 @@ function renderHist(){
 
     // Generate folio from venta ID
     const folioV = v.folio||v.id.slice(-6).toUpperCase();
+    // ── Fila sin artículos (venta sin items) ──
     if(!items.length)return`<tr style="${rowBg}">
       <td class="mono" style="font-size:11px;color:var(--accent2);font-weight:700;white-space:nowrap;cursor:pointer;letter-spacing:.5px"
         onclick="copiarFolio('${folioV}')" title="Clic para copiar folio">#${folioV}</td>
       <td class="mono">#${lista.length-idx}</td>
       <td style="font-size:11px">${mesStr}</td>
       <td class="mono" style="font-size:11px">${semStr}</td>
-      <td style="white-space:nowrap">${fmtFechaCorta(v.fecha)}</td><td style="color:var(--muted)">${v.hora||'—'}</td>
-      <td>${v.cliente}</td><td style="color:var(--muted)">${v.vendedor||'—'}</td>
-      <td>—</td><td>—</td><td>—</td><td>—</td>
+      <td style="white-space:nowrap">${fmtFechaCorta(v.fecha)}</td>
+      <td style="color:var(--muted)">${v.hora||'—'}</td>
+      <td>${v.cliente}</td>
+      <td style="color:var(--muted)">${v.vendedor||'—'}</td>
+      <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
       <td><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
       <td>${fmtPago(v.pago,v)}</td>
       <td class="mono" style="color:var(--muted)">—</td>
@@ -7417,40 +7464,55 @@ function renderHist(){
       <td class="mono" style="color:var(--cream)">${fmt(cobrado)}</td>
       <td class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
       <td class="mono" style="color:var(--green);font-weight:600">${fmt(cobrado)}</td>
+      ${(usuarioActivo?.rol==='admin'||usuarioActivo?.rol==='manager')
+        ?`<td><div style="display:flex;flex-direction:column;gap:3px">
+            <button class="btn btn-ghost btn-xs" onclick="editarFechaVenta('${v.id}','${v.fecha}','${v.hora||''}')">📅</button>
+            <button class="btn btn-red btn-xs" onclick="deleteVenta('${v.id}')">🗑️</button>
+          </div></td>`
+        :'<td></td>'}
     </tr>`;
 
-    return items.map((item,ii)=>`<tr style="${rowBg}">
-      ${ii===0?`<td class="mono" rowspan="${items.length}" style="font-size:11px;color:var(--accent2);font-weight:700;white-space:nowrap;cursor:pointer;letter-spacing:.5px"
-        onclick="copiarFolio('${folioV}')" title="Clic para copiar folio">#${folioV}</td>
-      <td class="mono" rowspan="${items.length}">#${lista.length-idx}</td>
-      <td style="font-size:11px" rowspan="${items.length}">${mesStr}</td>
-      <td class="mono" style="font-size:11px" rowspan="${items.length}">${semStr}</td>
-      <td rowspan="${items.length}" style="white-space:nowrap">${fmtFechaCorta(v.fecha)}</td>
-      <td rowspan="${items.length}" style="color:var(--muted)">${v.hora||'—'}</td>
-      <td rowspan="${items.length}">${v.cliente}</td>
-      <td rowspan="${items.length}" style="color:var(--muted)">${v.vendedor||'—'}</td>`:''}
-      <td class="mono" style="font-size:11px;color:var(--muted)">${item.sku||item.barcode||'—'}</td>
-      <td style="font-size:12px">${item.desc||'—'}${item.esGratis?'<span class="badge b-green" style="font-size:9px;margin-left:4px">GRATIS</span>':''}${item.sinCodigo?'<span class="badge b-gold" style="font-size:9px;margin-left:4px">ART. SIN CÓDIGO</span>':''}</td>
-      <td class="mono" style="text-align:center">${item.talla||'—'}</td>
-      <td><span class="badge b-accent" style="font-size:10px">${item.cat||(productos.find(p=>p.barcode===item.sku||p.sku===item.sku||p.id===item.id)?.cat)||'—'}</span></td>
-      <td class="mono" style="text-align:center">${item.qty||1}</td>
-      ${ii===0?`<td rowspan="${items.length}" class="mono" style="font-size:11px;color:var(--muted)">${(()=>{
-        const costoProd = productos.find(p=>p.id===item.id||(item.sku&&(p.barcode===item.sku||p.sku===item.sku)));
-        const costo = costoProd?.costo||item.costo||0;
-        return costo>0?fmt(costo):'—';
-      })()}</td>`:''}
-      ${ii===0?`<td rowspan="${items.length}"><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
-      <td rowspan="${items.length}">${fmtPago(v.pago,v)}</td>`:''}
-      <td class="mono" style="color:var(--gold);font-size:12px;font-weight:700">${fmt(item.price||0)}</td>
-      ${ii===0?'<td rowspan="'+items.length+'" class="mono" style="color:var(--red);font-size:11px">'+(v.descuento>0?'-'+fmt(v.descuento):'—')+'</td>'
-        +'<td rowspan="'+items.length+'" class="mono" style="color:var(--cream)">'+fmt(cobrado)+'</td>'
-        +'<td rowspan="'+items.length+'" class="mono" style="color:'+(isAC?'var(--gold)':'var(--muted)')+'">'+( isAC?fmt(v.total):'—')+'</td>'
-        +'<td rowspan="'+items.length+'" class="mono" style="color:var(--green);font-weight:600">'+fmt(cobrado)+(isAC&&v.anticipo?'<div style="font-size:10px;color:var(--muted)">Ant: '+fmt(v.anticipo)+'</div>':'')+'</td>'
-        +((usuarioActivo?.rol==='admin'||usuarioActivo?.rol==='manager')
-          ?'<td rowspan="'+items.length+'"><div style="display:flex;flex-direction:column;gap:3px"><button class="btn btn-ghost btn-xs" onclick="editarFechaVenta(\''+v.id+'\',\''+v.fecha+'\',\''+( v.hora||'')+'\')">📅</button><button class="btn btn-red btn-xs" onclick="deleteVenta(\''+v.id+'\')">🗑️</button></div></td>'
-          :'<td rowspan="'+items.length+'"></td>')
-        :''}
-    </tr>`).join('');
+    // ── Filas con artículos ──
+    return items.map((item,ii)=>{
+      const costoProd = ii===0
+        ? productos.find(p=>p.id===item.id||(item.sku&&(p.barcode===item.sku||p.sku===item.sku)))
+        : null;
+      const costoVal  = ii===0 ? (costoProd?.costo||item.costo||0) : 0;
+      return`<tr style="${rowBg}">
+        ${ii===0?`
+        <td class="mono" rowspan="${items.length}" style="font-size:11px;color:var(--accent2);font-weight:700;white-space:nowrap;cursor:pointer;letter-spacing:.5px"
+          onclick="copiarFolio('${folioV}')" title="Clic para copiar folio">#${folioV}</td>
+        <td class="mono" rowspan="${items.length}">#${lista.length-idx}</td>
+        <td style="font-size:11px" rowspan="${items.length}">${mesStr}</td>
+        <td class="mono" style="font-size:11px" rowspan="${items.length}">${semStr}</td>
+        <td rowspan="${items.length}" style="white-space:nowrap">${fmtFechaCorta(v.fecha)}</td>
+        <td rowspan="${items.length}" style="color:var(--muted)">${v.hora||'—'}</td>
+        <td rowspan="${items.length}">${v.cliente}</td>
+        <td rowspan="${items.length}" style="color:var(--muted)">${v.vendedor||'—'}</td>`:''}
+        <td class="mono" style="font-size:11px;color:var(--muted)">${item.sku||item.barcode||'—'}</td>
+        <td style="font-size:12px">${item.desc||'—'}${item.esGratis?'<span class="badge b-green" style="font-size:9px;margin-left:4px">GRATIS</span>':''}${item.sinCodigo?'<span class="badge b-gold" style="font-size:9px;margin-left:4px">ART. SIN CÓDIGO</span>':''}</td>
+        <td class="mono" style="text-align:center">${item.talla||'—'}</td>
+        <td><span class="badge b-accent" style="font-size:10px">${item.cat||(productos.find(p=>p.barcode===item.sku||p.sku===item.sku||p.id===item.id)?.cat)||'—'}</span></td>
+        <td class="mono" style="text-align:center">${item.qty||1}</td>
+        ${ii===0?`
+        <td rowspan="${items.length}"><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
+        <td rowspan="${items.length}">${fmtPago(v.pago,v)}</td>`:''}
+        <td class="mono" style="color:var(--gold);font-size:12px;font-weight:700">${fmt(item.price||0)}</td>
+        ${ii===0?`
+        <td rowspan="${items.length}" class="mono" style="color:var(--red);font-size:11px">${v.descuento>0?'-'+fmt(v.descuento):'—'}</td>
+        <td rowspan="${items.length}" class="mono" style="font-size:11px;color:var(--muted)">${costoVal>0?fmt(costoVal):'—'}</td>
+        <td rowspan="${items.length}" class="mono" style="color:var(--cream)">${fmt(cobrado)}</td>
+        <td rowspan="${items.length}" class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
+        <td rowspan="${items.length}" class="mono" style="color:var(--green);font-weight:600">${fmt(cobrado)}${isAC&&v.anticipo?'<div style="font-size:10px;color:var(--muted)">Ant: '+fmt(v.anticipo)+'</div>':''}</td>
+        ${(usuarioActivo?.rol==='admin'||usuarioActivo?.rol==='manager')
+          ?`<td rowspan="${items.length}"><div style="display:flex;flex-direction:column;gap:3px">
+              <button class="btn btn-ghost btn-xs" onclick="editarFechaVenta('${v.id}','${v.fecha}','${v.hora||''}')">📅</button>
+              <button class="btn btn-red btn-xs" onclick="deleteVenta('${v.id}')">🗑️</button>
+            </div></td>`
+          :`<td rowspan="${items.length}"></td>`}
+        `:''}
+      </tr>`;
+    }).join('');
   }).join('');
 }
 // ══════════════════ PROMOCIONES ══════════════════
