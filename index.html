@@ -610,6 +610,9 @@ select option{background:var(--s2)}
     <button class="mob-nav-btn" id="mob-btn-etiquetas" onclick="go('etiquetas',null);setMobActive('etiquetas')">
       <span class="mni">🏷️</span><span>Etiquetas</span>
     </button>
+    <button class="mob-nav-btn" id="mob-btn-recuperacion" onclick="go('recuperacion',null);setMobActive('recuperacion')">
+      <span class="mni">🔄</span><span>Recuperar</span>
+    </button>
     <button class="mob-nav-btn" id="mob-btn-more" onclick="toggleMobileSidebar()"
       style="position:relative">
       <span class="mni">☰</span><span>Más</span>
@@ -626,7 +629,7 @@ select option{background:var(--s2)}
       <div id="nav-transfer"></div><div id="nav-cuentas"></div><div id="nav-gastos"></div>
       <div id="nav-corte"></div><div id="nav-reportes"></div><div id="nav-resumen"></div>
       <div id="nav-catalogos-cfg"></div><div id="nav-promociones"></div>
-      <div id="nav-etiquetas"></div><div id="nav-sucursales"></div>
+      <div id="nav-recuperacion"></div><div id="nav-etiquetas"></div><div id="nav-sucursales"></div>
       <div id="nav-usuarios"></div><div id="nav-importar"></div>
       <div id="nav-bitacora"></div><div id="nav-costos"></div>
       <div id="nav-publicaciones"></div><div id="nav-analisis"></div><div id="nav-histcambios"></div>
@@ -2450,6 +2453,64 @@ select option{background:var(--s2)}
           </div>
         </div>
 
+        <!-- ══════════ RECUPERACIÓN DE TALLAS ══════════ -->
+        <div id="page-recuperacion" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+  </button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
+</div>
+<div class="page-header" style="flex-wrap:wrap;gap:8px">
+  <div>
+    <div id="ph-title" style="font-size:17px;font-weight:700">Recuperación de Tallas</div>
+    <div id="ph-sub" style="font-size:12px;color:var(--muted)">Tallas vendidas pendientes de recuperar del inventario</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto">
+    <select id="rec-filtro-suc" style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--cream);font-size:12px" onchange="renderRecuperacion()">
+      <option value="">Todas las sucursales</option>
+    </select>
+    <select id="rec-filtro-status" style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--cream);font-size:12px" onchange="renderRecuperacion()">
+      <option value="">Todos</option>
+      <option value="pendiente">🔴 Pendientes</option>
+      <option value="recuperado">✅ Recuperados</option>
+    </select>
+    <input type="text" id="rec-q" placeholder="🔍 Buscar estilo o marca..." style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--cream);font-size:12px;width:180px" oninput="renderRecuperacion()">
+    <button class="btn btn-ghost btn-sm" onclick="renderRecuperacion()">🔄 Actualizar</button>
+  </div>
+</div>
+<div style="padding:16px">
+  <!-- STATS ROW -->
+  <div class="stat-grid sg4" id="rec-stats" style="margin-bottom:16px"></div>
+  <!-- TABLE -->
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="tw">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:var(--s2);border-bottom:1px solid var(--border)">
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap">ESTILO / MARCA</th>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">DESCRIPCIÓN</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">TALLA</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">VENDIDAS</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">EN BODEGA</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">SUCURSAL VENTA</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">STATUS</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">ACCIÓN</th>
+          </tr>
+        </thead>
+        <tbody id="rec-tbody">
+          <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted)">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+        </div>
+
         <!-- ══════════ ETIQUETAS ══════════ -->
         <div id="page-etiquetas" class="page">
 <div class="mod-nav-bar">
@@ -3442,7 +3503,7 @@ async function setStockTalla(prodId, stockCompleto, talla, nuevoValor){
 
 // ══════════════════ STATE ══════════════════
 let currentUser=null, currentProfile=null;
-let sucursales=[], productos=[], ventas=[], gastos=[], usuarios=[], transferencias=[];
+let sucursales=[], productos=[], ventas=[], gastos=[], usuarios=[], transferencias=[], entradas=[];
 let activeSucId='all';
 let carrito=[], editProdId=null, posProducto=null, posTalla=null, gastoCat='';
 let editUsrId=null, editSucId=null;
@@ -3605,12 +3666,15 @@ function startListeners(){
   push(onSnapshot(query(col('ventas'),orderBy('createdAt','desc')),snap=>{
     ventas=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderDashboard();renderHist();calcCorte();renderCuentas();
+    if(typeof window._recRefreshHook==='function') window._recRefreshHook();
   }));
   // Entradas listener — refresh when entries change
   push(onSnapshot(col('entradas'),snap=>{
+    entradas=snap.docs.map(d=>({id:d.id,...d.data()}));
     if(document.getElementById('page-entradas')?.classList.contains('on')){
       renderHistEntradas();
     }
+    if(typeof window._recRefreshHook==='function') window._recRefreshHook();
   }));
   // Salidas listener — refresh when exits change
   push(onSnapshot(col('salidas'),snap=>{
@@ -3625,6 +3689,7 @@ function startListeners(){
   push(onSnapshot(query(col('transferencias'),orderBy('fecha','desc')),snap=>{
     transferencias=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderTransferencias();
+    if(typeof window._recRefreshHook==='function') window._recRefreshHook();
   }));
   push(onSnapshot(col('usuarios'),snap=>{
     usuarios=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -5727,7 +5792,7 @@ function abrirVentanaEtiquetas(items, sz){
     .e-header-left{display:flex;flex-direction:column;justify-content:center}
     .e-tienda{font-size:4.5pt;font-weight:700;letter-spacing:0.5pt;color:#000}
     .e-fecha{font-size:4pt;color:#333;font-weight:600}
-    /* ESTILO/SKU en el header (lado derecho) */
+    /* MARCA grande en el header (lado derecho) */
     .e-estilo-hdr{font-size:10pt;font-weight:900;color:#000;
       letter-spacing:0.5pt;font-family:Arial,sans-serif;
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -5749,32 +5814,29 @@ function abrirVentanaEtiquetas(items, sz){
     .e-precio{font-size:11pt;font-weight:900;color:#000;line-height:1;margin-top:0.3mm}
     .e-estilo{display:none}
 
-    /* COLUMNA DERECHA FILA 2: talla ENORME arriba + QR grande abajo */
+    /* COLUMNA DERECHA FILA 2: talla arriba grande + QR abajo */
     .e-right{
       grid-column:2;grid-row:2;
       border-left:0.5mm solid #000;
       display:flex;flex-direction:column;
-      align-items:center;justify-content:flex-start;
-      padding:0;
+      align-items:center;justify-content:space-between;
+      padding:0.5mm 0.5mm;
       overflow:hidden;
     }
-    /* Talla enorme — bien visible para la empleada */
+    /* Talla grande */
     .e-talla{
       font-family:Arial,sans-serif;font-weight:900;color:#000;
       line-height:1;text-align:center;
-      font-size:14pt;
-      width:100%;
-      padding:0.8mm 0.5mm 0.5mm;
-      border-bottom:0.4mm solid #000;
-      flex-shrink:0;
+      font-size:11pt;
+      width:100%;text-align:center;
     }
-    /* QR ocupa el resto */
+    /* QR más grande */
     .e-qr{
       display:flex;align-items:center;justify-content:center;
-      flex:1;width:100%;padding:0.3mm;
+      flex:1;
     }
     .e-qr canvas, .e-qr img{
-      width:12mm!important;height:12mm!important;
+      width:11mm!important;height:11mm!important;
       display:block;
     }
 
@@ -5803,16 +5865,16 @@ function abrirVentanaEtiquetas(items, sz){
   <div class="preview-grid">
   ${prodData.map((p,i) => {
     const tallaStr = p.talla||'';
-    const tf = tallaStr.length <= 2 ? '14pt' : tallaStr.length === 3 ? '12pt' : '9pt';
+    const tf = tallaStr.length <= 2 ? '11pt' : tallaStr.length === 3 ? '9pt' : '7.5pt';
     return `<div class="etiq">
 
-      <!-- HEADER: tienda+fecha izq, ESTILO/SKU der -->
+      <!-- HEADER: tienda+fecha izq, MARCA grande der -->
       <div class="e-header">
         <div class="e-header-left">
           <span class="e-tienda">ZAPATERIA JABED</span>
           <span class="e-fecha">${fechaImp}</span>
         </div>
-        <span class="e-estilo-hdr">${p.estilo||p.sku||'—'}</span>
+        <span class="e-estilo-hdr">${p.marca||p.estilo||p.sku||'—'}</span>
       </div>
 
       <!-- TEXTO IZQUIERDO: marca grande + desc + color + precio -->
@@ -8568,13 +8630,13 @@ function populateLocacionSelect(selectedVal){
 let usuariosInternos = []; // loaded from Firestore
 let usuarioActivo = null;  // {id, nombre, rol, pin}
 
-const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','dashboard-ventas','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','sucursales','usuarios','importar','bitacora','publicaciones','analisis','histcambios'];
+const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','dashboard-ventas','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','recuperacion','sucursales','usuarios','importar','bitacora','publicaciones','analisis','histcambios'];
 const PERMISOS_ROL_DEFAULT = {
   admin:      [...TODOS_MODULOS,'dashboard-ventas'],
   manager:    [...TODOS_MODULOS],
   supervisor: [],  // Empty by default — Abel assigns modules manually
   vendedor:   ['pos','historial','clientes','cuentas','inventario','catalogo'],
-  bodeguero:  ['inventario','catalogo','entradas','salidas','transfer','transferencias','etiquetas'],
+  bodeguero:  ['inventario','catalogo','entradas','salidas','transfer','transferencias','etiquetas','recuperacion'],
   lectura:    ['inventario','catalogo','historial','reportes','resumen']
 };
 // Roles that DON'T need to re-identify on every module change
@@ -9616,6 +9678,7 @@ const NAV_ID_MAP = {
   'promociones':   'nav-promociones',
   'catalogos-cfg': 'nav-catalogos-cfg',
   'etiquetas':     'nav-etiquetas',
+  'recuperacion':  'nav-recuperacion',
   'sucursales':    'nav-sucursales',
   'usuarios':      'nav-usuarios',
   'importar':      'nav-importar',
@@ -11078,6 +11141,7 @@ const PAGE_TITLES = {
   'catalogos-cfg':    {t:'Catálogos',           sub:'Configuración de catálogos'},
   'promociones':      {t:'Promociones',         sub:'Descuentos y ofertas'},
   'etiquetas':        {t:'Imprimir Etiquetas',  sub:'Generación de etiquetas'},
+  'recuperacion':     {t:'Recuperación de Tallas', sub:'Tallas vendidas pendientes de recuperar'},
   'sucursales':       {t:'Sucursales',          sub:'Gestión de tiendas y bodegas'},
   'usuarios':         {t:'Usuarios y Roles',    sub:'Control de acceso'},
   'importar':         {t:'Importar CSV',        sub:'Carga masiva de productos'},
@@ -11140,6 +11204,7 @@ function _navigateTo(page, el){
   if(page==='catalogos-cfg'){loadCatalogos();loadConfigGeneral();}
   if(page==='promociones'){loadPromociones();}
   if(page==='etiquetas'){document.getElementById('etiq-desde').value=hoy();}
+  if(page==='recuperacion'){initRecuperacion();}
   if(page==='analisis'){initAnalisis();}
   if(page==='histcambios'){loadHistorialCambios();}
   if(page==='dashboard-ventas'){
@@ -11190,6 +11255,7 @@ const GM_CATS = {
     title: '📣 Marketing', mods: [
       {icon:'📣', name:'Publicaciones',    page:'publicaciones', gold:true},
       {icon:'🏷️', name:'Imprimir Etiquetas',page:'etiquetas'},
+      {icon:'🔄', name:'Recuperar Tallas',   page:'recuperacion'},
       {icon:'🎁', name:'Promociones',      page:'promociones'},
     ]
   },
@@ -11253,6 +11319,7 @@ function getModDef(page){
     costos:        ['linear-gradient(135deg,#16a34a,#15803d)','M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'],
     publicaciones: ['linear-gradient(135deg,#f43f5e,#e11d48)','M21 2H3v16h5v4l4-4h5l4-4V2z M9 9h6 M9 13h4'],
     etiquetas:     ['linear-gradient(135deg,#db2777,#be185d)','M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z M7 7h.01'],
+    recuperacion:  ['linear-gradient(135deg,#0891b2,#06b6d4)','M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'],
     promociones:   ['linear-gradient(135deg,#ec4899,#db2777)','M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'],
     'catalogos-cfg':['linear-gradient(135deg,#64748b,#475569)','M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 18h.01'],
     usuarios:      ['linear-gradient(135deg,#4f46e5,#4338ca)','M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75'],
@@ -11312,6 +11379,7 @@ function goFromGrid(page){
     'corte':'nav-corte','reportes':'nav-reportes','resumen':'nav-resumen',
     'costos':'nav-costos','publicaciones':'nav-publicaciones',
     'etiquetas':'nav-etiquetas','promociones':'nav-promociones',
+    'recuperacion':'nav-recuperacion',
     'catalogos-cfg':'nav-catalogos-cfg','usuarios':'nav-usuarios',
     'sucursales':'nav-sucursales','importar':'nav-importar','bitacora':'nav-bitacora'
   };
@@ -12566,6 +12634,197 @@ async function confirmarDevolucion(){
     renderHist();
   }catch(e){toast('Error: '+e.message,'err');console.error(e);}
 }
+
+// ══════════════════ RECUPERACIÓN DE TALLAS ══════════════════
+
+let _recManualStatus = {}; // { "prodId_talla_sucId": "recuperado" } persistido en Firestore
+
+async function initRecuperacion(){
+  // Poblar filtro sucursales
+  const sel = document.getElementById('rec-filtro-suc');
+  if(sel){
+    const opts = sucursales.map(s=>`<option value="${s.id}">${s.nombre}</option>`).join('');
+    sel.innerHTML = '<option value="">Todas las sucursales</option>' + opts;
+  }
+  // Cargar estados manuales desde Firestore
+  try{
+    const {getDocs, collection} = window._fb;
+    const snap = await getDocs(col('recuperacion_status'));
+    _recManualStatus = {};
+    snap.docs.forEach(d=>{ _recManualStatus[d.id] = d.data().status||'pendiente'; });
+  }catch(e){ _recManualStatus = {}; }
+  renderRecuperacion();
+}
+
+function _buildRecuperacionData(){
+  // 1. Agrupar ventas por productoId + talla + sucursalId (solo ventas reales, no devoluciones)
+  const map = {}; // key: prodId_talla_sucId
+  ventas.forEach(v=>{
+    if(v.tipoVenta==='devolucion') return;
+    (v.items||[]).forEach(item=>{
+      if(!item.id || !item.talla || item.talla==='—') return;
+      const sucId = v.sucursalId||'';
+      const key = `${item.id}_${item.talla}_${sucId}`;
+      if(!map[key]){
+        map[key]={
+          key,
+          prodId: item.id,
+          talla:  item.talla,
+          sucId,
+          desc:   item.desc||'—',
+          marca:  item.marca||'',
+          sku:    item.sku||item.id,
+          color:  item.color||'',
+          totalVendido: 0,
+        };
+      }
+      map[key].totalVendido += (item.qty||1);
+    });
+  });
+
+  // 2. Para cada entrada, calcular cuánto hay en BODEGA del mismo estilo+talla
+  const bodegas = sucursales.filter(s=>s.tipo==='bodega');
+  const bodegaIds = new Set(bodegas.map(s=>s.id));
+
+  return Object.values(map).map(row=>{
+    // Stock en bodega: buscar el producto en sucursales de tipo bodega
+    let stockBodega = 0;
+    productos.forEach(p=>{
+      // mismo producto o mismo sku/barcode
+      if((p.id===row.prodId || p.sku===row.sku || p.barcode===row.sku) && bodegaIds.has(p.sucursalId)){
+        stockBodega += Number((p.stock||{})[row.talla]||0);
+      }
+    });
+
+    // Status: manual override > automático por transferencia/entrada
+    const manualSt = _recManualStatus[row.key];
+    let status = manualSt || 'pendiente';
+
+    // Auto-recuperado: si hubo transferencia de ese prod+talla hacia la sucursal de venta
+    if(status==='pendiente'){
+      const transf = (typeof transferencias!=='undefined'?transferencias:[])
+        .find(t=> (t.productoId===row.prodId||t.productoDesc===row.desc)
+                && t.talla===row.talla
+                && t.destinoId===row.sucId);
+      if(transf) status='recuperado';
+    }
+    // Auto-recuperado: si hubo entrada de mercancía con ese prod+talla en esa sucursal
+    if(status==='pendiente'){
+      const ent = (typeof entradas!=='undefined'?entradas:[])
+        .find(e=> e.sucursalId===row.sucId && e.estado==='aprobado'
+               && (e.lineas||[]).some(l=> l.talla===row.talla
+                 && (l.id===row.prodId||l.desc===row.desc||l.sku===row.sku)));
+      if(ent) status='recuperado';
+    }
+
+    row.stockBodega = stockBodega;
+    row.status = status;
+    return row;
+  });
+}
+
+async function renderRecuperacion(){
+  const tbody = document.getElementById('rec-tbody'); if(!tbody) return;
+  const q = (document.getElementById('rec-q')?.value||'').toLowerCase();
+  const filtroSuc = document.getElementById('rec-filtro-suc')?.value||'';
+  const filtroSt  = document.getElementById('rec-filtro-status')?.value||'';
+
+  const data = _buildRecuperacionData()
+    .filter(r=>{
+      if(filtroSuc && r.sucId!==filtroSuc) return false;
+      if(filtroSt  && r.status!==filtroSt) return false;
+      if(q && !r.desc.toLowerCase().includes(q) && !r.marca.toLowerCase().includes(q) && !r.sku.toLowerCase().includes(q) && !r.talla.toLowerCase().includes(q)) return false;
+      return true;
+    })
+    .sort((a,b)=>{
+      // pendientes primero
+      if(a.status==='pendiente' && b.status!=='pendiente') return -1;
+      if(b.status==='pendiente' && a.status!=='pendiente') return 1;
+      return a.desc.localeCompare(b.desc);
+    });
+
+  // Stats
+  const total = data.length;
+  const pendientes = data.filter(r=>r.status==='pendiente').length;
+  const recuperados = data.filter(r=>r.status==='recuperado').length;
+  const conStock = data.filter(r=>r.status==='pendiente'&&r.stockBodega>0).length;
+  const statsEl = document.getElementById('rec-stats');
+  if(statsEl) statsEl.innerHTML = `
+    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total Tallas</div></div>
+    <div class="stat-card" style="border-color:#e05252"><div class="stat-val" style="color:#e05252">${pendientes}</div><div class="stat-lbl">Pendientes</div></div>
+    <div class="stat-card" style="border-color:#52c97a"><div class="stat-val" style="color:#52c97a">${recuperados}</div><div class="stat-lbl">Recuperadas</div></div>
+    <div class="stat-card" style="border-color:#f0b429"><div class="stat-val" style="color:#f0b429">${conStock}</div><div class="stat-lbl">En Bodega (listas)</div></div>
+  `;
+
+  if(!data.length){
+    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted)">Sin registros${q?' para "'+q+'"':''}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map(r=>{
+    const sucNombre = sucursales.find(s=>s.id===r.sucId)?.nombre||r.sucId||'—';
+    const isPend = r.status==='pendiente';
+    const statusBadge = isPend
+      ? `<span style="background:#2a0a0a;color:#e05252;border:1px solid #5a1a1a;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700">🔴 Pendiente</span>`
+      : `<span style="background:#0a2e1a;color:#52c97a;border:1px solid #1a5a2a;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700">✅ Recuperado</span>`;
+    const stockColor = r.stockBodega===0?'var(--red)':r.stockBodega<3?'var(--gold)':'var(--green)';
+    const accionBtn = isPend
+      ? `<button class="btn btn-accent btn-xs" onclick="marcarRecuperado('${r.key}')">✅ Marcar Recuperado</button>`
+      : `<button class="btn btn-ghost btn-xs" onclick="marcarPendiente('${r.key}')">↩ Reabrir</button>`;
+    return `<tr style="border-bottom:1px solid var(--border);${isPend?'':'opacity:0.65'}">
+      <td style="padding:10px 12px">
+        <div style="font-weight:700;color:var(--cream);font-size:13px">${r.marca||r.sku}</div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono)">${r.sku}</div>
+      </td>
+      <td style="padding:10px 12px">
+        <div style="font-weight:500;color:var(--cream)">${r.desc}</div>
+        <div style="font-size:11px;color:var(--muted)">${r.color||''}</div>
+      </td>
+      <td style="padding:10px 12px;text-align:center">
+        <span style="background:var(--s3);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-weight:900;font-size:14px;font-family:var(--mono)">${r.talla}</span>
+      </td>
+      <td style="padding:10px 12px;text-align:center;font-weight:700;color:var(--cream)">${r.totalVendido}</td>
+      <td style="padding:10px 12px;text-align:center;font-weight:700;color:${stockColor}">${r.stockBodega} pza${r.stockBodega!==1?'s':''}</td>
+      <td style="padding:10px 12px;text-align:center;font-size:12px;color:var(--muted)">${sucNombre}</td>
+      <td style="padding:10px 12px;text-align:center">${statusBadge}</td>
+      <td style="padding:10px 12px;text-align:center">${accionBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function marcarRecuperado(key){
+  try{
+    await window._fb.setDoc(window._fb.doc(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/recuperacion_status`,key),{status:'recuperado',fecha:hoy(),hora:hora()},{merge:true});
+    _recManualStatus[key]='recuperado';
+    toast('✅ Talla marcada como recuperada');
+    renderRecuperacion();
+  }catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+async function marcarPendiente(key){
+  try{
+    await window._fb.setDoc(window._fb.doc(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/recuperacion_status`,key),{status:'pendiente',fecha:hoy(),hora:hora()},{merge:true});
+    _recManualStatus[key]='pendiente';
+    toast('🔴 Talla reabierta como pendiente');
+    renderRecuperacion();
+  }catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+// Auto-refrescar recuperacion cuando llegan nuevas transferencias o entradas
+const _origRenderTransferencias = typeof renderTransferencias==='function' ? renderTransferencias : null;
+
+// Hook: cuando el módulo está activo, re-render al recibir cambios de ventas/transferencias
+(function hookRecuperacion(){
+  const origOnSnap = window._fb ? null : null; // hooks se aplican tras Firebase init
+  // Escuchar cambios de transferencias para actualizar status automático
+  const checkAndRefresh = ()=>{
+    if(document.getElementById('page-recuperacion')?.classList.contains('on')){
+      renderRecuperacion();
+    }
+  };
+  // Monkey-patch renderTransferencias para refrescar recuperacion
+  window._recRefreshHook = checkAndRefresh;
+})();
 
 // ══════════════════ FIREBASE AUTH OBSERVER ══════════════════
 let fbInterval=setInterval(()=>{
