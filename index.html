@@ -2243,6 +2243,19 @@ select option{background:var(--s2)}
             </tr></thead>
             <tbody id="bitacora-tbody"></tbody></table>
           </div>
+
+          <!-- ══ MIGRACIÓN TALLAS ══ -->
+          <div class="card" style="margin-top:20px;border:1px solid var(--gold-dim)">
+            <div class="card-title" style="color:var(--gold)">🔄 Migración de Tallas: Decimal → Fracción</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6">
+              Convierte claves de stock con notación decimal (<code style="color:var(--gold)">22.5</code>) a fracción (<code style="color:var(--accent2)">22 1/2</code>) en todos los productos de Firebase.<br>
+              También sanea datos corruptos (objetos anidados por el bug de dot-notation). <strong style="color:var(--cream)">Ejecutar solo una vez.</strong>
+            </div>
+            <button class="btn btn-gold" onclick="migrarTallasDecimalesAFracciones()">
+              🔄 Ejecutar Migración (Solo Admin)
+            </button>
+          </div>
+
         </div>
 
         <!-- ══════════ IMPORTAR CSV ══════════ -->
@@ -2738,6 +2751,11 @@ select option{background:var(--s2)}
     </div>
     <div class="mb">
       <div id="ajuste-stock-desc" style="font-size:15px;font-weight:700;color:var(--accent2);margin-bottom:4px"></div>
+      <div id="ajuste-aviso-corrupcion" style="display:none;background:#2a1010;border:1px solid var(--red);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--red);margin-bottom:10px">
+        ⚠️ <b>Datos corruptos detectados</b> — algunas tallas tienen valores anidados incorrectos
+        (efecto del bug de medias tallas). Los valores se han aplanado automáticamente.
+        Verifica y corrige las cantidades marcadas en rojo antes de guardar.
+      </div>
       <div class="warn" style="margin-bottom:14px">
         ⚠️ Este ajuste modifica el stock directamente. Úsalo solo para corregir
         discrepancias verificadas. Queda registrado en bitácora con tu usuario.
@@ -3363,10 +3381,27 @@ select option{background:var(--s2)}
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ══════════════════ CONSTANTS ══════════════════
-const TALLAS_CALZADO=['13','14','15','16','17','18','19','20','21','22','22.5','23','23.5','24','24.5','25','25.5','26','26.5','27','27.5','28','29','30','31','32'];
+const TALLAS_CALZADO=['13','14','15','16','17','18','19','20','21','22','22 1/2','23','23 1/2','24','24 1/2','25','25 1/2','26','26 1/2','27','27 1/2','28','29','30','31','32'];
 const TALLAS_ROPA=['XS','S','M','L','XL','XXL','XXXL'];
-// ALL_TALLAS is now dynamic — rebuilt from catalogos on load
 let ALL_TALLAS=[...TALLAS_CALZADO,...TALLAS_ROPA,'Único','UNI'];
+
+const DECIMAL_A_FRACCION={'22.5':'22 1/2','23.5':'23 1/2','24.5':'24 1/2','25.5':'25 1/2','26.5':'26 1/2','27.5':'27 1/2'};
+
+function tallaToId(t){ return t.replace(/ /g,'_').replace(/\//g,'F'); }
+function idToTalla(s){ return s.replace(/F/g,'/').replace(/_/g,' '); }
+function tallaNumerica(t){
+  if(t && t.includes(' 1/2')) return parseFloat(t) + 0.5;
+  const n = parseFloat(t);
+  return isNaN(n) ? 999 : n;
+}
+function sortTallas(arr){
+  return [...arr].sort((a,b)=>{
+    const na=tallaNumerica(a), nb=tallaNumerica(b);
+    if(na!==999&&nb!==999) return na-nb;
+    if(na!==999) return -1; if(nb!==999) return 1;
+    return a.localeCompare(b);
+  });
+}
 function refreshAllTallas(){
   const fromCat = getCatalogList('tallas');
   if(fromCat.length>0) ALL_TALLAS=[...new Set(fromCat)];
@@ -3776,9 +3811,9 @@ function renderTallasSel(prod){
   const allVisible = [...new Set([...ALL_TALLAS, ...prodTallas])];
   // Sort: numeric first, then alpha
   allVisible.sort((a,b)=>{
-    const na=parseFloat(a), nb=parseFloat(b);
-    if(!isNaN(na)&&!isNaN(nb)) return na-nb;
-    if(!isNaN(na)) return -1;
+    const na=tallaNumerica(a), nb=tallaNumerica(b);
+    if(na!==999&&nb!==999) return na-nb;
+    if(na!==999) return -1;
     if(!isNaN(nb)) return 1;
     return a.localeCompare(b);
   });
@@ -3799,7 +3834,7 @@ function syncStockInps(){
 }
 function renderStockInps(stock){
   const el=document.getElementById('p-stock-inputs'),keys=Object.keys(stock);
-  el.innerHTML=keys.length?`<div class="fg"><label>Cantidad por talla</label><div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:5px">${keys.map(t=>`<div style="display:flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:4px 9px"><span style="font-size:11px;color:var(--muted);min-width:28px;font-family:var(--mono)">${t}</span><input type="number" id="si-${t}" value="${stock[t]||0}" min="0" style="width:48px;padding:3px 5px;font-size:12px;text-align:center"></div>`).join('')}</div></div>`:'';
+  el.innerHTML=keys.length?`<div class="fg"><label>Cantidad por talla</label><div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:5px">${keys.map(t=>`<div style="display:flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:4px 9px"><span style="font-size:11px;color:var(--muted);min-width:28px;font-family:var(--mono)">${t}</span><input type="number" id="si-${tallaToId(t)}" value="${stock[t]||0}" min="0" style="width:48px;padding:3px 5px;font-size:12px;text-align:center"></div>`).join('')}</div></div>`:'';
 }
 function getStockVals(){
   const r={};
@@ -3808,7 +3843,7 @@ function getStockVals(){
   if(!container) return r;
   container.querySelectorAll('input[type="number"]').forEach(i=>{
     if(!i.id.startsWith('si-')) return;
-    const talla = i.id.replace('si-','');
+    const talla = idToTalla(i.id.replace('si-',''));
     const qty = parseInt(i.value)||0;
     if(talla) r[talla] = qty;
   });
@@ -3867,7 +3902,7 @@ async function saveProducto(){
   // Collect per-talla barcodes
   const barcodeTallas={};
   document.querySelectorAll('[id^="pbt-"]').forEach(inp=>{
-    const talla=inp.id.replace('pbt-','').replace(/_/g,'.');
+    const talla=idToTalla(inp.id.replace('pbt-',''));
     const val=inp.value.trim();
     if(val)barcodeTallas[talla]=val;
   });
@@ -4043,9 +4078,9 @@ function renderInvMatriz(agrupados){
   
   // Sort tallas: numeric first, then alpha
   const allTallas=[...allTallasSet].sort((a,b)=>{
-    const na=parseFloat(a), nb=parseFloat(b);
-    if(!isNaN(na)&&!isNaN(nb))return na-nb;
-    if(!isNaN(na))return -1;
+    const na=tallaNumerica(a), nb=tallaNumerica(b);
+    if(na!==999&&nb!==999)return na-nb;
+    if(na!==999)return -1;
     if(!isNaN(nb))return 1;
     return a.localeCompare(b);
   });
@@ -4162,26 +4197,60 @@ async function abrirAjusteStock(prodId, descHint){
     (prod.barcode||prod.sku||'—') + ' — ' + (prod.desc||descHint||'');
 
   // Build all tallas: merge existing stock keys + ALL_TALLAS for this product type
-  const stockActual = prod.stock || {};
+  const stockRaw = prod.stock || {};
+
+  // ── SANITIZE: Firestore dot-notation bug puede dejar valores como objetos
+  //    anidados en lugar de números. Ej: stock["22"] = {"5":5} en lugar de 5
+  //    Los aplanamos: si el valor es objeto, sumamos sus valores numéricos.
+  const stockActual = {};
+  let hayCorrupcion = false;
+  Object.entries(stockRaw).forEach(([t, v]) => {
+    if(v !== null && typeof v === 'object'){
+      // Valor corrupto — sumar los sub-valores numéricos
+      const suma = Object.values(v).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+      stockActual[t] = suma;
+      hayCorrupcion = true;
+    } else {
+      stockActual[t] = isNaN(Number(v)) ? 0 : Number(v);
+    }
+  });
+
   const tallasExistentes = Object.keys(stockActual);
   const todasTallas = [...new Set([...tallasExistentes, ...ALL_TALLAS])].sort((a,b)=>{
-    const na=parseFloat(a),nb=parseFloat(b);
-    if(!isNaN(na)&&!isNaN(nb)) return na-nb;
-    if(!isNaN(na)) return -1; if(!isNaN(nb)) return 1;
+    const na=tallaNumerica(a),nb=tallaNumerica(b);
+    if(na!==999&&nb!==999) return na-nb;
+    if(na!==999) return -1; if(nb!==999) return 1;
     return a.localeCompare(b);
   });
 
+  // Si había datos corruptos, avisar al usuario
+  if(hayCorrupcion){
+    const aviso = document.getElementById('ajuste-aviso-corrupcion');
+    if(aviso) aviso.style.display = 'block';
+  } else {
+    const aviso = document.getElementById('ajuste-aviso-corrupcion');
+    if(aviso) aviso.style.display = 'none';
+  }
+
   document.getElementById('ajuste-stock-tallas').innerHTML = todasTallas.map(t => {
     const qty = stockActual[t] || 0;
-    const highlight = qty > 0 ? 'border-color:var(--accent);background:rgba(26,158,92,.08)' : '';
+    const corrupto = stockRaw[t] !== null && typeof stockRaw[t] === 'object';
+    const highlight = qty > 0
+      ? 'border-color:var(--accent);background:rgba(26,158,92,.08)'
+      : corrupto
+        ? 'border-color:var(--red);background:rgba(224,82,82,.08)'
+        : '';
+    const etiquetaActual = corrupto
+      ? `<span style="font-size:9px;color:var(--red)">⚠️ dato corrupto → ${qty}</span>`
+      : `<span style="font-size:9px;color:var(--faint)">actual: ${qty}</span>`;
     return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;
               background:var(--s3);border:1px solid var(--border);border-radius:8px;
               padding:7px 8px;min-width:62px;${highlight}">
       <span style="font-size:11px;color:var(--muted);font-weight:600">${t}</span>
-      <span style="font-size:9px;color:var(--faint)">actual: ${qty}</span>
-      <input type="number" id="adj-${t.replace(/\./g,'_')}" value="${qty}" min="0"
+      ${etiquetaActual}
+      <input type="number" id="adj-${tallaToId(t)}" value="${qty}" min="0"
         style="width:52px;padding:3px 5px;text-align:center;font-size:13px;font-weight:700;
-               ${qty>0?'color:var(--accent2)':''}">
+               ${qty>0?'color:var(--accent2)':''}${corrupto?';border-color:var(--red)':''}">
     </div>`;
   }).join('');
 
@@ -4201,7 +4270,7 @@ async function confirmarAjusteStock(){
   // Collect new stock values from form
   const nuevoStock = {};
   document.querySelectorAll('#ajuste-stock-tallas input[type="number"]').forEach(inp=>{
-    const t = inp.id.replace('adj-','').replace(/_/g,'.');
+    const t = idToTalla(inp.id.replace('adj-',''));
     const v = parseInt(inp.value)||0;
     if(v > 0 || (inp.value !== '' && parseInt(inp.value) === 0)) nuevoStock[t] = v;
   });
@@ -4335,12 +4404,12 @@ function openAddCart(id){
         ${suc?`<div style="font-size:12px;color:var(--muted)">${suc.tipo==='bodega'?'📦':'🏪'} ${suc.nombre}</div>`:''}
       </div>
     </div>
-    <div class="fg"><label>Talla</label><div class="tg">${ts.map(([t,c])=>`<button type="button" class="tb" id="ct-${t.replace('.','_')}" onclick="selTalla(this,'${t}')">${t}<br><span style="font-size:9px;opacity:.6">(${c})</span></button>`).join('')}</div></div>
+    <div class="fg"><label>Talla</label><div class="tg">${ts.map(([t,c])=>`<button type="button" class="tb" id="ct-${tallaToId(t)}" onclick="selTalla(this,'${t}')">${t}<br><span style="font-size:9px;opacity:.6">(${c})</span></button>`).join('')}</div></div>
     <div class="fr fr2">
       <div class="fg"><label>Cantidad</label><input type="number" id="a-qty" value="1" min="1"></div>
       <div class="fg"><label>Precio</label><input type="number" id="a-price" value="${p.precio}" step="0.01"></div>
     </div>`;
-  if(ts.length===1){posTalla=ts[0][0];setTimeout(()=>{const b=document.getElementById('ct-'+ts[0][0].replace('.','_'));if(b)b.classList.add('on');},30);}
+  if(ts.length===1){posTalla=ts[0][0];setTimeout(()=>{const b=document.getElementById('ct-'+tallaToId(ts[0][0]));if(b)b.classList.add('on');},30);}
   openM('mo-cart');
 }
 
@@ -4998,7 +5067,7 @@ const CFG_DEFAULTS = {
   vendedores: [],
   gastoCategorias: ['Renta','Servicios','Mercancía','Empaques','Sueldos','Publicidad','Transporte','Limpieza','Pago a Proveedores','Internet','Mantenimiento','Comida','Varios'],
   locaciones: ['A-1','A-2','A-3','B-1','B-2','B-3','C-1','C-2','C-3'],
-  tallas: ['13','14','15','16','17','18','19','20','21','22','22.5','23','23.5','24','24.5','25','25.5','26','26.5','27','27.5','28','29','30','31','32','XS','S','M','L','XL','XXL','XXXL','3XL','4XL','CH','MM','GD','EG','UNI','Único'],
+  tallas: ['13','14','15','16','17','18','19','20','21','22','22 1/2','23','23 1/2','24','24 1/2','25','25 1/2','26','26 1/2','27','27 1/2','28','29','30','31','32','XS','S','M','L','XL','XXL','XXXL','3XL','4XL','CH','MM','GD','EG','UNI','Único'],
   tipoTransaccion: ['💵 Venta Normal|venta','📦 Apartado|apartado','💳 Crédito|credito'],
   formaPago: ['💵 Efectivo|efectivo','💳 Tarjeta BBVA|tarjeta-bbva','💳 Tarjeta Mercado Pago|tarjeta-mp','📲 Transferencia|transferencia','🔀 Mixto|mixto','🪙 Monedero + Efectivo|monedero'],
   fuenteGasto: ['💰 Utilidad 2025','💵 Efectivo 2026','💳 Tarjeta BBVA','📲 Transferencia','🏦 Caja Tienda']
@@ -5129,7 +5198,7 @@ function selEtiqProd(id){
   document.getElementById('etiq-tallas-sel').innerHTML=`
     <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Tallas a imprimir</label>
     <div class="tg">${tallas.map(([t,c])=>`
-      <button type="button" class="tb on" id="etiq-t-${t.replace('.','_')}" onclick="toggleEtiqTalla(this,'${t}')">
+      <button type="button" class="tb on" id="etiq-t-${tallaToId(t)}" onclick="toggleEtiqTalla(this,'${t}')">
         ${t}<br><span style="font-size:9px;opacity:.7">(${c})</span>
       </button>`).join('')}</div>`;
 }
@@ -6442,9 +6511,9 @@ function selProdEntrada(id){
   const tallasProducto = Object.keys(stockEnt);
   // If product has no tallas yet, use ALL_TALLAS as fallback
   const allTallas = tallasProducto.length > 0 ? tallasProducto.sort((a,b)=>{
-    const na=parseFloat(a),nb=parseFloat(b);
-    if(!isNaN(na)&&!isNaN(nb))return na-nb;
-    if(!isNaN(na))return -1; if(!isNaN(nb))return 1;
+    const na=tallaNumerica(a),nb=tallaNumerica(b);
+    if(na!==999&&nb!==999)return na-nb;
+    if(na!==999)return -1; if(nb!==999)return 1;
     return a.localeCompare(b);
   }) : ALL_TALLAS;
   document.getElementById('ent-tallas-grid').innerHTML=allTallas.map(t=>{
@@ -6452,7 +6521,7 @@ function selProdEntrada(id){
     return `<div style="background:var(--s3);border:1px solid var(--accent)44;border-radius:8px;padding:8px;text-align:center;min-width:70px">
       <div style="font-weight:700;font-size:13px;color:var(--cream)">${t}</div>
       <div style="font-size:10px;color:var(--green);margin-bottom:4px">Stock: ${stockT}</div>
-      <input type="number" id="ent-qty-${t.replace(/\./g,'_')}" value="0" min="0" style="width:55px;padding:3px 6px;text-align:center;font-size:13px;font-weight:600" placeholder="0">
+      <input type="number" id="ent-qty-${tallaToId(t)}" value="0" min="0" style="width:55px;padding:3px 6px;text-align:center;font-size:13px;font-weight:600" placeholder="0">
     </div>`;
   }).join('');
 }
@@ -6464,7 +6533,7 @@ function agregarLineaEntrada(){
   document.querySelectorAll('#ent-tallas-grid input[type="number"]').forEach(el=>{
     const qty=parseInt(el.value||'0')||0;
     if(qty<=0) return;
-    const talla=el.id.replace('ent-qty-','').replace(/_/g,'.');
+    const talla=idToTalla(el.id.replace('ent-qty-',''));
     const ex=entLineas.find(l=>l.prodId===entProdSel.id&&l.talla===talla);
     if(ex){ex.cantidad+=qty;}
     else{entLineas.push({prodId:entProdSel.id,desc:entProdSel.desc,sku:entProdSel.barcode||entProdSel.sku,talla,cantidad:qty,precio:entProdSel.precio||0,precioOriginal:entProdSel.precio||0});}
@@ -6642,9 +6711,9 @@ function selProdSalida(id){
   const tallasConStock=Object.entries(stockSal).filter(([,v])=>v>0);
   // Sort numerically then alpha
   tallasConStock.sort(([a],[b])=>{
-    const na=parseFloat(a),nb=parseFloat(b);
-    if(!isNaN(na)&&!isNaN(nb))return na-nb;
-    if(!isNaN(na))return -1; if(!isNaN(nb))return 1;
+    const na=tallaNumerica(a),nb=tallaNumerica(b);
+    if(na!==999&&nb!==999)return na-nb;
+    if(na!==999)return -1; if(nb!==999)return 1;
     return a.localeCompare(b);
   });
   if(!tallasConStock.length){
@@ -6655,7 +6724,7 @@ function selProdSalida(id){
     <div style="background:var(--s3);border:1px solid var(--accent)33;border-radius:8px;padding:8px;text-align:center;min-width:70px">
       <div style="font-weight:700;font-size:13px;color:var(--cream)">${t}</div>
       <div style="font-size:10px;color:var(--green);margin-bottom:4px">Stock: ${s}</div>
-      <input type="number" id="sal-qty-${t.replace(/\./g,'_')}" value="0" min="0" max="${s}" style="width:55px;padding:3px 6px;text-align:center;font-size:13px;font-weight:600" placeholder="0">
+      <input type="number" id="sal-qty-${tallaToId(t)}" value="0" min="0" max="${s}" style="width:55px;padding:3px 6px;text-align:center;font-size:13px;font-weight:600" placeholder="0">
     </div>`).join('');
 }
 
@@ -6665,7 +6734,7 @@ function agregarLineaSalida(){
   document.querySelectorAll('#sal-tallas-grid input[type="number"]').forEach(el=>{
     const qty=parseInt(el.value||'0')||0;
     if(qty<=0) return;
-    const talla=el.id.replace('sal-qty-','').replace(/_/g,'.');
+    const talla=idToTalla(el.id.replace('sal-qty-',''));
     const stockMax=(salProdSel.stock||{})[talla]||0;
     if(qty>stockMax){toast('Solo hay '+stockMax+' en talla '+talla,'err');return;}
     const ex=salLineas.find(l=>l.prodId===salProdSel.id&&l.talla===talla);
@@ -7146,7 +7215,7 @@ function elegirGatillo(prodId){
   // Build talla buttons
   const tallas=Object.entries(p.stock||{})
     .filter(([,v])=>Number(v)>0)
-    .sort(([a],[b])=>{ const na=parseFloat(a),nb=parseFloat(b); return (!isNaN(na)&&!isNaN(nb))?na-nb:a.localeCompare(b); });
+    .sort(([a],[b])=>{ const na=tallaNumerica(a),nb=tallaNumerica(b); return (na!==999&&nb!==999)?na-nb:a.localeCompare(b); });
   const tituloEl=document.getElementById('pr-gtalla-titulo');
   if(tituloEl) tituloEl.textContent='Talla para "'+p.desc+'":';
   const listaEl=document.getElementById('pr-gtalla-lista');
@@ -7256,7 +7325,7 @@ function elegirRegalo(prodId){
   document.getElementById('pr-regalo-res').innerHTML='';
   const tallas=Object.entries(p.stock||{})
     .filter(([,v])=>Number(v)>0)
-    .sort(([a],[b])=>{ const na=parseFloat(a),nb=parseFloat(b); return (!isNaN(na)&&!isNaN(nb))?na-nb:a.localeCompare(b); });
+    .sort(([a],[b])=>{ const na=tallaNumerica(a),nb=tallaNumerica(b); return (na!==999&&nb!==999)?na-nb:a.localeCompare(b); });
   const tituloEl=document.getElementById('pr-rtalla-titulo');
   if(tituloEl) tituloEl.textContent='Talla del regalo "'+p.desc+'":';
   const listaEl=document.getElementById('pr-rtalla-lista');
@@ -7814,7 +7883,7 @@ function renderBarcodeTallaInputs(prod){
   container.innerHTML = tallasSel.map(t=>`
     <div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;min-width:130px">
       <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700">Talla ${t}</div>
-      <input type="text" id="pbt-${t.replace('.','_')}"
+      <input type="text" id="pbt-${tallaToId(t)}"
         value="${btExisting[t]||''}"
         placeholder="Código barras…"
         style="width:100%;font-size:12px;font-family:var(--mono);background:var(--s3);border:1px solid var(--border);border-radius:5px;padding:4px 6px;color:var(--cream)">
@@ -7830,7 +7899,7 @@ function autoGenerarCodigosTalla(){
   if(!tallasSel.length){ toast('Selecciona las tallas primero','err'); return; }
   // Generate: base + 2-digit talla index
   tallasSel.forEach((t,i)=>{
-    const inp = document.getElementById('pbt-'+t.replace('.','_'));
+    const inp = document.getElementById('pbt-'+tallaToId(t));
     if(inp && !inp.value){
       // Use base code + talla suffix
       const suffix = String(i+1).padStart(2,'0');
@@ -9540,6 +9609,74 @@ async function aplicarStockEnSucursal(linea, sucursalId, delta){
 
 
 
+// ══════════════════ MIGRACIÓN: DECIMALES → FRACCIONES ══════════════════
+// Convierte claves de stock "22.5" → "22 1/2" en todos los productos de Firestore.
+// Ejecutar UNA sola vez después de actualizar el sistema.
+async function migrarTallasDecimalesAFracciones(){
+  const rolActivo = usuarioActivo?.rol||currentProfile?.rol||'';
+  if(rolActivo !== 'admin'){ toast('Solo Admin puede ejecutar la migración','err'); return; }
+
+  const necesitan = productos.filter(p=>{
+    if(!p.stock) return false;
+    return Object.keys(p.stock).some(k => DECIMAL_A_FRACCION[k] !== undefined ||
+      (typeof p.stock[k] === 'object' && p.stock[k] !== null));
+  });
+
+  if(!necesitan.length){
+    toast('✅ Todos los productos ya usan formato fracción — sin cambios necesarios');
+    return;
+  }
+
+  const ok = confirm(
+    `Migración de tallas decimales a fracciones\n\n` +
+    `Se actualizarán ${necesitan.length} producto(s):\n` +
+    `22.5 → 22 1/2, 23.5 → 23 1/2, etc.\n\n` +
+    `También sanea datos corruptos (objetos anidados).\n\n` +
+    `¿Continuar? Esta operación no se puede deshacer.`
+  );
+  if(!ok) return;
+
+  let exitosos=0, errores=0;
+  const {updateDoc:upd} = window._fb;
+
+  for(const prod of necesitan){
+    try{
+      const snap = await window._fb.getDoc(docRef('productos', prod.id));
+      if(!snap.exists()) continue;
+      const stockViejo = snap.data().stock || {};
+      const stockNuevo = {};
+
+      Object.entries(stockViejo).forEach(([talla, val])=>{
+        // Sanear: si el valor es objeto (dato corrupto), aplanar
+        let cantidad;
+        if(val !== null && typeof val === 'object'){
+          cantidad = Object.values(val).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+        } else {
+          cantidad = isNaN(Number(val)) ? 0 : Number(val);
+        }
+        // Convertir clave decimal a fracción si aplica
+        const tallaConvertida = DECIMAL_A_FRACCION[talla] || talla;
+        // Acumular (puede haber solapamiento si existía "22.5" Y "22 1/2")
+        stockNuevo[tallaConvertida] = (stockNuevo[tallaConvertida]||0) + cantidad;
+      });
+
+      await upd(docRef('productos', prod.id), {stock: stockNuevo});
+      exitosos++;
+    } catch(e){
+      console.error('Error migrando', prod.id, e);
+      errores++;
+    }
+  }
+
+  toast(`✅ Migración completa: ${exitosos} productos actualizados${errores?' | ⚠️ '+errores+' errores (ver consola)':''}`);
+  // Forzar recarga de productos desde Firestore
+  const snap = await window._fb.getDocs(col('productos'));
+  productos = snap.docs.map(d=>({id:d.id,...d.data()}));
+  renderInv(); renderPOS(); renderCatalogo();
+}
+
+
+
 // ══════════════════ COSTOS Y UTILIDAD ══════════════════
 function renderCostos(){
   // If products not loaded yet, wait and retry
@@ -11087,7 +11224,7 @@ function generarTextoPublicacion(){
   lineas.push('─────────────────────');
   prods.forEach((p,i)=>{
     const tallas=Object.entries(p.stock||{}).filter(([,v])=>v>0)
-      .sort(([a],[b])=>{const na=parseFloat(a),nb=parseFloat(b);return(!isNaN(na)&&!isNaN(nb))?na-nb:a.localeCompare(b);})
+      .sort(([a],[b])=>{const na=tallaNumerica(a),nb=tallaNumerica(b);return(na!==999&&nb!==999)?na-nb:a.localeCompare(b);})
       .map(([t,c])=>t+(c===1?' (última)':c<=3?' (pocas)':'')).join(', ');
     const suc=sucursales.find(s=>s.id===p.sucursalId);
     lineas.push((i+1)+'. 👟 *'+p.desc+'*');
@@ -11569,7 +11706,7 @@ function selDevTipo(btn,tipo){
     } else {
       const disponibles=Object.entries(prod.stock||{})
         .filter(([t,v])=>Number(v)>0&&t!==tallaActual)
-        .sort(([a],[b])=>{const na=parseFloat(a),nb=parseFloat(b);return(!isNaN(na)&&!isNaN(nb))?na-nb:a.localeCompare(b);});
+        .sort(([a],[b])=>{const na=tallaNumerica(a),nb=tallaNumerica(b);return(na!==999&&nb!==999)?na-nb:a.localeCompare(b);});
       if(!disponibles.length){
         // Try to find same style in other sucursales
         const desc=(dI.desc||'').toLowerCase();
@@ -11664,7 +11801,7 @@ function seleccionarNuevoArtDev(prodId){
   document.getElementById('dev-nuevo-art-res').innerHTML='';
   // Show tallas disponibles para seleccionar
   const tallas=Object.entries(p.stock||{}).filter(([,v])=>Number(v)>0)
-    .sort(([a],[b])=>{const na=parseFloat(a),nb=parseFloat(b);return(!isNaN(na)&&!isNaN(nb))?na-nb:a.localeCompare(b);});
+    .sort(([a],[b])=>{const na=tallaNumerica(a),nb=tallaNumerica(b);return(na!==999&&nb!==999)?na-nb:a.localeCompare(b);});
   const selEl=document.getElementById('dev-nuevo-art-sel');
   selEl.innerHTML='<div style="background:rgba(26,158,92,.08);border:1px solid rgba(26,158,92,.3);border-radius:8px;padding:10px;margin-top:6px">'
     +'<div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:8px">Selecciona la talla del nuevo artículo:</div>'
