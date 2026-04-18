@@ -5082,6 +5082,27 @@ async function loadCatalogos(){
     const snap=await getDoc(docRef('config','catalogos'));
     catalogosData=snap.exists()?snap.data():{};
   }catch(e){catalogosData={};}
+
+  // ── AUTO-MIGRACIÓN: convertir tallas decimales → fracciones al cargar ──
+  // Si el catálogo en Firestore tiene "22.5", "28.5" etc., los convertimos
+  // y guardamos de vuelta para que no vuelvan a aparecer.
+  if(catalogosData.tallas && catalogosData.tallas.length){
+    const convertidas = catalogosData.tallas.map(t => DECIMAL_A_FRACCION[t] || t);
+    // Agregar las fracciones nuevas del CFG_DEFAULTS que no estén ya
+    const set = new Set(convertidas);
+    CFG_DEFAULTS.tallas.forEach(t => set.add(t));
+    const tallasNuevas = sortTallas([...set]);
+    // Si hubo cambios, guardar en Firestore automáticamente
+    const huboCambios = JSON.stringify(catalogosData.tallas) !== JSON.stringify(tallasNuevas);
+    catalogosData.tallas = tallasNuevas;
+    if(huboCambios){
+      try{
+        await window._fb.setDoc(docRef('config','catalogos'), catalogosData, {merge:true});
+        console.log('✅ Tallas migradas a fracción en config/catalogos');
+      }catch(e){ console.warn('No se pudo guardar tallas migradas:', e); }
+    }
+  }
+
   for(const k of Object.keys(CFG_DEFAULTS)){
     if(!catalogosData[k])catalogosData[k]=[...CFG_DEFAULTS[k]];
   }
@@ -9669,6 +9690,11 @@ async function migrarTallasDecimalesAFracciones(){
   }
 
   toast(`✅ Migración completa: ${exitosos} productos actualizados${errores?' | ⚠️ '+errores+' errores (ver consola)':''}`);
+  // También migrar el catálogo de tallas en config/catalogos
+  try{
+    await loadCatalogos();
+    console.log('✅ Catálogo de tallas migrado');
+  }catch(e){ console.warn('Error migrando catálogo:', e); }
   // Forzar recarga de productos desde Firestore
   const snap = await window._fb.getDocs(col('productos'));
   productos = snap.docs.map(d=>({id:d.id,...d.data()}));
