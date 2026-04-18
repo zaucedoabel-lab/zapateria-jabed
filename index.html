@@ -3363,19 +3363,7 @@ select option{background:var(--s2)}
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ══════════════════ CONSTANTS ══════════════════
-// ══════════════════════════════════════════════════════════════════
-//  🔧 HELPER: Actualizar talla de stock de forma segura
-//  CRÍTICO: Firestore usa el punto (.) como separador de ruta anidada
-//  en field paths. Usar ["stock.22.5"] crea stock→22→5 en lugar de
-//  stock["22.5"]. Esta función usa el objeto completo para evitar el bug.
-// ══════════════════════════════════════════════════════════════════
-async function setStockTalla(prodId, stockCompleto, talla, nuevoValor){
-  const nuevoStock = {...(stockCompleto||{}), [talla]: nuevoValor};
-  await window._fb.updateDoc(docRef('productos', prodId), {stock: nuevoStock});
-  return nuevoStock;
-}
-
-['13','14','15','16','17','18','19','20','21','22','22.5','23','23.5','24','24.5','25','25.5','26','26.5','27','27.5','28','29','30','31','32'];
+const TALLAS_CALZADO=['13','14','15','16','17','18','19','20','21','22','22.5','23','23.5','24','24.5','25','25.5','26','26.5','27','27.5','28','29','30','31','32'];
 const TALLAS_ROPA=['XS','S','M','L','XL','XXL','XXXL'];
 // ALL_TALLAS is now dynamic — rebuilt from catalogos on load
 let ALL_TALLAS=[...TALLAS_CALZADO,...TALLAS_ROPA,'Único','UNI'];
@@ -3388,6 +3376,19 @@ const TEMPORADAS=['Primavera/Verano','Otoño/Invierno','Todo el Año','Liquidaci
 const GASTO_CATS=['Renta','Servicios','Mercancía','Empaques','Sueldos','Publicidad','Transporte','Limpieza','Pago a Proveedores','Internet','Mantenimiento','Comida','Varios'];
 const ROLES={admin:'Admin',vendedor:'Vendedor',bodega:'Bodeguero',lectura:'Lectura'};
 const ROLE_COLORS={admin:'role-admin',vendedor:'role-vendedor',bodega:'role-bodega',lectura:'role-lectura'};
+
+// ══════════════════════════════════════════════════════════════════
+//  🔧 HELPER: Actualizar talla de stock de forma segura
+//  CRÍTICO: Firestore usa el punto (.) como separador de ruta anidada
+//  en field paths. Usar ["stock.22.5"] crea stock→22→5 en lugar de
+//  stock["22.5"]. Esta función usa el objeto completo para evitar el bug.
+// ══════════════════════════════════════════════════════════════════
+async function setStockTalla(prodId, stockCompleto, talla, nuevoValor){
+  const nuevoStock = {...(stockCompleto||{}), [talla]: nuevoValor};
+  await window._fb.updateDoc(docRef('productos', prodId), {stock: nuevoStock});
+  return nuevoStock;
+}
+
 
 // ══════════════════ STATE ══════════════════
 let currentUser=null, currentProfile=null;
