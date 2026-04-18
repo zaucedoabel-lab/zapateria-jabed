@@ -3838,15 +3838,7 @@ function renderTallasSel(prod){
   const sel=document.getElementById('p-tallas-sel');
   const prodTallas = prod ? Object.keys(prod.stock||{}) : [];
   // Combine ALL_TALLAS with any tallas the product already has (in case talla was removed from catalog)
-  const allVisible = [...new Set([...ALL_TALLAS, ...prodTallas])];
-  // Sort: numeric first, then alpha
-  allVisible.sort((a,b)=>{
-    const na=tallaNumerica(a), nb=tallaNumerica(b);
-    if(na!==999&&nb!==999) return na-nb;
-    if(na!==999) return -1;
-    if(!isNaN(nb)) return 1;
-    return a.localeCompare(b);
-  });
+  const allVisible = sortTallas([...new Set([...ALL_TALLAS, ...prodTallas])]);
   sel.innerHTML='<div class="tg">'+allVisible.map(t=>`<button type="button" class="tb ${prodTallas.includes(t)?'on':''}" onclick="toggleT(this,'${t}')">${t}</button>`).join('')+'</div>';
   renderStockInps(prod?prod.stock:{});
 }
@@ -3965,6 +3957,44 @@ async function saveProducto(){
       const idx=productos.findIndex(p=>p.id===editProdId);
       if(idx>=0) productos[idx]={...data, id:editProdId, createdAt:productos[idx].createdAt||new Date().toISOString()};
       else productos.push({...data, id:editProdId});
+
+      // ── BUG FIX: sincronizar campos descriptivos al gemelo de Bodega ──
+      // Si se editó un producto de Tienda, propagar cambios al gemelo en Bodega
+      // (NO tocar el stock del gemelo — ese se maneja por Entradas/Transferencias)
+      const sucEditada = sucursales.find(s=>s.id===sucId);
+      if(sucEditada && sucEditada.tipo !== 'bodega'){
+        const codigoRef = (data.barcode||data.sku||'').trim();
+        const gemelos = productos.filter(p=>
+          p.id !== editProdId &&
+          sucursales.find(s=>s.id===p.sucursalId)?.tipo === 'bodega' &&
+          (p.creadoDesde === editProdId ||
+           (codigoRef && (p.barcode===codigoRef||p.sku===codigoRef)))
+        );
+        const camposSincronizar = {
+          barcode:data.barcode, sku:data.sku, desc:data.desc,
+          cat:data.cat, linea:data.linea, temporada:data.temporada,
+          marca:data.marca, precio:data.precio, costo:data.costo,
+          color:data.color, notas:data.notas, locacion:data.locacion,
+          barcodeTallas:data.barcodeTallas, foto:data.foto,
+          updatedAt:data.updatedAt
+        };
+        // También sync las tallas nuevas en bodega (con stock 0)
+        for(const gemelo of gemelos){
+          const stockGemelo = gemelo.stock||{};
+          const nuevasTallas = Object.keys(data.stock||{})
+            .filter(t=>!(t in stockGemelo));
+          const stockActualizado = {...stockGemelo};
+          nuevasTallas.forEach(t=>{ stockActualizado[t]=0; });
+          try{
+            await window._fb.updateDoc(docRef('productos',gemelo.id),{
+              ...camposSincronizar,
+              stock: stockActualizado
+            });
+            const gIdx=productos.findIndex(x=>x.id===gemelo.id);
+            if(gIdx>=0) productos[gIdx]={...productos[gIdx],...camposSincronizar,stock:stockActualizado};
+          }catch(e){ console.warn('Error sincronizando gemelo bodega:',e); }
+        }
+      }
       // Log changes to historial-cambios collection
       const cambios=[];
       const campos={desc:'Descripción',cat:'Categoría',linea:'Línea',temporada:'Temporada',
@@ -4062,8 +4092,28 @@ async function saveProducto(){
 }
 
 async function deleteProducto(id){
-  if(!confirm('¿Eliminar este producto?'))return;
-  await window._fb.deleteDoc(docRef('productos',id));toast('Eliminado');
+  if(!confirm('¿Eliminar este producto?\n\nSi tiene un gemelo en Bodega, también se eliminará.'))return;
+  try{
+    // Delete tienda product
+    await window._fb.deleteDoc(docRef('productos',id));
+    // Also delete bodega gemelo (linked via creadoDesde)
+    const prod = productos.find(x=>x.id===id);
+    if(prod && sucursales.find(s=>s.id===prod.sucursalId)?.tipo !== 'bodega'){
+      const codigoRef = (prod.barcode||prod.sku||'').trim();
+      const gemilosIds = productos
+        .filter(p=>
+          p.id !== id &&
+          sucursales.find(s=>s.id===p.sucursalId)?.tipo === 'bodega' &&
+          (p.creadoDesde === id ||
+           (codigoRef && (p.barcode===codigoRef||p.sku===codigoRef)))
+        )
+        .map(p=>p.id);
+      for(const gId of gemilosIds){
+        await window._fb.deleteDoc(docRef('productos', gId));
+      }
+    }
+    toast('Producto eliminado ✓');
+  }catch(e){ toast('Error al eliminar: '+e.message,'err'); console.error(e); }
 }
 
 // ══════════════════ RENDER INVENTARIO ══════════════════
@@ -4095,11 +4145,14 @@ function renderInv(){
     const ms=activeSucId==='all'||p.sucursalId===activeSucId;
     const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
     const tot=sumS(p.stock);
-    const mstock=mostrar==='todos'||(mostrar==='con_stock'&&tot>0)||(mostrar==='sin_stock'&&tot===0)||(mostrar==='bajo_stock'&&tot>0&&tot<=3);
+    // ── BUG FIX: gemelos de bodega (creadoDesde) siempre visibles en inventario
+    // aunque tengan 0 stock — representan "ranuras" pendientes de surtir
+    const esGemeloEsperando = !!p.creadoDesde && sucursales.find(s=>s.id===p.sucursalId)?.tipo==='bodega' && tot===0;
+    const mstock = esGemeloEsperando || mostrar==='todos'||(mostrar==='con_stock'&&tot>0)||(mostrar==='sin_stock'&&tot===0)||(mostrar==='bajo_stock'&&tot>0&&tot<=3);
     return mq&&mc&&ml&&mt&&mm&&ms&&mstock;
   });
 
-  // Group by barcode+sucursal+liquidacion flag — LIQ records always separate
+  // Group by barcode+sucursal+liquidacion flag
   const grupos={};
   lista.forEach(p=>{
     const baseKey=(p.sku||p.barcode||p.id)+'_'+(p.sucursalId||'');
@@ -4107,19 +4160,36 @@ function renderInv(){
     if(!grupos[key]){grupos[key]={...p,_ids:[p.id],stock:{...p.stock}};}
     else{
       grupos[key]._ids.push(p.id);
-      Object.entries(p.stock||{}).forEach(([t,c])=>{grupos[key].stock[t]=(grupos[key].stock[t]||0)+c;});
+      Object.entries(p.stock||{}).forEach(([t,c])=>{grupos[key].stock[t]=(grupos[key].stock[t]||0)+(Number(c)||0);});
       if(!grupos[key].foto&&p.foto)grupos[key].foto=p.foto;
     }
   });
   const agrupados=Object.values(grupos);
 
-  // Stats
+  // ── BUG FIX: stats separados por Tienda y Bodega ──
   const sumStock=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
-  const totalPzas=agrupados.reduce((a,p)=>a+sumStock(p.stock),0);
-  const totalValor=agrupados.reduce((a,p)=>a+(parseFloat(p.precio)||0)*sumStock(p.stock),0);
-  if(document.getElementById('inv-count'))document.getElementById('inv-count').textContent=agrupados.length+' artículos';
-  if(document.getElementById('inv-total-stock'))document.getElementById('inv-total-stock').textContent='Stock: '+totalPzas.toLocaleString('es-MX')+' pzas';
-  if(document.getElementById('inv-total-valor'))document.getElementById('inv-total-valor').textContent='Valor: '+fmt(totalValor);
+  const tiendasIds=new Set(sucursales.filter(s=>s.tipo!=='bodega').map(s=>s.id));
+  const bodegasIds=new Set(sucursales.filter(s=>s.tipo==='bodega').map(s=>s.id));
+
+  // Si hay filtro de sucursal activo, solo contar esa sucursal
+  const pzasTienda=agrupados.filter(p=>tiendasIds.has(p.sucursalId)||(!p.sucursalId&&tiendasIds.size>0))
+    .reduce((a,p)=>a+sumStock(p.stock),0);
+  const pzasBodega=agrupados.filter(p=>bodegasIds.has(p.sucursalId))
+    .reduce((a,p)=>a+sumStock(p.stock),0);
+  const totalPzas = pzasTienda + pzasBodega;
+  // Valor solo de tienda (precio de venta × stock en tienda)
+  const totalValor=agrupados.filter(p=>tiendasIds.has(p.sucursalId)||(!p.sucursalId&&tiendasIds.size===0))
+    .reduce((a,p)=>a+(parseFloat(p.precio)||0)*sumStock(p.stock),0);
+
+  const countEl = document.getElementById('inv-count');
+  const stockEl = document.getElementById('inv-total-stock');
+  const valorEl = document.getElementById('inv-total-valor');
+  if(countEl) countEl.textContent=agrupados.length+' artículos';
+  if(stockEl) stockEl.textContent=
+    (pzasBodega>0
+      ? `🏪 ${pzasTienda.toLocaleString('es-MX')} · 📦 ${pzasBodega.toLocaleString('es-MX')} = ${totalPzas.toLocaleString('es-MX')} pzas`
+      : `Stock: ${totalPzas.toLocaleString('es-MX')} pzas`);
+  if(valorEl) valorEl.textContent='Valor tienda: '+fmt(totalValor);
   document.getElementById('inv-empty').style.display=agrupados.length?'none':'block';
 
   if(invVista==='matriz'){
@@ -4136,14 +4206,8 @@ function renderInvMatriz(agrupados){
   const allTallasSet=new Set();
   agrupados.forEach(p=>Object.keys(p.stock||{}).forEach(t=>allTallasSet.add(t)));
   
-  // Sort tallas: numeric first, then alpha
-  const allTallas=[...allTallasSet].sort((a,b)=>{
-    const na=tallaNumerica(a), nb=tallaNumerica(b);
-    if(na!==999&&nb!==999)return na-nb;
-    if(na!==999)return -1;
-    if(!isNaN(nb))return 1;
-    return a.localeCompare(b);
-  });
+  // Sort tallas using sortTallas helper (handles fractions + CH/MM/GD etc)
+  const allTallas = sortTallas([...allTallasSet]);
 
   const getSucNombre=id=>sucursales.find(s=>s.id===id)?.nombre||'—';
 
@@ -4170,7 +4234,10 @@ function renderInvMatriz(agrupados){
     const tot=sumS(p.stock);
     const suc=getSucNombre(p.sucursalId);
     const isBodega=sucursales.find(s=>s.id===p.sucursalId)?.tipo==='bodega';
-    const rowColor=tot===0?'opacity:.5':tot<=3?'background:rgba(240,180,41,.06)':'';
+    const esGemeloEsperando = !!p.creadoDesde && isBodega && tot===0;
+    const rowColor = esGemeloEsperando
+      ? 'background:rgba(82,168,224,.04);border-left:2px solid var(--blue)'
+      : tot===0 ? 'opacity:.5' : tot<=3 ? 'background:rgba(240,180,41,.06)' : '';
     
     return`<tr style="${rowColor}">
       <td><div class="thumb" style="width:32px;height:32px;font-size:16px">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div></td>
@@ -4186,7 +4253,9 @@ function renderInvMatriz(agrupados){
           :`<td style="text-align:center;color:var(--faint);font-size:11px">—</td>`;
         return cell;
       }).join('')}
-      <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:${tot===0?'var(--red)':tot<=3?'var(--gold)':'var(--cream)'}">${tot}</td>
+      <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:${tot===0?'var(--red)':tot<=3?'var(--gold)':'var(--cream)'}">
+        ${esGemeloEsperando ? '<span style="font-size:10px;color:var(--blue);font-weight:600">⏳ Sin\nentrada</span>' : tot}
+      </td>
       <td style="text-align:right;font-family:var(--mono);color:var(--gold);font-size:13px">${fmt(p.precio)}</td>
       <td>
         <div class="flex-row" style="gap:3px">
@@ -4250,6 +4319,14 @@ function renderInvLista(agrupadosPorSuc){
 
     const editId = p._idTienda || p._idBodega || p._ids[0];
 
+    const hayGemeloEsperando = Object.values(porCodigo).some(g =>
+      g._idBodega && g.totB === 0
+    );
+    // Para cada fila: verificar si el gemelo bodega está en espera
+    const tieneGemeloEsperando = p._idBodega &&
+      productos.find(x=>x.id===p._idBodega)?.creadoDesde &&
+      totB === 0;
+
     return`<tr>
       <td><div class="thumb">${p.foto?`<img src="${p.foto}" alt="">`:p.desc?.charAt(0)||'?'}</div></td>
       <td><div class="mono">${p.barcode||'—'}</div><div style="font-size:10px;color:var(--faint)">${p.sku||''}</div></td>
@@ -4260,7 +4337,9 @@ function renderInvLista(agrupadosPorSuc){
       <td style="color:var(--muted)">${p.color||'—'}</td>
       <td style="max-width:200px">${ts||'<span style="color:var(--faint)">Sin stock</span>'}</td>
       <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:${totT===0?'var(--faint)':'var(--accent2)'}">${totT}</td>
-      <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:${totB===0?'var(--faint)':'var(--gold)'}">${totB}</td>
+      <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:${tieneGemeloEsperando?'var(--blue)':totB===0?'var(--faint)':'var(--gold)'}">
+        ${tieneGemeloEsperando ? '<span style="font-size:10px">⏳</span>' : totB}
+      </td>
       <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:15px;color:${tot===0?'var(--red)':tot<=3?'var(--gold)':'var(--cream)'}">${tot}</td>
       <td class="mono">${fmt(p.precio)}</td>
       <td>${estado}</td>
@@ -4619,11 +4698,28 @@ function searchTransferProd(){
   const q=(document.getElementById('tr-prod-q')?.value||'').toLowerCase();
   const res=document.getElementById('tr-prod-res');
   if(!q){res.innerHTML='';return;}
-  const lista=productos.filter(p=>(p.desc||'').toLowerCase().includes(q)||(p.sku||'').includes(q)).slice(0,5);
-  res.innerHTML=lista.map(p=>`<div onclick="selTransferProd('${p.id}')" style="padding:8px 10px;background:var(--s2);border:1px solid var(--border);border-radius:7px;cursor:pointer;margin-bottom:4px;font-size:13px;transition:background .15s" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
-    <b>${p.desc}</b> <span style="color:var(--muted)">${p.sku||p.barcode||''} · ${p.cat}</span>
-    <span class="badge b-green" style="float:right">${Object.values(p.stock||{}).reduce((a,b)=>a+b,0)} pzas</span>
-  </div>`).join('');
+  // ── BUG FIX 1: excluir duplicados por código; mostrar todas las sucursales (tienda y bodega)
+  // pero deduplicar para que el usuario elija el producto, no la sucursal
+  const seen = new Map();
+  productos.forEach(p=>{
+    const mq=(p.desc||'').toLowerCase().includes(q)||(p.sku||'').includes(q)||(p.barcode||'').includes(q);
+    if(!mq) return;
+    const key = (p.barcode||p.sku||p.desc||p.id).trim().toLowerCase();
+    const prev = seen.get(key);
+    const stockP = Object.values(p.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    const stockPrev = prev ? Object.values(prev.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0) : -1;
+    // Preferir el que tenga más stock (normalmentela tienda)
+    if(!prev || stockP > stockPrev) seen.set(key, p);
+  });
+  const lista = [...seen.values()].slice(0,5);
+  res.innerHTML=lista.map(p=>{
+    const suc=sucursales.find(s=>s.id===p.sucursalId);
+    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    return`<div onclick="selTransferProd('${p.id}')" style="padding:8px 10px;background:var(--s2);border:1px solid var(--border);border-radius:7px;cursor:pointer;margin-bottom:4px;font-size:13px;transition:background .15s" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
+      <b>${p.desc}</b> <span style="color:var(--muted)">${p.sku||p.barcode||''} · ${p.cat}</span>
+      <span class="badge ${tot>0?'b-green':'b-red'}" style="float:right">${tot} pzas · ${suc?.nombre||'—'}</span>
+    </div>`;
+  }).join('');
 }
 
 function selTransferProd(id){
@@ -4633,12 +4729,19 @@ function selTransferProd(id){
   document.getElementById('tr-prod-q').value=trProdSel.desc;
   const div=document.getElementById('tr-prod-sel');
   const suc=sucursales.find(s=>s.id===trProdSel.sucursalId);
+  const tot=Object.values(trProdSel.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
   div.style.display='block';
-  div.innerHTML=`<b>${trProdSel.desc}</b> · ${trProdSel.color||'—'}<br><span style="font-size:12px;color:var(--muted)">Sucursal actual: ${suc?.nombre||'—'} · ${Object.values(trProdSel.stock||{}).reduce((a,b)=>a+b,0)} pzas totales</span>`;
-  // Fill talla select
+  div.innerHTML=`<b>${trProdSel.desc}</b> · ${trProdSel.color||'—'}<br>
+    <span style="font-size:12px;color:var(--muted)">Sucursal: ${suc?.nombre||'—'} · ${tot} pzas totales</span>`;
+  // ── BUG FIX 3: talla select sorted with sortTallas ──
   const ts=document.getElementById('tr-talla');
-  ts.innerHTML=Object.entries(trProdSel.stock||{}).filter(([,v])=>v>0).map(([t,c])=>`<option value="${t}">${t} (${c} disponibles)</option>`).join('');
-  // Pre-select origen
+  const tallasConStock = sortTallas(
+    Object.keys(trProdSel.stock||{}).filter(t=>(trProdSel.stock[t]||0)>0)
+  );
+  ts.innerHTML = tallasConStock.length
+    ? tallasConStock.map(t=>`<option value="${t}">${t} (${trProdSel.stock[t]} disponibles)</option>`).join('')
+    : '<option value="">Sin stock disponible</option>';
+  // Pre-select origen to the product's sucursal
   document.getElementById('tr-origen').value=trProdSel.sucursalId||'';
 }
 
@@ -4652,35 +4755,82 @@ async function hacerTransferencia(){
   if(!origen||!destino){toast('Selecciona origen y destino','err');return;}
   if(origen===destino){toast('Origen y destino no pueden ser iguales','err');return;}
   if(!talla){toast('Selecciona una talla','err');return;}
-  const stockActual=trProdSel.stock?.[talla]||0;
-  if(qty>stockActual){toast(`Solo hay ${stockActual} en talla ${talla}`,'err');return;}
-  // Update stock: resta del origen (el producto ya tiene sucursal origen)
-  // For multi-sucursal: products belong to one sucursal; transfer = create/update product in destino
-  // Find if product exists in destino
-  const prodDestino=productos.find(p=>p.id!==trProdSel.id&&(p.barcode===trProdSel.barcode||p.sku===trProdSel.sku)&&p.sucursalId===destino);
-  const {updateDoc,addDoc,setDoc}=window._fb;
-  // Resta en origen
-  await setStockTalla(trProdSel.id, trProdSel.stock, talla, Math.max(0,stockActual-qty));
+
+  // ── BUG FIX 4: leer stock fresco de Firestore antes de transferir ──
+  let stockFrescoOrigen;
+  try{
+    const snap = await window._fb.getDoc(docRef('productos', trProdSel.id));
+    stockFrescoOrigen = snap.exists() ? (snap.data().stock||{}) : trProdSel.stock||{};
+  }catch(e){ stockFrescoOrigen = trProdSel.stock||{}; }
+
+  const stockActual = (stockFrescoOrigen[talla]||0);
+  if(qty > stockActual){
+    toast(`Solo hay ${stockActual} pza(s) disponibles en talla ${talla} en ${sucursales.find(s=>s.id===origen)?.nombre||'origen'}`,'err');
+    return;
+  }
+
+  // Find product in destino — match by barcode/sku/creadoDesde
+  const codigoRef = (trProdSel.barcode||trProdSel.sku||'').trim();
+  let prodDestino = productos.find(p=>
+    p.id !== trProdSel.id &&
+    p.sucursalId === destino &&
+    (p.creadoDesde === trProdSel.id ||
+     (codigoRef && (p.barcode===codigoRef||p.sku===codigoRef)))
+  );
+
+  const {addDoc:fbAddDoc} = window._fb;
+
+  // Resta en origen (fresca)
+  await setStockTalla(trProdSel.id, stockFrescoOrigen, talla, Math.max(0, stockActual - qty));
+
   // Suma en destino
   if(prodDestino){
-    const curD=prodDestino.stock?.[talla]||0;
-    await setStockTalla(prodDestino.id, prodDestino.stock, talla, curD+qty);
-  }else{
-    // Create copy in destino
-    const newStock={[talla]:qty};
-    await addDoc(col('productos'),{...trProdSel,stock:newStock,sucursalId:destino,createdAt:new Date().toISOString()});
+    let stockFrescoDestino;
+    try{
+      const dSnap = await window._fb.getDoc(docRef('productos', prodDestino.id));
+      stockFrescoDestino = dSnap.exists() ? (dSnap.data().stock||{}) : prodDestino.stock||{};
+    }catch(e){ stockFrescoDestino = prodDestino.stock||{}; }
+    const curD = stockFrescoDestino[talla]||0;
+    await setStockTalla(prodDestino.id, stockFrescoDestino, talla, curD + qty);
+  } else {
+    // ── BUG FIX 5: crear gemelo en destino con la estructura correcta ──
+    // En lugar de copiar el objeto completo (que podría tener creadoDesde incorrecto),
+    // creamos un registro limpio con solo las tallas existentes a 0 + la talla transferida
+    const stockNuevoDestino = {};
+    Object.keys(trProdSel.stock||{}).forEach(t=>{ stockNuevoDestino[t]=0; });
+    stockNuevoDestino[talla] = qty;
+    await fbAddDoc(col('productos'),{
+      barcode:trProdSel.barcode||'', sku:trProdSel.sku||'',
+      desc:trProdSel.desc, cat:trProdSel.cat||'',
+      linea:trProdSel.linea||'', temporada:trProdSel.temporada||'',
+      marca:trProdSel.marca||'', color:trProdSel.color||'',
+      precio:trProdSel.precio||0, costo:trProdSel.costo||0,
+      locacion:trProdSel.locacion||'', foto:trProdSel.foto||null,
+      barcodeTallas:trProdSel.barcodeTallas||{},
+      stock: stockNuevoDestino,
+      sucursalId: destino,
+      creadoDesde: trProdSel.id,
+      createdAt: new Date().toISOString()
+    });
   }
+
   // Log transfer
-  await addDoc(col('transferencias'),{
-    productoId:trProdSel.id,productoDesc:trProdSel.desc,talla,qty,
-    origenId:origen,origenNombre:sucursales.find(s=>s.id===origen)?.nombre||origen,
-    destinoId:destino,destinoNombre:sucursales.find(s=>s.id===destino)?.nombre||destino,
-    notas,fecha:hoy(),hora:hora(),usuario:currentProfile?.nombre||'—',
+  await fbAddDoc(col('transferencias'),{
+    productoId:trProdSel.id, productoDesc:trProdSel.desc, talla, qty,
+    origenId:origen, origenNombre:sucursales.find(s=>s.id===origen)?.nombre||origen,
+    destinoId:destino, destinoNombre:sucursales.find(s=>s.id===destino)?.nombre||destino,
+    notas, fecha:hoy(), hora:hora(), usuario:currentProfile?.nombre||'—',
     createdAt:new Date().toISOString()
   });
-  trProdSel=null;document.getElementById('tr-prod-q').value='';document.getElementById('tr-prod-sel').style.display='none';
-  document.getElementById('tr-qty').value=1;document.getElementById('tr-notas').value='';
-  toast(`Transferencia realizada: ${qty} pza(s) de ${talla} ✓`);
+
+  trProdSel=null;
+  document.getElementById('tr-prod-q').value='';
+  document.getElementById('tr-prod-sel').style.display='none';
+  document.getElementById('tr-qty').value=1;
+  document.getElementById('tr-notas').value='';
+  // ── BUG FIX 4b: refrescar inventario tras transferencia ──
+  renderInv(); renderPOS();
+  toast(`↔️ Transferencia: ${qty} pza(s) talla ${talla} → ${sucursales.find(s=>s.id===destino)?.nombre||'destino'} ✓`);
 }
 
 function renderTransferencias(){
@@ -4772,29 +4922,74 @@ function calcCorte(){
   const sid=document.getElementById('corte-suc')?.value||'';
   const vF=ventas.filter(v=>v.fecha===fecha&&(!sid||v.sucursalId===sid));
   const gF=gastos.filter(g=>g.fecha===fecha&&(!sid||g.sucursalId===sid));
-  const bp={efectivo:0,tarjeta:0,transferencia:0,mixto:0};
-  let ti=0;
-  vF.forEach(v=>{bp[v.pago]=(bp[v.pago]||0)+v.total;ti+=(v.items||[]).reduce((a,i)=>a+i.qty,0);});
-  const tv=vF.reduce((a,v)=>a+v.total,0),tg=gF.reduce((a,g)=>a+g.monto,0);
+
+  // ── BUG FIX: calcular cobrado real por forma de pago ──
+  // - apartado/credito: solo cuenta el anticipo
+  // - devolucion: resta (total es negativo)
+  // - abono: suma el monto del abono
+  // - venta normal: suma el total
+  const bp={efectivo:0,tarjeta:0,transferencia:0,mixto:0,monedero:0};
+  let ti=0, transacciones=0;
+  vF.forEach(v=>{
+    const tipoV = v.tipoVenta||'venta';
+    const isDev  = tipoV==='devolucion';
+    const isAC   = tipoV==='apartado'||tipoV==='credito';
+    const isAbo  = tipoV==='abono';
+    const cobrado = isDev ? (v.total||0)            // negativo
+                  : isAC  ? (v.anticipo||0)
+                  : isAbo ? (v.monto||v.total||0)
+                  :          (v.total||0);
+    const pago = (v.pago||'efectivo').toLowerCase().trim();
+    if(pago==='mixto'){
+      bp.efectivo  += v.mixtoEfectivo||0;
+      bp.tarjeta   += v.mixtoTarjeta||0;
+    } else if(pago.includes('tarjeta')||pago.includes('bbva')||pago.includes('mp')||
+              pago==='transferencia'||pago.includes('transfer')){
+      bp.tarjeta   += cobrado;
+    } else if(pago==='monedero'){
+      bp.monedero  += cobrado;
+    } else {
+      bp.efectivo  += cobrado;
+    }
+    // Solo contar artículos de ventas reales (no devoluciones ni abonos)
+    if(!isDev&&!isAbo) ti += (v.items||[]).reduce((a,i)=>a+(i.qty||1),0);
+    transacciones++;
+  });
+
+  const tv = vF.reduce((a,v)=>{
+    const tipoV=v.tipoVenta||'venta';
+    const isDev=tipoV==='devolucion';
+    const isAC=tipoV==='apartado'||tipoV==='credito';
+    const isAbo=tipoV==='abono';
+    const cobrado=isDev?(v.total||0):isAC?(v.anticipo||0):isAbo?(v.monto||v.total||0):(v.total||0);
+    return a+cobrado;
+  },0);
+  const tg=gF.reduce((a,g)=>a+g.monto,0);
+
   document.getElementById('co-ef').textContent=fmt(bp.efectivo);
-  document.getElementById('co-tar').textContent=fmt(bp.tarjeta);
-  document.getElementById('co-tra').textContent=fmt(bp.transferencia);
-  document.getElementById('co-mix').textContent=fmt(bp.mixto);
+  document.getElementById('co-tar').textContent=fmt(bp.tarjeta+(bp.monedero||0));
+  document.getElementById('co-tra').textContent=fmt(bp.transferencia||0);
+  document.getElementById('co-mix').textContent=fmt(bp.mixto||0);
   document.getElementById('co-items').textContent=ti;
-  document.getElementById('co-trans').textContent=vF.length;
+  document.getElementById('co-trans').textContent=transacciones;
   document.getElementById('co-tv').textContent=fmt(tv);
   document.getElementById('co-tg').textContent=fmt(tg);
   const net=tv-tg,bal=document.getElementById('co-bal');
   bal.textContent=fmt(net);bal.style.color=net>=0?'var(--green)':'var(--red)';
-  const pi={efectivo:'💵',tarjeta:'💳',transferencia:'📲',mixto:'🔀'};
+  const pi={efectivo:'💵',tarjeta:'💳',transferencia:'📲',mixto:'🔀',monedero:'🪙'};
   document.getElementById('co-empty').style.display=vF.length?'none':'block';
-  const getSuc=id=>sucursales.find(s=>s.id===id)?.nombre||'—';
-  document.getElementById('co-det').innerHTML=vF.map(v=>`<tr>
-    <td class="mono">${v.hora}</td><td>${v.cliente}</td><td>${v.vendedor||'—'}</td>
-    <td style="font-size:12px">${(v.items||[]).map(x=>`${x.desc} T${x.talla}`).join(', ')}</td>
-    <td>${pi[v.pago]||''} ${v.pago}</td>
-    <td class="text-r mono" style="color:var(--gold)">${fmt(v.total)}</td>
-  </tr>`).join('');
+  document.getElementById('co-det').innerHTML=vF.map(v=>{
+    const tipoV=v.tipoVenta||'venta';
+    const isDev=tipoV==='devolucion';
+    const isAC=tipoV==='apartado'||tipoV==='credito';
+    const cobrado=isDev?(v.total||0):isAC?(v.anticipo||0):(v.monto||v.total||0);
+    const rowColor=isDev?'color:var(--red)':isAC?'color:var(--gold)':'color:var(--green)';
+    return`<tr>
+    <td class="mono">${v.hora||'—'}</td><td>${v.cliente||'—'}</td><td>${v.vendedor||'—'}</td>
+    <td style="font-size:12px">${isDev?'↩ Devolución':(v.items||[]).map(x=>`${x.desc} T${x.talla}`).join(', ')}</td>
+    <td>${pi[v.pago]||''} ${v.pago||'—'}</td>
+    <td class="text-r mono" style="${rowColor}">${fmt(cobrado)}</td>
+  </tr>`;}).join('');
 }
 
 // ══════════════════ REPORTES AVANZADOS ══════════════════
@@ -5147,26 +5342,50 @@ function renderDashboard(){
   const h=hoy();
   const vH=ventas.filter(v=>v.fecha===h);
   const gH=gastos.filter(g=>g.fecha===h);
-  const tv=vH.reduce((a,v)=>a+v.total,0),tg=gH.reduce((a,g)=>a+g.monto,0);
-  const stock=productos.reduce((a,p)=>a+Object.values(p.stock||{}).reduce((x,y)=>x+(isNaN(Number(y))?0:Number(y)),0),0);
+  // ── BUG FIX: calcular cobrado real (excluye full-total de apartados/devoluciones) ──
+  const tv=vH.reduce((a,v)=>{
+    const tipoV=v.tipoVenta||'venta';
+    const isDev=tipoV==='devolucion';
+    const isAC=tipoV==='apartado'||tipoV==='credito';
+    const isAbo=tipoV==='abono';
+    const cobrado=isDev?(v.total||0):isAC?(v.anticipo||0):isAbo?(v.monto||v.total||0):(v.total||0);
+    return a+cobrado;
+  },0);
+  const tg=gH.reduce((a,g)=>a+g.monto,0);
+  // Stock: solo sucursales tienda (no bodega) para el contador principal
+  const tiendasIds=new Set(sucursales.filter(s=>s.tipo!=='bodega').map(s=>s.id));
+  const stock=productos
+    .filter(p=>!p.sucursalId||tiendasIds.has(p.sucursalId)||tiendasIds.size===0)
+    .reduce((a,p)=>a+Object.values(p.stock||{}).reduce((x,y)=>x+(isNaN(Number(y))?0:Number(y)),0),0);
   document.getElementById('dash-fecha').textContent=fmtFecha(h);
   document.getElementById('dash-stats').innerHTML=`
     <div class="scard gold"><div class="sl">Ventas Hoy</div><div class="sv gold">${fmt(tv)}</div><div class="ss">${vH.length} transacciones</div></div>
-    <div class="scard g"><div class="sl">Artículos en Stock</div><div class="sv g">${stock}</div><div class="ss">${productos.length} modelos · ${sucursales.length} sucursales</div></div>
+    <div class="scard g"><div class="sl">Stock Tienda</div><div class="sv g">${stock}</div><div class="ss">${productos.filter(p=>tiendasIds.has(p.sucursalId)).length} modelos</div></div>
     <div class="scard r"><div class="sl">Gastos Hoy</div><div class="sv r">${fmt(tg)}</div></div>
     <div class="scard a"><div class="sl">Balance Neto</div><div class="sv a">${fmt(tv-tg)}</div></div>`;
 
   const ul=document.getElementById('dash-ventas-hoy');
-  ul.innerHTML=vH.length?[...vH].slice(0,6).map(v=>`
+  ul.innerHTML=vH.length?[...vH].slice(0,6).map(v=>{
+    const tipoV=v.tipoVenta||'venta';
+    const isDev=tipoV==='devolucion';
+    const isAC=tipoV==='apartado'||tipoV==='credito';
+    const cobrado=isDev?(v.total||0):isAC?(v.anticipo||0):(v.monto||v.total||0);
+    const badgeClass=isDev?'b-red':isAC?'b-gold':'b-green';
+    return`
     <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
       <div>
         <div style="font-size:13px;color:var(--cream)">${v.cliente}</div>
-        <div style="font-size:11px;color:var(--muted)">${v.hora} · ${v.vendedor||'—'} · ${(v.items||[]).length} art.</div>
+        <div style="font-size:11px;color:var(--muted)">${v.hora||'—'} · ${v.vendedor||'—'} · ${(v.items||[]).length} art.</div>
       </div>
-      <span class="badge b-green">${fmt(v.total)}</span>
-    </div>`).join(''):`<div class="empty" style="padding:20px"><div class="empty-icon">🛒</div><div>Sin ventas hoy</div></div>`;
+      <span class="badge ${badgeClass}">${fmt(cobrado)}</span>
+    </div>`;}).join(''):`<div class="empty" style="padding:20px"><div class="empty-icon">🛒</div><div>Sin ventas hoy</div></div>`;
 
-  const bajos=productos.filter(p=>Object.values(p.stock||{}).reduce((a,b)=>a+b,0)<=3&&Object.values(p.stock||{}).reduce((a,b)=>a+b,0)>0);
+  // ── BUG FIX: bajo stock solo cuenta tienda, no bodega ──
+  const bajos=productos.filter(p=>{
+    if(sucursales.find(s=>s.id===p.sucursalId)?.tipo==='bodega') return false;
+    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    return tot<=3&&tot>0;
+  });
   document.getElementById('dash-bajo-cnt').textContent=bajos.length;
   document.getElementById('dash-bajo').innerHTML=bajos.length?bajos.slice(0,6).map(p=>{
     const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
@@ -5739,13 +5958,19 @@ async function cobrar(){
   const notaNombre=document.getElementById('c-nota-nombre')?.value.trim()||clienteNombre;
   const notaTel=document.getElementById('c-nota-tel')?.value.trim()||clienteObj?.celular||'';
   try{
-    const {updateDoc}=window._fb;
+    // ── Descontar stock de la sucursal correcta (tienda) ──────────────
+    // Aplica para todos los tipos: venta, apartado, crédito
+    // Para apartado/credito: el artículo se reserva → sale de tienda igual
     for(const item of carrito){
-      if(item.sinCodigo)continue; // artículo sin código — no afecta inventario
-      const p=productos.find(x=>x.id===item.id);
-      if(p&&p.stock&&p.stock[item.talla]!==undefined){
-        await setStockTalla(p.id, p.stock, item.talla, Math.max(0,p.stock[item.talla]-item.qty));
-      }
+      if(item.sinCodigo || item.esGratis) continue;
+      const p = productos.find(x=>x.id===item.id);
+      if(!p || !item.talla || item.talla==='—') continue;
+      const stockTalla = (p.stock||{})[item.talla];
+      if(stockTalla === undefined) continue;
+      // Respetar la sucursal de la venta para descontar del registro correcto
+      const linea = {prodId: item.id, talla: item.talla, sku: item.sku||item.barcode||'',
+                     barcode: item.barcode||item.sku||'', desc: item.desc||''};
+      await aplicarStockEnSucursal(linea, sucId, -(item.qty||1));
     }
     const folioFisico=document.getElementById('c-nota-folio')?.value.trim()||'';
     const mixtoEf  = pago==='mixto'?parseFloat(document.getElementById('c-mixto-ef')?.value||'0')||0:0;
@@ -5808,7 +6033,7 @@ async function cobrar(){
     }
     // Side effects after modal is closed
     try{
-      if(clienteId&&tipoVenta==='venta') await acumularPuntosCliente(clienteId,total);
+      if(clienteId&&tipoVenta==='venta') await acumularPuntosCliente(clienteId, total, tipoVenta);
       if(isAC) mostrarNotaSeparo({...ventaDoc,items:ventaDoc.items||[]});
     }catch(sideErr){
       console.warn('cobrar side effect error:', sideErr);
@@ -6034,7 +6259,7 @@ async function guardarAbono(){
     });
     // 3. Acumular puntos monedero si liquida y tiene cliente registrado
     if(nuevoSaldo<=0 && v.clienteId){
-      await acumularPuntosCliente(v.clienteId, v.total);
+      await acumularPuntosCliente(v.clienteId, v.total, 'venta');
     }
     closeM('mo-abono');
     abonoVentaId = null;
@@ -6261,8 +6486,10 @@ async function saveConfigGeneral(){
   }catch(e){toast('Error: '+e.message,'err');}
 }
 
-async function acumularPuntosCliente(clienteId, totalVenta){
-  if(!clienteId||!totalVenta)return;
+async function acumularPuntosCliente(clienteId, totalVenta, tipoVenta){
+  // ── BUG FIX: no acumular puntos en devoluciones ni en abonos ──
+  if(!clienteId || !totalVenta) return;
+  if(tipoVenta==='devolucion' || tipoVenta==='abono') return;
   const pct=(configGeneral.puntoPorcentaje||5)/100;
   const puntosGanados=parseFloat((totalVenta*pct).toFixed(2));
   if(puntosGanados<=0)return;
@@ -6273,6 +6500,8 @@ async function acumularPuntosCliente(clienteId, totalVenta){
       puntos:nuevosPuntos,
       ultimaCompra:hoy()
     });
+    const idx=clientes.findIndex(x=>x.id===clienteId);
+    if(idx>=0) clientes[idx].puntos=nuevosPuntos;
     toast(`+${puntosGanados.toFixed(0)} puntos al monedero de ${c.nombre} ✓`);
   }catch(e){console.error('acumularPuntos:',e);}
 }
@@ -6626,25 +6855,61 @@ function buscarProdEntrada(){
   const q=(document.getElementById('ent-prod-q')?.value||'').toLowerCase();
   const res=document.getElementById('ent-prod-res'); if(!res)return;
   if(!q){res.innerHTML='';return;}
-  const raw=productos.filter(p=>(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q));
-  // Deduplicate by barcode/sku — keep the one with most stock or most recent
-  const seen=new Map();
+  const raw=productos.filter(p=>
+    (p.desc||'').toLowerCase().includes(q)||
+    (p.barcode||'').includes(q)||
+    (p.sku||'').toLowerCase().includes(q)
+  );
+
+  // ── NUEVO: agrupar por código mostrando Tienda y Bodega por separado ──
+  // Cada código puede tener 1 fila de tienda + 1 o más filas de bodega.
+  // Se muestran como entradas independientes para que el usuario elija dónde entra la mercancía.
+  const grupos = new Map(); // key: codigoBase → [{prod, esBodega}]
   raw.forEach(p=>{
-    const key=(p.barcode||p.sku||p.desc||'').trim().toLowerCase();
-    if(!key)return;
-    const prev=seen.get(key);
-    if(!prev){seen.set(key,p);return;}
-    // Prefer product with stock > 0, then by createdAt (newest)
-    const stockP=Object.values(p.stock||{}).reduce((a,b)=>a+Number(b),0);
-    const stockPrev=Object.values(prev.stock||{}).reduce((a,b)=>a+Number(b),0);
-    if(stockP>stockPrev||(stockP===stockPrev&&(p.createdAt||'')>(prev.createdAt||''))) seen.set(key,p);
+    const codigoBase = (p.barcode||p.sku||p.desc||p.id).trim().toLowerCase();
+    if(!grupos.has(codigoBase)) grupos.set(codigoBase, []);
+    grupos.get(codigoBase).push(p);
   });
-  const lista=[...seen.values()].slice(0,8);
-  res.innerHTML=lista.map(p=>`
-    <div onclick="selProdEntrada('${p.id}')" style="padding:8px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:4px" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
-      <div style="font-weight:600;font-size:13px;color:var(--cream)">${p.desc}</div>
-      <div style="font-size:11px;color:var(--muted)">${p.barcode||p.sku||'—'} · ${p.cat||'—'} · ${p.color||'—'}</div>
-    </div>`).join('');
+
+  const resultados = [];
+  grupos.forEach(prods=>{
+    // Separar tienda y bodega
+    const tienda  = prods.filter(p=> sucursales.find(s=>s.id===p.sucursalId)?.tipo !== 'bodega');
+    const bodegas = prods.filter(p=> sucursales.find(s=>s.id===p.sucursalId)?.tipo === 'bodega');
+    // Agregar el mejor representante de tienda (más stock o más reciente)
+    if(tienda.length){
+      const best = tienda.reduce((a,b)=>{
+        const sa=Object.values(a.stock||{}).reduce((x,y)=>x+(Number(y)||0),0);
+        const sb=Object.values(b.stock||{}).reduce((x,y)=>x+(Number(y)||0),0);
+        return sb>sa?b:a;
+      });
+      resultados.push(best);
+    }
+    // Agregar cada bodega por separado
+    bodegas.forEach(b=>resultados.push(b));
+  });
+
+  const lista = resultados.slice(0,10);
+  res.innerHTML=lista.map(p=>{
+    const suc   = sucursales.find(s=>s.id===p.sucursalId);
+    const esBod = suc?.tipo==='bodega';
+    const tot   = Object.values(p.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+    const stockLabel = tot===0&&esBod
+      ? '<span style="font-size:10px;color:var(--blue)">⏳ Sin stock — ingresarás la primera entrada</span>'
+      : `<span class="badge ${tot>0?'b-green':'b-red'}" style="font-size:10px">${tot} pzas</span>`;
+    const sucBadge = esBod
+      ? `<span class="badge b-orange" style="font-size:10px">📦 ${suc?.nombre||'Bodega'}</span>`
+      : `<span class="badge b-green" style="font-size:10px">🏪 ${suc?.nombre||'Tienda'}</span>`;
+    return`<div onclick="selProdEntrada('${p.id}')"
+      style="padding:8px 12px;background:var(--s2);border:1px solid ${esBod?'var(--gold)':'var(--border)'};border-radius:8px;cursor:pointer;margin-bottom:4px"
+      onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+        <div style="font-weight:600;font-size:13px;color:var(--cream)">${p.desc}</div>
+        <div style="display:flex;gap:4px;align-items:center">${sucBadge} ${stockLabel}</div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">${p.barcode||p.sku||'—'} · ${p.cat||'—'} · ${p.color||'—'}</div>
+    </div>`;
+  }).join('');
 }
 
 function selProdEntrada(id){
@@ -6652,25 +6917,31 @@ function selProdEntrada(id){
   document.getElementById('ent-prod-q').value=entProdSel.desc;
   document.getElementById('ent-prod-res').innerHTML='';
   document.getElementById('ent-prod-sel').style.display='block';
+
+  const suc = sucursales.find(s=>s.id===entProdSel.sucursalId);
+  const esBod = suc?.tipo==='bodega';
   document.getElementById('ent-prod-info').innerHTML=`
     <div style="font-weight:600;color:var(--cream)">${entProdSel.desc}</div>
-    <div style="font-size:12px;color:var(--muted)">${entProdSel.barcode||entProdSel.sku||'—'} · ${entProdSel.marca||'—'} · ${entProdSel.color||'—'}</div>`;
-  // Show ONLY the tallas that this product has registered in Catálogo General
-  // These are the tallas set when the product was created/edited
+    <div style="font-size:12px;color:var(--muted)">${entProdSel.barcode||entProdSel.sku||'—'} · ${entProdSel.marca||'—'}</div>
+    <div style="margin-top:4px">${esBod
+      ? '<span class="badge b-orange" style="font-size:10px">📦 '+( suc?.nombre||'Bodega')+'</span>'
+      : '<span class="badge b-green" style="font-size:10px">🏪 '+(suc?.nombre||'Tienda')+'</span>'}
+    </div>`;
+
+  // ── Auto-seleccionar la sucursal del producto elegido ──
+  const sucSel = document.getElementById('ent-sucursal');
+  if(sucSel && entProdSel.sucursalId){
+    sucSel.value = entProdSel.sucursalId;
+  }
+
+  // Mostrar tallas del producto con su stock ACTUAL en esa sucursal
   const stockEnt = entProdSel.stock || {};
-  const tallasProducto = Object.keys(stockEnt);
-  // If product has no tallas yet, use ALL_TALLAS as fallback
-  const allTallas = tallasProducto.length > 0 ? tallasProducto.sort((a,b)=>{
-    const na=tallaNumerica(a),nb=tallaNumerica(b);
-    if(na!==999&&nb!==999)return na-nb;
-    if(na!==999)return -1; if(nb!==999)return 1;
-    return a.localeCompare(b);
-  }) : ALL_TALLAS;
-  document.getElementById('ent-tallas-grid').innerHTML=allTallas.map(t=>{
+  const tallasProducto = sortTallas(Object.keys(stockEnt).length > 0 ? Object.keys(stockEnt) : ALL_TALLAS);
+  document.getElementById('ent-tallas-grid').innerHTML=tallasProducto.map(t=>{
     const stockT = stockEnt[t]||0;
     return `<div style="background:var(--s3);border:1px solid var(--accent)44;border-radius:8px;padding:8px;text-align:center;min-width:70px">
       <div style="font-weight:700;font-size:13px;color:var(--cream)">${t}</div>
-      <div style="font-size:10px;color:var(--green);margin-bottom:4px">Stock: ${stockT}</div>
+      <div style="font-size:10px;color:${stockT>0?'var(--green)':'var(--faint)'};margin-bottom:4px">Stock: ${stockT}</div>
       <input type="number" id="ent-qty-${tallaToId(t)}" value="0" min="0" style="width:55px;padding:3px 6px;text-align:center;font-size:13px;font-weight:600" placeholder="0">
     </div>`;
   }).join('');
@@ -6858,14 +7129,9 @@ function selProdSalida(id){
     <div style="font-weight:600;color:var(--cream)">${salProdSel.desc}</div>
     <div style="font-size:12px;color:var(--muted)">${salProdSel.barcode||salProdSel.sku||'—'} · ${salProdSel.marca||'—'}</div>`;
   const stockSal=salProdSel.stock||{};
-  const tallasConStock=Object.entries(stockSal).filter(([,v])=>v>0);
-  // Sort numerically then alpha
-  tallasConStock.sort(([a],[b])=>{
-    const na=tallaNumerica(a),nb=tallaNumerica(b);
-    if(na!==999&&nb!==999)return na-nb;
-    if(na!==999)return -1; if(nb!==999)return 1;
-    return a.localeCompare(b);
-  });
+  // ── BUG FIX: usar sortTallas para orden correcto (fracciones + CH/MM/GD) ──
+  const tallasConStock = sortTallas(Object.keys(stockSal).filter(t=>(stockSal[t]||0)>0))
+    .map(t=>[t, stockSal[t]]);
   if(!tallasConStock.length){
     document.getElementById('sal-tallas-grid').innerHTML='<div style="color:var(--red);font-size:12px">Sin stock disponible</div>';
     return;
@@ -6966,12 +7232,10 @@ async function registrarSalida(){
       aprobadoPor:esAdmin?(usuarioActual?.nombre||'Admin'):'',
       createdAt:new Date().toISOString()
     });
-    // If admin: apply stock immediately
+    // If admin: apply stock immediately — use aplicarStockEnSucursal for fresh reads
     if(esAdmin){
       for(const linea of salLineas){
-        const p=productos.find(x=>x.id===linea.prodId); if(!p)continue;
-        const stockActual=(p.stock||{})[linea.talla]||0;
-        await setStockTalla(p.id, p.stock, linea.talla, Math.max(0,stockActual-linea.cantidad));
+        await aplicarStockEnSucursal(linea, sucId, -linea.cantidad);
       }
       toast(`Salida registrada y aplicada: ${totalBaja} piezas ✓`);
     }else{
@@ -7057,35 +7321,37 @@ function renderHist(){
     return matchDesde&&matchHasta&&matchPago&&matchSuc&&matchTipo;
   });
 
-  // Calculate totals correctly
-  // "Cobrado" = what was actually received (anticipo for apartado/credito, full total for venta/abono)
+  // ── BUG FIX: devoluciones tienen total NEGATIVO — deben RESTAR del cobrado ──
   let totalCobrado=0, totalEfectivo=0, totalTarjeta=0, totalPendiente=0;
   lista.forEach(v=>{
     const tipoV = v.tipoVenta||'venta';
     const isAC  = tipoV==='apartado'||tipoV==='credito';
     const isAbo = tipoV==='abono';
-    // cobrado = what was ACTUALLY received in this transaction
+    const isDev = tipoV==='devolucion';  // ← BUG FIX: identificar devoluciones
+    // cobrado: lo que realmente entró a caja en esta transacción
     let cobrado = 0;
-    if(isAC)       cobrado = v.anticipo||0;
-    else if(isAbo) cobrado = v.monto||v.total||0;  // abono stores amount in monto
-    else           cobrado = v.total||0;
+    if(isDev)       cobrado = v.total||0;              // negativo por diseño
+    else if(isAC)   cobrado = v.anticipo||0;
+    else if(isAbo)  cobrado = v.monto||v.total||0;
+    else             cobrado = v.total||0;
     totalCobrado += cobrado;
-    // Classify by payment method
-    const p = (v.pago||'').toLowerCase().trim();
-    if(p==='mixto'){
-      // Use saved breakdown; fallback: split 50/50
-      const ef  = v.mixtoEfectivo||0;
-      const tar = v.mixtoTarjeta||0;
-      if(ef+tar>0){ totalEfectivo+=ef; totalTarjeta+=tar; }
-      else { totalEfectivo+=cobrado/2; totalTarjeta+=cobrado/2; }
-    } else if(p==='efectivo'||p==='monedero'||p==='caja'||p==='') {
-      totalEfectivo += cobrado;
-    } else if(p.includes('tarjeta')||p.includes('bbva')||p.includes('mp')||
-              p.includes('mercado')||p==='transferencia'||p.includes('transfer')) {
-      totalTarjeta += cobrado;
+    if(isDev){ // las devoluciones restan de la forma de pago original
+      totalEfectivo += cobrado; // total ya es negativo
     } else {
-      // Any other value: default to efectivo
-      totalEfectivo += cobrado;
+      const p = (v.pago||'').toLowerCase().trim();
+      if(p==='mixto'){
+        const ef  = v.mixtoEfectivo||0;
+        const tar = v.mixtoTarjeta||0;
+        if(ef+tar>0){ totalEfectivo+=ef; totalTarjeta+=tar; }
+        else { totalEfectivo+=cobrado/2; totalTarjeta+=cobrado/2; }
+      } else if(p==='efectivo'||p==='monedero'||p==='caja'||p==='') {
+        totalEfectivo += cobrado;
+      } else if(p.includes('tarjeta')||p.includes('bbva')||p.includes('mp')||
+                p.includes('mercado')||p==='transferencia'||p.includes('transfer')) {
+        totalTarjeta += cobrado;
+      } else {
+        totalEfectivo += cobrado;
+      }
     }
     if(isAC) totalPendiente += Math.max(0,(v.total||0)-(v.anticipo||0));
   });
@@ -7096,7 +7362,6 @@ function renderHist(){
   setEl('h-total-efectivo',fmt(totalEfectivo));
   setEl('h-total-tarjeta',fmt(totalTarjeta));
   setEl('h-total-pendiente',fmt(totalPendiente));
-  // Legacy badge
   const legBadge=document.getElementById('h-total');
   if(legBadge)legBadge.textContent='Total cobrado: '+fmt(totalCobrado);
 
@@ -9148,22 +9413,21 @@ async function deleteVenta(id){
   const msg = esAbono ? msgAbono : msgVenta;
   if(!confirm(msg))return;
   try{
-    const {updateDoc, deleteDoc} = window._fb;
-    // Restore stock for each item (not abonos, not sin-codigo, not gratis)
+    const {deleteDoc} = window._fb;
+    // ── Restaurar stock a la sucursal correcta de la venta ─────────────
     if(!esAbono){
+      const ventaSucId = venta.sucursalId||'';
       for(const item of (venta.items||[])){
-        if(item.sinCodigo||item.esGratis)continue;
-        // Find product by id, sku or barcode
-        const p = productos.find(x=>x.id===item.id||(item.sku&&x.barcode===item.sku)||(item.sku&&x.sku===item.sku));
-        if(!p||!item.talla||item.talla==='—')continue;
-        const stockActual = (p.stock||{})[item.talla]||0;
-        await setStockTalla(p.id, p.stock, item.talla, stockActual+(item.qty||1));
-        // Update local cache
-        const idx=productos.findIndex(x=>x.id===p.id);
-        if(idx>=0){
-          if(!productos[idx].stock)productos[idx].stock={};
-          productos[idx].stock[item.talla]=stockActual+(item.qty||1);
-        }
+        if(item.sinCodigo||item.esGratis) continue;
+        if(!item.talla||item.talla==='—') continue;
+        const linea = {
+          prodId: item.id,
+          talla:  item.talla,
+          sku:    item.sku||item.barcode||'',
+          barcode:item.barcode||item.sku||'',
+          desc:   item.desc||''
+        };
+        await aplicarStockEnSucursal(linea, ventaSucId, item.qty||1);
       }
     }
     await deleteDoc(docRef('ventas',id));
