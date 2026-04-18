@@ -12682,15 +12682,25 @@ function _buildRecuperacionData(){
     });
   });
 
-  // 2. Para cada entrada, calcular cuánto hay en BODEGA del mismo estilo+talla
-  const bodegas = sucursales.filter(s=>s.tipo==='bodega');
+  // 2. Clasificar sucursales
+  const bodegas   = sucursales.filter(s=>s.tipo==='bodega');
   const bodegaIds = new Set(bodegas.map(s=>s.id));
 
   return Object.values(map).map(row=>{
-    // Stock en bodega: buscar el producto en sucursales de tipo bodega
+    // Stock en TIENDA (sucursal donde se vendió)
+    let stockTienda = 0;
+    productos.forEach(p=>{
+      if((p.id===row.prodId || p.sku===row.sku || p.barcode===row.sku) && p.sucursalId===row.sucId){
+        stockTienda += Number((p.stock||{})[row.talla]||0);
+      }
+    });
+
+    // ── FILTRO CLAVE: solo mostrar si ya no hay stock en tienda ──
+    if(stockTienda > 0) return null;
+
+    // Stock en BODEGA
     let stockBodega = 0;
     productos.forEach(p=>{
-      // mismo producto o mismo sku/barcode
       if((p.id===row.prodId || p.sku===row.sku || p.barcode===row.sku) && bodegaIds.has(p.sucursalId)){
         stockBodega += Number((p.stock||{})[row.talla]||0);
       }
@@ -12717,10 +12727,11 @@ function _buildRecuperacionData(){
       if(ent) status='recuperado';
     }
 
+    row.stockTienda = stockTienda;
     row.stockBodega = stockBodega;
     row.status = status;
     return row;
-  });
+  }).filter(Boolean); // eliminar tallas con stock > 0 en tienda
 }
 
 async function renderRecuperacion(){
