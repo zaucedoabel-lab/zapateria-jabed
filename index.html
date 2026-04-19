@@ -196,53 +196,80 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
 }
 
 /* ══════ GRID MENU — Opción B: App Icons ══════ */
-#page-grid-menu{background:var(--bg);min-height:calc(100vh - 100px)}
-.gm-header{display:flex;align-items:center;gap:12px;padding:8px 0 20px}
-.gm-back-btn{display:flex;align-items:center;gap:8px;padding:10px 18px;
-  background:var(--s2);border:1px solid var(--border);border-radius:12px;
-  cursor:pointer;font-size:14px;color:var(--cream);font-weight:700;transition:all .15s}
-.gm-back-btn:hover{background:var(--s3);transform:translateX(-2px)}
-.gm-title{font-size:20px;font-weight:800;color:var(--cream)}
-.gm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}
-@media(max-width:900px){.gm-grid{grid-template-columns:repeat(3,1fr);gap:16px}}
-@media(max-width:600px){.gm-grid{grid-template-columns:repeat(2,1fr);gap:12px}}
-/* Category cards */
-.gm-cat-card{
-  display:flex;flex-direction:column;align-items:stretch;
-  padding:0;border-radius:24px;cursor:pointer;overflow:hidden;
-  transition:transform .2s,box-shadow .2s;border:none;
-  box-shadow:0 6px 28px rgba(0,0,0,.35);min-height:220px;
-  position:relative;
+/* ══ GRID MENU — ESTILO PROFESIONAL AZUL ══ */
+#page-grid-menu{
+  background:linear-gradient(160deg,#0d1b2e 0%,#0a2240 40%,#0d2d4a 100%);
+  min-height:calc(100vh - 52px);padding:28px 24px 40px;
 }
-.gm-cat-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 12px 40px rgba(0,0,0,.5)}
-.gm-cat-card:active{transform:scale(.97)}
-.gm-cat-bg{width:100%;min-height:inherit;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:22px 20px 20px;box-sizing:border-box}
-.gm-cat-svg-wrap{width:90px;height:90px;border-radius:22px;
+.gm-header{display:flex;align-items:center;gap:12px;padding:0 0 24px}
+.gm-back-btn{display:flex;align-items:center;gap:8px;padding:9px 18px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;
+  cursor:pointer;font-size:14px;color:rgba(255,255,255,.85);font-weight:600;transition:all .15s}
+.gm-back-btn:hover{background:rgba(255,255,255,.14);transform:translateX(-2px)}
+.gm-title{font-size:20px;font-weight:800;color:#fff;letter-spacing:.5px}
+/* Greeting header */
+.gm-greeting{margin-bottom:28px}
+.gm-greeting-title{font-size:26px;font-weight:900;color:#fff;margin-bottom:4px;font-family:var(--display)}
+.gm-greeting-sub{font-size:14px;color:rgba(255,255,255,.55);letter-spacing:.5px}
+/* Grids */
+.gm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:900px){.gm-grid{grid-template-columns:repeat(3,1fr);gap:14px}}
+@media(max-width:600px){.gm-grid{grid-template-columns:repeat(2,1fr);gap:10px}}
+/* Category cards — estilo azul profesional */
+.gm-cat-card{
+  border-radius:20px;cursor:pointer;overflow:hidden;border:none;
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .18s;
+  box-shadow:0 8px 32px rgba(0,0,0,.35);
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  min-height:0;
+}
+.gm-cat-card:hover{transform:translateY(-5px) scale(1.03);box-shadow:0 16px 44px rgba(0,0,0,.5);border-color:rgba(255,255,255,.22)}
+.gm-cat-card:active{transform:scale(.96)}
+.gm-cat-bg{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:28px 16px 24px;gap:16px;
+  background:linear-gradient(160deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.04) 100%);
+  min-height:180px;
+}
+.gm-cat-svg-wrap{
+  width:88px;height:88px;border-radius:22px;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,.22);backdrop-filter:blur(4px);margin-bottom:auto}
-.gm-cat-svg-wrap svg{width:54px;height:54px}
-.gm-cat-bottom{margin-top:16px}
-.gm-cat-name{font-size:20px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:4px;
-  text-shadow:0 2px 8px rgba(0,0,0,.4);text-transform:uppercase;letter-spacing:1px}
-.gm-cat-count{font-size:12px;color:rgba(255,255,255,.8);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+  background:rgba(255,255,255,.10);
+  border:1.5px solid rgba(255,255,255,.18);
+  transition:background .18s;
+}
+.gm-cat-card:hover .gm-cat-svg-wrap{background:rgba(255,255,255,.18)}
+.gm-cat-svg-wrap svg{width:50px;height:50px}
+.gm-cat-bottom{text-align:center}
+.gm-cat-name{font-size:15px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:3px;
+  text-shadow:0 1px 6px rgba(0,0,0,.5);letter-spacing:.3px}
+.gm-cat-count{font-size:11px;color:rgba(255,255,255,.5);font-weight:500;letter-spacing:.5px;text-transform:uppercase}
 /* Submodule cards */
 .gm-mod-card{
-  display:flex;flex-direction:column;align-items:stretch;
-  padding:0;border-radius:20px;cursor:pointer;overflow:hidden;
-  transition:transform .2s,box-shadow .2s;border:none;
-  box-shadow:0 4px 18px rgba(0,0,0,.3);min-height:180px;
+  border-radius:16px;cursor:pointer;overflow:hidden;border:1px solid rgba(255,255,255,.1);
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .18s;
+  box-shadow:0 4px 18px rgba(0,0,0,.3);
+  background:rgba(255,255,255,.05);
 }
-.gm-mod-card:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 10px 30px rgba(0,0,0,.4)}
-.gm-mod-card:active{transform:scale(.97)}
-.gm-mod-bg{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:18px 16px 16px}
-.gm-mod-svg-wrap{width:70px;height:70px;border-radius:18px;
+.gm-mod-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 10px 30px rgba(0,0,0,.45);border-color:rgba(255,255,255,.2)}
+.gm-mod-card:active{transform:scale(.96)}
+.gm-mod-bg{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px 12px 18px;gap:12px;
+  background:linear-gradient(160deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,.02) 100%);
+  min-height:150px;
+}
+.gm-mod-svg-wrap{
+  width:64px;height:64px;border-radius:16px;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,.22);backdrop-filter:blur(4px)}
-.gm-mod-svg-wrap svg{width:40px;height:40px}
-.gm-mod-bottom{margin-top:14px}
-.gm-mod-name{font-size:14px;font-weight:900;color:#fff;line-height:1.3;
-  text-shadow:0 1px 4px rgba(0,0,0,.35);text-transform:uppercase;letter-spacing:.8px}
-.gm-mod-icon,.gm-cat-icon{display:none} /* hide old emoji icons */
+  background:rgba(255,255,255,.10);border:1.5px solid rgba(255,255,255,.18);
+}
+.gm-mod-svg-wrap svg{width:36px;height:36px}
+.gm-mod-bottom{text-align:center}
+.gm-mod-name{font-size:12px;font-weight:700;color:#fff;line-height:1.3;
+  text-shadow:0 1px 4px rgba(0,0,0,.35);letter-spacing:.3px}
+.gm-mod-icon,.gm-cat-icon{display:none}
 .nav-section{padding:8px;flex:1}
 .nav-label{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:1.5px;padding:10px 10px 4px;font-weight:600}
 .nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .15s;margin-bottom:1px;border:1px solid transparent;user-select:none}
@@ -671,120 +698,147 @@ select option{background:var(--s2)}
             <button class="gm-back-btn" onclick="gmBack()">← Regresar</button>
             <div class="gm-title" id="gm-cat-title"></div>
           </div>
-          <!-- Category grid — App icon style -->
+          <!-- Category grid — estilo profesional azul -->
+          <div style="margin-bottom:28px">
+            <div style="font-size:26px;font-weight:900;color:#fff;font-family:var(--display);margin-bottom:4px">Zapatería JABED</div>
+            <div style="font-size:13px;color:rgba(255,255,255,.45);letter-spacing:.5px">Selecciona un módulo para continuar</div>
+          </div>
           <div id="gm-cats" class="gm-grid">
+
+            <!-- INVENTARIO -->
             <div class="gm-cat-card" onclick="gmShowCat('inventario')">
-              <div class="gm-cat-bg" style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%)">
-                <div class="gm-cat-svg-wrap"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Silueta calzado -->
-  <path d="M8 68 C8 68 10 58 20 55 C28 53 36 56 44 55 C52 54 58 50 64 46 C70 42 76 40 82 42 C88 44 92 50 90 56 C88 62 80 66 72 67 C64 68 12 68 8 68 Z" fill="rgba(255,255,255,0.9)"/>
-  <path d="M8 68 C8 68 10 58 20 55 C28 53 36 56 44 55 C52 54 58 50 64 46 C70 42 76 40 82 42 C88 44 92 50 90 56 C88 62 80 66 72 67 C64 68 12 68 8 68 Z" stroke="rgba(255,255,255,0.3)" stroke-width="1" fill="rgba(255,255,255,0.85)"/>
-  <path d="M14 68 L14 62 C14 62 18 56 24 55" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" fill="none"/>
-  <!-- Playera T-shirt pequeña arriba -->
-  <path d="M35 12 L27 20 L32 22 L32 36 L52 36 L52 22 L57 20 L49 12 C49 12 47 17 42 17 C37 17 35 12 35 12 Z" fill="rgba(255,255,255,0.75)" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
-</svg></div>
+              <div class="gm-cat-bg">
+                <div class="gm-cat-svg-wrap">
+                  <svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Caja/bodega -->
+                    <rect x="6" y="18" width="36" height="24" rx="3"/>
+                    <path d="M6 18l6-10h24l6 10"/>
+                    <path d="M16 18v4a8 8 0 0 0 16 0v-4"/>
+                    <!-- Estante lineas -->
+                    <line x1="6" y1="30" x2="42" y2="30"/>
+                  </svg>
+                </div>
                 <div class="gm-cat-bottom">
                   <div class="gm-cat-name">Inventario</div>
                   <div class="gm-cat-count">6 módulos</div>
                 </div>
               </div>
             </div>
+
+            <!-- VENTAS / POS -->
             <div class="gm-cat-card" onclick="gmShowCat('ventas')">
-              <div class="gm-cat-bg" style="background:linear-gradient(135deg,#f0b429 0%,#f97316 100%)">
-                <div class="gm-cat-svg-wrap"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Cuerpo caja registradora -->
-  <rect x="10" y="35" width="80" height="52" rx="6" fill="rgba(255,255,255,0.9)"/>
-  <!-- Pantalla -->
-  <rect x="18" y="42" width="48" height="18" rx="3" fill="rgba(240,180,41,0.7)"/>
-  <text x="42" y="56" font-family="monospace" font-size="10" fill="white" text-anchor="middle" font-weight="bold">$235</text>
-  <!-- Gaveta -->
-  <rect x="10" y="75" width="80" height="12" rx="3" fill="rgba(255,255,255,0.4)"/>
-  <rect x="44" y="77" width="12" height="8" rx="2" fill="rgba(255,255,255,0.6)"/>
-  <!-- Teclado botones -->
-  <rect x="72" y="43" width="10" height="7" rx="2" fill="rgba(255,255,255,0.6)"/>
-  <rect x="72" y="53" width="10" height="7" rx="2" fill="rgba(255,255,255,0.6)"/>
-  <rect x="72" y="63" width="10" height="7" rx="2" fill="rgba(255,255,255,0.6)"/>
-  <!-- Rollo papel arriba -->
-  <rect x="30" y="22" width="40" height="16" rx="3" fill="rgba(255,255,255,0.7)"/>
-  <line x1="38" y1="26" x2="62" y2="26" stroke="rgba(240,180,41,0.8)" stroke-width="1.5"/>
-  <line x1="38" y1="30" x2="56" y2="30" stroke="rgba(240,180,41,0.8)" stroke-width="1.5"/>
-  <line x1="38" y1="34" x2="58" y2="34" stroke="rgba(240,180,41,0.8)" stroke-width="1.5"/>
-</svg></div>
+              <div class="gm-cat-bg">
+                <div class="gm-cat-svg-wrap">
+                  <svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Caja registradora -->
+                    <rect x="6" y="20" width="36" height="22" rx="3"/>
+                    <rect x="12" y="25" width="18" height="8" rx="2"/>
+                    <rect x="6" y="34" width="36" height="8" rx="0"/>
+                    <rect x="20" y="36" width="8" height="4" rx="1"/>
+                    <!-- Rollo papel -->
+                    <rect x="14" y="10" width="20" height="12" rx="2"/>
+                    <line x1="18" y1="13" x2="30" y2="13"/>
+                    <line x1="18" y1="17" x2="28" y2="17"/>
+                    <!-- Botones -->
+                    <rect x="32" y="26" width="5" height="3" rx="1"/>
+                    <rect x="32" y="31" width="5" height="3" rx="1"/>
+                  </svg>
+                </div>
                 <div class="gm-cat-bottom">
                   <div class="gm-cat-name">Ventas</div>
                   <div class="gm-cat-count">5 módulos</div>
                 </div>
               </div>
             </div>
+
+            <!-- FINANZAS -->
             <div class="gm-cat-card" onclick="gmShowCat('finanzas')">
-              <div class="gm-cat-bg" style="background:linear-gradient(135deg,#10b981 0%,#059669 100%)">
-                <div class="gm-cat-svg-wrap"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Calculadora -->
-  <rect x="12" y="10" width="55" height="80" rx="7" fill="rgba(255,255,255,0.9)"/>
-  <!-- Pantalla -->
-  <rect x="19" y="18" width="41" height="20" rx="3" fill="rgba(16,185,129,0.6)"/>
-  <text x="55" y="33" font-family="monospace" font-size="11" fill="white" text-anchor="end" font-weight="bold">1,250</text>
-  <!-- Botones fila 1 -->
-  <rect x="19" y="44" width="11" height="9" rx="2" fill="rgba(255,255,255,0.5)"/>
-  <rect x="33" y="44" width="11" height="9" rx="2" fill="rgba(255,255,255,0.5)"/>
-  <rect x="47" y="44" width="13" height="9" rx="2" fill="rgba(16,185,129,0.6)"/>
-  <!-- Botones fila 2 -->
-  <rect x="19" y="57" width="11" height="9" rx="2" fill="rgba(255,255,255,0.5)"/>
-  <rect x="33" y="57" width="11" height="9" rx="2" fill="rgba(255,255,255,0.5)"/>
-  <rect x="47" y="57" width="13" height="9" rx="2" fill="rgba(255,255,255,0.5)"/>
-  <!-- Botones fila 3 -->
-  <rect x="19" y="70" width="11" height="9" rx="2" fill="rgba(255,255,255,0.5)"/>
-  <rect x="33" y="70" width="11" height="9" rx="2" fill="rgba(255,255,255,0.5)"/>
-  <rect x="47" y="70" width="13" height="18" rx="2" fill="rgba(16,185,129,0.7)"/>
-  <!-- Fila 4 -->
-  <rect x="19" y="83" width="25" height="7" rx="2" fill="rgba(255,255,255,0.5)"/>
-  <!-- Pluma diagonal -->
-  <line x1="72" y1="20" x2="92" y2="72" stroke="rgba(255,255,255,0.9)" stroke-width="4" stroke-linecap="round"/>
-  <line x1="68" y1="16" x2="74" y2="22" stroke="rgba(255,255,255,0.9)" stroke-width="3" stroke-linecap="round"/>
-  <path d="M90 70 L94 80 L84 76 Z" fill="rgba(255,255,255,0.9)"/>
-  <line x1="70" y1="14" x2="66" y2="10" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round"/>
-</svg></div>
+              <div class="gm-cat-bg">
+                <div class="gm-cat-svg-wrap">
+                  <svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Calculadora -->
+                    <rect x="10" y="6" width="28" height="36" rx="4"/>
+                    <rect x="14" y="10" width="20" height="9" rx="2"/>
+                    <!-- Botones 3x3 -->
+                    <rect x="14" y="23" width="5" height="4" rx="1"/>
+                    <rect x="21.5" y="23" width="5" height="4" rx="1"/>
+                    <rect x="29" y="23" width="5" height="8" rx="1"/>
+                    <rect x="14" y="30" width="5" height="4" rx="1"/>
+                    <rect x="21.5" y="30" width="5" height="4" rx="1"/>
+                    <rect x="14" y="37" width="13" height="3" rx="1"/>
+                  </svg>
+                </div>
                 <div class="gm-cat-bottom">
                   <div class="gm-cat-name">Finanzas</div>
                   <div class="gm-cat-count">5 módulos</div>
                 </div>
               </div>
             </div>
+
+            <!-- MARKETING -->
             <div class="gm-cat-card" onclick="gmShowCat('marketing')">
-              <div class="gm-cat-bg" style="background:linear-gradient(135deg,#f43f5e 0%,#e11d48 100%)">
-                <div class="gm-cat-svg-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-    </svg></div>
+              <div class="gm-cat-bg">
+                <div class="gm-cat-svg-wrap">
+                  <svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Etiqueta precio -->
+                    <path d="M8 8h18l14 16-18 16L8 24Z"/>
+                    <circle cx="20" cy="20" r="3"/>
+                    <!-- Lineas de precio -->
+                    <line x1="28" y1="22" x2="40" y2="22"/>
+                    <line x1="30" y1="27" x2="38" y2="27"/>
+                    <line x1="26" y1="17" x2="40" y2="17"/>
+                  </svg>
+                </div>
                 <div class="gm-cat-bottom">
                   <div class="gm-cat-name">Marketing</div>
                   <div class="gm-cat-count">3 módulos</div>
                 </div>
               </div>
             </div>
+
+            <!-- CONFIGURACIÓN -->
             <div class="gm-cat-card" onclick="gmShowCat('configuracion')">
-              <div class="gm-cat-bg" style="background:linear-gradient(135deg,#64748b 0%,#475569 100%)">
-                <div class="gm-cat-svg-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-    </svg></div>
+              <div class="gm-cat-bg">
+                <div class="gm-cat-svg-wrap">
+                  <svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Engrane -->
+                    <circle cx="24" cy="24" r="6"/>
+                    <path d="M24 6v4M24 38v4M6 24h4M38 24h4M10.1 10.1l2.8 2.8M35.1 35.1l2.8 2.8M10.1 37.9l2.8-2.8M35.1 12.9l2.8-2.8"/>
+                    <!-- Segundo engrane pequeño -->
+                    <circle cx="36" cy="12" r="4"/>
+                    <path d="M36 6v2M36 16v2M30 12h2M40 12h2"/>
+                  </svg>
+                </div>
                 <div class="gm-cat-bottom">
                   <div class="gm-cat-name">Configuración</div>
                   <div class="gm-cat-count">4 módulos</div>
                 </div>
               </div>
             </div>
+
+            <!-- APROBACIONES -->
             <div class="gm-cat-card" onclick="goFromGrid('bitacora')">
-              <div class="gm-cat-bg" style="background:linear-gradient(135deg,#f0b429 0%,#d97706 100%)">
-                <div class="gm-cat-svg-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-      <polyline points="22 4 12 14.01 9 11.01"/>
-    </svg></div>
+              <div class="gm-cat-bg">
+                <div class="gm-cat-svg-wrap">
+                  <svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Documento con check -->
+                    <rect x="10" y="6" width="28" height="36" rx="3"/>
+                    <polyline points="18,24 22,28 30,18"/>
+                    <!-- Líneas texto -->
+                    <line x1="15" y1="14" x2="33" y2="14"/>
+                    <line x1="15" y1="19" x2="25" y2="19"/>
+                    <!-- Líneas debajo del check -->
+                    <line x1="15" y1="34" x2="33" y2="34"/>
+                    <line x1="15" y1="38" x2="28" y2="38"/>
+                  </svg>
+                </div>
                 <div class="gm-cat-bottom">
                   <div class="gm-cat-name">Aprobaciones</div>
                   <div class="gm-cat-count">Bitácora</div>
                 </div>
               </div>
             </div>
+
           </div>
           <!-- Submodules grid (hidden until cat selected) -->
           <div id="gm-mods" class="gm-grid" style="display:none"></div>
@@ -11391,7 +11445,7 @@ function gmShowCat(cat){
   modsEl.innerHTML = mods.map(m=>{
     const def = getModDef(m.page);
     return `<div class="gm-mod-card" onclick="goFromGrid('${m.page}')">
-      <div class="gm-mod-bg" style="background:${def.g}">
+      <div class="gm-mod-bg">
         <div class="gm-mod-svg-wrap">${def.svg}</div>
         <div class="gm-mod-bottom">
           <div class="gm-mod-name">${m.name}</div>
