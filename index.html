@@ -1280,14 +1280,48 @@ select option{background:var(--s2)}
               <!-- Cliente -->
               <div style="margin-bottom:12px">
                 <label style="display:block;font-size:14px;font-weight:700;color:var(--cream);margin-bottom:6px">👤 Cliente</label>
-                <select id="c-cliente-sel" onchange="onClienteSelect()" style="width:100%;font-size:15px;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--cream)">
-                  <option value="">— Cliente general —</option>
-                </select>
+
+                <!-- Búsqueda por celular -->
+                <div style="position:relative;margin-bottom:8px">
+                  <div style="display:flex;gap:8px;align-items:center">
+                    <div style="position:relative;flex:1">
+                      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">📱</span>
+                      <input type="tel" id="c-cel-buscar"
+                        placeholder="Celular del cliente..."
+                        maxlength="15"
+                        oninput="buscarClientePorCelular()"
+                        style="width:100%;padding:11px 12px 11px 36px;font-size:16px;font-weight:700;
+                          border-radius:8px;border:2px solid var(--border);background:var(--s3);
+                          color:var(--cream);letter-spacing:1px;font-family:var(--mono)"
+                      >
+                    </div>
+                    <button onclick="limpiarClienteCelular()" title="Limpiar"
+                      style="padding:10px 12px;background:var(--s3);border:1px solid var(--border);
+                        border-radius:8px;color:var(--muted);cursor:pointer;font-size:14px;white-space:nowrap">
+                      ✕
+                    </button>
+                  </div>
+
+                  <!-- Resultado de búsqueda -->
+                  <div id="c-cel-resultado" style="display:none;margin-top:8px;border-radius:10px;overflow:hidden;border:2px solid var(--accent);background:var(--s2)">
+                  </div>
+
+                  <!-- Cliente General (cuando no hay número) -->
+                  <div id="c-cli-general" style="margin-top:6px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px">
+                    <span style="font-size:18px">👤</span>
+                    <span style="font-size:14px;font-weight:600;color:var(--muted)">Cliente General</span>
+                  </div>
+                </div>
+
                 <div id="c-cliente-info" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:8px;margin-top:6px;font-size:12px"></div>
                 <div id="c-cumple-alert" style="display:none;background:#2a1e08;border:1px solid var(--gold);border-radius:8px;padding:8px;margin-top:6px;font-size:13px;color:var(--gold)">
                   🎂 ¡Cumpleaños hoy! Descuento del <span id="c-cumple-pct"></span>%
                   <button class="btn btn-gold btn-xs" style="margin-left:8px" onclick="aplicarDescCumple()">Aplicar</button>
                 </div>
+                <!-- Select oculto para compatibilidad con el resto del sistema -->
+                <select id="c-cliente-sel" onchange="onClienteSelect()" style="display:none">
+                  <option value="">— Cliente general —</option>
+                </select>
               </div>
 
               <!-- Vendedor — solo texto, no selector -->
@@ -4741,6 +4775,10 @@ function clearCart(){
     const cliSel=document.getElementById('c-cliente-sel');if(cliSel)cliSel.value='';
     const cliInfo=document.getElementById('c-cliente-info');if(cliInfo)cliInfo.style.display='none';
     const cumpleAl=document.getElementById('c-cumple-alert');if(cumpleAl)cumpleAl.style.display='none';
+    // Limpiar campo celular
+    const celInput=document.getElementById('c-cel-buscar');if(celInput)celInput.value='';
+    const celRes=document.getElementById('c-cel-resultado');if(celRes)celRes.style.display='none';
+    const cliGen=document.getElementById('c-cli-general');if(cliGen)cliGen.style.display='flex';
     const cambioEl=document.getElementById('c-cambio');if(cambioEl)cambioEl.textContent='$0.00';
     const monederoDisp=document.getElementById('c-monedero-disp');if(monederoDisp)monederoDisp.textContent='$0.00';
     const monederoResto=document.getElementById('c-monedero-resto');if(monederoResto)monederoResto.textContent='';
@@ -6084,6 +6122,10 @@ async function cobrar(){
       const cliSel=document.getElementById('c-cliente-sel');if(cliSel)cliSel.value='';
       const cliInfo=document.getElementById('c-cliente-info');if(cliInfo)cliInfo.style.display='none';
       const cumpleAl=document.getElementById('c-cumple-alert');if(cumpleAl)cumpleAl.style.display='none';
+      // Limpiar campo celular
+      const celInput2=document.getElementById('c-cel-buscar');if(celInput2)celInput2.value='';
+      const celRes2=document.getElementById('c-cel-resultado');if(celRes2)celRes2.style.display='none';
+      const cliGen2=document.getElementById('c-cli-general');if(cliGen2)cliGen2.style.display='flex';
       const promoAl=document.getElementById('c-promo-alert');if(promoAl)promoAl.style.display='none';
       const monSec=document.getElementById('c-monedero-section');if(monSec)monSec.style.display='none';
       const cambioEl=document.getElementById('c-cambio');if(cambioEl)cambioEl.textContent='$0.00';
@@ -12836,6 +12878,105 @@ const _origRenderTransferencias = typeof renderTransferencias==='function' ? ren
   // Monkey-patch renderTransferencias para refrescar recuperacion
   window._recRefreshHook = checkAndRefresh;
 })();
+
+// ══════════════════ BÚSQUEDA CLIENTE POR CELULAR (POS) ══════════════════
+
+function buscarClientePorCelular(){
+  const input  = document.getElementById('c-cel-buscar');
+  const result = document.getElementById('c-cel-resultado');
+  const general= document.getElementById('c-cli-general');
+  const sel    = document.getElementById('c-cliente-sel');
+  const val    = (input?.value||'').replace(/\D/g,''); // solo dígitos
+
+  if(!val || val.length < 3){
+    // Sin número suficiente → cliente general
+    if(result) result.style.display='none';
+    if(general) general.style.display='flex';
+    if(sel){ sel.value=''; onClienteSelect(); }
+    return;
+  }
+
+  // Buscar en clientes por celular o teléfono
+  const encontrado = clientes.find(c=>{
+    const cel = (c.celular||c.telefono||'').replace(/\D/g,'');
+    return cel && cel.includes(val);
+  });
+
+  if(general) general.style.display='none';
+
+  if(encontrado){
+    const nombre = `${encontrado.nombre||''} ${encontrado.apPat||''} ${encontrado.apMat||''}`.trim();
+    const puntos = encontrado.puntos||0;
+    const hoyMD  = hoy().slice(5);
+    const esCumple = (encontrado.cumple||'').slice(5)===hoyMD;
+
+    if(result){
+      result.style.display='block';
+      result.innerHTML=`
+        <div style="padding:12px 14px;display:flex;align-items:center;gap:12px">
+          <div style="width:44px;height:44px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);
+            display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">👤</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:16px;font-weight:800;color:var(--cream)">${nombre}${esCumple?' 🎂':''}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:1px">📱 ${encontrado.celular||encontrado.telefono||''}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Cash</div>
+            <div style="font-size:20px;font-weight:900;color:var(--gold);font-family:var(--mono)">
+              $${puntos.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})}
+            </div>
+          </div>
+        </div>
+        ${esCumple?`<div style="background:#2a1e08;border-top:1px solid var(--gold)44;padding:7px 14px;font-size:12px;color:var(--gold)">🎂 ¡Hoy es su cumpleaños! Descuento del ${configGeneral.cumpleanosDesc||10}%
+          <button class="btn btn-gold btn-xs" style="margin-left:8px" onclick="aplicarDescCumple()">Aplicar</button></div>`:''}
+      `;
+    }
+
+    // Sincronizar con el select oculto para que el sistema de cobro funcione igual
+    if(sel){
+      // Asegurarse que la option existe
+      let opt = sel.querySelector(`option[value="${encontrado.id}"]`);
+      if(!opt){
+        opt = document.createElement('option');
+        opt.value = encontrado.id;
+        opt.textContent = nombre;
+        sel.appendChild(opt);
+      }
+      sel.value = encontrado.id;
+      onClienteSelect();
+    }
+  } else {
+    // Número escrito pero no encontrado
+    if(result){
+      result.style.display='block';
+      result.innerHTML=`
+        <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;color:var(--muted)">
+          <span style="font-size:20px">🔍</span>
+          <div>
+            <div style="font-size:13px;font-weight:600">No encontrado</div>
+            <div style="font-size:11px">Se registrará como Cliente General</div>
+          </div>
+        </div>`;
+    }
+    if(sel){ sel.value=''; onClienteSelect(); }
+  }
+}
+
+function limpiarClienteCelular(){
+  const input  = document.getElementById('c-cel-buscar');
+  const result = document.getElementById('c-cel-resultado');
+  const general= document.getElementById('c-cli-general');
+  const sel    = document.getElementById('c-cliente-sel');
+  if(input)  input.value='';
+  if(result) result.style.display='none';
+  if(general)general.style.display='flex';
+  if(sel){   sel.value=''; onClienteSelect(); }
+  const infoBox=document.getElementById('c-cliente-info');
+  if(infoBox) infoBox.style.display='none';
+  const cumple=document.getElementById('c-cumple-alert');
+  if(cumple)  cumple.style.display='none';
+  input?.focus();
+}
 
 // ══════════════════ FIREBASE AUTH OBSERVER ══════════════════
 let fbInterval=setInterval(()=>{
