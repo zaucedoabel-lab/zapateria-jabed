@@ -3011,9 +3011,9 @@ body{background:#071222!important}
         <div class="fg"><label>Temporada</label><select id="p-temporada"><option value="">Seleccionar…</option><option>Primavera/Verano</option><option>Otoño/Invierno</option><option>Todo el Año</option><option>Liquidación</option><option>2024</option><option>2025</option><option>2026</option><option>2027</option></select></div>
       </div>
       <div class="fr fr3">
-        <div class="fg"><label>Marca</label><input type="text" id="p-marca" placeholder="Flexi"></div>
+        <div class="fg"><label>Marca</label><select id="p-marca"><option value="">Seleccionar marca…</option></select></div>
         <div class="fg"><label>Precio de Venta ($)</label><input type="number" id="p-precio" step="0.01" placeholder="0.00"></div>
-        <div class="fg"><label>Color</label><input type="text" id="p-color" placeholder="Negro, Café, Beige…"></div>
+        <div class="fg"><label>Color</label><select id="p-color"><option value="">Seleccionar color…</option></select></div>
       </div>
       <div class="fr fr2">
         <div class="fg"><label>Sucursal</label><select id="p-suc"><option value="">Cargando…</option></select></div>
@@ -4072,6 +4072,15 @@ async function deleteSucursal(id, nombre){
 }
 
 // ══════════════════ PRODUCTOS ══════════════════
+// Pobla un select del modal de producto con datos del catálogo
+function populateProdCatalogSelect(selectId, catalogKey, blankLabel, selectedVal){
+  const sel = document.getElementById(selectId); if(!sel) return;
+  const items = getCatalogList(catalogKey);
+  sel.innerHTML = `<option value="">${blankLabel}</option>` +
+    items.map(v=>`<option value="${v}"${v===selectedVal?' selected':''}>${v}</option>`).join('');
+  if(selectedVal && items.includes(selectedVal)) sel.value = selectedVal;
+}
+
 function abrirModalProducto(id){
   editProdId=id||null; photoDataUrl=null;
   document.getElementById('mp-title').textContent=id?'Editar Producto':'Nuevo Producto';
@@ -4080,7 +4089,8 @@ function abrirModalProducto(id){
   // Populate sucursal select first
   const sucSel=document.getElementById('p-suc');
   sucSel.innerHTML=sucursales.map(s=>`<option value="${s.id}">${s.nombre} (${s.tipo})</option>`).join('');
-  const fields=['bar','sku','desc','marca','precio','color','notas','costo'];
+  // Campos simples (texto/número) — excluir marca y color que ahora son selects
+  const fields=['bar','sku','desc','precio','notas','costo'];
   if(id){
     const p=productos.find(x=>x.id===id);
     if(p){
@@ -4088,7 +4098,10 @@ function abrirModalProducto(id){
       document.getElementById('p-cat').value=p.cat||'Dama';
       document.getElementById('p-linea').value=p.linea||'';
       document.getElementById('p-temporada').value=p.temporada||'';
-      setTimeout(()=>populateLocacionSelect(p.locacion||''),50);
+      // Poblar selects de catálogo con valor actual
+      populateProdCatalogSelect('p-marca','marcas','Sin marca',p.marca||'');
+      populateProdCatalogSelect('p-color','colores','Sin color',p.color||'');
+      populateLocacionSelect(p.locacion||'');
       if(p.sucursalId)sucSel.value=p.sucursalId;
       if(p.foto){document.getElementById('photo-preview').src=p.foto;document.getElementById('photo-preview').style.display='block';document.getElementById('photo-placeholder').style.display='none';}
       renderTallasSel(p);
@@ -4098,6 +4111,10 @@ function abrirModalProducto(id){
     document.getElementById('p-cat').value='Dama';
     document.getElementById('p-linea').value='';
     document.getElementById('p-temporada').value='';
+    // Poblar selects de catálogo vacíos para nuevo producto
+    populateProdCatalogSelect('p-marca','marcas','Seleccionar marca…','');
+    populateProdCatalogSelect('p-color','colores','Seleccionar color…','');
+    populateLocacionSelect('');
     if(sucursales.length>0)sucSel.value=sucursales[0].id;
     renderTallasSel(null);
   }
@@ -5827,6 +5844,9 @@ function updateProductoSelects(){
   upd('inv-cat',getCatalogList('categorias'),'Todas');
   upd('inv-linea',getCatalogList('lineas'),'Todas');
   upd('inv-temp',getCatalogList('temporadas'),'Todas');
+  // Marca y Color — re-poblar si el modal está abierto
+  upd('p-marca',getCatalogList('marcas'),'Seleccionar marca…');
+  upd('p-color',getCatalogList('colores'),'Seleccionar color…');
   populateVendedoresSelect();
 }
 
