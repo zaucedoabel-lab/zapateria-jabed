@@ -357,8 +357,8 @@ select option{background:var(--s2)}
 /* ══ PRODUCT CARD (POS) ══ */
 .prod-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s;overflow:hidden}
 .prod-card:hover{border-color:rgba(108,99,255,.5);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.4)}
-.prod-img{width:100%;height:120px;object-fit:cover;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:36px;color:var(--faint)}
-.prod-img img{width:100%;height:100%;object-fit:cover}
+.prod-img{width:100%;aspect-ratio:1;height:auto;min-height:120px;object-fit:cover;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:36px;color:var(--faint);overflow:hidden}
+.prod-img img{width:100%;height:100%;object-fit:cover;display:block}
 .prod-info{padding:10px 12px}
 
 /* ══ PHOTO UPLOAD ══ */
@@ -4647,7 +4647,7 @@ function renderPOS(){
     const tot=sumS(p.stock);
     const suc=sucursales.find(s=>s.id===p.sucursalId);
     return`<div class="prod-card" onclick="openAddCart('${p.id}')">
-      <div class="prod-img" style="height:100px">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div>
+      <div class="prod-img" style="aspect-ratio:1;height:auto;min-height:120px">${p.foto?`<img src="${p.foto}" alt="${p.desc}" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:36px">👟</span>`}</div>
       <div class="prod-info">
         <div style="font-size:15px;font-weight:900;color:var(--gold);font-family:var(--mono);
           margin-bottom:3px;letter-spacing:.5px">${p.sku||p.barcode||'—'}</div>
@@ -8596,7 +8596,7 @@ function renderPOS(){
     const tot  = sumS(p.stock);
     const suc  = sucursales.find(s=>s.id===p.sucursalId);
     return`<div class="prod-card" onclick="openAddCart('${p.id}')">
-      <div class="prod-img" style="height:100px">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div>
+      <div class="prod-img" style="aspect-ratio:1;height:auto;min-height:120px">${p.foto?`<img src="${p.foto}" alt="${p.desc}" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:36px">👟</span>`}</div>
       <div class="prod-info">
         <div style="font-size:15px;font-weight:900;color:var(--gold);font-family:var(--mono);
           margin-bottom:3px;letter-spacing:.5px">${p.sku||p.barcode||'—'}</div>
