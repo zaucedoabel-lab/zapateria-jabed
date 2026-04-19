@@ -557,6 +557,75 @@ select option{background:var(--s2)}
   .mod-tab{padding:0 12px;font-size:11px}
 }
 
+/* ══ CROSS-MODULE BAR (barra de navegación entre módulos) ══ */
+#cross-mod-bar{
+  display:none;
+  align-items:stretch;
+  background:#071222;
+  border-bottom:2px solid rgba(255,255,255,.1);
+  flex-shrink:0;
+  z-index:300;
+  overflow-x:auto;
+  scrollbar-width:none;
+  flex-wrap:wrap;
+}
+#cross-mod-bar::-webkit-scrollbar{display:none}
+body.in-module #cross-mod-bar{display:flex}
+body.in-module .topbar{display:none!important}
+body.in-module #nav-bar{display:none!important}
+body.in-module #fixed-back-btn{display:none!important}
+
+.cmb-back{
+  display:flex;align-items:center;justify-content:center;
+  gap:8px;padding:0 22px;
+  background:linear-gradient(135deg,#f0b429 0%,#f97316 100%);
+  border:none;border-right:3px solid rgba(0,0,0,.25);
+  cursor:pointer;font-size:14px;font-weight:900;color:#000;
+  white-space:nowrap;flex-shrink:0;letter-spacing:.5px;
+  text-transform:uppercase;transition:opacity .15s;min-height:52px;
+  box-shadow:4px 0 20px rgba(240,180,41,.3);
+}
+.cmb-back:hover{opacity:.88}
+.cmb-tab{
+  display:flex;align-items:center;justify-content:center;
+  padding:0 22px;min-height:52px;
+  font-size:12px;font-weight:800;color:rgba(255,255,255,.8);
+  cursor:pointer;border:none;
+  border-right:1px solid rgba(255,255,255,.08);
+  white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;
+  background:#1a3a6a;transition:all .15s;text-align:center;line-height:1.3;
+}
+.cmb-tab:hover{background:#2a4d8e;color:#fff}
+.cmb-tab.active{
+  background:#7c3aed;color:#fff;
+  box-shadow:inset 0 -3px 0 #a855f7,inset 0 3px 0 rgba(168,85,247,.3);
+  font-weight:900;
+}
+.cmb-spacer{flex:1;min-width:10px}
+.cmb-user-area{
+  display:flex;align-items:center;gap:8px;
+  padding:0 14px;flex-shrink:0;border-left:1px solid rgba(255,255,255,.08);
+}
+.cmb-user-txt{font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap}
+.cmb-signout{
+  padding:6px 12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+  border-radius:8px;color:rgba(255,255,255,.6);font-size:11px;font-weight:600;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.cmb-signout:hover{background:rgba(255,255,255,.14);color:#fff}
+
+/* ══ FONDO AZUL UNIFORME en toda la app ══ */
+body{background:#071222!important}
+.main{background:linear-gradient(175deg,#0d1b2e 0%,#0a2240 50%,#0d2d4a 100%)!important}
+.content{background:transparent!important;min-height:100%}
+.page{background:transparent}
+#page-grid-menu{background:linear-gradient(160deg,#0d1b2e 0%,#0a2240 40%,#0d2d4a 100%)}
+.topbar{background:#071222!important;border-bottom:1px solid rgba(255,255,255,.06)!important}
+#nav-bar{background:#071222!important}
+#auth{background:linear-gradient(160deg,#0d1b2e 0%,#0a2240 100%)!important}
+#loading{background:#071222!important}
+
+
 
 /* Reportes chart bars */
 .chart-bar-wrap{display:flex;flex-direction:column;gap:8px;padding:8px 0}
@@ -626,6 +695,9 @@ select option{background:var(--s2)}
       border-top:1px solid var(--border);min-height:42px;align-items:center">
     </div>
   </div>
+
+  <!-- CROSS MODULE BAR — barra de navegación entre módulos del mismo grupo -->
+  <div id="cross-mod-bar"><!-- populated by renderCrossModTabs() --></div>
 
   <div class="topbar">
     <div class="tb-logo">👟 Zapatería JABED</div>
@@ -722,7 +794,7 @@ select option{background:var(--s2)}
             <div class="gm-title" id="gm-cat-title"></div>
           </div>
           <!-- Category grid — estilo profesional azul -->
-          <div style="margin-bottom:36px">
+          <div id="gm-greeting" style="margin-bottom:36px">
             <div style="font-size:30px;font-weight:900;color:#fff;font-family:var(--display);margin-bottom:6px">Zapatería JABED</div>
             <div style="font-size:14px;color:rgba(255,255,255,.45);letter-spacing:.5px;text-transform:uppercase">Selecciona un módulo para continuar</div>
           </div>
@@ -11318,11 +11390,15 @@ function _navigateTo(page, el){
   if(actEl)   actEl.innerHTML     = info.actions||'';
   // Update module name labels in all mod-nav-bars
   document.querySelectorAll('#mod-cur-name').forEach(el=>{ el.textContent = info.t||page; });
+  // Mark body as in-module (hides topbar, shows cross-mod-bar)
+  document.body.classList.add('in-module');
+  // Render cross-module navigation bar
+  renderCrossModTabs(page);
   // Show nav-bar + fixed back button
   const navBar = document.getElementById('nav-bar');
-  if(navBar){ navBar.style.display = 'flex'; }
+  if(navBar){ navBar.style.display = 'none'; }
   const fixedBack = document.getElementById('fixed-back-btn');
-  if(fixedBack) fixedBack.style.display = 'flex';
+  if(fixedBack) fixedBack.style.display = 'none';
   // Track recent pages and render tabs
   if(!_recentPages.includes(page)) _recentPages.unshift(page);
   if(_recentPages.length>MAX_TABS) _recentPages=_recentPages.slice(0,MAX_TABS);
@@ -11419,6 +11495,7 @@ const GM_CATS = {
 function toggleGridMenu(){
   _gmCurrentCat = null;
   _recentPages = [];
+  document.body.classList.remove('in-module');
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   const menuPage = document.getElementById('page-grid-menu');
   if(menuPage) menuPage.classList.add('on');
@@ -11429,7 +11506,46 @@ function toggleGridMenu(){
   if(fixedBack) fixedBack.style.display = 'none';
   const tabsEl = document.getElementById('ph-tabs');
   if(tabsEl) tabsEl.innerHTML = '';
+  const cBar = document.getElementById('cross-mod-bar');
+  if(cBar) cBar.innerHTML = '';
   gmShowCategories();
+}
+
+// ══ CROSS-MODULE NAVIGATION BAR ══
+function renderCrossModTabs(page){
+  const bar = document.getElementById('cross-mod-bar');
+  if(!bar) return;
+  // Encontrar la categoría del módulo actual
+  let currentCat = null;
+  for(const [key, cat] of Object.entries(GM_CATS)){
+    if(cat.mods.some(m => m.page === page)){ currentCat = key; break; }
+  }
+  const perms = usuarioActivo ? getPermisosUsuario(usuarioActivo) : null;
+  let tabsHtml = '';
+  if(currentCat){
+    const catData = GM_CATS[currentCat];
+    const mods = catData.mods.filter(m =>
+      !perms || perms.includes(m.page) ||
+      perms.includes(m.page.replace('transferencias','transfer'))
+    );
+    tabsHtml = mods.map(m =>
+      `<button class="cmb-tab${m.page===page?' active':''}" onclick="goFromGrid('${m.page}')">${m.name}</button>`
+    ).join('');
+  }
+  const userName = usuarioActivo ? (usuarioActivo.nombre || usuarioActivo.email || 'Usuario') : '';
+  const userHtml = userName
+    ? `<div class="cmb-user-area">
+        <span class="cmb-user-txt">👤 ${userName}</span>
+        <button class="cmb-signout" onclick="doSignOut()">Salir</button>
+       </div>`
+    : `<div class="cmb-user-area">
+        <button class="cmb-signout" onclick="doSignOut()">Salir</button>
+       </div>`;
+  bar.innerHTML =
+    `<button class="cmb-back" onclick="toggleGridMenu()">⌂ MENÚ</button>` +
+    tabsHtml +
+    `<div class="cmb-spacer"></div>` +
+    userHtml;
 }
 
 function gmShowCategories(){
@@ -11498,6 +11614,9 @@ function gmShowCat(cat){
   document.getElementById('gm-header').style.display = 'flex';
   document.getElementById('gm-cat-title').textContent = catData.title;
   document.getElementById('gm-cats').style.display = 'none';
+  // Ocultar saludo al ver sub-categoría
+  const greet = document.getElementById('gm-greeting');
+  if(greet) greet.style.display = 'none';
   const modsEl = document.getElementById('gm-mods');
   modsEl.style.display = 'grid';
   modsEl.innerHTML = mods.map(m=>{
@@ -11517,6 +11636,8 @@ function gmBack(){
   document.getElementById('gm-cats').style.display = 'grid';
   document.getElementById('gm-mods').style.display = 'none';
   document.getElementById('gm-header').style.display = 'none';
+  const greet = document.getElementById('gm-greeting');
+  if(greet) greet.style.display = '';
   _gmCurrentCat = null;
 }
 
