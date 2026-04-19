@@ -566,8 +566,12 @@ select option{background:var(--s2)}
   flex-shrink:0;
   z-index:300;
   overflow-x:auto;
+  overflow-y:hidden;
+  flex-wrap:nowrap;
   scrollbar-width:none;
-  flex-wrap:wrap;
+  -webkit-overflow-scrolling:touch;
+  cursor:grab;
+  user-select:none;
 }
 #cross-mod-bar::-webkit-scrollbar{display:none}
 body.in-module #cross-mod-bar{display:flex}
@@ -575,6 +579,16 @@ body.in-module .topbar{display:none!important}
 body.in-module #nav-bar{display:none!important}
 body.in-module #fixed-back-btn{display:none!important}
 body.in-module .mod-nav-bar{display:none!important}
+
+/* Solo en escritorio se permite wrapping */
+@media(min-width:1025px){
+  #cross-mod-bar{flex-wrap:wrap;cursor:default;overflow-x:hidden}
+}
+/* Móvil/Tablet: tabs compactos */
+@media(max-width:1024px){
+  .cmb-tab{flex-shrink:0;min-height:44px;padding:0 14px;font-size:11px}
+  .cmb-back{flex-shrink:0;min-height:44px;padding:0 12px;font-size:12px}
+}
 
 .cmb-back{
   display:flex;align-items:center;justify-content:center;
@@ -595,6 +609,7 @@ body.in-module .mod-nav-bar{display:none!important}
   border-right:1px solid rgba(255,255,255,.08);
   white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;
   background:#1a3a6a;transition:all .15s;text-align:center;line-height:1.3;
+  flex-shrink:0;
 }
 .cmb-tab:hover{background:#2a4d8e;color:#fff}
 .cmb-tab.active{
@@ -2900,8 +2915,15 @@ body{background:#071222!important}
 </button>
   <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-histcambios"></div>
-  <button onclick="loadHistorialCambios()" style="display:flex;align-items:center;gap:6px;margin:6px 10px;padding:8px 16px;background:var(--s2);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:var(--cream)">🔄 Actualizar</button>
 </div>
+          <!-- Cabecera con título y botón actualizar -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+            <div>
+              <div style="font-size:18px;font-weight:800;color:var(--cream)">📝 Historial de Cambios</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">Modificaciones en Catálogo · Entradas · Aprobaciones</div>
+            </div>
+            <button onclick="loadHistorialCambios()" style="display:flex;align-items:center;gap:6px;padding:9px 18px;background:var(--accent);border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:#fff;transition:opacity .15s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">🔄 Actualizar</button>
+          </div>
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px">
             <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
               <div class="search-wrap" style="flex:2;min-width:180px">
@@ -11392,6 +11414,9 @@ function _navigateTo(page, el){
   document.querySelectorAll('#mod-cur-name').forEach(el=>{ el.textContent = info.t||page; });
   // Mark body as in-module (hides topbar, shows cross-mod-bar)
   document.body.classList.add('in-module');
+  // Scroll contenido al inicio
+  const mainEl = document.querySelector('.main');
+  if(mainEl) mainEl.scrollTop = 0;
   // Render cross-module navigation bar
   renderCrossModTabs(page);
   // Show nav-bar + fixed back button
@@ -11496,6 +11521,9 @@ function toggleGridMenu(){
   _gmCurrentCat = null;
   _recentPages = [];
   document.body.classList.remove('in-module');
+  // Scroll al inicio
+  const mainEl = document.querySelector('.main');
+  if(mainEl) mainEl.scrollTop = 0;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   const menuPage = document.getElementById('page-grid-menu');
   if(menuPage) menuPage.classList.add('on');
@@ -11515,7 +11543,6 @@ function toggleGridMenu(){
 function renderCrossModTabs(page){
   const bar = document.getElementById('cross-mod-bar');
   if(!bar) return;
-  // Encontrar la categoría del módulo actual
   let currentCat = null;
   for(const [key, cat] of Object.entries(GM_CATS)){
     if(cat.mods.some(m => m.page === page)){ currentCat = key; break; }
@@ -11546,6 +11573,38 @@ function renderCrossModTabs(page){
     tabsHtml +
     `<div class="cmb-spacer"></div>` +
     userHtml;
+  // Scroll activo al tab actual
+  const activeTab = bar.querySelector('.cmb-tab.active');
+  if(activeTab) setTimeout(()=>activeTab.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'}),80);
+  // Drag-to-scroll (mouse y touch)
+  initCmbDragScroll(bar);
+}
+
+function initCmbDragScroll(el){
+  let isDown=false, startX=0, scrollLeft=0;
+  // Mouse drag
+  el.addEventListener('mousedown',e=>{
+    if(e.target.tagName==='BUTTON') return;
+    isDown=true; el.style.cursor='grabbing';
+    startX=e.pageX-el.offsetLeft; scrollLeft=el.scrollLeft;
+  },{passive:true});
+  el.addEventListener('mouseleave',()=>{isDown=false;el.style.cursor='grab'});
+  el.addEventListener('mouseup',()=>{isDown=false;el.style.cursor='grab'});
+  el.addEventListener('mousemove',e=>{
+    if(!isDown) return;
+    e.preventDefault();
+    const x=e.pageX-el.offsetLeft;
+    el.scrollLeft=scrollLeft-(x-startX)*1.2;
+  });
+  // Touch drag (mobile)
+  let touchStartX=0, touchScrollLeft=0;
+  el.addEventListener('touchstart',e=>{
+    touchStartX=e.touches[0].pageX; touchScrollLeft=el.scrollLeft;
+  },{passive:true});
+  el.addEventListener('touchmove',e=>{
+    const dx=touchStartX-e.touches[0].pageX;
+    el.scrollLeft=touchScrollLeft+dx;
+  },{passive:true});
 }
 
 function gmShowCategories(){
