@@ -4457,12 +4457,20 @@ function renderInv(){
     const ml=!linea||p.linea===linea;
     const mt=!temp||p.temporada===temp;
     const mm=!marca||(p.marca||'').toLowerCase().includes(marca);
-    const ms=activeSucId==='all'||p.sucursalId===activeSucId;
+    // ── SUCURSAL FILTER FIX ──
+    // Productos sin sucursalId son de tienda principal → siempre visibles
+    // al ver una tienda específica (no bodega)
+    const sucP = sucursales.find(s=>s.id===p.sucursalId);
+    const esBodegaP = sucP?.tipo==='bodega';
+    const ms = activeSucId==='all'
+      ? true
+      : p.sucursalId===activeSucId
+        || (!p.sucursalId && sucursales.find(s=>s.id===activeSucId)?.tipo!=='bodega');
     const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
     const tot=sumS(p.stock);
     // ── BUG FIX: gemelos de bodega (creadoDesde) siempre visibles en inventario
     // aunque tengan 0 stock — representan "ranuras" pendientes de surtir
-    const esGemeloEsperando = !!p.creadoDesde && sucursales.find(s=>s.id===p.sucursalId)?.tipo==='bodega' && tot===0;
+    const esGemeloEsperando = !!p.creadoDesde && esBodegaP && tot===0;
     const mstock = esGemeloEsperando || mostrar==='todos'||(mostrar==='con_stock'&&tot>0)||(mostrar==='sin_stock'&&tot===0)||(mostrar==='bajo_stock'&&tot>0&&tot<=3);
     return mq&&mc&&ml&&mt&&mm&&ms&&mstock;
   });
