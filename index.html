@@ -197,10 +197,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
 /* ══ GRID MENU — ESTILO PROFESIONAL AZUL ══ */
 #page-grid-menu{
   background:linear-gradient(160deg,#0d1b2e 0%,#0a2240 40%,#0d2d4a 100%);
-  /* Cancelar el padding de .content (20px top/bottom, 24px left/right) */
   margin:-20px -24px;
   padding:36px 44px;
   box-sizing:border-box;
+  min-height:calc(100vh - 52px);
 }
 .gm-header{display:flex;align-items:center;gap:12px;padding:0 0 24px}
 .gm-back-btn{display:flex;align-items:center;gap:8px;padding:9px 18px;
@@ -963,7 +963,6 @@ body{background:#071222!important}
 
           </div>
 
-          </div>
           <!-- Submodules grid (hidden until cat selected) -->
           <div id="gm-mods" class="gm-grid" style="display:none"></div>
         </div>
@@ -11610,27 +11609,13 @@ function gmShowCat(cat){
   const catData = GM_CATS[cat];
   if(!catData) return;
   const perms = usuarioActivo ? getPermisosUsuario(usuarioActivo) : null;
-  const mods = catData.mods.filter(m=> !perms || perms.includes(m.page) || perms.includes(m.page.replace('transferencias','transfer')));
+  const mods = catData.mods.filter(m=>
+    !perms || perms.includes(m.page) ||
+    perms.includes(m.page.replace('transferencias','transfer'))
+  );
   if(!mods.length){ toast('Sin módulos disponibles en esta categoría','err'); return; }
-  document.getElementById('gm-header').style.display = 'flex';
-  document.getElementById('gm-cat-title').textContent = catData.title;
-  document.getElementById('gm-cats').style.display = 'none';
-  // Ocultar saludo al ver sub-categoría
-  const greet = document.getElementById('gm-greeting');
-  if(greet) greet.style.display = 'none';
-  const modsEl = document.getElementById('gm-mods');
-  modsEl.style.display = 'grid';
-  modsEl.innerHTML = mods.map(m=>{
-    const def = getModDef(m.page);
-    return `<div class="gm-mod-card" onclick="goFromGrid('${m.page}')">
-      <div class="gm-mod-bg">
-        <div class="gm-mod-svg-wrap">${def.svg}</div>
-        <div class="gm-mod-bottom">
-          <div class="gm-mod-name">${m.name}</div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  // Navegar directamente al primer módulo — cross-mod-bar muestra todos los módulos
+  goFromGrid(mods[0].page);
 }
 
 function gmBack(){
