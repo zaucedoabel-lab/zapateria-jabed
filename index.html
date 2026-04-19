@@ -5847,7 +5847,15 @@ function buscarEtiq(){
   const q=(document.getElementById('etiq-q')?.value||'').toLowerCase();
   const res=document.getElementById('etiq-resultados');
   if(!q){res.innerHTML='';return;}
-  const lista=productos.filter(p=>(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q)).slice(0,8);
+  // Solo productos de tienda (excluir bodega)
+  const tiendasIds = new Set(sucursales.filter(s=>s.tipo!=='bodega').map(s=>s.id));
+  const lista=productos.filter(p=>{
+    const matchQ=(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q);
+    if(!matchQ) return false;
+    // Excluir productos de bodega
+    const suc=sucursales.find(s=>s.id===p.sucursalId);
+    return !suc || suc.tipo!=='bodega';
+  }).slice(0,8);
   res.innerHTML=lista.map(p=>{
     const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
     const tot=sumS(p.stock);
@@ -6060,21 +6068,23 @@ function abrirVentanaEtiquetas(items, sz){
       padding:0.5mm 0.5mm;
       overflow:hidden;
     }
-    /* Talla grande */
+    /* Talla MÁS GRANDE y BOLD */
     .e-talla{
       font-family:Arial,sans-serif;font-weight:900;color:#000;
       line-height:1;text-align:center;
-      font-size:11pt;
+      font-size:14pt;
       width:100%;text-align:center;
+      letter-spacing:-0.5pt;
     }
-    /* QR más grande */
+    /* QR a tamaño fijo — el canvas se genera a 200px y CSS lo escala down para nitidez */
     .e-qr{
       display:flex;align-items:center;justify-content:center;
       flex:1;
     }
     .e-qr canvas, .e-qr img{
-      width:11mm!important;height:11mm!important;
+      width:10mm!important;height:10mm!important;
       display:block;
+      image-rendering:pixelated;
     }
 
     /* ═══ IMPRESIÓN ═══ */
@@ -6102,7 +6112,8 @@ function abrirVentanaEtiquetas(items, sz){
   <div class="preview-grid">
   ${prodData.map((p,i) => {
     const tallaStr = p.talla||'';
-    const tf = tallaStr.length <= 2 ? '11pt' : tallaStr.length === 3 ? '9pt' : '7.5pt';
+    // Talla MÁS GRANDE: 16pt short, 13pt medium, 11pt long
+    const tf = tallaStr.length <= 2 ? '16pt' : tallaStr.length === 3 ? '13pt' : '11pt';
     return `<div class="etiq">
 
       <!-- HEADER: tienda+fecha izq, MARCA grande der -->
@@ -6122,9 +6133,9 @@ function abrirVentanaEtiquetas(items, sz){
         <div class="e-precio">$${Number(p.precio).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
       </div>
 
-      <!-- DERECHA: talla grande + QR -->
+      <!-- DERECHA: talla GRANDE BOLD + QR -->
       <div class="e-right">
-        <div class="e-talla" style="font-size:${tf}">${tallaStr}</div>
+        <div class="e-talla" style="font-size:${tf};font-weight:900">${tallaStr}</div>
         <div class="e-qr" id="qr-wrap-${i}"></div>
       </div>
 
@@ -6140,8 +6151,8 @@ function abrirVentanaEtiquetas(items, sz){
       try{
         new QRCode(wrap, {
           text: bc,
-          width:  38,   /* px — se ajusta a 10mm en pantalla via CSS */
-          height: 38,
+          width:  200,  /* alta resolución → CSS escala DOWN = imagen nítida al imprimir */
+          height: 200,
           colorDark:  '#000000',
           colorLight: '#ffffff',
           correctLevel: QRCode.CorrectLevel.M
