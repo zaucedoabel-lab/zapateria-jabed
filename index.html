@@ -197,7 +197,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
 /* ══ GRID MENU — ESTILO PROFESIONAL AZUL ══ */
 #page-grid-menu{
   background:linear-gradient(160deg,#0d1b2e 0%,#0a2240 40%,#0d2d4a 100%);
-  min-height:calc(100vh - 52px);padding:28px 24px 40px;
+  min-height:calc(100vh - 52px);
+  padding:28px 24px 40px;
+  display:flex;flex-direction:column;justify-content:center;
 }
 .gm-header{display:flex;align-items:center;gap:12px;padding:0 0 24px}
 .gm-back-btn{display:flex;align-items:center;gap:8px;padding:9px 18px;
@@ -213,9 +215,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
 .gm-grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:20px;
-  max-width:900px;
+  gap:22px;
+  max-width:860px;
   margin:0 auto;
+  width:100%;
 }
 @media(max-width:900px){.gm-grid{gap:14px}}
 @media(max-width:600px){.gm-grid{grid-template-columns:repeat(2,1fr);gap:10px}}
@@ -711,28 +714,26 @@ select option{background:var(--s2)}
             <div class="gm-title" id="gm-cat-title"></div>
           </div>
           <!-- Category grid — estilo profesional azul -->
-          <div style="margin-bottom:28px">
-            <div style="font-size:26px;font-weight:900;color:#fff;font-family:var(--display);margin-bottom:4px">Zapatería JABED</div>
-            <div style="font-size:13px;color:rgba(255,255,255,.45);letter-spacing:.5px">Selecciona un módulo para continuar</div>
+          <div style="margin-bottom:32px">
+            <div style="font-size:28px;font-weight:900;color:#fff;font-family:var(--display);margin-bottom:5px">Zapatería JABED</div>
+            <div style="font-size:14px;color:rgba(255,255,255,.45);letter-spacing:.5px">Selecciona un módulo para continuar</div>
           </div>
           <div id="gm-cats" class="gm-grid">
 
-            <!-- INVENTARIO -->
+            <!-- INVENTARIO — playera con sliders -->
             <div class="gm-cat-card" onclick="gmShowCat('inventario')">
               <div class="gm-cat-bg">
                 <div class="gm-cat-svg-wrap">
-                  <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <!-- Caja principal -->
-                    <rect x="8" y="28" width="48" height="28" rx="4"/>
-                    <!-- Tapa abierta -->
-                    <path d="M8 28 L16 14 H48 L56 28"/>
-                    <!-- Asa izquierda -->
-                    <path d="M24 28 C24 28 24 20 32 20 C40 20 40 28 40 28"/>
-                    <!-- Línea central bodega -->
-                    <line x1="8" y1="42" x2="56" y2="42"/>
-                    <!-- Estrella / check piezas -->
-                    <line x1="26" y1="49" x2="38" y2="49"/>
-                    <line x1="32" y1="45" x2="32" y2="53"/>
+                  <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Playera T-shirt -->
+                    <path d="M22 8 L8 18 L14 22 L14 56 L50 56 L50 22 L56 18 L42 8 C42 8 40 16 32 16 C24 16 22 8 22 8 Z"/>
+                    <!-- Sliders encima de la playera -->
+                    <line x1="20" y1="30" x2="44" y2="30"/>
+                    <circle cx="28" cy="30" r="3" fill="#fff"/>
+                    <line x1="20" y1="38" x2="44" y2="38"/>
+                    <circle cx="36" cy="38" r="3" fill="#fff"/>
+                    <line x1="20" y1="46" x2="44" y2="46"/>
+                    <circle cx="24" cy="46" r="3" fill="#fff"/>
                   </svg>
                 </div>
                 <div class="gm-cat-bottom">
@@ -742,26 +743,32 @@ select option{background:var(--s2)}
               </div>
             </div>
 
-            <!-- VENTAS -->
+            <!-- VENTAS — caja registradora -->
             <div class="gm-cat-card" onclick="gmShowCat('ventas')">
               <div class="gm-cat-bg">
                 <div class="gm-cat-svg-wrap">
-                  <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <!-- Cuerpo caja registradora -->
-                    <rect x="8" y="28" width="48" height="30" rx="4"/>
-                    <!-- Pantalla -->
-                    <rect x="14" y="33" width="26" height="11" rx="2"/>
-                    <!-- Teclas -->
-                    <rect x="43" y="33" width="7" height="4" rx="1.5"/>
-                    <rect x="43" y="40" width="7" height="4" rx="1.5"/>
-                    <!-- Gaveta -->
-                    <rect x="8" y="48" width="48" height="10" rx="0"/>
-                    <rect x="28" y="50" width="8" height="5" rx="1.5"/>
-                    <!-- Rollo papel -->
-                    <rect x="18" y="12" width="28" height="18" rx="3"/>
-                    <line x1="24" y1="17" x2="40" y2="17"/>
-                    <line x1="24" y1="22" x2="38" y2="22"/>
-                    <line x1="24" y1="27" x2="36" y2="27"/>
+                  <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Base caja registradora -->
+                    <rect x="6" y="28" width="52" height="28" rx="4"/>
+                    <!-- Pantalla display -->
+                    <rect x="12" y="33" width="28" height="10" rx="2"/>
+                    <!-- Número en pantalla -->
+                    <line x1="29" y1="36" x2="35" y2="36"/>
+                    <line x1="27" y1="40" x2="35" y2="40"/>
+                    <!-- Botones teclado der -->
+                    <rect x="43" y="33" width="8" height="4" rx="1.5"/>
+                    <rect x="43" y="40" width="8" height="4" rx="1.5"/>
+                    <!-- Gaveta inferior -->
+                    <line x1="6" y1="48" x2="58" y2="48"/>
+                    <rect x="26" y="50" width="12" height="4" rx="1.5"/>
+                    <!-- Rollo papel arriba -->
+                    <rect x="16" y="10" width="32" height="20" rx="3"/>
+                    <line x1="22" y1="15" x2="42" y2="15"/>
+                    <line x1="22" y1="20" x2="40" y2="20"/>
+                    <line x1="22" y1="25" x2="38" y2="25"/>
+                    <!-- Soporte -->
+                    <path d="M16 28 L6 28"/>
+                    <path d="M48 28 L58 28"/>
                   </svg>
                 </div>
                 <div class="gm-cat-bottom">
@@ -771,28 +778,29 @@ select option{background:var(--s2)}
               </div>
             </div>
 
-            <!-- FINANZAS -->
+            <!-- FINANZAS — calculadora + lápiz -->
             <div class="gm-cat-card" onclick="gmShowCat('finanzas')">
               <div class="gm-cat-bg">
                 <div class="gm-cat-svg-wrap">
-                  <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <!-- Cuerpo calculadora -->
-                    <rect x="12" y="6" width="40" height="52" rx="5"/>
+                  <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Calculadora cuerpo -->
+                    <rect x="8" y="6" width="36" height="52" rx="5"/>
                     <!-- Pantalla -->
-                    <rect x="17" y="12" width="30" height="13" rx="3"/>
-                    <!-- Numero en pantalla -->
-                    <line x1="36" y1="16" x2="42" y2="16"/>
-                    <line x1="34" y1="21" x2="42" y2="21"/>
-                    <!-- Botones fila 1 -->
-                    <rect x="17" y="31" width="7" height="5" rx="1.5"/>
-                    <rect x="28" y="31" width="7" height="5" rx="1.5"/>
-                    <rect x="39" y="31" width="7" height="5" rx="1.5"/>
-                    <!-- Botones fila 2 -->
-                    <rect x="17" y="40" width="7" height="5" rx="1.5"/>
-                    <rect x="28" y="40" width="7" height="5" rx="1.5"/>
-                    <rect x="39" y="40" width="7" height="11" rx="1.5"/>
-                    <!-- Botones fila 3 -->
-                    <rect x="17" y="49" width="18" height="5" rx="1.5"/>
+                    <rect x="13" y="11" width="26" height="12" rx="2.5"/>
+                    <!-- Texto pantalla -->
+                    <line x1="26" y1="15" x2="34" y2="15"/>
+                    <line x1="24" y1="19" x2="34" y2="19"/>
+                    <!-- Botones 3x3 -->
+                    <rect x="13" y="28" width="7" height="5" rx="1.5"/>
+                    <rect x="23" y="28" width="7" height="5" rx="1.5"/>
+                    <rect x="33" y="28" width="7" height="12" rx="1.5"/>
+                    <rect x="13" y="37" width="7" height="5" rx="1.5"/>
+                    <rect x="23" y="37" width="7" height="5" rx="1.5"/>
+                    <rect x="13" y="46" width="17" height="5" rx="1.5"/>
+                    <!-- Lápiz diagonal -->
+                    <line x1="46" y1="14" x2="58" y2="48"/>
+                    <line x1="44" y1="10" x2="48" y2="16"/>
+                    <path d="M56 46 L60 58 L48 54 Z"/>
                   </svg>
                 </div>
                 <div class="gm-cat-bottom">
@@ -802,19 +810,20 @@ select option{background:var(--s2)}
               </div>
             </div>
 
-            <!-- MARKETING -->
+            <!-- MARKETING — bolsa de compras -->
             <div class="gm-cat-card" onclick="gmShowCat('marketing')">
               <div class="gm-cat-bg">
                 <div class="gm-cat-svg-wrap">
-                  <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <!-- Etiqueta de precio tipo diamante -->
-                    <path d="M10 10 L34 10 L54 32 L34 54 L10 54 Z"/>
-                    <!-- Agujero etiqueta -->
-                    <circle cx="22" cy="22" r="4"/>
-                    <!-- Líneas precio -->
-                    <line x1="28" y1="28" x2="44" y2="28"/>
-                    <line x1="28" y1="35" x2="40" y2="35"/>
-                    <line x1="28" y1="42" x2="42" y2="42"/>
+                  <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Bolsa cuerpo -->
+                    <path d="M10 22 L6 58 L58 58 L54 22 Z"/>
+                    <!-- Asas bolsa -->
+                    <path d="M22 22 C22 22 22 10 32 10 C42 10 42 22 42 22"/>
+                    <!-- Líneas decorativas bolsa -->
+                    <line x1="10" y1="34" x2="54" y2="34"/>
+                    <!-- Estrella / logo en bolsa -->
+                    <line x1="32" y1="42" x2="32" y2="52"/>
+                    <line x1="27" y1="47" x2="37" y2="47"/>
                   </svg>
                 </div>
                 <div class="gm-cat-bottom">
@@ -824,21 +833,21 @@ select option{background:var(--s2)}
               </div>
             </div>
 
-            <!-- CONFIGURACIÓN -->
+            <!-- CONFIGURACIÓN — engranajes -->
             <div class="gm-cat-card" onclick="gmShowCat('configuracion')">
               <div class="gm-cat-bg">
                 <div class="gm-cat-svg-wrap">
-                  <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <!-- Engrane grande -->
-                    <circle cx="32" cy="32" r="9"/>
-                    <path d="M32 8v6M32 50v6M8 32h6M50 32h6
-                             M15.5 15.5l4.2 4.2M44.3 44.3l4.2 4.2
-                             M15.5 48.5l4.2-4.2M44.3 19.7l4.2-4.2"/>
-                    <!-- Engrane pequeño esquina -->
-                    <circle cx="50" cy="14" r="5.5"/>
-                    <path d="M50 6v3M50 19v3M42 14h3M55 14h3
-                             M44.4 8.4l2.1 2.1M53.5 17.5l2.1 2.1
-                             M44.4 19.6l2.1-2.1M53.5 10.5l2.1-2.1"/>
+                    <circle cx="28" cy="34" r="8"/>
+                    <path d="M28 14v4M28 50v4M8 34h4M44 34h4
+                             M13.4 19.4l2.8 2.8M39.8 45.8l2.8 2.8
+                             M13.4 48.6l2.8-2.8M39.8 22.2l2.8-2.8"/>
+                    <!-- Engrane pequeño arriba derecha -->
+                    <circle cx="46" cy="18" r="6"/>
+                    <path d="M46 8v4M46 24v4M36 18h4M52 18h4
+                             M39.5 11.5l2.8 2.8M49.7 24.7l2.8 2.8
+                             M39.5 24.5l2.8-2.8M49.7 11.3l2.8-2.8"/>
                   </svg>
                 </div>
                 <div class="gm-cat-bottom">
@@ -848,20 +857,21 @@ select option{background:var(--s2)}
               </div>
             </div>
 
-            <!-- APROBACIONES -->
+            <!-- APROBACIONES — documento con check -->
             <div class="gm-cat-card" onclick="goFromGrid('bitacora')">
               <div class="gm-cat-bg">
                 <div class="gm-cat-svg-wrap">
-                  <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <!-- Documento -->
-                    <rect x="12" y="6" width="40" height="52" rx="4"/>
+                  <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Documento con doblado esquina -->
+                    <path d="M12 6 L44 6 L52 14 L52 58 L12 58 Z"/>
+                    <path d="M44 6 L44 14 L52 14"/>
                     <!-- Líneas texto -->
-                    <line x1="20" y1="18" x2="44" y2="18"/>
-                    <line x1="20" y1="25" x2="36" y2="25"/>
-                    <!-- Check grande -->
-                    <polyline points="22,36 29,44 42,30" stroke-width="3"/>
-                    <!-- Líneas debajo -->
-                    <line x1="20" y1="50" x2="44" y2="50"/>
+                    <line x1="20" y1="22" x2="44" y2="22"/>
+                    <line x1="20" y1="29" x2="38" y2="29"/>
+                    <!-- Check grande centrado -->
+                    <polyline points="20,38 28,47 44,33" stroke-width="3"/>
+                    <!-- Línea inferior -->
+                    <line x1="20" y1="52" x2="44" y2="52"/>
                   </svg>
                 </div>
                 <div class="gm-cat-bottom">
@@ -11431,13 +11441,13 @@ function gmShowCategories(){
 // ══ Module icon definitions (SVG + gradient) ══
 function getModDef(page){
   const M = {
-    inventario:    ['linear-gradient(135deg,#6366f1,#8b5cf6)','M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96L12 12.01l8.73-5.05 M12 22.08V12'],
-    catalogo:      ['linear-gradient(135deg,#7c3aed,#6d28d9)','M4 19.5A2.5 2.5 0 0 1 6.5 17H20 M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'],
-    entradas:      ['linear-gradient(135deg,#059669,#10b981)','M8 17l4 4 4-4 M12 12v9 M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29'],
-    salidas:       ['linear-gradient(135deg,#dc2626,#ef4444)','M16 17l-4 4-4-4 M12 12v9 M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29 M12 2v7'],
-    transferencias:['linear-gradient(135deg,#2563eb,#3b82f6)','M17 1l4 4-4 4 M3 11V9a4 4 0 0 1 4-4h14 M7 23l-4-4 4-4 M21 13v2a4 4 0 0 1-4 4H3'],
-    analisis:      ['linear-gradient(135deg,#7c3aed,#4f46e5)','M18 20V10 M12 20V4 M6 20v-6'],
-    pos:           ['linear-gradient(135deg,#f0b429,#f97316)','M2 3h20v14H2z rx=2 M8 21h8 M12 17v4'],
+    inventario:    ['', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 L3 7 L5 8 L5 21 L19 21 L19 8 L21 7 L16 3 C16 3 15.3 6 12 6 C8.7 6 8 3 8 3Z"/><line x1="8" y1="12" x2="16" y2="12"/><circle cx="10.5" cy="12" r="1.2" fill="#fff"/><line x1="8" y1="15.5" x2="16" y2="15.5"/><circle cx="13.5" cy="15.5" r="1.2" fill="#fff"/></svg>`],
+    catalogo:      ['', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`],
+    entradas:      ['', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>`],
+    salidas:       ['', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 7 12 3 8 7"/><line x1="12" y1="3" x2="12" y2="12"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>`],
+    transferencias:['', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`],
+    analisis:      ['', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>`],
+    pos:           ['', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="16 2 12 6 8 2"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="6" y1="16" x2="6" y2="16"/><line x1="10" y1="16" x2="10" y2="16"/><line x1="6" y1="19" x2="10" y2="19"/></svg>`],
     historial:     ['linear-gradient(135deg,#ea580c,#f97316)','M14 2v6h6 M20 20H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10l6 6v10a2 2 0 0 1-2 2z M8 13h8 M8 17h5'],
     'dashboard-ventas':['linear-gradient(135deg,#d97706,#b45309)','M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z'],
     cuentas:       ['linear-gradient(135deg,#f59e0b,#fbbf24)','M2 5h20v14H2z rx=2 M2 10h20'],
@@ -11460,8 +11470,15 @@ function getModDef(page){
   };
   const def = M[page] || ['linear-gradient(135deg,#6366f1,#8b5cf6)','M3 3h18v18H3z'];
   const [grad, pathD] = def;
-  const svgContent = pathD.split(' M').map((d,i)=>`<path d="${i===0?d:'M'+d}" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`).join('');
-  return {g: grad, svg: `<svg viewBox="0 0 24 24">${svgContent}</svg>`};
+  // Si pathD ya es un SVG completo (<svg...>), usarlo directo
+  let svgOut;
+  if(typeof pathD === 'string' && pathD.trim().startsWith('<svg')){
+    svgOut = pathD;
+  } else {
+    const svgContent = pathD.split(' M').map((d,i)=>`<path d="${i===0?d:'M'+d}" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`).join('');
+    svgOut = `<svg viewBox="0 0 24 24">${svgContent}</svg>`;
+  }
+  return {g: grad, svg: svgOut};
 }
 
 function gmShowCat(cat){
