@@ -5334,8 +5334,17 @@ function calcReportes(){
   const hasta=document.getElementById('rep-hasta').value;
   const sid=document.getElementById('rep-suc').value;
   const vR=ventas.filter(v=>v.fecha>=desde&&v.fecha<=hasta&&(!sid||v.sucursalId===sid));
-  const totalV=vR.reduce((a,v)=>a+v.total,0);
-  const totalItems=vR.reduce((a,v)=>a+(v.items||[]).reduce((x,i)=>x+i.qty,0),0);
+  // FIX: excluir devoluciones del total de ventas (son negativas pero no deben sumar 2 veces)
+  const totalV=vR.reduce((a,v)=>{
+    const t=v.tipoVenta||'venta';
+    if(t==='devolucion') return a+(v.total||0); // negativo → resta correctamente
+    if(t==='apartado'||t==='credito') return a+(v.anticipo||0);
+    if(t==='abono') return a+(v.monto||v.total||0);
+    return a+(v.total||0);
+  },0);
+  // FIX: no contar artículos de devoluciones como vendidos
+  const totalItems=vR.filter(v=>v.tipoVenta!=='devolucion'&&v.tipoVenta!=='abono')
+    .reduce((a,v)=>a+(v.items||[]).reduce((x,i)=>x+i.qty,0),0);
   const gR=gastos.filter(g=>g.fecha>=desde&&g.fecha<=hasta&&(!sid||g.sucursalId===sid));
   const totalG=gR.reduce((a,g)=>a+g.monto,0);
 
@@ -5347,7 +5356,8 @@ function calcReportes(){
 
   // Modelos campeón
   const modelVentas={};
-  vR.forEach(v=>(v.items||[]).forEach(i=>{
+  // FIX: no incluir artículos de devoluciones en modelos campeón
+  vR.filter(v=>v.tipoVenta!=='devolucion').forEach(v=>(v.items||[]).forEach(i=>{
     const k=i.id||i.desc;
     if(!modelVentas[k])modelVentas[k]={desc:i.desc,qty:0,monto:0,foto:i.foto||null};
     modelVentas[k].qty+=i.qty;modelVentas[k].monto+=i.price*i.qty;
@@ -7731,8 +7741,19 @@ function renderHist(){
     else if(isAbo)  cobrado = v.monto||v.total||0;
     else             cobrado = v.total||0;
     totalCobrado += cobrado;
-    if(isDev){ // las devoluciones restan de la forma de pago original
-      totalEfectivo += cobrado; // total ya es negativo
+    if(isDev){ // FIX: restar de la forma de pago original de la venta
+      const p=(v.pago||'efectivo').toLowerCase().trim();
+      if(p==='mixto'){
+        // Resta proporcional al mixto
+        const ef=v.mixtoEfectivo||0; const tar=v.mixtoTarjeta||0; const tot=ef+tar||1;
+        totalEfectivo += cobrado*(ef/tot);
+        totalTarjeta  += cobrado*(tar/tot);
+      } else if(p.includes('tarjeta')||p.includes('bbva')||p.includes('mp')||
+                p.includes('mercado')||p==='transferencia'||p.includes('transfer')){
+        totalTarjeta += cobrado; // resta de tarjeta
+      } else {
+        totalEfectivo += cobrado; // resta de efectivo
+      }
     } else {
       const p = (v.pago||'').toLowerCase().trim();
       if(p==='mixto'){
@@ -7784,15 +7805,17 @@ function renderHist(){
 
   document.getElementById('h-tbody').innerHTML=lista.map((v,idx)=>{
     const sucObj=sucursales.find(s=>s.id===v.sucursalId);
+    const isDev=v.tipoVenta==='devolucion';           // ← FIX: faltaba esta variable
     const isAprt=(v.tipoVenta||'venta')==='apartado';
     const isAbono=v.tipoVenta==='abono';
     const isCredito=v.tipoVenta==='credito';
     const isAC=isAprt||isCredito;
     const mesStr=getNombreMes(v.fecha).slice(0,3);
     const semStr=getNumSemana(v.fecha);
-    const cobrado=isAC?(v.anticipo||0):(v.total||0);
+    const cobrado=isDev?(v.total||0):isAC?(v.anticipo||0):(v.total||0); // ← FIX: devolución resta
     const items=v.items||[];
-    const rowBg=isAprt?'background:rgba(240,180,41,.05)':isAbono?'background:rgba(82,201,122,.04)':isCredito?'background:rgba(82,168,224,.04)':'';
+    // ← FIX: fila roja para devoluciones, destacar visualmente
+    const rowBg=isDev?'background:rgba(224,82,82,.08);border-left:3px solid var(--red)':isAprt?'background:rgba(240,180,41,.05)':isAbono?'background:rgba(82,201,122,.04)':isCredito?'background:rgba(82,168,224,.04)':'';
 
     // Generate folio from venta ID
     const folioV = v.folio||v.id.slice(-6).toUpperCase();
@@ -7808,14 +7831,14 @@ function renderHist(){
       <td>${v.cliente}</td>
       <td style="color:var(--muted)">${v.vendedor||'—'}</td>
       <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
-      <td><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
+      <td><span class="badge ${isDev?'b-red':isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isDev?'↩ Devolución':isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
       <td>${fmtPago(v.pago,v)}</td>
       <td class="mono" style="color:var(--muted)">—</td>
       <td class="mono" style="color:var(--red);font-size:11px">${v.descuento>0?'-'+fmt(v.descuento):'—'}</td>
       <td class="mono" style="color:var(--muted);font-size:11px">—</td>
       <td class="mono" style="color:var(--cream)">${fmt(cobrado)}</td>
       <td class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
-      <td class="mono" style="color:var(--green);font-weight:600">${fmt(cobrado)}</td>
+      <td class="mono" style="color:${isDev?'var(--red)':'var(--green)'};font-weight:600">${fmt(cobrado)}${isDev?'<div style="font-size:9px;color:var(--red);opacity:.8">↩ resta</div>':''}</td>
       ${(usuarioActivo?.rol==='admin'||usuarioActivo?.rol==='manager')
         ?`<td><div style="display:flex;flex-direction:column;gap:3px">
             <button class="btn btn-ghost btn-xs" onclick="editarFechaVenta('${v.id}','${v.fecha}','${v.hora||''}')">📅</button>
@@ -7847,7 +7870,7 @@ function renderHist(){
         <td><span class="badge b-accent" style="font-size:10px">${item.cat||(productos.find(p=>p.barcode===item.sku||p.sku===item.sku||p.id===item.id)?.cat)||'—'}</span></td>
         <td class="mono" style="text-align:center">${item.qty||1}</td>
         ${ii===0?`
-        <td rowspan="${items.length}"><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
+        <td rowspan="${items.length}"><span class="badge ${isDev?'b-red':isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isDev?'↩ Devolución':isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
         <td rowspan="${items.length}">${fmtPago(v.pago,v)}</td>`:''}
         <td class="mono" style="color:var(--gold);font-size:12px;font-weight:700">${fmt(item.price||0)}</td>
         ${ii===0?`
@@ -7855,7 +7878,7 @@ function renderHist(){
         <td rowspan="${items.length}" class="mono" style="font-size:11px;color:var(--muted)">${costoVal>0?fmt(costoVal):'—'}</td>
         <td rowspan="${items.length}" class="mono" style="color:var(--cream)">${fmt(cobrado)}</td>
         <td rowspan="${items.length}" class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
-        <td rowspan="${items.length}" class="mono" style="color:var(--green);font-weight:600">${fmt(cobrado)}${isAC&&v.anticipo?'<div style="font-size:10px;color:var(--muted)">Ant: '+fmt(v.anticipo)+'</div>':''}</td>
+        <td rowspan="${items.length}" class="mono" style="color:${isDev?'var(--red)':'var(--green)'};font-weight:600">${fmt(cobrado)}${isDev?'<div style="font-size:9px;color:var(--red);opacity:.8">↩ resta</div>':''}${!isDev&&isAC&&v.anticipo?'<div style="font-size:10px;color:var(--muted)">Ant: '+fmt(v.anticipo)+'</div>':''}</td>
         ${(usuarioActivo?.rol==='admin'||usuarioActivo?.rol==='manager')
           ?`<td rowspan="${items.length}"><div style="display:flex;flex-direction:column;gap:3px">
               <button class="btn btn-ghost btn-xs" onclick="editarFechaVenta('${v.id}','${v.fecha}','${v.hora||''}')">📅</button>
@@ -11182,16 +11205,29 @@ function renderDashboardVentas(){
     return inR&&inS;
   });
 
-  // Totals
+  // Totals — FIX: devoluciones restan del total y de la forma de pago correspondiente
   let total=0,efectivo=0,tarjeta=0,transferencia=0;
   vFilt.forEach(v=>{
-    const monto=v.tipoVenta==='apartado'||v.tipoVenta==='credito'?(v.anticipo||0):v.total||0;
+    const tipoV=v.tipoVenta||'venta';
+    const isDev=tipoV==='devolucion';
+    const isAC=tipoV==='apartado'||tipoV==='credito';
+    const isAbo=tipoV==='abono';
+    const monto=isDev?(v.total||0):isAC?(v.anticipo||0):isAbo?(v.monto||v.total||0):(v.total||0);
     total+=monto;
-    const p=v.pago||'';
-    if(p==='efectivo'||p==='monedero')efectivo+=monto;
-    else if(p.startsWith('tarjeta'))tarjeta+=monto;
-    else if(p==='transferencia')transferencia+=monto;
-    else if(p==='mixto')efectivo+=monto; // count mixto as efectivo for simplicity
+    const p=(v.pago||'').toLowerCase().trim();
+    if(isDev){
+      // Devolucion resta de la forma de pago original
+      if(p.includes('tarjeta')||p.includes('bbva')||p.includes('mp')||p==='transferencia'||p.includes('transfer'))
+        tarjeta+=monto;
+      else
+        efectivo+=monto;
+    } else if(p==='mixto'){
+      const ef=v.mixtoEfectivo||0; const tar=v.mixtoTarjeta||0; const tot=ef+tar||1;
+      efectivo+=monto*(ef/tot); tarjeta+=monto*(tar/tot);
+    } else if(p==='efectivo'||p==='monedero'||p==='') efectivo+=monto;
+    else if(p.includes('tarjeta')||p.includes('bbva')||p.includes('mp')) tarjeta+=monto;
+    else if(p==='transferencia'||p.includes('transfer')) transferencia+=monto;
+    else efectivo+=monto;
   });
 
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
