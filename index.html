@@ -197,10 +197,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
 /* ══ GRID MENU — ESTILO PROFESIONAL AZUL ══ */
 #page-grid-menu{
   background:linear-gradient(160deg,#0d1b2e 0%,#0a2240 40%,#0d2d4a 100%);
+  /* Cancelar el padding de .content (20px top/bottom, 24px left/right) */
   margin:-20px -24px;
   padding:36px 44px;
   box-sizing:border-box;
-  min-height:calc(100vh - 52px);
 }
 .gm-header{display:flex;align-items:center;gap:12px;padding:0 0 24px}
 .gm-back-btn{display:flex;align-items:center;gap:8px;padding:9px 18px;
@@ -557,91 +557,6 @@ select option{background:var(--s2)}
   .mod-tab{padding:0 12px;font-size:11px}
 }
 
-/* ══ CROSS-MODULE BAR (barra de navegación entre módulos) ══ */
-#cross-mod-bar{
-  display:none;
-  align-items:stretch;
-  background:#071222;
-  border-bottom:2px solid rgba(255,255,255,.1);
-  flex-shrink:0;
-  z-index:300;
-  overflow-x:auto;
-  overflow-y:hidden;
-  flex-wrap:nowrap;
-  scrollbar-width:none;
-  -webkit-overflow-scrolling:touch;
-  cursor:grab;
-  user-select:none;
-}
-#cross-mod-bar::-webkit-scrollbar{display:none}
-body.in-module #cross-mod-bar{display:flex}
-body.in-module .topbar{display:none!important}
-body.in-module #nav-bar{display:none!important}
-body.in-module #fixed-back-btn{display:none!important}
-body.in-module .mod-nav-bar{display:none!important}
-
-/* Solo en escritorio se permite wrapping */
-@media(min-width:1025px){
-  #cross-mod-bar{flex-wrap:wrap;cursor:default;overflow-x:hidden}
-}
-/* Móvil/Tablet: tabs compactos */
-@media(max-width:1024px){
-  .cmb-tab{flex-shrink:0;min-height:44px;padding:0 14px;font-size:11px}
-  .cmb-back{flex-shrink:0;min-height:44px;padding:0 12px;font-size:12px}
-}
-
-.cmb-back{
-  display:flex;align-items:center;justify-content:center;
-  gap:8px;padding:0 22px;
-  background:linear-gradient(135deg,#f0b429 0%,#f97316 100%);
-  border:none;border-right:3px solid rgba(0,0,0,.25);
-  cursor:pointer;font-size:14px;font-weight:900;color:#000;
-  white-space:nowrap;flex-shrink:0;letter-spacing:.5px;
-  text-transform:uppercase;transition:opacity .15s;min-height:52px;
-  box-shadow:4px 0 20px rgba(240,180,41,.3);
-}
-.cmb-back:hover{opacity:.88}
-.cmb-tab{
-  display:flex;align-items:center;justify-content:center;
-  padding:0 22px;min-height:52px;
-  font-size:12px;font-weight:800;color:rgba(255,255,255,.8);
-  cursor:pointer;border:none;
-  border-right:1px solid rgba(255,255,255,.08);
-  white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;
-  background:#1a3a6a;transition:all .15s;text-align:center;line-height:1.3;
-  flex-shrink:0;
-}
-.cmb-tab:hover{background:#2a4d8e;color:#fff}
-.cmb-tab.active{
-  background:#7c3aed;color:#fff;
-  box-shadow:inset 0 -3px 0 #a855f7,inset 0 3px 0 rgba(168,85,247,.3);
-  font-weight:900;
-}
-.cmb-spacer{flex:1;min-width:10px}
-.cmb-user-area{
-  display:flex;align-items:center;gap:8px;
-  padding:0 14px;flex-shrink:0;border-left:1px solid rgba(255,255,255,.08);
-}
-.cmb-user-txt{font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap}
-.cmb-signout{
-  padding:6px 12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
-  border-radius:8px;color:rgba(255,255,255,.6);font-size:11px;font-weight:600;
-  cursor:pointer;transition:all .15s;white-space:nowrap;
-}
-.cmb-signout:hover{background:rgba(255,255,255,.14);color:#fff}
-
-/* ══ FONDO AZUL UNIFORME en toda la app ══ */
-body{background:#071222!important}
-.main{background:linear-gradient(175deg,#0d1b2e 0%,#0a2240 50%,#0d2d4a 100%)!important}
-.content{background:transparent!important;min-height:100%}
-.page{background:transparent}
-#page-grid-menu{background:linear-gradient(160deg,#0d1b2e 0%,#0a2240 40%,#0d2d4a 100%)}
-.topbar{background:#071222!important;border-bottom:1px solid rgba(255,255,255,.06)!important}
-#nav-bar{background:#071222!important}
-#auth{background:linear-gradient(160deg,#0d1b2e 0%,#0a2240 100%)!important}
-#loading{background:#071222!important}
-
-
 
 /* Reportes chart bars */
 .chart-bar-wrap{display:flex;flex-direction:column;gap:8px;padding:8px 0}
@@ -711,9 +626,6 @@ body{background:#071222!important}
       border-top:1px solid var(--border);min-height:42px;align-items:center">
     </div>
   </div>
-
-  <!-- CROSS MODULE BAR — barra de navegación entre módulos del mismo grupo -->
-  <div id="cross-mod-bar"><!-- populated by renderCrossModTabs() --></div>
 
   <div class="topbar">
     <div class="tb-logo">👟 Zapatería JABED</div>
@@ -810,7 +722,7 @@ body{background:#071222!important}
             <div class="gm-title" id="gm-cat-title"></div>
           </div>
           <!-- Category grid — estilo profesional azul -->
-          <div id="gm-greeting" style="margin-bottom:36px">
+          <div style="margin-bottom:36px">
             <div style="font-size:30px;font-weight:900;color:#fff;font-family:var(--display);margin-bottom:6px">Zapatería JABED</div>
             <div style="font-size:14px;color:rgba(255,255,255,.45);letter-spacing:.5px;text-transform:uppercase">Selecciona un módulo para continuar</div>
           </div>
@@ -978,6 +890,7 @@ body{background:#071222!important}
 
           </div>
 
+          </div>
           <!-- Submodules grid (hidden until cat selected) -->
           <div id="gm-mods" class="gm-grid" style="display:none"></div>
         </div>
@@ -1281,78 +1194,95 @@ body{background:#071222!important}
 </div>
 
 
-          <!-- VISTA PRINCIPAL: Buscador + Productos + Carrito -->
+          <!-- VISTA PRINCIPAL: Buscador + Productos + Carrito — Layout imagen referencia -->
           <div id="pos-main-view">
-            <!-- Barra superior: búsqueda + sin código -->
-            <div style="background:var(--s1);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-              <div class="search-wrap" style="flex:1;min-width:220px;font-size:15px">
-                <span class="search-ico" style="font-size:16px">🔍</span>
+            <!-- Barra superior única: búsqueda + botones + filtros -->
+            <div style="background:var(--s1);border-bottom:2px solid var(--border);padding:10px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <!-- Búsqueda -->
+              <div class="search-wrap" style="flex:1;min-width:200px">
+                <span class="search-ico">🔍</span>
                 <input type="text" id="pos-q" placeholder="Buscar o escanear código de barras…"
-                  style="font-size:16px;padding:10px 10px 10px 36px"
+                  style="font-size:15px;padding:10px 10px 10px 34px"
                   oninput="onPOSInput()" onkeydown="onPOSKeydown(event)">
               </div>
+              <!-- Botón SIN CÓDIGO -->
               <button onclick="abrirArticuloSinCodigo()"
-                style="padding:14px 24px;background:#f0b429;color:#000;border:none;border-radius:12px;
-                font-size:20px;font-weight:900;cursor:pointer;white-space:nowrap;
-                box-shadow:0 4px 14px rgba(240,180,41,.5);letter-spacing:.5px">
-                ＋ SIN CÓDIGO
+                style="padding:10px 18px;background:#f0b429;color:#000;border:none;border-radius:10px;
+                font-size:15px;font-weight:900;cursor:pointer;white-space:nowrap;
+                box-shadow:0 3px 10px rgba(240,180,41,.5)">
+                + SIN CÓDIGO
               </button>
+              <!-- Botón PROMOS -->
               <button onclick="verPromocionesVigentes()"
-                style="padding:14px 20px;background:rgba(240,180,41,.15);color:var(--gold);border:1px solid var(--gold);border-radius:12px;
+                style="padding:10px 14px;background:rgba(240,180,41,.12);color:var(--gold);border:1.5px solid var(--gold);border-radius:10px;
                 font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap">
                 🎁 PROMOS
               </button>
-              <select id="pos-suc" onchange="renderPOS()" style="padding:10px;font-size:14px;border-radius:8px;background:var(--s2);color:var(--cream);border:1px solid var(--border)"></select>
-              <select id="pos-cat" onchange="renderPOS()" style="padding:10px;font-size:13px;border-radius:8px;background:var(--s2);color:var(--cream);border:1px solid var(--border);width:140px"><option value="">Todas Cat.</option></select>
-              <select id="pos-linea" onchange="renderPOS()" style="padding:10px;font-size:13px;border-radius:8px;background:var(--s2);color:var(--cream);border:1px solid var(--border);width:130px"><option value="">Todas Líneas</option></select>
+              <!-- Sucursal -->
+              <select id="pos-suc" onchange="renderPOS()" style="padding:8px 10px;font-size:13px;border-radius:8px;background:var(--s2);color:var(--cream);border:1px solid var(--border)"></select>
+              <!-- Categoría -->
+              <select id="pos-cat" onchange="renderPOS()" style="padding:8px 10px;font-size:13px;border-radius:8px;background:var(--s2);color:var(--cream);border:1px solid var(--border);width:130px"><option value="">Todas Cat.</option></select>
+              <!-- Línea -->
+              <select id="pos-linea" onchange="renderPOS()" style="padding:8px 10px;font-size:13px;border-radius:8px;background:var(--s2);color:var(--cream);border:1px solid var(--border);width:120px"><option value="">Todas Líneas</option></select>
             </div>
 
-            <div style="display:flex;height:calc(100vh - 160px);overflow:hidden">
+            <div style="display:flex;height:calc(100vh - 148px);overflow:hidden">
               <!-- Grilla de productos -->
-              <div style="flex:1;overflow-y:auto;padding:12px">
-                <div id="pos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px"></div>
+              <div style="flex:1;overflow-y:auto;padding:10px">
+                <div id="pos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px"></div>
               </div>
 
-              <!-- Panel lateral: carrito -->
-              <div style="width:300px;border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--s1)">
-                <!-- TOP: TOTAL + COBRAR siempre visible -->
-                <div style="padding:14px;background:var(--s2);border-bottom:2px solid var(--border)">
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-                    <span style="font-size:20px;font-weight:800;color:var(--cream)">TOTAL</span>
-                    <span id="c-total" style="font-size:32px;font-weight:900;color:var(--gold)">$0.00</span>
+              <!-- Panel lateral: carrito — layout imagen referencia -->
+              <div style="width:310px;border-left:2px solid var(--border);display:flex;flex-direction:column;background:var(--s1)">
+
+                <!-- TOTAL grande -->
+                <div style="padding:12px 14px;background:var(--s2);border-bottom:1px solid var(--border)">
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-size:18px;font-weight:800;color:var(--cream);letter-spacing:.5px">TOTAL</span>
+                    <span id="c-total" style="font-size:30px;font-weight:900;color:var(--gold);font-family:var(--mono)">$0.00</span>
                   </div>
-                  <div id="c-promo-alert" style="display:none;background:#0a1f0f;border:1px solid var(--green)44;border-radius:8px;padding:8px;margin-bottom:10px;font-size:12px"></div>
-                  <button onclick="abrirModalCobro()"
-                    style="width:100%;padding:18px;background:var(--accent);color:#fff;border:none;
-                    border-radius:14px;font-size:24px;font-weight:900;cursor:pointer;
-                    box-shadow:0 4px 18px rgba(26,158,92,.5);letter-spacing:.5px"
-                    id="btn-cobrar-pos">
+                </div>
+
+                <!-- COBRAR — botón verde grande -->
+                <div style="padding:10px 14px;background:var(--s2);border-bottom:1px solid var(--border)">
+                  <div id="c-promo-alert" style="display:none;background:#0a1f0f;border:1px solid var(--green)44;border-radius:8px;padding:6px;margin-bottom:8px;font-size:11px"></div>
+                  <button onclick="abrirModalCobro()" id="btn-cobrar-pos"
+                    style="width:100%;padding:16px;background:var(--accent);color:#fff;border:none;
+                    border-radius:12px;font-size:22px;font-weight:900;cursor:pointer;
+                    box-shadow:0 4px 16px rgba(26,158,92,.5);letter-spacing:.5px;
+                    display:flex;align-items:center;justify-content:center;gap:8px">
                     💰 COBRAR
                   </button>
                 </div>
-                <!-- Cabecera carrito -->
-                <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-                  <span style="font-size:14px;font-weight:700;color:var(--cream)">🛒 Carrito</span>
-                  <div style="display:flex;gap:6px">
-                    <button onclick="abrirModalDevolucion()"
-                      style="background:rgba(82,168,224,.2);color:var(--blue);border:2px solid var(--blue);border-radius:8px;padding:8px 13px;font-size:13px;font-weight:800;cursor:pointer"
-                      title="Registrar devolución / cambio">↩ Devolución</button>
-                    <button onclick="clearCart()" style="background:var(--red);color:#fff;border:none;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:700;cursor:pointer">🗑 Vaciar</button>
-                  </div>
+
+                <!-- Carrito header: label + Devolución + Vaciar -->
+                <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;background:var(--s1)">
+                  <span style="font-size:13px;font-weight:700;color:var(--cream);flex:1">🛒 Carrito</span>
+                  <button onclick="abrirModalDevolucion()"
+                    style="background:rgba(82,168,224,.18);color:var(--blue);border:1.5px solid var(--blue);
+                    border-radius:8px;padding:7px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap">
+                    ↩ Devolución
+                  </button>
+                  <button onclick="clearCart()"
+                    style="background:var(--red);color:#fff;border:none;border-radius:8px;
+                    padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
+                    🗑 Vaciar
+                  </button>
                 </div>
-                <!-- Lista artículos scrolleable -->
+
+                <!-- Lista artículos -->
                 <div id="cart-list" style="flex:1;overflow-y:auto;padding:8px"></div>
-                <!-- Subtotal abajo (sin descuento - se mueve al modal cobro) -->
-                <div style="padding:10px 12px;border-top:1px solid var(--border)">
+
+                <!-- Subtotal + descuento -->
+                <div style="padding:8px 12px;border-top:1px solid var(--border);background:var(--s2)">
                   <div style="display:flex;justify-content:space-between;margin-bottom:2px">
                     <span style="font-size:12px;color:var(--muted)">Subtotal</span>
                     <span id="c-sub" style="font-size:12px;color:var(--cream)">$0.00</span>
                   </div>
-                  <div style="display:flex;justify-content:space-between;align-items:center">
+                  <div style="display:flex;justify-content:space-between">
                     <span style="font-size:11px;color:var(--muted)">Descuento</span>
                     <span id="c-desc-preview" style="font-size:11px;color:var(--red)">$0.00</span>
                   </div>
-                  <!-- Hidden inputs kept for calcCart() compatibility -->
                   <input type="hidden" id="c-desc" value="0">
                   <input type="hidden" id="c-desc-t" value="$">
                 </div>
@@ -1441,6 +1371,27 @@ body{background:#071222!important}
                   </div>
                 </div>
                 <div id="c-mixto-status" style="margin-top:8px;font-size:13px;color:var(--muted);text-align:center"></div>
+              </div>
+
+              <!-- BBVA+Efectivo section -->
+              <div id="c-bbvaef-section" style="display:none;background:var(--s2);border:2px solid rgba(0,112,206,.5);border-radius:10px;padding:14px;margin-bottom:12px">
+                <div style="font-size:13px;color:#4fa3e0;font-weight:700;margin-bottom:4px">💳 BBVA + 💵 Efectivo</div>
+                <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Ej: cliente paga $80 con tarjeta BBVA y $20 en efectivo</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                  <div>
+                    <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">💳 BBVA ($)</label>
+                    <input type="number" id="c-bbvaef-tar" placeholder="0.00" step="1" min="0"
+                      style="width:100%;font-size:20px;font-weight:700;padding:10px;border-radius:8px;border:2px solid rgba(0,112,206,.4);background:var(--s3);color:var(--cream)"
+                      oninput="calcBbvaEf()">
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">💵 Efectivo ($)</label>
+                    <input type="number" id="c-bbvaef-ef" placeholder="0.00" step="1" min="0"
+                      style="width:100%;font-size:20px;font-weight:700;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--s3);color:var(--cream)"
+                      oninput="calcBbvaEf()">
+                  </div>
+                </div>
+                <div id="c-bbvaef-status" style="margin-top:8px;font-size:13px;color:var(--muted);text-align:center"></div>
               </div>
 
               <!-- Monedero section -->
@@ -2915,15 +2866,8 @@ body{background:#071222!important}
 </button>
   <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-histcambios"></div>
+  <button onclick="loadHistorialCambios()" style="display:flex;align-items:center;gap:6px;margin:6px 10px;padding:8px 16px;background:var(--s2);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:var(--cream)">🔄 Actualizar</button>
 </div>
-          <!-- Cabecera con título y botón actualizar -->
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-            <div>
-              <div style="font-size:18px;font-weight:800;color:var(--cream)">📝 Historial de Cambios</div>
-              <div style="font-size:12px;color:var(--muted);margin-top:2px">Modificaciones en Catálogo · Entradas · Aprobaciones</div>
-            </div>
-            <button onclick="loadHistorialCambios()" style="display:flex;align-items:center;gap:6px;padding:9px 18px;background:var(--accent);border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:#fff;transition:opacity .15s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">🔄 Actualizar</button>
-          </div>
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px">
             <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
               <div class="search-wrap" style="flex:2;min-width:180px">
@@ -3011,9 +2955,9 @@ body{background:#071222!important}
         <div class="fg"><label>Temporada</label><select id="p-temporada"><option value="">Seleccionar…</option><option>Primavera/Verano</option><option>Otoño/Invierno</option><option>Todo el Año</option><option>Liquidación</option><option>2024</option><option>2025</option><option>2026</option><option>2027</option></select></div>
       </div>
       <div class="fr fr3">
-        <div class="fg"><label>Marca</label><select id="p-marca"><option value="">Seleccionar marca…</option></select></div>
+        <div class="fg"><label>Marca</label><input type="text" id="p-marca" placeholder="Flexi"></div>
         <div class="fg"><label>Precio de Venta ($)</label><input type="number" id="p-precio" step="0.01" placeholder="0.00"></div>
-        <div class="fg"><label>Color</label><select id="p-color"><option value="">Seleccionar color…</option></select></div>
+        <div class="fg"><label>Color</label><input type="text" id="p-color" placeholder="Negro, Café, Beige…"></div>
       </div>
       <div class="fr fr2">
         <div class="fg"><label>Sucursal</label><select id="p-suc"><option value="">Cargando…</option></select></div>
@@ -4072,15 +4016,6 @@ async function deleteSucursal(id, nombre){
 }
 
 // ══════════════════ PRODUCTOS ══════════════════
-// Pobla un select del modal de producto con datos del catálogo
-function populateProdCatalogSelect(selectId, catalogKey, blankLabel, selectedVal){
-  const sel = document.getElementById(selectId); if(!sel) return;
-  const items = getCatalogList(catalogKey);
-  sel.innerHTML = `<option value="">${blankLabel}</option>` +
-    items.map(v=>`<option value="${v}"${v===selectedVal?' selected':''}>${v}</option>`).join('');
-  if(selectedVal && items.includes(selectedVal)) sel.value = selectedVal;
-}
-
 function abrirModalProducto(id){
   editProdId=id||null; photoDataUrl=null;
   document.getElementById('mp-title').textContent=id?'Editar Producto':'Nuevo Producto';
@@ -4089,8 +4024,7 @@ function abrirModalProducto(id){
   // Populate sucursal select first
   const sucSel=document.getElementById('p-suc');
   sucSel.innerHTML=sucursales.map(s=>`<option value="${s.id}">${s.nombre} (${s.tipo})</option>`).join('');
-  // Campos simples (texto/número) — excluir marca y color que ahora son selects
-  const fields=['bar','sku','desc','precio','notas','costo'];
+  const fields=['bar','sku','desc','marca','precio','color','notas','costo'];
   if(id){
     const p=productos.find(x=>x.id===id);
     if(p){
@@ -4098,10 +4032,7 @@ function abrirModalProducto(id){
       document.getElementById('p-cat').value=p.cat||'Dama';
       document.getElementById('p-linea').value=p.linea||'';
       document.getElementById('p-temporada').value=p.temporada||'';
-      // Poblar selects de catálogo con valor actual
-      populateProdCatalogSelect('p-marca','marcas','Sin marca',p.marca||'');
-      populateProdCatalogSelect('p-color','colores','Sin color',p.color||'');
-      populateLocacionSelect(p.locacion||'');
+      setTimeout(()=>populateLocacionSelect(p.locacion||''),50);
       if(p.sucursalId)sucSel.value=p.sucursalId;
       if(p.foto){document.getElementById('photo-preview').src=p.foto;document.getElementById('photo-preview').style.display='block';document.getElementById('photo-placeholder').style.display='none';}
       renderTallasSel(p);
@@ -4111,10 +4042,6 @@ function abrirModalProducto(id){
     document.getElementById('p-cat').value='Dama';
     document.getElementById('p-linea').value='';
     document.getElementById('p-temporada').value='';
-    // Poblar selects de catálogo vacíos para nuevo producto
-    populateProdCatalogSelect('p-marca','marcas','Seleccionar marca…','');
-    populateProdCatalogSelect('p-color','colores','Seleccionar color…','');
-    populateLocacionSelect('');
     if(sucursales.length>0)sucSel.value=sucursales[0].id;
     renderTallasSel(null);
   }
@@ -4457,20 +4384,12 @@ function renderInv(){
     const ml=!linea||p.linea===linea;
     const mt=!temp||p.temporada===temp;
     const mm=!marca||(p.marca||'').toLowerCase().includes(marca);
-    // ── SUCURSAL FILTER FIX ──
-    // Productos sin sucursalId son de tienda principal → siempre visibles
-    // al ver una tienda específica (no bodega)
-    const sucP = sucursales.find(s=>s.id===p.sucursalId);
-    const esBodegaP = sucP?.tipo==='bodega';
-    const ms = activeSucId==='all'
-      ? true
-      : p.sucursalId===activeSucId
-        || (!p.sucursalId && sucursales.find(s=>s.id===activeSucId)?.tipo!=='bodega');
+    const ms=activeSucId==='all'||p.sucursalId===activeSucId;
     const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
     const tot=sumS(p.stock);
     // ── BUG FIX: gemelos de bodega (creadoDesde) siempre visibles en inventario
     // aunque tengan 0 stock — representan "ranuras" pendientes de surtir
-    const esGemeloEsperando = !!p.creadoDesde && esBodegaP && tot===0;
+    const esGemeloEsperando = !!p.creadoDesde && sucursales.find(s=>s.id===p.sucursalId)?.tipo==='bodega' && tot===0;
     const mstock = esGemeloEsperando || mostrar==='todos'||(mostrar==='con_stock'&&tot>0)||(mostrar==='sin_stock'&&tot===0)||(mostrar==='bajo_stock'&&tot>0&&tot<=3);
     return mq&&mc&&ml&&mt&&mm&&ms&&mstock;
   });
@@ -5334,17 +5253,8 @@ function calcReportes(){
   const hasta=document.getElementById('rep-hasta').value;
   const sid=document.getElementById('rep-suc').value;
   const vR=ventas.filter(v=>v.fecha>=desde&&v.fecha<=hasta&&(!sid||v.sucursalId===sid));
-  // FIX: excluir devoluciones del total de ventas (son negativas pero no deben sumar 2 veces)
-  const totalV=vR.reduce((a,v)=>{
-    const t=v.tipoVenta||'venta';
-    if(t==='devolucion') return a+(v.total||0); // negativo → resta correctamente
-    if(t==='apartado'||t==='credito') return a+(v.anticipo||0);
-    if(t==='abono') return a+(v.monto||v.total||0);
-    return a+(v.total||0);
-  },0);
-  // FIX: no contar artículos de devoluciones como vendidos
-  const totalItems=vR.filter(v=>v.tipoVenta!=='devolucion'&&v.tipoVenta!=='abono')
-    .reduce((a,v)=>a+(v.items||[]).reduce((x,i)=>x+i.qty,0),0);
+  const totalV=vR.reduce((a,v)=>a+v.total,0);
+  const totalItems=vR.reduce((a,v)=>a+(v.items||[]).reduce((x,i)=>x+i.qty,0),0);
   const gR=gastos.filter(g=>g.fecha>=desde&&g.fecha<=hasta&&(!sid||g.sucursalId===sid));
   const totalG=gR.reduce((a,g)=>a+g.monto,0);
 
@@ -5356,8 +5266,7 @@ function calcReportes(){
 
   // Modelos campeón
   const modelVentas={};
-  // FIX: no incluir artículos de devoluciones en modelos campeón
-  vR.filter(v=>v.tipoVenta!=='devolucion').forEach(v=>(v.items||[]).forEach(i=>{
+  vR.forEach(v=>(v.items||[]).forEach(i=>{
     const k=i.id||i.desc;
     if(!modelVentas[k])modelVentas[k]={desc:i.desc,qty:0,monto:0,foto:i.foto||null};
     modelVentas[k].qty+=i.qty;modelVentas[k].monto+=i.price*i.qty;
@@ -5754,7 +5663,7 @@ const CFG_DEFAULTS = {
   locaciones: ['A-1','A-2','A-3','B-1','B-2','B-3','C-1','C-2','C-3'],
   tallas: ['12','12 1/2','13','13 1/2','14','14 1/2','15','15 1/2','16','16 1/2','17','17 1/2','18','18 1/2','19','19 1/2','20','20 1/2','21','21 1/2','22','22 1/2','23','23 1/2','24','24 1/2','25','25 1/2','26','26 1/2','27','27 1/2','28','28 1/2','29','29 1/2','30','30 1/2','31','31 1/2','32','XS','S','M','L','XL','XXL','XXXL','3XL','4XL','CH','MM','GD','EG','UNI','Único'],
   tipoTransaccion: ['💵 Venta Normal|venta','📦 Apartado|apartado','💳 Crédito|credito'],
-  formaPago: ['💵 Efectivo|efectivo','💳 Tarjeta BBVA|tarjeta-bbva','💳 Tarjeta Mercado Pago|tarjeta-mp','📲 Transferencia|transferencia','🔀 Mixto|mixto','🪙 Monedero + Efectivo|monedero'],
+  formaPago: ['💵 Efectivo|efectivo','💳 Tarjeta BBVA|tarjeta-bbva','💳 Tarjeta Mercado Pago|tarjeta-mp','📲 Transferencia|transferencia','🔀 Mixto|mixto','💳+💵 BBVA+Efectivo|bbva-efectivo','🪙 Monedero + Efectivo|monedero'],
   fuenteGasto: ['💰 Utilidad 2025','💵 Efectivo 2026','💳 Tarjeta BBVA','📲 Transferencia','🏦 Caja Tienda']
 };
 // Config general (monedero, cumpleaños)
@@ -5862,9 +5771,6 @@ function updateProductoSelects(){
   upd('inv-cat',getCatalogList('categorias'),'Todas');
   upd('inv-linea',getCatalogList('lineas'),'Todas');
   upd('inv-temp',getCatalogList('temporadas'),'Todas');
-  // Marca y Color — re-poblar si el modal está abierto
-  upd('p-marca',getCatalogList('marcas'),'Seleccionar marca…');
-  upd('p-color',getCatalogList('colores'),'Seleccionar color…');
   populateVendedoresSelect();
 }
 
@@ -5885,15 +5791,7 @@ function buscarEtiq(){
   const q=(document.getElementById('etiq-q')?.value||'').toLowerCase();
   const res=document.getElementById('etiq-resultados');
   if(!q){res.innerHTML='';return;}
-  // Solo productos de tienda (excluir bodega)
-  const tiendasIds = new Set(sucursales.filter(s=>s.tipo!=='bodega').map(s=>s.id));
-  const lista=productos.filter(p=>{
-    const matchQ=(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q);
-    if(!matchQ) return false;
-    // Excluir productos de bodega
-    const suc=sucursales.find(s=>s.id===p.sucursalId);
-    return !suc || suc.tipo!=='bodega';
-  }).slice(0,8);
+  const lista=productos.filter(p=>(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q)).slice(0,8);
   res.innerHTML=lista.map(p=>{
     const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
     const tot=sumS(p.stock);
@@ -6106,23 +6004,21 @@ function abrirVentanaEtiquetas(items, sz){
       padding:0.5mm 0.5mm;
       overflow:hidden;
     }
-    /* Talla MÁS GRANDE y BOLD */
+    /* Talla grande */
     .e-talla{
       font-family:Arial,sans-serif;font-weight:900;color:#000;
       line-height:1;text-align:center;
-      font-size:14pt;
+      font-size:11pt;
       width:100%;text-align:center;
-      letter-spacing:-0.5pt;
     }
-    /* QR a tamaño fijo — el canvas se genera a 200px y CSS lo escala down para nitidez */
+    /* QR más grande */
     .e-qr{
       display:flex;align-items:center;justify-content:center;
       flex:1;
     }
     .e-qr canvas, .e-qr img{
-      width:10mm!important;height:10mm!important;
+      width:11mm!important;height:11mm!important;
       display:block;
-      image-rendering:pixelated;
     }
 
     /* ═══ IMPRESIÓN ═══ */
@@ -6150,8 +6046,7 @@ function abrirVentanaEtiquetas(items, sz){
   <div class="preview-grid">
   ${prodData.map((p,i) => {
     const tallaStr = p.talla||'';
-    // Talla MÁS GRANDE: 16pt short, 13pt medium, 11pt long
-    const tf = tallaStr.length <= 2 ? '16pt' : tallaStr.length === 3 ? '13pt' : '11pt';
+    const tf = tallaStr.length <= 2 ? '11pt' : tallaStr.length === 3 ? '9pt' : '7.5pt';
     return `<div class="etiq">
 
       <!-- HEADER: tienda+fecha izq, MARCA grande der -->
@@ -6160,7 +6055,7 @@ function abrirVentanaEtiquetas(items, sz){
           <span class="e-tienda">ZAPATERIA JABED</span>
           <span class="e-fecha">${fechaImp}</span>
         </div>
-        <span class="e-estilo-hdr">${p.estilo||p.sku||p.bc||'—'}</span>
+        <span class="e-estilo-hdr">${p.marca||p.estilo||p.sku||'—'}</span>
       </div>
 
       <!-- TEXTO IZQUIERDO: marca grande + desc + color + precio -->
@@ -6171,9 +6066,9 @@ function abrirVentanaEtiquetas(items, sz){
         <div class="e-precio">$${Number(p.precio).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
       </div>
 
-      <!-- DERECHA: talla GRANDE BOLD + QR -->
+      <!-- DERECHA: talla grande + QR -->
       <div class="e-right">
-        <div class="e-talla" style="font-size:${tf};font-weight:900">${tallaStr}</div>
+        <div class="e-talla" style="font-size:${tf}">${tallaStr}</div>
         <div class="e-qr" id="qr-wrap-${i}"></div>
       </div>
 
@@ -6189,8 +6084,8 @@ function abrirVentanaEtiquetas(items, sz){
       try{
         new QRCode(wrap, {
           text: bc,
-          width:  200,  /* alta resolución → CSS escala DOWN = imagen nítida al imprimir */
-          height: 200,
+          width:  38,   /* px — se ajusta a 10mm en pantalla via CSS */
+          height: 38,
           colorDark:  '#000000',
           colorLight: '#ffffff',
           correctLevel: QRCode.CorrectLevel.M
@@ -6336,6 +6231,12 @@ async function cobrar(){
     if(pago==='mixto'&&mixtoEf+mixtoTar<total-0.5){
       toast('⚠️ Los montos del pago mixto no cubren el total','err'); return;
     }
+    // BBVA+Efectivo
+    const bbvaEfTar = pago==='bbva-efectivo'?parseFloat(document.getElementById('c-bbvaef-tar')?.value||'0')||0:0;
+    const bbvaEfEf  = pago==='bbva-efectivo'?parseFloat(document.getElementById('c-bbvaef-ef')?.value||'0')||0:0;
+    if(pago==='bbva-efectivo'&&bbvaEfTar+bbvaEfEf<total-0.5){
+      toast('⚠️ Los montos BBVA+Efectivo no cubren el total','err'); return;
+    }
     const ventaDoc={
       fecha:hoy(),hora:hora(),
       items:JSON.parse(JSON.stringify(carrito.map(item=>({...item,sinCodigo:item.sinCodigo||false})))),
@@ -6347,6 +6248,8 @@ async function cobrar(){
       notaFolio:folioFisico,
       mixtoEfectivo:mixtoEf||0,
       mixtoTarjeta:mixtoTar||0,
+      bbvaEfectivo:bbvaEfEf||0,
+      bbvaTarjeta:bbvaEfTar||0,
       vendedor,
       sucursalId:sucId||'',
       createdAt:new Date().toISOString()
@@ -6876,14 +6779,21 @@ function toggleMonederoField(){
   const monSec   = document.getElementById('c-monedero-section');
   const efSec    = document.getElementById('c-efectivo-section');
   const mixSec   = document.getElementById('c-mixto-section');
-  if(monSec)  monSec.style.display  = pago==='monedero'?'block':'none';
-  if(mixSec)  mixSec.style.display  = pago==='mixto'?'block':'none';
-  // Show cambio for efectivo/monedero; hide for tarjeta/mixto/transferencia
-  if(efSec)   efSec.style.display   = (pago==='efectivo'||pago==='monedero')?'block':'none';
-  // Reset mixto fields when switching away
+  const bbvaEfSec= document.getElementById('c-bbvaef-section');
+  if(monSec)   monSec.style.display   = pago==='monedero'?'block':'none';
+  if(mixSec)   mixSec.style.display   = pago==='mixto'?'block':'none';
+  if(bbvaEfSec)bbvaEfSec.style.display= pago==='bbva-efectivo'?'block':'none';
+  // Mostrar cambio solo para efectivo/monedero; ocultar para tarjeta/mixto/transferencia/bbva-ef
+  const showEf = pago==='efectivo'||pago==='monedero';
+  if(efSec) efSec.style.display = showEf?'block':'none';
+  // Reset campos al cambiar
   if(pago!=='mixto'){
     const mef=document.getElementById('c-mixto-ef');const mtar=document.getElementById('c-mixto-tar');
     if(mef)mef.value='';if(mtar)mtar.value='';
+  }
+  if(pago!=='bbva-efectivo'){
+    const bef=document.getElementById('c-bbvaef-ef');const btar=document.getElementById('c-bbvaef-tar');
+    if(bef)bef.value='';if(btar)btar.value='';
   }
   calcCambio();
 }
@@ -6900,6 +6810,20 @@ function calcMixto(){
   else if(diff<-0.01){ st.innerHTML='⚠️ Faltan $'+Math.abs(diff).toFixed(2)+' por cubrir'; st.style.color='var(--red)'; }
   else if(diff>0.01) { st.innerHTML='💚 Cambio: $'+diff.toFixed(2); st.style.color='var(--green)'; }
   else               { st.innerHTML='✅ Total cubierto exacto'; st.style.color='var(--green)'; }
+}
+
+function calcBbvaEf(){
+  const total = parseFloat(document.getElementById('cobro-total')?.textContent?.replace(/[^0-9.]/g,'')||'0')||0;
+  const tar = parseFloat(document.getElementById('c-bbvaef-tar')?.value||'0')||0;
+  const ef  = parseFloat(document.getElementById('c-bbvaef-ef')?.value||'0')||0;
+  const suma = tar+ef;
+  const diff = suma-total;
+  const st = document.getElementById('c-bbvaef-status');
+  if(!st) return;
+  if(suma===0)       { st.textContent='Ingresa BBVA y Efectivo'; st.style.color='var(--muted)'; }
+  else if(diff<-0.01){ st.innerHTML='⚠️ Faltan $'+Math.abs(diff).toFixed(2)+' por cubrir'; st.style.color='var(--red)'; }
+  else if(diff>0.01) { st.innerHTML='💚 Cambio efectivo: $'+diff.toFixed(2); st.style.color='var(--green)'; }
+  else               { st.innerHTML='✅ Pago completo — BBVA $'+tar.toFixed(2)+' + Efectivo $'+ef.toFixed(2); st.style.color='var(--green)'; }
 }
 
 function calcCambio(){
@@ -7741,19 +7665,8 @@ function renderHist(){
     else if(isAbo)  cobrado = v.monto||v.total||0;
     else             cobrado = v.total||0;
     totalCobrado += cobrado;
-    if(isDev){ // FIX: restar de la forma de pago original de la venta
-      const p=(v.pago||'efectivo').toLowerCase().trim();
-      if(p==='mixto'){
-        // Resta proporcional al mixto
-        const ef=v.mixtoEfectivo||0; const tar=v.mixtoTarjeta||0; const tot=ef+tar||1;
-        totalEfectivo += cobrado*(ef/tot);
-        totalTarjeta  += cobrado*(tar/tot);
-      } else if(p.includes('tarjeta')||p.includes('bbva')||p.includes('mp')||
-                p.includes('mercado')||p==='transferencia'||p.includes('transfer')){
-        totalTarjeta += cobrado; // resta de tarjeta
-      } else {
-        totalEfectivo += cobrado; // resta de efectivo
-      }
+    if(isDev){ // las devoluciones restan de la forma de pago original
+      totalEfectivo += cobrado; // total ya es negativo
     } else {
       const p = (v.pago||'').toLowerCase().trim();
       if(p==='mixto'){
@@ -7761,6 +7674,10 @@ function renderHist(){
         const tar = v.mixtoTarjeta||0;
         if(ef+tar>0){ totalEfectivo+=ef; totalTarjeta+=tar; }
         else { totalEfectivo+=cobrado/2; totalTarjeta+=cobrado/2; }
+      } else if(p==='bbva-efectivo'){
+        // BBVA+Efectivo: suma cada parte a su columna correcta
+        totalTarjeta += v.bbvaTarjeta||0;
+        totalEfectivo+= v.bbvaEfectivo||0;
       } else if(p==='efectivo'||p==='monedero'||p==='caja'||p==='') {
         totalEfectivo += cobrado;
       } else if(p.includes('tarjeta')||p.includes('bbva')||p.includes('mp')||
@@ -7787,7 +7704,7 @@ function renderHist(){
   // Build pago labels from catalog + hardcoded fallbacks
   const pagoEntries=getCatalogList('formaPago')||[];
   const pi={efectivo:'💵 Efectivo',tarjeta:'💳 Tarjeta','tarjeta-bbva':'💳 BBVA','tarjeta-mp':'💳 Mercado Pago',
-    transferencia:'📲 Transf.',mixto:'🔀 Mixto',monedero:'🪙 Monedero',abono:'💰 Abono',
+    transferencia:'📲 Transf.',mixto:'🔀 Mixto','bbva-efectivo':'💳+💵 BBVA+Ef',monedero:'🪙 Monedero',abono:'💰 Abono',
     '':'—','undefined':'—','null':'—'};
   pagoEntries.forEach(e=>{const[lbl,val]=e.split('|');if(val&&lbl)pi[val]=lbl;});
   const fmtPago=(pago,venta)=>{
@@ -7800,22 +7717,29 @@ function renderHist(){
         +(tar>0?'<div style="color:var(--blue)">💳 Tar: '+fmt(tar)+'</div>':'')
         +'</div>';
     }
+    if(pago==='bbva-efectivo'&&venta&&(venta.bbvaEfectivo||venta.bbvaTarjeta)){
+      const ef=venta.bbvaEfectivo||0;
+      const tar=venta.bbvaTarjeta||0;
+      return'<div style="font-size:11px;line-height:1.5">'
+        +'<div style="color:#4fa3e0">💳+💵 BBVA+Ef</div>'
+        +(tar>0?'<div style="color:#4fa3e0">💳 BBVA: '+fmt(tar)+'</div>':'')
+        +(ef>0?'<div style="color:var(--green)">💵 Ef: '+fmt(ef)+'</div>':'')
+        +'</div>';
+    }
     return pi[pago||'']||(pago?'💳 '+pago:'—');
   };
 
   document.getElementById('h-tbody').innerHTML=lista.map((v,idx)=>{
     const sucObj=sucursales.find(s=>s.id===v.sucursalId);
-    const isDev=v.tipoVenta==='devolucion';           // ← FIX: faltaba esta variable
     const isAprt=(v.tipoVenta||'venta')==='apartado';
     const isAbono=v.tipoVenta==='abono';
     const isCredito=v.tipoVenta==='credito';
     const isAC=isAprt||isCredito;
     const mesStr=getNombreMes(v.fecha).slice(0,3);
     const semStr=getNumSemana(v.fecha);
-    const cobrado=isDev?(v.total||0):isAC?(v.anticipo||0):(v.total||0); // ← FIX: devolución resta
+    const cobrado=isAC?(v.anticipo||0):(v.total||0);
     const items=v.items||[];
-    // ← FIX: fila roja para devoluciones, destacar visualmente
-    const rowBg=isDev?'background:rgba(224,82,82,.08);border-left:3px solid var(--red)':isAprt?'background:rgba(240,180,41,.05)':isAbono?'background:rgba(82,201,122,.04)':isCredito?'background:rgba(82,168,224,.04)':'';
+    const rowBg=isAprt?'background:rgba(240,180,41,.05)':isAbono?'background:rgba(82,201,122,.04)':isCredito?'background:rgba(82,168,224,.04)':'';
 
     // Generate folio from venta ID
     const folioV = v.folio||v.id.slice(-6).toUpperCase();
@@ -7831,14 +7755,14 @@ function renderHist(){
       <td>${v.cliente}</td>
       <td style="color:var(--muted)">${v.vendedor||'—'}</td>
       <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
-      <td><span class="badge ${isDev?'b-red':isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isDev?'↩ Devolución':isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
+      <td><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
       <td>${fmtPago(v.pago,v)}</td>
       <td class="mono" style="color:var(--muted)">—</td>
       <td class="mono" style="color:var(--red);font-size:11px">${v.descuento>0?'-'+fmt(v.descuento):'—'}</td>
       <td class="mono" style="color:var(--muted);font-size:11px">—</td>
       <td class="mono" style="color:var(--cream)">${fmt(cobrado)}</td>
       <td class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
-      <td class="mono" style="color:${isDev?'var(--red)':'var(--green)'};font-weight:600">${fmt(cobrado)}${isDev?'<div style="font-size:9px;color:var(--red);opacity:.8">↩ resta</div>':''}</td>
+      <td class="mono" style="color:var(--green);font-weight:600">${fmt(cobrado)}</td>
       ${(usuarioActivo?.rol==='admin'||usuarioActivo?.rol==='manager')
         ?`<td><div style="display:flex;flex-direction:column;gap:3px">
             <button class="btn btn-ghost btn-xs" onclick="editarFechaVenta('${v.id}','${v.fecha}','${v.hora||''}')">📅</button>
@@ -7870,7 +7794,7 @@ function renderHist(){
         <td><span class="badge b-accent" style="font-size:10px">${item.cat||(productos.find(p=>p.barcode===item.sku||p.sku===item.sku||p.id===item.id)?.cat)||'—'}</span></td>
         <td class="mono" style="text-align:center">${item.qty||1}</td>
         ${ii===0?`
-        <td rowspan="${items.length}"><span class="badge ${isDev?'b-red':isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isDev?'↩ Devolución':isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
+        <td rowspan="${items.length}"><span class="badge ${isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
         <td rowspan="${items.length}">${fmtPago(v.pago,v)}</td>`:''}
         <td class="mono" style="color:var(--gold);font-size:12px;font-weight:700">${fmt(item.price||0)}</td>
         ${ii===0?`
@@ -7878,7 +7802,7 @@ function renderHist(){
         <td rowspan="${items.length}" class="mono" style="font-size:11px;color:var(--muted)">${costoVal>0?fmt(costoVal):'—'}</td>
         <td rowspan="${items.length}" class="mono" style="color:var(--cream)">${fmt(cobrado)}</td>
         <td rowspan="${items.length}" class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
-        <td rowspan="${items.length}" class="mono" style="color:${isDev?'var(--red)':'var(--green)'};font-weight:600">${fmt(cobrado)}${isDev?'<div style="font-size:9px;color:var(--red);opacity:.8">↩ resta</div>':''}${!isDev&&isAC&&v.anticipo?'<div style="font-size:10px;color:var(--muted)">Ant: '+fmt(v.anticipo)+'</div>':''}</td>
+        <td rowspan="${items.length}" class="mono" style="color:var(--green);font-weight:600">${fmt(cobrado)}${isAC&&v.anticipo?'<div style="font-size:10px;color:var(--muted)">Ant: '+fmt(v.anticipo)+'</div>':''}</td>
         ${(usuarioActivo?.rol==='admin'||usuarioActivo?.rol==='manager')
           ?`<td rowspan="${items.length}"><div style="display:flex;flex-direction:column;gap:3px">
               <button class="btn btn-ghost btn-xs" onclick="editarFechaVenta('${v.id}','${v.fecha}','${v.hora||''}')">📅</button>
@@ -11205,29 +11129,16 @@ function renderDashboardVentas(){
     return inR&&inS;
   });
 
-  // Totals — FIX: devoluciones restan del total y de la forma de pago correspondiente
+  // Totals
   let total=0,efectivo=0,tarjeta=0,transferencia=0;
   vFilt.forEach(v=>{
-    const tipoV=v.tipoVenta||'venta';
-    const isDev=tipoV==='devolucion';
-    const isAC=tipoV==='apartado'||tipoV==='credito';
-    const isAbo=tipoV==='abono';
-    const monto=isDev?(v.total||0):isAC?(v.anticipo||0):isAbo?(v.monto||v.total||0):(v.total||0);
+    const monto=v.tipoVenta==='apartado'||v.tipoVenta==='credito'?(v.anticipo||0):v.total||0;
     total+=monto;
-    const p=(v.pago||'').toLowerCase().trim();
-    if(isDev){
-      // Devolucion resta de la forma de pago original
-      if(p.includes('tarjeta')||p.includes('bbva')||p.includes('mp')||p==='transferencia'||p.includes('transfer'))
-        tarjeta+=monto;
-      else
-        efectivo+=monto;
-    } else if(p==='mixto'){
-      const ef=v.mixtoEfectivo||0; const tar=v.mixtoTarjeta||0; const tot=ef+tar||1;
-      efectivo+=monto*(ef/tot); tarjeta+=monto*(tar/tot);
-    } else if(p==='efectivo'||p==='monedero'||p==='') efectivo+=monto;
-    else if(p.includes('tarjeta')||p.includes('bbva')||p.includes('mp')) tarjeta+=monto;
-    else if(p==='transferencia'||p.includes('transfer')) transferencia+=monto;
-    else efectivo+=monto;
+    const p=v.pago||'';
+    if(p==='efectivo'||p==='monedero')efectivo+=monto;
+    else if(p.startsWith('tarjeta'))tarjeta+=monto;
+    else if(p==='transferencia')transferencia+=monto;
+    else if(p==='mixto')efectivo+=monto; // count mixto as efectivo for simplicity
   });
 
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
@@ -11487,18 +11398,11 @@ function _navigateTo(page, el){
   if(actEl)   actEl.innerHTML     = info.actions||'';
   // Update module name labels in all mod-nav-bars
   document.querySelectorAll('#mod-cur-name').forEach(el=>{ el.textContent = info.t||page; });
-  // Mark body as in-module (hides topbar, shows cross-mod-bar)
-  document.body.classList.add('in-module');
-  // Scroll contenido al inicio
-  const mainEl = document.querySelector('.main');
-  if(mainEl) mainEl.scrollTop = 0;
-  // Render cross-module navigation bar
-  renderCrossModTabs(page);
   // Show nav-bar + fixed back button
   const navBar = document.getElementById('nav-bar');
-  if(navBar){ navBar.style.display = 'none'; }
+  if(navBar){ navBar.style.display = 'flex'; }
   const fixedBack = document.getElementById('fixed-back-btn');
-  if(fixedBack) fixedBack.style.display = 'none';
+  if(fixedBack) fixedBack.style.display = 'flex';
   // Track recent pages and render tabs
   if(!_recentPages.includes(page)) _recentPages.unshift(page);
   if(_recentPages.length>MAX_TABS) _recentPages=_recentPages.slice(0,MAX_TABS);
@@ -11595,10 +11499,6 @@ const GM_CATS = {
 function toggleGridMenu(){
   _gmCurrentCat = null;
   _recentPages = [];
-  document.body.classList.remove('in-module');
-  // Scroll al inicio
-  const mainEl = document.querySelector('.main');
-  if(mainEl) mainEl.scrollTop = 0;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   const menuPage = document.getElementById('page-grid-menu');
   if(menuPage) menuPage.classList.add('on');
@@ -11609,77 +11509,7 @@ function toggleGridMenu(){
   if(fixedBack) fixedBack.style.display = 'none';
   const tabsEl = document.getElementById('ph-tabs');
   if(tabsEl) tabsEl.innerHTML = '';
-  const cBar = document.getElementById('cross-mod-bar');
-  if(cBar) cBar.innerHTML = '';
   gmShowCategories();
-}
-
-// ══ CROSS-MODULE NAVIGATION BAR ══
-function renderCrossModTabs(page){
-  const bar = document.getElementById('cross-mod-bar');
-  if(!bar) return;
-  let currentCat = null;
-  for(const [key, cat] of Object.entries(GM_CATS)){
-    if(cat.mods.some(m => m.page === page)){ currentCat = key; break; }
-  }
-  const perms = usuarioActivo ? getPermisosUsuario(usuarioActivo) : null;
-  let tabsHtml = '';
-  if(currentCat){
-    const catData = GM_CATS[currentCat];
-    const mods = catData.mods.filter(m =>
-      !perms || perms.includes(m.page) ||
-      perms.includes(m.page.replace('transferencias','transfer'))
-    );
-    tabsHtml = mods.map(m =>
-      `<button class="cmb-tab${m.page===page?' active':''}" onclick="goFromGrid('${m.page}')">${m.name}</button>`
-    ).join('');
-  }
-  const userName = usuarioActivo ? (usuarioActivo.nombre || usuarioActivo.email || 'Usuario') : '';
-  const userHtml = userName
-    ? `<div class="cmb-user-area">
-        <span class="cmb-user-txt">👤 ${userName}</span>
-        <button class="cmb-signout" onclick="doSignOut()">Salir</button>
-       </div>`
-    : `<div class="cmb-user-area">
-        <button class="cmb-signout" onclick="doSignOut()">Salir</button>
-       </div>`;
-  bar.innerHTML =
-    `<button class="cmb-back" onclick="toggleGridMenu()">⌂ MENÚ</button>` +
-    tabsHtml +
-    `<div class="cmb-spacer"></div>` +
-    userHtml;
-  // Scroll activo al tab actual
-  const activeTab = bar.querySelector('.cmb-tab.active');
-  if(activeTab) setTimeout(()=>activeTab.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'}),80);
-  // Drag-to-scroll (mouse y touch)
-  initCmbDragScroll(bar);
-}
-
-function initCmbDragScroll(el){
-  let isDown=false, startX=0, scrollLeft=0;
-  // Mouse drag
-  el.addEventListener('mousedown',e=>{
-    if(e.target.tagName==='BUTTON') return;
-    isDown=true; el.style.cursor='grabbing';
-    startX=e.pageX-el.offsetLeft; scrollLeft=el.scrollLeft;
-  },{passive:true});
-  el.addEventListener('mouseleave',()=>{isDown=false;el.style.cursor='grab'});
-  el.addEventListener('mouseup',()=>{isDown=false;el.style.cursor='grab'});
-  el.addEventListener('mousemove',e=>{
-    if(!isDown) return;
-    e.preventDefault();
-    const x=e.pageX-el.offsetLeft;
-    el.scrollLeft=scrollLeft-(x-startX)*1.2;
-  });
-  // Touch drag (mobile)
-  let touchStartX=0, touchScrollLeft=0;
-  el.addEventListener('touchstart',e=>{
-    touchStartX=e.touches[0].pageX; touchScrollLeft=el.scrollLeft;
-  },{passive:true});
-  el.addEventListener('touchmove',e=>{
-    const dx=touchStartX-e.touches[0].pageX;
-    el.scrollLeft=touchScrollLeft+dx;
-  },{passive:true});
 }
 
 function gmShowCategories(){
@@ -11743,21 +11573,30 @@ function gmShowCat(cat){
   const catData = GM_CATS[cat];
   if(!catData) return;
   const perms = usuarioActivo ? getPermisosUsuario(usuarioActivo) : null;
-  const mods = catData.mods.filter(m=>
-    !perms || perms.includes(m.page) ||
-    perms.includes(m.page.replace('transferencias','transfer'))
-  );
+  const mods = catData.mods.filter(m=> !perms || perms.includes(m.page) || perms.includes(m.page.replace('transferencias','transfer')));
   if(!mods.length){ toast('Sin módulos disponibles en esta categoría','err'); return; }
-  // Navegar directamente al primer módulo — cross-mod-bar muestra todos los módulos
-  goFromGrid(mods[0].page);
+  document.getElementById('gm-header').style.display = 'flex';
+  document.getElementById('gm-cat-title').textContent = catData.title;
+  document.getElementById('gm-cats').style.display = 'none';
+  const modsEl = document.getElementById('gm-mods');
+  modsEl.style.display = 'grid';
+  modsEl.innerHTML = mods.map(m=>{
+    const def = getModDef(m.page);
+    return `<div class="gm-mod-card" onclick="goFromGrid('${m.page}')">
+      <div class="gm-mod-bg">
+        <div class="gm-mod-svg-wrap">${def.svg}</div>
+        <div class="gm-mod-bottom">
+          <div class="gm-mod-name">${m.name}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function gmBack(){
   document.getElementById('gm-cats').style.display = 'grid';
   document.getElementById('gm-mods').style.display = 'none';
   document.getElementById('gm-header').style.display = 'none';
-  const greet = document.getElementById('gm-greeting');
-  if(greet) greet.style.display = '';
   _gmCurrentCat = null;
 }
 
