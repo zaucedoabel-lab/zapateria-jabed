@@ -557,6 +557,16 @@ select option{background:var(--s2)}
   .mod-tab{padding:0 12px;font-size:11px}
 }
 
+/* ══ COBRAR MODAL — responsive 2 columnas ══ */
+@media(max-width:700px){
+  #pos-cobro-modal > div {
+    padding: 14px !important;
+  }
+  #pos-cobro-modal .cobro-grid-2col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* ══ CROSS-MODULE BAR (barra de navegación entre módulos) ══ */
 #cross-mod-bar{
   display:none;
@@ -1361,210 +1371,225 @@ body{background:#071222!important}
           </div>
 
           <!-- MODAL DE COBRO (pantalla completa) -->
-          <div id="pos-cobro-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center">
-            <div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;width:95%;max-width:560px;max-height:90vh;overflow-y:auto;padding:24px">
+          <div id="pos-cobro-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;align-items:flex-start;justify-content:center;overflow-y:auto;padding:12px 8px">
+            <div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;width:100%;max-width:900px;padding:18px 20px;margin:auto">
 
               <!-- Header -->
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)">
                 <div style="font-size:20px;font-weight:800;color:var(--cream)">💰 Cobrar Venta</div>
                 <button onclick="cerrarModalCobro()" style="background:var(--s3);border:none;border-radius:8px;padding:8px 14px;font-size:14px;color:var(--muted);cursor:pointer">✕ Cancelar</button>
               </div>
 
-              <!-- Resumen artículos -->
-              <div id="cobro-items-list" style="background:var(--s2);border-radius:10px;padding:10px;margin-bottom:14px;max-height:160px;overflow-y:auto"></div>
+              <!-- ═══ LAYOUT 2 COLUMNAS ═══ -->
+              <div class="cobro-grid-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
 
-              <!-- 🏷️ DESCUENTO — visible y llamativo -->
-              <div style="background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(239,68,68,.05));border:2px solid rgba(239,68,68,.4);border-radius:12px;padding:14px 16px;margin-bottom:14px">
-                <div style="font-size:13px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🏷️ Aplicar Descuento</div>
-                <div style="display:flex;gap:8px;align-items:center">
-                  <input type="number" id="c-desc-modal" value="0" min="0"
-                    placeholder="0"
-                    style="flex:1;font-size:36px;font-weight:900;padding:14px 18px;border-radius:12px;
-                    border:2px solid rgba(239,68,68,.5);background:var(--s2);color:var(--red);
-                    text-align:center;height:70px"
-                    oninput="calcCartFromModal()">
-                  <select id="c-desc-t-modal" onchange="calcCartFromModal()"
-                    style="width:80px;font-size:14px;font-weight:700;padding:8px 6px;border-radius:10px;
-                    border:2px solid rgba(239,68,68,.4);background:var(--s2);color:var(--red);cursor:pointer;
-                    height:70px">
-                    <option value="$">$</option>
-                    <option value="%">%</option>
-                  </select>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--muted)">
-                  <span>Subtotal: <span id="cobro-subtotal">$0.00</span></span>
-                  <span>Descuento: <span id="cobro-desc-monto" style="color:var(--red);font-weight:700">$0.00</span></span>
-                </div>
-              </div>
+                <!-- ══ COLUMNA IZQUIERDA ══ -->
+                <div>
 
-              <!-- Total grande -->
-              <div style="display:flex;justify-content:space-between;align-items:center;background:var(--s2);border-radius:10px;padding:14px 16px;margin-bottom:16px">
-                <span style="font-size:20px;font-weight:700;color:var(--cream)">TOTAL</span>
-                <span id="cobro-total" style="font-size:32px;font-weight:900;color:var(--gold)">$0.00</span>
-              </div>
+                  <!-- Resumen artículos -->
+                  <div id="cobro-items-list" style="background:var(--s2);border-radius:10px;padding:10px;margin-bottom:12px;max-height:130px;overflow-y:auto"></div>
 
-              <!-- Tipo de transacción — botones grandes -->
-              <div style="margin-bottom:14px">
-                <div style="font-size:14px;font-weight:700;color:var(--cream);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Tipo de Transacción</div>
-                <div id="pos-tipo-btns" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-              </div>
-              <input type="hidden" id="c-tipo-venta" value="venta">
-
-              <!-- Apartado fields -->
-              <div id="c-apartado-section" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
-                <div class="fg" style="margin-bottom:8px"><label style="font-size:13px;font-weight:600">Anticipo / Abono inicial ($)</label><input type="number" id="c-anticipo" placeholder="0.00" step="0.01" min="0" style="font-size:16px;padding:10px" oninput="calcCambio()"></div>
-                <div class="fg"><label style="font-size:13px;font-weight:600">Fecha Límite</label><input type="date" id="c-fecha-aprt" style="font-size:14px;padding:10px"></div>
-              </div>
-
-              <!-- Forma de pago — botones dinámicos desde Catálogos -->
-              <div style="margin-bottom:14px">
-                <div style="font-size:14px;font-weight:700;color:var(--cream);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Forma de Pago</div>
-                <div id="pos-pago-btns" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px"></div>
-              </div>
-              <input type="hidden" id="c-pago" value="efectivo">
-
-              <!-- Mixto section (efectivo + tarjeta) -->
-              <div id="c-mixto-section" style="display:none;background:var(--s2);border:1px solid rgba(82,168,224,.4);border-radius:10px;padding:14px;margin-bottom:12px">
-                <div style="font-size:13px;color:var(--blue);font-weight:700;margin-bottom:10px">🔀 Pago Mixto — Efectivo + Tarjeta</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                  <div>
-                    <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">💵 Efectivo ($)</label>
-                    <input type="number" id="c-mixto-ef" placeholder="0.00" step="1" min="0"
-                      style="width:100%;font-size:20px;font-weight:700;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--s3);color:var(--cream)"
-                      oninput="calcMixto()">
-                  </div>
-                  <div>
-                    <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">💳 Tarjeta / Puntos ($)</label>
-                    <input type="number" id="c-mixto-tar" placeholder="0.00" step="1" min="0"
-                      style="width:100%;font-size:20px;font-weight:700;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--s3);color:var(--cream)"
-                      oninput="calcMixto()">
-                  </div>
-                </div>
-                <div id="c-mixto-status" style="margin-top:8px;font-size:13px;color:var(--muted);text-align:center"></div>
-              </div>
-
-              <!-- BBVA+Efectivo section -->
-              <div id="c-bbvaef-section" style="display:none;background:var(--s2);border:2px solid rgba(0,112,206,.5);border-radius:10px;padding:14px;margin-bottom:12px">
-                <div style="font-size:13px;color:#4fa3e0;font-weight:700;margin-bottom:4px">💳 BBVA + 💵 Efectivo</div>
-                <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Ej: $80 con tarjeta BBVA y $20 en efectivo</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                  <div>
-                    <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">💳 BBVA ($)</label>
-                    <input type="number" id="c-bbvaef-tar" placeholder="0.00" step="1" min="0"
-                      style="width:100%;font-size:20px;font-weight:700;padding:10px;border-radius:8px;border:2px solid rgba(0,112,206,.4);background:var(--s3);color:var(--cream)"
-                      oninput="calcBbvaEf()">
-                  </div>
-                  <div>
-                    <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">💵 Efectivo ($)</label>
-                    <input type="number" id="c-bbvaef-ef" placeholder="0.00" step="1" min="0"
-                      style="width:100%;font-size:20px;font-weight:700;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--s3);color:var(--cream)"
-                      oninput="calcBbvaEf()">
-                  </div>
-                </div>
-                <div id="c-bbvaef-status" style="margin-top:8px;font-size:13px;color:var(--muted);text-align:center"></div>
-              </div>
-
-              <!-- Monedero section -->
-              <div id="c-monedero-section" style="display:none;background:var(--s2);border:1px solid var(--gold)44;border-radius:8px;padding:12px;margin-bottom:12px">
-                <div style="font-size:13px;color:var(--gold);font-weight:600;margin-bottom:8px">🪙 Pago con Monedero</div>
-                <div style="display:flex;gap:8px;align-items:center">
-                  <div class="fg" style="flex:1;margin-bottom:0"><label style="font-size:12px">Monedero a usar ($)</label><input type="number" id="c-monedero-monto" placeholder="0.00" step="0.01" min="0" style="font-size:15px;padding:8px" oninput="calcCartMonedero()"></div>
-                  <div style="font-size:12px;color:var(--muted);white-space:nowrap">Disponible:<br><span id="c-monedero-disp" style="color:var(--gold);font-weight:700">$0.00</span></div>
-                </div>
-                <div id="c-monedero-resto" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
-              </div>
-
-              <!-- Efectivo recibido y cambio -->
-              <div id="c-efectivo-section" style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                  <div>
-                    <label style="display:block;font-size:13px;font-weight:700;color:var(--cream);margin-bottom:6px" id="c-recibido-label">💵 Total Recibido ($)</label>
-                    <input type="number" id="c-recibido" placeholder="0.00" step="1" min="0"
-                      style="width:100%;font-size:22px;padding:10px;font-weight:700;border-radius:8px;border:2px solid var(--border);background:var(--s3);color:var(--cream)"
-                      oninput="calcCambio()">
-                  </div>
-                  <div>
-                    <label style="display:block;font-size:13px;font-weight:700;color:var(--cream);margin-bottom:6px">🔄 Cambio</label>
-                    <div id="c-cambio" style="font-size:28px;font-weight:900;color:var(--green);padding:8px 0">$0.00</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Cliente -->
-              <div style="margin-bottom:12px">
-                <label style="display:block;font-size:14px;font-weight:700;color:var(--cream);margin-bottom:6px">👤 Cliente</label>
-
-                <!-- Búsqueda por celular -->
-                <div style="position:relative;margin-bottom:8px">
-                  <div style="display:flex;gap:8px;align-items:center">
-                    <div style="position:relative;flex:1">
-                      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">📱</span>
-                      <input type="tel" id="c-cel-buscar"
-                        placeholder="Celular del cliente..."
-                        maxlength="15"
-                        oninput="buscarClientePorCelular()"
-                        style="width:100%;padding:11px 12px 11px 36px;font-size:16px;font-weight:700;
-                          border-radius:8px;border:2px solid var(--border);background:var(--s3);
-                          color:var(--cream);letter-spacing:1px;font-family:var(--mono)"
-                      >
+                  <!-- 🏷️ DESCUENTO -->
+                  <div style="background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(239,68,68,.05));border:2px solid rgba(239,68,68,.4);border-radius:12px;padding:12px 14px;margin-bottom:12px">
+                    <div style="font-size:12px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🏷️ Aplicar Descuento</div>
+                    <div style="display:flex;gap:8px;align-items:center">
+                      <input type="number" id="c-desc-modal" value="0" min="0"
+                        placeholder="0"
+                        style="flex:1;font-size:30px;font-weight:900;padding:10px 14px;border-radius:12px;
+                        border:2px solid rgba(239,68,68,.5);background:var(--s2);color:var(--red);
+                        text-align:center;height:58px"
+                        oninput="calcCartFromModal()">
+                      <select id="c-desc-t-modal" onchange="calcCartFromModal()"
+                        style="width:70px;font-size:14px;font-weight:700;padding:6px 4px;border-radius:10px;
+                        border:2px solid rgba(239,68,68,.4);background:var(--s2);color:var(--red);cursor:pointer;
+                        height:58px">
+                        <option value="$">$</option>
+                        <option value="%">%</option>
+                      </select>
                     </div>
-                    <button onclick="limpiarClienteCelular()" title="Limpiar"
-                      style="padding:10px 12px;background:var(--s3);border:1px solid var(--border);
-                        border-radius:8px;color:var(--muted);cursor:pointer;font-size:14px;white-space:nowrap">
-                      ✕
-                    </button>
+                    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--muted)">
+                      <span>Subtotal: <span id="cobro-subtotal">$0.00</span></span>
+                      <span>Descuento: <span id="cobro-desc-monto" style="color:var(--red);font-weight:700">$0.00</span></span>
+                    </div>
                   </div>
 
-                  <!-- Resultado de búsqueda -->
-                  <div id="c-cel-resultado" style="display:none;margin-top:8px;border-radius:10px;overflow:hidden;border:2px solid var(--accent);background:var(--s2)">
+                  <!-- Total grande -->
+                  <div style="display:flex;justify-content:space-between;align-items:center;background:var(--s2);border-radius:10px;padding:12px 16px;margin-bottom:12px">
+                    <span style="font-size:18px;font-weight:700;color:var(--cream)">TOTAL</span>
+                    <span id="cobro-total" style="font-size:30px;font-weight:900;color:var(--gold)">$0.00</span>
                   </div>
 
-                  <!-- Cliente General (cuando no hay número) -->
-                  <div id="c-cli-general" style="margin-top:6px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px">
-                    <span style="font-size:18px">👤</span>
-                    <span style="font-size:14px;font-weight:600;color:var(--muted)">Cliente General</span>
+                  <!-- Tipo de transacción -->
+                  <div style="margin-bottom:12px">
+                    <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Tipo de Transacción</div>
+                    <div id="pos-tipo-btns" style="display:flex;gap:6px;flex-wrap:wrap"></div>
                   </div>
-                </div>
+                  <input type="hidden" id="c-tipo-venta" value="venta">
 
-                <div id="c-cliente-info" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:8px;margin-top:6px;font-size:12px"></div>
-                <div id="c-cumple-alert" style="display:none;background:#2a1e08;border:1px solid var(--gold);border-radius:8px;padding:8px;margin-top:6px;font-size:13px;color:var(--gold)">
-                  🎂 ¡Cumpleaños hoy! Descuento del <span id="c-cumple-pct"></span>%
-                  <button class="btn btn-gold btn-xs" style="margin-left:8px" onclick="aplicarDescCumple()">Aplicar</button>
-                </div>
-                <!-- Select oculto para compatibilidad con el resto del sistema -->
-                <select id="c-cliente-sel" onchange="onClienteSelect()" style="display:none">
-                  <option value="">— Cliente general —</option>
-                </select>
-              </div>
+                  <!-- Apartado fields -->
+                  <div id="c-apartado-section" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px">
+                    <div class="fg" style="margin-bottom:8px"><label style="font-size:13px;font-weight:600">Anticipo / Abono inicial ($)</label><input type="number" id="c-anticipo" placeholder="0.00" step="0.01" min="0" style="font-size:16px;padding:10px" oninput="calcCambio()"></div>
+                    <div class="fg"><label style="font-size:13px;font-weight:600">Fecha Límite</label><input type="date" id="c-fecha-aprt" style="font-size:14px;padding:10px"></div>
+                  </div>
 
-              <!-- Vendedor — solo texto, no selector -->
-              <div style="margin-bottom:12px">
-                <label style="display:block;font-size:14px;font-weight:700;color:var(--cream);margin-bottom:6px">🏷️ Vendedor</label>
-                <div id="cobro-vendedor-display" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:15px;color:var(--cream);font-weight:600">—</div>
-                <input type="hidden" id="c-vendedor-sel" value="">
-              </div>
+                  <!-- Forma de pago -->
+                  <div style="margin-bottom:12px">
+                    <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Forma de Pago</div>
+                    <div id="pos-pago-btns" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px"></div>
+                  </div>
+                  <input type="hidden" id="c-pago" value="efectivo">
 
-              <!-- Sucursal -->
-              <div style="margin-bottom:14px">
-                <label style="display:block;font-size:14px;font-weight:700;color:var(--cream);margin-bottom:6px">🏪 Sucursal de Venta</label>
-                <select id="c-suc-venta" style="width:100%;font-size:15px;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--cream)"></select>
-              </div>
+                  <!-- Mixto section -->
+                  <div id="c-mixto-section" style="display:none;background:var(--s2);border:1px solid rgba(82,168,224,.4);border-radius:10px;padding:12px;margin-bottom:10px">
+                    <div style="font-size:13px;color:var(--blue);font-weight:700;margin-bottom:8px">🔀 Pago Mixto — Efectivo + Tarjeta</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                      <div>
+                        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">💵 Efectivo ($)</label>
+                        <input type="number" id="c-mixto-ef" placeholder="0.00" step="1" min="0"
+                          style="width:100%;font-size:18px;font-weight:700;padding:8px;border-radius:8px;border:2px solid var(--border);background:var(--s3);color:var(--cream)"
+                          oninput="calcMixto()">
+                      </div>
+                      <div>
+                        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">💳 Tarjeta / Puntos ($)</label>
+                        <input type="number" id="c-mixto-tar" placeholder="0.00" step="1" min="0"
+                          style="width:100%;font-size:18px;font-weight:700;padding:8px;border-radius:8px;border:2px solid var(--border);background:var(--s3);color:var(--cream)"
+                          oninput="calcMixto()">
+                      </div>
+                    </div>
+                    <div id="c-mixto-status" style="margin-top:6px;font-size:13px;color:var(--muted);text-align:center"></div>
+                  </div>
 
-              <!-- Nota separo -->
-              <div id="c-nota-section" style="display:none;background:var(--s2);border:1px solid var(--gold)44;border-radius:8px;padding:12px;margin-bottom:14px">
-                <div style="font-size:13px;color:var(--gold);font-weight:700;margin-bottom:8px">📄 Datos para Nota de Separo</div>
-                <div class="fg" style="margin-bottom:8px"><label style="font-size:13px">Nº de Nota (folio físico)</label><input type="text" id="c-nota-folio" placeholder="Ej: 000917" style="font-size:16px;font-weight:700;letter-spacing:1px;padding:8px"></div>
-                <div class="fg" style="margin-bottom:8px"><label style="font-size:13px">Nombre completo</label><input type="text" id="c-nota-nombre" placeholder="Nombre del cliente" style="font-size:14px;padding:8px"></div>
-                <div class="fg"><label style="font-size:13px">Teléfono</label><input type="text" id="c-nota-tel" placeholder="(899) 000-0000" style="font-size:14px;padding:8px"></div>
-              </div>
+                  <!-- BBVA+Efectivo section -->
+                  <div id="c-bbvaef-section" style="display:none;background:var(--s2);border:2px solid rgba(0,112,206,.5);border-radius:10px;padding:12px;margin-bottom:10px">
+                    <div style="font-size:13px;color:#4fa3e0;font-weight:700;margin-bottom:4px">💳 BBVA + 💵 Efectivo</div>
+                    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Ej: $80 con tarjeta BBVA y $20 en efectivo</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                      <div>
+                        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">💳 BBVA ($)</label>
+                        <input type="number" id="c-bbvaef-tar" placeholder="0.00" step="1" min="0"
+                          style="width:100%;font-size:18px;font-weight:700;padding:8px;border-radius:8px;border:2px solid rgba(0,112,206,.4);background:var(--s3);color:var(--cream)"
+                          oninput="calcBbvaEf()">
+                      </div>
+                      <div>
+                        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">💵 Efectivo ($)</label>
+                        <input type="number" id="c-bbvaef-ef" placeholder="0.00" step="1" min="0"
+                          style="width:100%;font-size:18px;font-weight:700;padding:8px;border-radius:8px;border:2px solid var(--border);background:var(--s3);color:var(--cream)"
+                          oninput="calcBbvaEf()">
+                      </div>
+                    </div>
+                    <div id="c-bbvaef-status" style="margin-top:6px;font-size:13px;color:var(--muted);text-align:center"></div>
+                  </div>
 
-              <!-- Botón COBRAR VENTA grande -->
-              <button onclick="cobrar()"
-                style="width:100%;padding:20px;background:var(--accent);color:#fff;border:none;
-                border-radius:14px;font-size:24px;font-weight:900;cursor:pointer;
-                box-shadow:0 4px 20px rgba(26,158,92,.5);letter-spacing:1px">
-                ✅ COBRAR VENTA
-              </button>
+                  <!-- Monedero section -->
+                  <div id="c-monedero-section" style="display:none;background:var(--s2);border:1px solid var(--gold)44;border-radius:8px;padding:10px;margin-bottom:10px">
+                    <div style="font-size:13px;color:var(--gold);font-weight:600;margin-bottom:8px">🪙 Pago con Monedero</div>
+                    <div style="display:flex;gap:8px;align-items:center">
+                      <div class="fg" style="flex:1;margin-bottom:0"><label style="font-size:12px">Monedero a usar ($)</label><input type="number" id="c-monedero-monto" placeholder="0.00" step="0.01" min="0" style="font-size:15px;padding:8px" oninput="calcCartMonedero()"></div>
+                      <div style="font-size:12px;color:var(--muted);white-space:nowrap">Disponible:<br><span id="c-monedero-disp" style="color:var(--gold);font-weight:700">$0.00</span></div>
+                    </div>
+                    <div id="c-monedero-resto" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
+                  </div>
+
+                </div><!-- fin columna izquierda -->
+
+                <!-- ══ COLUMNA DERECHA ══ -->
+                <div style="display:flex;flex-direction:column;gap:0">
+
+                  <!-- Efectivo recibido y cambio -->
+                  <div id="c-efectivo-section" style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                      <div>
+                        <label style="display:block;font-size:13px;font-weight:700;color:var(--cream);margin-bottom:6px" id="c-recibido-label">💵 Total Recibido ($)</label>
+                        <input type="number" id="c-recibido" placeholder="0.00" step="1" min="0"
+                          style="width:100%;font-size:22px;padding:10px;font-weight:700;border-radius:8px;border:2px solid var(--border);background:var(--s3);color:var(--cream)"
+                          oninput="calcCambio()">
+                      </div>
+                      <div>
+                        <label style="display:block;font-size:13px;font-weight:700;color:var(--cream);margin-bottom:6px">🔄 Cambio</label>
+                        <div id="c-cambio" style="font-size:28px;font-weight:900;color:var(--green);padding:8px 0">$0.00</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Cliente -->
+                  <div style="margin-bottom:12px">
+                    <label style="display:block;font-size:14px;font-weight:700;color:var(--cream);margin-bottom:6px">👤 Cliente</label>
+
+                    <!-- Búsqueda por celular -->
+                    <div style="position:relative;margin-bottom:8px">
+                      <div style="display:flex;gap:8px;align-items:center">
+                        <div style="position:relative;flex:1">
+                          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">📱</span>
+                          <input type="tel" id="c-cel-buscar"
+                            placeholder="Celular del cliente..."
+                            maxlength="15"
+                            oninput="buscarClientePorCelular()"
+                            style="width:100%;padding:11px 12px 11px 36px;font-size:16px;font-weight:700;
+                              border-radius:8px;border:2px solid var(--border);background:var(--s3);
+                              color:var(--cream);letter-spacing:1px;font-family:var(--mono)"
+                          >
+                        </div>
+                        <button onclick="limpiarClienteCelular()" title="Limpiar"
+                          style="padding:10px 12px;background:var(--s3);border:1px solid var(--border);
+                            border-radius:8px;color:var(--muted);cursor:pointer;font-size:14px;white-space:nowrap">
+                          ✕
+                        </button>
+                      </div>
+
+                      <!-- Resultado de búsqueda -->
+                      <div id="c-cel-resultado" style="display:none;margin-top:8px;border-radius:10px;overflow:hidden;border:2px solid var(--accent);background:var(--s2)">
+                      </div>
+
+                      <!-- Cliente General (cuando no hay número) -->
+                      <div id="c-cli-general" style="margin-top:6px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px">
+                        <span style="font-size:18px">👤</span>
+                        <span style="font-size:14px;font-weight:600;color:var(--muted)">Cliente General</span>
+                      </div>
+                    </div>
+
+                    <div id="c-cliente-info" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:8px;margin-top:6px;font-size:12px"></div>
+                    <div id="c-cumple-alert" style="display:none;background:#2a1e08;border:1px solid var(--gold);border-radius:8px;padding:8px;margin-top:6px;font-size:13px;color:var(--gold)">
+                      🎂 ¡Cumpleaños hoy! Descuento del <span id="c-cumple-pct"></span>%
+                      <button class="btn btn-gold btn-xs" style="margin-left:8px" onclick="aplicarDescCumple()">Aplicar</button>
+                    </div>
+                    <!-- Select oculto para compatibilidad con el resto del sistema -->
+                    <select id="c-cliente-sel" onchange="onClienteSelect()" style="display:none">
+                      <option value="">— Cliente general —</option>
+                    </select>
+                  </div>
+
+                  <!-- Vendedor — solo texto, no selector -->
+                  <div style="margin-bottom:12px">
+                    <label style="display:block;font-size:14px;font-weight:700;color:var(--cream);margin-bottom:6px">🏷️ Vendedor</label>
+                    <div id="cobro-vendedor-display" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:15px;color:var(--cream);font-weight:600">—</div>
+                    <input type="hidden" id="c-vendedor-sel" value="">
+                  </div>
+
+                  <!-- Sucursal -->
+                  <div style="margin-bottom:12px">
+                    <label style="display:block;font-size:14px;font-weight:700;color:var(--cream);margin-bottom:6px">🏪 Sucursal de Venta</label>
+                    <select id="c-suc-venta" style="width:100%;font-size:15px;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--cream)"></select>
+                  </div>
+
+                  <!-- Nota separo -->
+                  <div id="c-nota-section" style="display:none;background:var(--s2);border:1px solid var(--gold)44;border-radius:8px;padding:12px;margin-bottom:12px">
+                    <div style="font-size:13px;color:var(--gold);font-weight:700;margin-bottom:8px">📄 Datos para Nota de Separo</div>
+                    <div class="fg" style="margin-bottom:8px"><label style="font-size:13px">Nº de Nota (folio físico)</label><input type="text" id="c-nota-folio" placeholder="Ej: 000917" style="font-size:16px;font-weight:700;letter-spacing:1px;padding:8px"></div>
+                    <div class="fg" style="margin-bottom:8px"><label style="font-size:13px">Nombre completo</label><input type="text" id="c-nota-nombre" placeholder="Nombre del cliente" style="font-size:14px;padding:8px"></div>
+                    <div class="fg"><label style="font-size:13px">Teléfono</label><input type="text" id="c-nota-tel" placeholder="(899) 000-0000" style="font-size:14px;padding:8px"></div>
+                  </div>
+
+                  <!-- Botón COBRAR VENTA grande — en columna derecha abajo -->
+                  <button onclick="cobrar()"
+                    style="width:100%;padding:20px;background:var(--accent);color:#fff;border:none;
+                    border-radius:14px;font-size:22px;font-weight:900;cursor:pointer;
+                    box-shadow:0 4px 20px rgba(26,158,92,.5);letter-spacing:1px;margin-top:auto">
+                    ✅ COBRAR VENTA
+                  </button>
+
+                </div><!-- fin columna derecha -->
+
+              </div><!-- fin grid 2 columnas -->
 
             </div>
           </div>
