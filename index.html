@@ -7893,6 +7893,14 @@ function renderHist(){
         const ef=v.mixtoEfectivo||0; const tar=v.mixtoTarjeta||0; const tot=ef+tar||1;
         totalEfectivo += cobrado*(ef/tot);
         totalTarjeta  += cobrado*(tar/tot);
+      } else if(p==='bbva-efectivo'){
+        const ef=v.bbvaEfectivo||0; const tar=v.bbvaTarjeta||0; const tot=ef+tar||1;
+        totalEfectivo += cobrado*(ef/tot);
+        totalTarjeta  += cobrado*(tar/tot);
+      } else if(p==='tarjeta-efectivo'){
+        const ef=v.tarjetaEfEfectivo||0; const tar=v.tarjetaEfTarjeta||0; const tot=ef+tar||1;
+        totalEfectivo += cobrado*(ef/tot);
+        totalTarjeta  += cobrado*(tar/tot);
       } else if(p.includes('tarjeta')||p.includes('bbva')||p.includes('mp')||
                 p.includes('mercado')||p==='transferencia'||p.includes('transfer')){
         totalTarjeta += cobrado; // resta de tarjeta
@@ -7909,6 +7917,9 @@ function renderHist(){
       } else if(p==='bbva-efectivo'){
         totalTarjeta  += v.bbvaTarjeta||0;
         totalEfectivo += v.bbvaEfectivo||0;
+      } else if(p==='tarjeta-efectivo'){
+        totalTarjeta  += v.tarjetaEfTarjeta||0;
+        totalEfectivo += v.tarjetaEfEfectivo||0;
       } else if(p==='efectivo'||p==='monedero'||p==='caja'||p==='') {
         totalEfectivo += cobrado;
       } else if(p.includes('tarjeta')||p.includes('bbva')||p.includes('mp')||
