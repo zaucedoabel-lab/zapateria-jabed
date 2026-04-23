@@ -5343,6 +5343,12 @@ function calcCorte(){
     if(pago==='mixto'){
       bp.efectivo  += v.mixtoEfectivo||0;
       bp.tarjeta   += v.mixtoTarjeta||0;
+    } else if(pago==='bbva-efectivo'){
+      bp.efectivo  += v.bbvaEfectivo||0;
+      bp.tarjeta   += v.bbvaTarjeta||0;
+    } else if(pago==='tarjeta-efectivo'){
+      bp.efectivo  += v.tarjetaEfEfectivo||0;
+      bp.tarjeta   += v.tarjetaEfTarjeta||0;
     } else if(pago.includes('tarjeta')||pago.includes('bbva')||pago.includes('mp')||
               pago==='transferencia'||pago.includes('transfer')){
       bp.tarjeta   += cobrado;
@@ -5387,7 +5393,15 @@ function calcCorte(){
     return`<tr>
     <td class="mono">${v.hora||'—'}</td><td>${v.cliente||'—'}</td><td>${v.vendedor||'—'}</td>
     <td style="font-size:12px">${isDev?'↩ Devolución':(v.items||[]).map(x=>`${x.desc} T${x.talla}`).join(', ')}</td>
-    <td>${pi[v.pago]||''} ${v.pago||'—'}</td>
+    <td style="font-size:11px;line-height:1.5">${
+      v.pago==='mixto'&&(v.mixtoEfectivo||v.mixtoTarjeta)?
+        `🔀 Mixto<br><span style="color:var(--green)">💵 ${fmt(v.mixtoEfectivo||0)}</span> <span style="color:var(--blue)">💳 ${fmt(v.mixtoTarjeta||0)}</span>`:
+      v.pago==='bbva-efectivo'&&(v.bbvaEfectivo||v.bbvaTarjeta)?
+        `💳+💵 BBVA+Ef<br><span style="color:#4fa3e0">💳 ${fmt(v.bbvaTarjeta||0)}</span> <span style="color:var(--green)">💵 ${fmt(v.bbvaEfectivo||0)}</span>`:
+      v.pago==='tarjeta-efectivo'&&(v.tarjetaEfEfectivo||v.tarjetaEfTarjeta)?
+        `💳+💵 Tar+Ef<br><span style="color:#c084fc">💳 ${fmt(v.tarjetaEfTarjeta||0)}</span> <span style="color:var(--green)">💵 ${fmt(v.tarjetaEfEfectivo||0)}</span>`:
+        `${pi[v.pago]||'💳'} ${v.pago||'—'}`
+    }</td>
     <td class="text-r mono" style="${rowColor}">${fmt(cobrado)}</td>
   </tr>`;}).join('');
 }
@@ -6331,10 +6345,14 @@ function exportarExcel(){
 // ══════════════════ COBRAR VENTA ══════════════════
 async function cobrar(){
   if(!carrito.length){toast('Carrito vacío','err');return;}
+  // ── Sincronizar descuento del modal antes de cualquier cálculo ──
+  calcCartFromModal();
   const sub=carrito.reduce((a,c)=>a+c.price*c.qty,0);
-  const dv_pre=parseFloat(document.getElementById('c-desc')?.value)||0;
-  const dt_pre=document.getElementById('c-desc-t')?.value||'$';
-  const dm_pre=dt_pre==='%'?sub*(dv_pre/100):dv_pre;
+  // Leer primero del input visible del modal, luego del hidden como fallback
+  const dv_raw=document.getElementById('c-desc-modal')?.value;
+  const dv_pre=dv_raw!==undefined&&dv_raw!==''?parseFloat(dv_raw)||0:parseFloat(document.getElementById('c-desc')?.value)||0;
+  const dt_pre=document.getElementById('c-desc-t-modal')?.value||document.getElementById('c-desc-t')?.value||'$';
+  const dm_pre=dt_pre==='%'?sub*(dv_pre/100):Math.min(dv_pre,sub);
   const totalPre=Math.max(0,sub-dm_pre);
   const pagoPre=document.getElementById('c-pago')?.value||'efectivo';
   const tipoPre=document.getElementById('c-tipo-venta')?.value||'venta';
@@ -6368,9 +6386,9 @@ async function cobrar(){
     toast('⚠️ Ingresa el monto del anticipo','err');
     return;
   }
-  const dv=parseFloat(document.getElementById('c-desc')?.value)||0;
-  const dt=document.getElementById('c-desc-t')?.value||'$';
-  const dm=dt==='%'?sub*(dv/100):dv;
+  const dv=(()=>{const r=document.getElementById('c-desc-modal')?.value;return(r!==undefined&&r!=='')?parseFloat(r)||0:parseFloat(document.getElementById('c-desc')?.value)||0;})();
+  const dt=document.getElementById('c-desc-t-modal')?.value||document.getElementById('c-desc-t')?.value||'$';
+  const dm=dt==='%'?sub*(dv/100):Math.min(dv,sub);
   const total=Math.max(0,sub-dm);
   const pago=document.getElementById('c-pago')?.value||'efectivo';
   const tipoVenta=document.getElementById('c-tipo-venta')?.value||'venta';
@@ -7936,6 +7954,15 @@ function renderHist(){
       return'<div style="font-size:11px;line-height:1.5">'
         +'<div style="color:#4fa3e0">💳+💵 BBVA+Ef</div>'
         +(tar>0?'<div style="color:#4fa3e0">💳 BBVA: '+fmt(tar)+'</div>':'')
+        +(ef>0?'<div style="color:var(--green)">💵 Ef: '+fmt(ef)+'</div>':'')
+        +'</div>';
+    }
+    if(pago==='tarjeta-efectivo'&&venta&&(venta.tarjetaEfEfectivo||venta.tarjetaEfTarjeta)){
+      const ef=venta.tarjetaEfEfectivo||0;
+      const tar=venta.tarjetaEfTarjeta||0;
+      return'<div style="font-size:11px;line-height:1.5">'
+        +'<div style="color:#c084fc">💳+💵 Tarjeta+Ef</div>'
+        +(tar>0?'<div style="color:#c084fc">💳 Tarjeta: '+fmt(tar)+'</div>':'')
         +(ef>0?'<div style="color:var(--green)">💵 Ef: '+fmt(ef)+'</div>':'')
         +'</div>';
     }
@@ -11452,13 +11479,27 @@ function renderDashboardVentas(){
     </div>`).join(''):'<div style="color:var(--muted);padding:16px;text-align:center">Sin ventas en este período</div>';
 
   // Por pago
-  const pagoLabels={efectivo:'💵 Efectivo','tarjeta-bbva':'💳 BBVA','tarjeta-mp':'💳 Mercado Pago',transferencia:'📲 Transferencia',mixto:'🔀 Mixto',monedero:'🪙 Monedero'};
-  const byPago={};
+  const pagoLabels={efectivo:'💵 Efectivo','tarjeta-bbva':'💳 BBVA','tarjeta-mp':'💳 Mercado Pago',transferencia:'📲 Transferencia',mixto:'🔀 Mixto',monedero:'🪙 Monedero','bbva-efectivo':'💳+💵 BBVA+Ef','tarjeta-efectivo':'💳+💵 Tarjeta+Ef'};
+  const byPago={'efectivo':0,'tarjeta':0};
   vFilt.forEach(v=>{
     const p=v.pago||'otro';
     const m=v.tipoVenta==='apartado'||v.tipoVenta==='credito'?(v.anticipo||0):v.total||0;
-    byPago[p]=(byPago[p]||0)+m;
+    if(p==='mixto'){
+      byPago['💵 Ef (Mixto)']=(byPago['💵 Ef (Mixto)']||0)+(v.mixtoEfectivo||0);
+      byPago['💳 Tar (Mixto)']=(byPago['💳 Tar (Mixto)']||0)+(v.mixtoTarjeta||0);
+    } else if(p==='bbva-efectivo'){
+      byPago['💵 Ef (BBVA+Ef)']=(byPago['💵 Ef (BBVA+Ef)']||0)+(v.bbvaEfectivo||0);
+      byPago['💳 BBVA']=(byPago['💳 BBVA']||0)+(v.bbvaTarjeta||0);
+    } else if(p==='tarjeta-efectivo'){
+      byPago['💵 Ef (Tar+Ef)']=(byPago['💵 Ef (Tar+Ef)']||0)+(v.tarjetaEfEfectivo||0);
+      byPago['💳 Tar (Tar+Ef)']=(byPago['💳 Tar (Tar+Ef)']||0)+(v.tarjetaEfTarjeta||0);
+    } else {
+      const label=pagoLabels[p]||(p?p:'Otro');
+      byPago[label]=(byPago[label]||0)+m;
+    }
   });
+  // Quitar los vacíos de 0
+  Object.keys(byPago).forEach(k=>{if(byPago[k]===0)delete byPago[k];});
   const pagoList=Object.entries(byPago).sort((a,b)=>b[1]-a[1]);
   const maxPago=pagoList[0]?.[1]||1;
   document.getElementById('dv-por-pago').innerHTML=pagoList.length?pagoList.map(([p,v])=>`
@@ -12087,8 +12128,10 @@ function renderReporteSemanal(){
       const cobrado = isAC ? (v.anticipo||0) : (v.total||0);
       const p = v.pago||'';
       if(p==='efectivo'||p==='monedero') efectivo+=cobrado;
+      else if(p==='mixto'){ efectivo+=v.mixtoEfectivo||0; tarjeta+=v.mixtoTarjeta||0; }
+      else if(p==='bbva-efectivo'){ efectivo+=v.bbvaEfectivo||0; tarjeta+=v.bbvaTarjeta||0; }
+      else if(p==='tarjeta-efectivo'){ efectivo+=v.tarjetaEfEfectivo||0; tarjeta+=v.tarjetaEfTarjeta||0; }
       else if(p.startsWith('tarjeta')||p==='transferencia') tarjeta+=cobrado;
-      else if(p==='mixto') efectivo+=cobrado;
       total+=cobrado;
       if(v.tipoVenta==='apartado') separos+=(v.anticipo||0);
     });
