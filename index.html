@@ -1386,30 +1386,30 @@ body{background:#071222!important}
                 <!-- ══ COLUMNA IZQUIERDA ══ -->
                 <div>
 
-                  <!-- Resumen artículos -->
-                  <div id="cobro-items-list" style="background:var(--s2);border-radius:10px;padding:10px;margin-bottom:12px;max-height:180px;overflow-y:auto"></div>
+                  <!-- Resumen artículos — GRANDE para la cajera -->
+                  <div id="cobro-items-list" style="background:var(--s2);border-radius:12px;padding:8px;margin-bottom:10px;min-height:100px;max-height:320px;overflow-y:auto;border:1px solid var(--border)"></div>
 
-                  <!-- 🏷️ DESCUENTO -->
-                  <div style="background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(239,68,68,.05));border:2px solid rgba(239,68,68,.4);border-radius:12px;padding:12px 14px;margin-bottom:12px">
-                    <div style="font-size:12px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🏷️ Aplicar Descuento</div>
-                    <div style="display:flex;gap:8px;align-items:center">
-                      <input type="number" id="c-desc-modal" value="0" min="0"
+                  <!-- 🏷️ DESCUENTO — compacto -->
+                  <div style="background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.35);border-radius:10px;padding:8px 10px;margin-bottom:10px">
+                    <div style="font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🏷️ Descuento</div>
+                    <div style="display:flex;gap:6px;align-items:center">
+                      <input type="number" id="c-desc-modal" min="0"
                         placeholder="0"
-                        style="flex:1;font-size:30px;font-weight:900;padding:10px 14px;border-radius:12px;
-                        border:2px solid rgba(239,68,68,.5);background:var(--s2);color:var(--red);
-                        text-align:center;height:58px"
+                        style="flex:1;font-size:20px;font-weight:900;padding:6px 10px;border-radius:8px;
+                        border:1.5px solid rgba(239,68,68,.4);background:var(--s2);color:var(--red);
+                        text-align:center;height:42px"
                         oninput="calcCartFromModal()">
                       <select id="c-desc-t-modal" onchange="calcCartFromModal()"
-                        style="width:70px;font-size:14px;font-weight:700;padding:6px 4px;border-radius:10px;
-                        border:2px solid rgba(239,68,68,.4);background:var(--s2);color:var(--red);cursor:pointer;
-                        height:58px">
+                        style="width:58px;font-size:13px;font-weight:700;padding:4px;border-radius:8px;
+                        border:1.5px solid rgba(239,68,68,.35);background:var(--s2);color:var(--red);cursor:pointer;
+                        height:42px">
                         <option value="$">$</option>
                         <option value="%">%</option>
                       </select>
                     </div>
-                    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--muted)">
-                      <span>Subtotal: <span id="cobro-subtotal">$0.00</span></span>
-                      <span>Descuento: <span id="cobro-desc-monto" style="color:var(--red);font-weight:700">$0.00</span></span>
+                    <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:11px;color:var(--muted)">
+                      <span>Sub: <span id="cobro-subtotal">$0.00</span></span>
+                      <span>Desc: <span id="cobro-desc-monto" style="color:var(--red);font-weight:700">$0.00</span></span>
                     </div>
                   </div>
 
@@ -1602,9 +1602,11 @@ body{background:#071222!important}
 
                   <!-- Botón COBRAR VENTA grande — en columna derecha abajo -->
                   <button onclick="cobrar()"
-                    style="width:100%;padding:20px;background:var(--accent);color:#fff;border:none;
-                    border-radius:14px;font-size:22px;font-weight:900;cursor:pointer;
-                    box-shadow:0 4px 20px rgba(26,158,92,.5);letter-spacing:1px;margin-top:auto">
+                    style="width:100%;padding:24px 20px;background:var(--accent);color:#fff;border:none;
+                    border-radius:16px;font-size:28px;font-weight:900;cursor:pointer;
+                    box-shadow:0 6px 28px rgba(26,158,92,.55);letter-spacing:2px;margin-top:auto;
+                    text-transform:uppercase;transition:transform .1s;
+                    line-height:1.1">
                     ✅ COBRAR VENTA
                   </button>
 
@@ -9813,26 +9815,30 @@ function abrirModalCobro(){
   const items = document.getElementById('cobro-items-list');
   if(items){
     items.innerHTML = carrito.map(item=>`
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--border)">
-        <div style="width:52px;height:52px;border-radius:8px;overflow:hidden;background:var(--s3);flex-shrink:0;display:flex;align-items:center;justify-content:center">
-          ${item.foto ? `<img src="${item.foto}" style="width:100%;height:100%;object-fit:cover" alt="">` : `<span style="font-size:24px">👟</span>`}
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 6px;border-bottom:1px solid var(--border)">
+        <div style="width:64px;height:64px;border-radius:10px;overflow:hidden;background:var(--s3);flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)">
+          ${item.foto ? `<img src="${item.foto}" style="width:100%;height:100%;object-fit:cover" alt="">` : `<span style="font-size:30px">👟</span>`}
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:700;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.desc}</div>
-          <div style="display:flex;gap:8px;align-items:center;margin-top:3px">
-            <span style="font-size:17px;font-weight:900;color:var(--accent2);background:var(--accent-dim);padding:1px 7px;border-radius:5px">T${item.talla}</span>
-            <span style="font-size:17px;font-weight:900;color:var(--gold)">×${item.qty}</span>
+          <div style="font-size:15px;font-weight:700;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.desc}</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:5px;flex-wrap:wrap">
+            <span style="font-size:20px;font-weight:900;color:var(--accent2);background:var(--accent-dim);padding:2px 10px;border-radius:6px">T${item.talla}</span>
+            <span style="font-size:20px;font-weight:900;color:var(--cream)">×</span>
+            <span style="font-size:24px;font-weight:900;color:var(--gold)">${item.qty}</span>
             ${item.sinCodigo?'<span class="badge b-gold" style="font-size:10px">SIN CÓD.</span>':''}
             ${item.esGratis?'<span class="badge b-green" style="font-size:10px">GRATIS</span>':''}
           </div>
         </div>
-        <span style="font-size:16px;font-weight:800;color:var(--gold);flex-shrink:0">${fmt(item.price*item.qty)}</span>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:20px;font-weight:900;color:var(--gold)">${fmt(item.price*item.qty)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">c/u ${fmt(item.price)}</div>
+        </div>
       </div>`).join('');
   }
   // Reset discount fields when opening modal (modal-specific IDs)
   const descModal  = document.getElementById('c-desc-modal');
   const descTModal = document.getElementById('c-desc-t-modal');
-  if(descModal)  descModal.value  = '0';
+  if(descModal)  descModal.value  = '';
   if(descTModal) descTModal.value = '$';
   // Also reset hidden inputs
   const hiddenDesc  = document.getElementById('c-desc');
@@ -9917,16 +9923,22 @@ function buildPOSButtons(){
   if(!pagoContainer) return;
   let pagoList = getCatalogList('formaPago');
   if(!pagoList || !pagoList.length)
-    pagoList = ['💵 Efectivo|efectivo','💳 Tarjeta|tarjeta-bbva','📲 Transferencia|transferencia','🔀 Mixto|mixto','🪙 Monedero|monedero'];
+    pagoList = ['💵 Efectivo|efectivo','💳 Tarjeta BBVA|tarjeta-bbva','💳 Tarjeta MP|tarjeta-mp','📲 Transferencia|transferencia','🔀 Mixto|mixto','🪙 Monedero|monedero'];
+  // ── Forzar Tarjeta+Efectivo siempre presente ──
+  const hasTarjetaEf = pagoList.some(e=>e.includes('tarjeta-efectivo'));
+  if(!hasTarjetaEf) pagoList = [...pagoList, '💳+💵 Tarjeta+Efectivo|tarjeta-efectivo'];
   const currentPago = document.getElementById('c-pago')?.value||'efectivo';
   pagoContainer.innerHTML = pagoList.map(entry=>{
     const parts = entry.split('|');
     const label = parts[0];
     const value = parts[1]||parts[0];
     const isOn = value===currentPago;
+    const isTarjetaEf = value==='tarjeta-efectivo';
     return `<button class="pos-pago-btn ${isOn?'on':''}" data-pago="${value}" onclick="selPagoPos('${value}')"
-      style="padding:11px 6px;border-radius:9px;border:2px solid ${isOn?'var(--accent)':'var(--border)'};
-      background:${isOn?'var(--accent)':'var(--s2)'};color:${isOn?'#fff':'var(--muted)'};
+      style="padding:11px 6px;border-radius:9px;
+      border:2px solid ${isOn?(isTarjetaEf?'#a855f7':'var(--accent)'):(isTarjetaEf?'rgba(168,85,247,.5)':'var(--border)')};
+      background:${isOn?(isTarjetaEf?'#7c3aed':'var(--accent)'):'var(--s2)'};
+      color:${isOn?'#fff':(isTarjetaEf?'#c084fc':'var(--muted)')};
       font-size:13px;font-weight:700;cursor:pointer">${label||value}</button>`;
   }).join('');
 }
