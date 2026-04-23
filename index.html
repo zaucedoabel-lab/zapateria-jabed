@@ -59,6 +59,191 @@ body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:
 ::-webkit-scrollbar-track{background:var(--s1)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 
+/* ══════════════════════════════════════════
+   🎨 TEMAS DEL MÓDULO COBRAR VENTA
+   data-cobro-theme="dark|white|gray|minimal"
+   ══════════════════════════════════════════ */
+
+/* TEMA: BLANCO PURO (D) */
+#pos-cobro-modal[data-cobro-theme="white"] > div {
+  background:#ffffff !important; border-color:#e2e8f0 !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] .cobro-hdr {
+  background:#f8fafc !important; border-color:#e2e8f0 !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] .cobro-hdr-title { color:#1e293b !important; }
+#pos-cobro-modal[data-cobro-theme="white"] .cobro-cancel-btn {
+  background:#fff !important; border-color:#e2e8f0 !important; color:#64748b !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] .cobro-grid-2col > div:first-child {
+  background:#f8fafc !important; border-right:1px solid #e2e8f0 !important; border-radius:0 !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] .cobro-grid-2col > div:last-child {
+  background:#ffffff !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] #cobro-items-list {
+  background:#fff !important; border-color:#e2e8f0 !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] #cobro-items-list > div {
+  border-color:#f1f5f9 !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] #cobro-items-list .cobro-item-name { color:#1e293b !important; }
+#pos-cobro-modal[data-cobro-theme="white"] #cobro-items-list .cobro-item-price { color:#0f172a !important; }
+#pos-cobro-modal[data-cobro-theme="white"] #cobro-items-list .cobro-item-unit { color:#64748b !important; }
+#pos-cobro-modal[data-cobro-theme="white"] #cobro-total { color:#15803d !important; }
+#pos-cobro-modal[data-cobro-theme="white"] [style*="cobro-total"] { color:#15803d !important; }
+#pos-cobro-modal[data-cobro-theme="white"] .cobro-total-bar {
+  background:#f0fdf4 !important; border:1px solid #86efac !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] .cobro-total-label { color:#166534 !important; }
+#pos-cobro-modal[data-cobro-theme="white"] .pos-tipo-btn {
+  background:#fff !important; border-color:#e2e8f0 !important; color:#94a3b8 !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] .pos-tipo-btn.on {
+  background:#16a34a !important; border-color:#16a34a !important; color:#fff !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] .pos-pago-btn {
+  background:#fff !important; border-color:#e2e8f0 !important; color:#64748b !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] .pos-pago-btn.on {
+  background:#16a34a !important; border-color:#16a34a !important; color:#fff !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] .cobro-section-lbl { color:#94a3b8 !important; }
+#pos-cobro-modal[data-cobro-theme="white"] #c-desc-modal {
+  background:#fff !important; border-color:rgba(239,68,68,.4) !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] #c-recibido {
+  background:#f9fafb !important; border-color:#e2e8f0 !important; color:#1e293b !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] #c-cambio {
+  color:#15803d !important; background:#f0fdf4 !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] #c-efectivo-section {
+  background:#f9fafb !important; border-color:#e2e8f0 !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] #c-cel-buscar {
+  background:#fff !important; border-color:#e2e8f0 !important; color:#1e293b !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] #c-cli-general, 
+#pos-cobro-modal[data-cobro-theme="white"] #cobro-vendedor-display,
+#pos-cobro-modal[data-cobro-theme="white"] #c-suc-venta {
+  background:#fff !important; border-color:#e2e8f0 !important; color:#1e293b !important;
+}
+#pos-cobro-modal[data-cobro-theme="white"] #c-recibido-label,
+#pos-cobro-modal[data-cobro-theme="white"] [style*="color:var(--cream)"] { color:#1e293b !important; }
+#pos-cobro-modal[data-cobro-theme="white"] [style*="color:var(--muted)"] { color:#64748b !important; }
+
+/* TEMA: GRIS CLARO + TOTAL OSCURO (E) */
+#pos-cobro-modal[data-cobro-theme="gray"] > div {
+  background:#f1f5f9 !important; border-color:#e2e8f0 !important;
+}
+#pos-cobro-modal[data-cobro-theme="gray"] .cobro-hdr {
+  background:#ffffff !important; border-color:#e2e8f0 !important;
+}
+#pos-cobro-modal[data-cobro-theme="gray"] .cobro-hdr-title { color:#0f172a !important; }
+#pos-cobro-modal[data-cobro-theme="gray"] .cobro-cancel-btn {
+  background:#f8fafc !important; border-color:#e2e8f0 !important; color:#64748b !important;
+}
+#pos-cobro-modal[data-cobro-theme="gray"] .cobro-grid-2col > div:first-child {
+  background:#ffffff !important; border-radius:10px !important; margin:8px 0 8px 8px !important; padding:12px !important;
+}
+#pos-cobro-modal[data-cobro-theme="gray"] .cobro-grid-2col > div:last-child {
+  background:#ffffff !important; border-radius:10px !important; margin:8px 8px 8px 0 !important; padding:12px !important;
+}
+#pos-cobro-modal[data-cobro-theme="gray"] #cobro-items-list {
+  background:#f8fafc !important; border-color:#e2e8f0 !important;
+}
+#pos-cobro-modal[data-cobro-theme="gray"] #cobro-items-list > div { border-color:#f1f5f9 !important; }
+#pos-cobro-modal[data-cobro-theme="gray"] #cobro-total { color:#4ade80 !important; }
+#pos-cobro-modal[data-cobro-theme="gray"] .cobro-total-bar {
+  background:#0f172a !important; border-color:#1e293b !important;
+}
+#pos-cobro-modal[data-cobro-theme="gray"] .cobro-total-label { color:#94a3b8 !important; }
+#pos-cobro-modal[data-cobro-theme="gray"] .pos-tipo-btn {
+  background:#f8fafc !important; border-color:#e2e8f0 !important; color:#94a3b8 !important;
+}
+#pos-cobro-modal[data-cobro-theme="gray"] .pos-tipo-btn.on {
+  background:#15803d !important; border-color:#15803d !important; color:#fff !important;
+}
+#pos-cobro-modal[data-cobro-theme="gray"] .pos-pago-btn {
+  background:#f8fafc !important; border-color:#e2e8f0 !important; color:#64748b !important;
+}
+#pos-cobro-modal[data-cobro-theme="gray"] .pos-pago-btn.on {
+  background:#15803d !important; border-color:#15803d !important; color:#fff !important;
+}
+#pos-cobro-modal[data-cobro-theme="gray"] .cobro-section-lbl { color:#94a3b8 !important; }
+#pos-cobro-modal[data-cobro-theme="gray"] #c-desc-modal { background:#f9fafb !important; border-color:rgba(239,68,68,.4) !important; }
+#pos-cobro-modal[data-cobro-theme="gray"] #c-recibido { background:#f9fafb !important; border-color:#e2e8f0 !important; color:#1e293b !important; }
+#pos-cobro-modal[data-cobro-theme="gray"] #c-cambio { color:#15803d !important; background:#f0fdf4 !important; }
+#pos-cobro-modal[data-cobro-theme="gray"] #c-efectivo-section { background:#f9fafb !important; border-color:#e2e8f0 !important; }
+#pos-cobro-modal[data-cobro-theme="gray"] #c-cel-buscar { background:#f9fafb !important; border-color:#e2e8f0 !important; color:#1e293b !important; }
+#pos-cobro-modal[data-cobro-theme="gray"] #c-cli-general, 
+#pos-cobro-modal[data-cobro-theme="gray"] #cobro-vendedor-display,
+#pos-cobro-modal[data-cobro-theme="gray"] #c-suc-venta { background:#f9fafb !important; border-color:#e2e8f0 !important; color:#1e293b !important; }
+#pos-cobro-modal[data-cobro-theme="gray"] [style*="color:var(--cream)"] { color:#1e293b !important; }
+#pos-cobro-modal[data-cobro-theme="gray"] [style*="color:var(--muted)"] { color:#64748b !important; }
+
+/* TEMA: MINIMALISTA BLANCO + LÍNEA VERDE (F) */
+#pos-cobro-modal[data-cobro-theme="minimal"] > div {
+  background:#ffffff !important; border-color:#e5e7eb !important;
+}
+#pos-cobro-modal[data-cobro-theme="minimal"] .cobro-hdr {
+  background:#ffffff !important; border-bottom:2px solid #22c55e !important;
+}
+#pos-cobro-modal[data-cobro-theme="minimal"] .cobro-hdr-title { color:#111827 !important; }
+#pos-cobro-modal[data-cobro-theme="minimal"] .cobro-cancel-btn {
+  background:#f9fafb !important; border-color:#f3f4f6 !important; color:#9ca3af !important;
+}
+#pos-cobro-modal[data-cobro-theme="minimal"] .cobro-grid-2col > div:first-child {
+  background:#fafafa !important; border-right:2px solid #22c55e !important;
+}
+#pos-cobro-modal[data-cobro-theme="minimal"] .cobro-grid-2col > div:last-child {
+  background:#ffffff !important;
+}
+#pos-cobro-modal[data-cobro-theme="minimal"] #cobro-items-list {
+  background:#fff !important; border-color:#f3f4f6 !important;
+}
+#pos-cobro-modal[data-cobro-theme="minimal"] #cobro-items-list > div { border-color:#f3f4f6 !important; }
+#pos-cobro-modal[data-cobro-theme="minimal"] #cobro-total { color:#15803d !important; }
+#pos-cobro-modal[data-cobro-theme="minimal"] .cobro-total-bar {
+  background:#f0fdf4 !important; border-left:3px solid #22c55e !important;
+  border-top:none !important; border-right:none !important; border-bottom:none !important;
+  border-radius:0 8px 8px 0 !important;
+}
+#pos-cobro-modal[data-cobro-theme="minimal"] .cobro-total-label { color:#166534 !important; }
+#pos-cobro-modal[data-cobro-theme="minimal"] .pos-tipo-btn {
+  background:#fff !important; border:1.5px solid #e5e7eb !important; color:#9ca3af !important;
+}
+#pos-cobro-modal[data-cobro-theme="minimal"] .pos-tipo-btn.on {
+  background:#22c55e !important; border-color:#22c55e !important; color:#fff !important;
+}
+#pos-cobro-modal[data-cobro-theme="minimal"] .pos-pago-btn {
+  background:#fff !important; border:1.5px solid #e5e7eb !important; color:#6b7280 !important;
+}
+#pos-cobro-modal[data-cobro-theme="minimal"] .pos-pago-btn.on {
+  background:#22c55e !important; border-color:#22c55e !important; color:#fff !important;
+}
+#pos-cobro-modal[data-cobro-theme="minimal"] .cobro-section-lbl {
+  color:#9ca3af !important; border-bottom:1px solid #f3f4f6 !important; padding-bottom:2px !important;
+}
+#pos-cobro-modal[data-cobro-theme="minimal"] #c-desc-modal { background:#f9fafb !important; border-color:rgba(239,68,68,.4) !important; }
+#pos-cobro-modal[data-cobro-theme="minimal"] #c-recibido { background:#f9fafb !important; border-color:#e5e7eb !important; color:#1e293b !important; }
+#pos-cobro-modal[data-cobro-theme="minimal"] #c-cambio { color:#15803d !important; background:#f0fdf4 !important; border-color:#86efac !important; }
+#pos-cobro-modal[data-cobro-theme="minimal"] #c-efectivo-section { background:#f9fafb !important; border-color:#e5e7eb !important; }
+#pos-cobro-modal[data-cobro-theme="minimal"] #c-cel-buscar { background:#f9fafb !important; border-color:#e5e7eb !important; color:#111827 !important; }
+#pos-cobro-modal[data-cobro-theme="minimal"] #c-cli-general,
+#pos-cobro-modal[data-cobro-theme="minimal"] #cobro-vendedor-display,
+#pos-cobro-modal[data-cobro-theme="minimal"] #c-suc-venta { background:#f9fafb !important; border-color:#e5e7eb !important; color:#111827 !important; }
+#pos-cobro-modal[data-cobro-theme="minimal"] [style*="color:var(--cream)"] { color:#111827 !important; }
+#pos-cobro-modal[data-cobro-theme="minimal"] [style*="color:var(--muted)"] { color:#6b7280 !important; }
+
+/* COBRAR VENTA — siempre verde con letra blanca en TODOS los temas */
+#pos-cobro-modal button[onclick="cobrar()"] {
+  background:#16a34a !important; color:#fff !important;
+  box-shadow:0 6px 24px rgba(22,163,74,.4) !important;
+}
+#pos-cobro-modal button[onclick="cobrar()"]:hover { background:#15803d !important; }
+
 /* ══ LOADING ══ */
 #loading{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
 .spin{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
@@ -1375,9 +1560,9 @@ body{background:#071222!important}
             <div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;width:100%;max-width:1060px;padding:18px 20px;margin:auto">
 
               <!-- Header -->
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)">
-                <div style="font-size:20px;font-weight:800;color:var(--cream)">💰 Cobrar Venta</div>
-                <button onclick="cerrarModalCobro()" style="background:var(--s3);border:none;border-radius:8px;padding:8px 14px;font-size:14px;color:var(--muted);cursor:pointer">✕ Cancelar</button>
+              <div class="cobro-hdr" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+                <div class="cobro-hdr-title" style="font-size:20px;font-weight:800;color:var(--cream)">💰 Cobrar Venta</div>
+                <button class="cobro-cancel-btn" onclick="cerrarModalCobro()" style="background:var(--s3);border:none;border-radius:8px;padding:8px 14px;font-size:14px;color:var(--muted);cursor:pointer">✕ Cancelar</button>
               </div>
 
               <!-- ═══ LAYOUT 2 COLUMNAS ═══ -->
@@ -1414,14 +1599,14 @@ body{background:#071222!important}
                   </div>
 
                   <!-- Total grande -->
-                  <div style="display:flex;justify-content:space-between;align-items:center;background:var(--s2);border-radius:10px;padding:12px 16px;margin-bottom:12px">
-                    <span style="font-size:18px;font-weight:700;color:var(--cream)">TOTAL</span>
+                  <div class="cobro-total-bar" style="display:flex;justify-content:space-between;align-items:center;background:var(--s2);border-radius:10px;padding:12px 16px;margin-bottom:12px">
+                    <span class="cobro-total-label" style="font-size:18px;font-weight:700;color:var(--cream)">TOTAL</span>
                     <span id="cobro-total" style="font-size:30px;font-weight:900;color:var(--gold)">$0.00</span>
                   </div>
 
                   <!-- Tipo de transacción -->
                   <div style="margin-bottom:12px">
-                    <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Tipo de Transacción</div>
+                    <div class="cobro-section-lbl" style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Tipo de Transacción</div>
                     <div id="pos-tipo-btns" style="display:flex;gap:6px;flex-wrap:wrap"></div>
                   </div>
                   <input type="hidden" id="c-tipo-venta" value="venta">
@@ -1434,7 +1619,7 @@ body{background:#071222!important}
 
                   <!-- Forma de pago -->
                   <div style="margin-bottom:12px">
-                    <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Forma de Pago</div>
+                    <div class="cobro-section-lbl" style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Forma de Pago</div>
                     <div id="pos-pago-btns" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px"></div>
                   </div>
                   <input type="hidden" id="c-pago" value="efectivo">
@@ -2746,6 +2931,95 @@ body{background:#071222!important}
               <button class="btn btn-accent" onclick="saveConfigGeneral()">💾 Guardar</button>
             </div>
           </div>
+
+          <!-- 🎨 Selector de Tema — Módulo Cobrar Venta -->
+          <div class="card" style="margin-top:16px">
+            <div class="card-title">🎨 Tema Visual — Módulo Cobrar Venta</div>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Elige el diseño de color para la pantalla de cobro. Se aplica al instante y se guarda en este dispositivo.</p>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+
+              <div id="tema-dark" onclick="aplicarTemaCobro('dark')"
+                style="cursor:pointer;border-radius:12px;border:2px solid var(--accent);overflow:hidden;transition:transform .15s"
+                onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="background:#0a0a0f;padding:10px 8px">
+                  <div style="height:5px;background:#1a1a25;border-radius:3px;margin-bottom:6px"></div>
+                  <div style="display:flex;gap:4px;margin-bottom:5px">
+                    <div style="flex:1;height:20px;background:#12121a;border-radius:4px"></div>
+                    <div style="flex:1;height:20px;background:#12121a;border-radius:4px"></div>
+                  </div>
+                  <div style="height:8px;background:#1a9e5c;border-radius:4px;margin-bottom:4px"></div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px">
+                    <div style="height:8px;background:#1a9e5c;border-radius:3px"></div>
+                    <div style="height:8px;background:#1a1a25;border-radius:3px"></div>
+                    <div style="height:8px;background:#1a1a25;border-radius:3px"></div>
+                  </div>
+                  <div style="height:12px;background:#1a9e5c;border-radius:5px;margin-top:6px"></div>
+                </div>
+                <div style="background:#111;padding:5px 8px;text-align:center;font-size:11px;font-weight:700;color:#25c97a">Oscuro (actual)</div>
+              </div>
+
+              <div id="tema-white" onclick="aplicarTemaCobro('white')"
+                style="cursor:pointer;border-radius:12px;border:2px solid var(--border);overflow:hidden;transition:transform .15s"
+                onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="background:#fff;padding:10px 8px">
+                  <div style="height:5px;background:#f1f5f9;border-radius:3px;margin-bottom:6px"></div>
+                  <div style="display:flex;gap:4px;margin-bottom:5px">
+                    <div style="flex:1;height:20px;background:#f8fafc;border-radius:4px;border:1px solid #e2e8f0"></div>
+                    <div style="flex:1;height:20px;background:#f8fafc;border-radius:4px;border:1px solid #e2e8f0"></div>
+                  </div>
+                  <div style="height:8px;background:#dcfce7;border:1px solid #86efac;border-radius:4px;margin-bottom:4px"></div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px">
+                    <div style="height:8px;background:#16a34a;border-radius:3px"></div>
+                    <div style="height:8px;background:#f1f5f9;border-radius:3px;border:1px solid #e2e8f0"></div>
+                    <div style="height:8px;background:#f1f5f9;border-radius:3px;border:1px solid #e2e8f0"></div>
+                  </div>
+                  <div style="height:12px;background:#16a34a;border-radius:5px;margin-top:6px"></div>
+                </div>
+                <div style="background:#f8fafc;padding:5px 8px;text-align:center;font-size:11px;font-weight:700;color:#15803d;border-top:1px solid #e2e8f0">Blanco Puro (D)</div>
+              </div>
+
+              <div id="tema-gray" onclick="aplicarTemaCobro('gray')"
+                style="cursor:pointer;border-radius:12px;border:2px solid var(--border);overflow:hidden;transition:transform .15s"
+                onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="background:#f1f5f9;padding:10px 8px">
+                  <div style="height:5px;background:#fff;border-radius:3px;margin-bottom:6px;border:1px solid #e2e8f0"></div>
+                  <div style="display:flex;gap:4px;margin-bottom:5px">
+                    <div style="flex:1;height:20px;background:#fff;border-radius:4px;border:1px solid #e2e8f0"></div>
+                    <div style="flex:1;height:20px;background:#fff;border-radius:4px;border:1px solid #e2e8f0"></div>
+                  </div>
+                  <div style="height:8px;background:#0f172a;border-radius:4px;margin-bottom:4px"></div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px">
+                    <div style="height:8px;background:#15803d;border-radius:3px"></div>
+                    <div style="height:8px;background:#e2e8f0;border-radius:3px"></div>
+                    <div style="height:8px;background:#e2e8f0;border-radius:3px"></div>
+                  </div>
+                  <div style="height:12px;background:#15803d;border-radius:5px;margin-top:6px"></div>
+                </div>
+                <div style="background:#e2e8f0;padding:5px 8px;text-align:center;font-size:11px;font-weight:700;color:#15803d">Gris + Total Oscuro (E)</div>
+              </div>
+
+              <div id="tema-minimal" onclick="aplicarTemaCobro('minimal')"
+                style="cursor:pointer;border-radius:12px;border:2px solid var(--border);overflow:hidden;transition:transform .15s"
+                onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="background:#fff;padding:10px 8px">
+                  <div style="height:5px;background:#fff;border-bottom:2px solid #22c55e;margin-bottom:6px"></div>
+                  <div style="display:flex;gap:4px;margin-bottom:5px">
+                    <div style="flex:1;height:20px;background:#fafafa;border-right:2px solid #22c55e"></div>
+                    <div style="flex:1;height:20px;background:#fff"></div>
+                  </div>
+                  <div style="height:8px;background:#f0fdf4;border-left:3px solid #22c55e;border-radius:0 4px 4px 0;margin-bottom:4px"></div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px">
+                    <div style="height:8px;background:#22c55e;border-radius:3px"></div>
+                    <div style="height:8px;background:#f9fafb;border-radius:3px;border:1px solid #e5e7eb"></div>
+                    <div style="height:8px;background:#f9fafb;border-radius:3px;border:1px solid #e5e7eb"></div>
+                  </div>
+                  <div style="height:12px;background:#22c55e;border-radius:5px;margin-top:6px"></div>
+                </div>
+                <div style="background:#f0fdf4;padding:5px 8px;text-align:center;font-size:11px;font-weight:700;color:#15803d;border-top:1px solid #dcfce7">Minimalista Verde (F)</div>
+              </div>
+
+            </div>
+          </div>
         </div>
 
         <!-- ══════════ RECUPERACIÓN DE TALLAS ══════════ -->
@@ -3891,7 +4165,7 @@ async function initApp(user){
   loadClientes();
   loadConfigGeneral();
   renderDashboard();
-  // Pre-load tallas catalog so product modal always has correct tallas
+  setTimeout(()=>initTemaCobro(), 800);
   loadCatalogos().catch(()=>{});
   // Show grid menu after init
   setTimeout(()=>{ toggleGridMenu(); }, 600);
@@ -6876,6 +7150,31 @@ function onClienteSelect(){
 
   onClienteSelectMonedero();}
 
+function aplicarTemaCobro(tema, silente=false){
+  try{
+    const modal = document.getElementById('pos-cobro-modal');
+    if(!modal) return;
+    modal.setAttribute('data-cobro-theme', tema);
+    localStorage.setItem('cobro_tema', tema);
+    ['dark','white','gray','minimal'].forEach(t=>{
+      const el = document.getElementById('tema-'+t);
+      if(!el) return;
+      el.style.borderColor = t===tema ? 'var(--accent)' : 'var(--border)';
+      el.style.boxShadow   = t===tema ? '0 0 0 2px var(--accent-dim)' : 'none';
+    });
+    if(!silente){
+      const nombres={dark:'Oscuro',white:'Blanco Puro',gray:'Gris Claro',minimal:'Minimalista'};
+      toast('🎨 Tema "'+( nombres[tema]||tema )+'" aplicado ✓');
+    }
+  }catch(e){ console.warn('aplicarTemaCobro error:', e); }
+}
+function initTemaCobro(){
+  try{
+    const saved = localStorage.getItem('cobro_tema')||'dark';
+    aplicarTemaCobro(saved, true); // silente=true → sin toast al cargar
+  }catch(e){ console.warn('initTemaCobro error:', e); }
+}
+
 function aplicarDescCumple(){
   const pct=configGeneral.cumpleanosDesc||10;
   // Set discount in modal inputs
@@ -9858,7 +10157,7 @@ function abrirModalCobro(){
           ${item.foto ? `<img src="${item.foto}" style="width:100%;height:100%;object-fit:cover" alt="">` : `<span style="font-size:30px">👟</span>`}
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:15px;font-weight:700;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.desc}</div>
+          <div class="cobro-item-name" style="font-size:15px;font-weight:700;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.desc}</div>
           <div style="display:flex;gap:8px;align-items:center;margin-top:5px;flex-wrap:wrap">
             <span style="font-size:20px;font-weight:900;color:var(--accent2);background:var(--accent-dim);padding:2px 10px;border-radius:6px">T${item.talla}</span>
             <span style="font-size:20px;font-weight:900;color:var(--cream)">×</span>
@@ -9868,8 +10167,8 @@ function abrirModalCobro(){
           </div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:20px;font-weight:900;color:var(--gold)">${fmt(item.price*item.qty)}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">c/u ${fmt(item.price)}</div>
+          <div class="cobro-item-price" style="font-size:20px;font-weight:900;color:var(--gold)">${fmt(item.price*item.qty)}</div>
+          <div class="cobro-item-unit" style="font-size:11px;color:var(--muted);margin-top:2px">c/u ${fmt(item.price)}</div>
         </div>
       </div>`).join('');
   }
