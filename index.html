@@ -2031,27 +2031,54 @@ body{background:#071222!important}
             <div class="card-title">📆 Ventas por Día de la Semana</div>
             <div id="dv-dias-bars"></div>
           </div>
-          <!-- Listado ventas por día -->
-          <div class="card" id="dv-listado-dias-card" style="margin-top:16px">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-              <div class="card-title" style="margin:0">📋 Ventas por Día</div>
-              <button class="btn btn-ghost btn-sm" onclick="renderDashboardVentas()">🔄 Actualizar</button>
+          <!-- Listado ventas por día + acumulado mensual -->
+          <div id="dv-listado-dias-card" style="margin-top:16px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+
+            <!-- IZQUIERDA: Ventas por Día -->
+            <div class="card" style="flex:1;min-width:280px;max-width:50%;padding:0;overflow:hidden">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid var(--border)">
+                <div style="font-size:13px;font-weight:700;color:var(--cream)">📋 Ventas por Día</div>
+                <button class="btn btn-ghost btn-sm" onclick="renderDashboardVentas()">🔄 Actualizar</button>
+              </div>
+              <div style="overflow-y:auto;max-height:480px">
+                <table style="width:100%;border-collapse:collapse">
+                  <thead style="position:sticky;top:0;background:var(--s2);z-index:1"><tr>
+                    <th style="padding:7px 10px;text-align:left;font-size:10px;color:var(--muted);font-weight:600;white-space:nowrap">FECHA</th>
+                    <th style="padding:7px 6px;text-align:center;font-size:10px;color:var(--muted);font-weight:600">#</th>
+                    <th style="padding:7px 8px;text-align:right;font-size:10px;color:var(--green);font-weight:600">EFECT.</th>
+                    <th style="padding:7px 8px;text-align:right;font-size:10px;color:var(--blue);font-weight:600">TARJ.</th>
+                    <th style="padding:7px 10px;text-align:right;font-size:10px;color:var(--gold);font-weight:600">TOTAL</th>
+                  </tr></thead>
+                  <tbody id="dv-listado-dias-tbody">
+                    <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin datos</td></tr>
+                  </tbody>
+                  <tfoot id="dv-listado-dias-tfoot"></tfoot>
+                </table>
+              </div>
             </div>
-            <div class="tw" style="overflow-x:auto">
-              <table style="min-width:480px;width:100%">
-                <thead><tr>
-                  <th style="text-align:left">Fecha</th>
-                  <th style="text-align:center">Transacc.</th>
-                  <th style="text-align:right">💵 Efectivo</th>
-                  <th style="text-align:right">💳 Tarjetas</th>
-                  <th style="text-align:right;color:var(--gold)">Total</th>
-                </tr></thead>
-                <tbody id="dv-listado-dias-tbody">
-                  <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin datos</td></tr>
-                </tbody>
-                <tfoot id="dv-listado-dias-tfoot"></tfoot>
-              </table>
+
+            <!-- DERECHA: Acumulado por Mes -->
+            <div class="card" style="flex:1;min-width:280px;max-width:50%;padding:0;overflow:hidden">
+              <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border)">
+                <div style="font-size:13px;font-weight:700;color:var(--cream)">📅 Acumulado por Mes</div>
+              </div>
+              <div style="overflow-y:auto;max-height:480px">
+                <table style="width:100%;border-collapse:collapse">
+                  <thead style="position:sticky;top:0;background:var(--s2);z-index:1"><tr>
+                    <th style="padding:7px 10px;text-align:left;font-size:10px;color:var(--muted);font-weight:600">MES</th>
+                    <th style="padding:7px 6px;text-align:center;font-size:10px;color:var(--muted);font-weight:600">#</th>
+                    <th style="padding:7px 8px;text-align:right;font-size:10px;color:var(--green);font-weight:600">EFECT.</th>
+                    <th style="padding:7px 8px;text-align:right;font-size:10px;color:var(--blue);font-weight:600">TARJ.</th>
+                    <th style="padding:7px 10px;text-align:right;font-size:10px;color:var(--gold);font-weight:600">TOTAL</th>
+                  </tr></thead>
+                  <tbody id="dv-acum-mes-tbody">
+                    <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin datos</td></tr>
+                  </tbody>
+                  <tfoot id="dv-acum-mes-tfoot"></tfoot>
+                </table>
+              </div>
             </div>
+
           </div>
         </div>
 
@@ -2648,7 +2675,7 @@ body{background:#071222!important}
             <table style="min-width:1100px" id="an-table">
               <thead><tr>
                 <th style="width:32px"></th>
-                <th style="width:44px"></th>
+                <th style="width:68px"></th>
                 <th>Estilo</th>
                 <th>Descripción</th>
                 <th>Cat.</th>
@@ -2702,7 +2729,7 @@ body{background:#071222!important}
           </div>
           <div class="tw" style="overflow-x:auto">
             <table style="min-width:1200px"><thead><tr>
-              <th style="width:44px"></th>
+              <th style="width:68px"></th>
               <th>Fecha Alta</th>
               <th>Creado Por</th>
               <th>Código</th>
@@ -3085,7 +3112,7 @@ body{background:#071222!important}
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead>
           <tr style="background:var(--s2);border-bottom:1px solid var(--border)">
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;width:44px"></th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;width:68px"></th>
             <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap">ESTILO / MARCA</th>
             <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">DESCRIPCIÓN</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">TALLA</th>
@@ -11305,7 +11332,7 @@ function renderCostos(){
           ? '<span class="badge b-gold" style="font-size:10px">🔥 Oferta</span>'
           : '<span style="color:var(--faint);font-size:11px">—</span>');
     return `<tr>
-      <td style="padding:6px 8px"><div class="thumb">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div></td>
+      <td style="padding:6px 8px"><div class="thumb" style="width:60px;height:60px;font-size:28px;border-radius:8px">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div></td>
       <td style="white-space:nowrap;font-size:11px">
         <div style="color:var(--cream);font-weight:600">${fechaAlta}</div>
         <div style="color:var(--muted);font-size:10px">${horaAlta}</div>
@@ -11904,79 +11931,130 @@ function renderDashboardVentas(){
       </div>`;
   }
 
-  // ── Listado ventas por día ──
+  // ── Listado ventas por día + acumulado mensual ──
   (function renderListadoDias(){
     const tbodyD  = document.getElementById('dv-listado-dias-tbody');
     const tfootD  = document.getElementById('dv-listado-dias-tfoot');
+    const tbodyM  = document.getElementById('dv-acum-mes-tbody');
+    const tfootM  = document.getElementById('dv-acum-mes-tfoot');
     if(!tbodyD) return;
 
-    // Agrupar por fecha
+    const diasNomSemana=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const MESES_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+    // ── Usar TODAS las ventas para el acumulado mensual (no solo vFilt de período) ──
+    const todasVentas = ventas||[];
+
+    // Agrupar vFilt por DÍA
     const byDay = {};
     vFilt.forEach(v=>{
-      const f = v.fecha||'';
-      if(!f) return;
-      if(!byDay[f]) byDay[f]={fecha:f, txns:0, efectivo:0, tarjetas:0, total:0};
-      const tipoV = v.tipoVenta||'venta';
-      const isDev = tipoV==='devolucion';
-      const monto = isDev?(v.total||0):
-                    (tipoV==='apartado'||tipoV==='credito')?(v.anticipo||0):
-                    tipoV==='abono'?(v.monto||v.total||0):(v.total||0);
-      byDay[f].txns++;
-      byDay[f].total += monto;
-      const p=(v.pago||'').toLowerCase().trim();
-      if(p==='mixto'){
-        byDay[f].efectivo += v.mixtoEfectivo||0;
-        byDay[f].tarjetas += v.mixtoTarjeta||0;
-      } else if(p==='bbva-efectivo'){
-        byDay[f].efectivo += v.bbvaEfectivo||0;
-        byDay[f].tarjetas += v.bbvaTarjeta||0;
-      } else if(p==='tarjeta-efectivo'){
-        byDay[f].efectivo += v.tarjetaEfEfectivo||0;
-        byDay[f].tarjetas += v.tarjetaEfTarjeta||0;
-      } else if(p==='efectivo'||p==='monedero'||p==='') byDay[f].efectivo += monto;
-      else if(p.includes('tarjeta')||p.includes('bbva')||p.includes('mp')||p==='transferencia'||p.includes('transfer')) byDay[f].tarjetas += monto;
-      else byDay[f].efectivo += monto;
+      const f = v.fecha||''; if(!f) return;
+      if(!byDay[f]) byDay[f]={fecha:f,txns:0,efectivo:0,tarjetas:0,total:0};
+      const tipoV=v.tipoVenta||'venta';
+      const isDev=tipoV==='devolucion';
+      const monto=isDev?(v.total||0):(tipoV==='apartado'||tipoV==='credito')?(v.anticipo||0):tipoV==='abono'?(v.monto||v.total||0):(v.total||0);
+      byDay[f].txns++; byDay[f].total+=monto;
+      const pg=(v.pago||'').toLowerCase().trim();
+      if(pg==='mixto'){byDay[f].efectivo+=v.mixtoEfectivo||0;byDay[f].tarjetas+=v.mixtoTarjeta||0;}
+      else if(pg==='bbva-efectivo'){byDay[f].efectivo+=v.bbvaEfectivo||0;byDay[f].tarjetas+=v.bbvaTarjeta||0;}
+      else if(pg==='tarjeta-efectivo'){byDay[f].efectivo+=v.tarjetaEfEfectivo||0;byDay[f].tarjetas+=v.tarjetaEfTarjeta||0;}
+      else if(pg==='efectivo'||pg==='monedero'||pg==='') byDay[f].efectivo+=monto;
+      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) byDay[f].tarjetas+=monto;
+      else byDay[f].efectivo+=monto;
     });
-
     const dias = Object.values(byDay).sort((a,b)=>b.fecha.localeCompare(a.fecha));
 
+    // ── Tabla Ventas por Día ──
     if(!dias.length){
       tbodyD.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin ventas en este período</td></tr>';
       if(tfootD) tfootD.innerHTML='';
-      return;
+    } else {
+      const totEf=dias.reduce((a,d)=>a+d.efectivo,0);
+      const totTar=dias.reduce((a,d)=>a+d.tarjetas,0);
+      const totAll=dias.reduce((a,d)=>a+d.total,0);
+      const totTxn=dias.reduce((a,d)=>a+d.txns,0);
+      tbodyD.innerHTML=dias.map(d=>{
+        const dt=new Date(d.fecha+'T12:00:00');
+        const dow=dt.getDay();
+        const nomDia=diasNomSemana[dow];
+        const esDom=dow===0; const esSab=dow===6;
+        const rowBg=esDom?'background:rgba(239,68,68,.07)':esSab?'background:rgba(240,180,41,.05)':'';
+        const dia=d.fecha.slice(8);  // "23"
+        const mesIdx=parseInt(d.fecha.slice(5,7))-1;
+        const mesNom=MESES_N[mesIdx]||'';
+        return `<tr style="border-bottom:1px solid var(--border);${rowBg}">
+          <td style="padding:6px 10px;white-space:nowrap">
+            <span style="font-family:var(--mono);font-size:22px;font-weight:900;color:var(--cream);line-height:1">${dia}</span>
+            <span style="font-size:10px;color:var(--muted);display:block;line-height:1.2">${mesNom} · ${nomDia}</span>
+          </td>
+          <td style="padding:6px;text-align:center;font-size:11px;color:var(--muted)">${d.txns}</td>
+          <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--green)">${fmt(d.efectivo)}</td>
+          <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--blue)">${fmt(d.tarjetas)}</td>
+          <td style="padding:6px 10px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">${fmt(d.total)}</td>
+        </tr>`;
+      }).join('');
+      if(tfootD) tfootD.innerHTML=`<tr style="border-top:2px solid var(--border2);background:var(--s2)">
+        <td style="padding:8px 10px;font-size:11px;font-weight:700;color:var(--cream)">${dias.length}d</td>
+        <td style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted)">${totTxn}</td>
+        <td style="padding:8px 8px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green)">${fmt(totEf)}</td>
+        <td style="padding:8px 8px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${fmt(totTar)}</td>
+        <td style="padding:8px 10px;text-align:right;font-family:var(--mono);font-size:14px;font-weight:800;color:var(--gold)">${fmt(totAll)}</td>
+      </tr>`;
     }
 
-    // Totales
-    const totEf  = dias.reduce((a,d)=>a+d.efectivo,0);
-    const totTar = dias.reduce((a,d)=>a+d.tarjetas,0);
-    const totAll = dias.reduce((a,d)=>a+d.total,0);
-    const totTxn = dias.reduce((a,d)=>a+d.txns,0);
-    const diasNomSemana=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-
-    tbodyD.innerHTML = dias.map(d=>{
-      const dt = new Date(d.fecha+'T12:00:00');
-      const nomDia = diasNomSemana[dt.getDay()];
-      const esSab = dt.getDay()===6;
-      const esDom = dt.getDay()===0;
-      const rowStyle = esDom?'background:rgba(239,68,68,.06)':esSab?'background:rgba(240,180,41,.05)':'';
-      return `<tr style="border-bottom:1px solid var(--border);${rowStyle}">
-        <td style="padding:9px 12px;white-space:nowrap">
-          <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--cream)">${fmtFechaCorta(d.fecha)}</span>
-          <span style="font-size:10px;color:var(--muted);margin-left:5px">${nomDia}</span>
+    // ── Tabla Acumulado por Mes (todas las ventas, sin filtro de período) ──
+    if(!tbodyM) return;
+    const byMes = {};
+    todasVentas.forEach(v=>{
+      const f=v.fecha||''; if(!f||f.length<7) return;
+      const mesKey=f.slice(0,7); // "2026-04"
+      if(!byMes[mesKey]) byMes[mesKey]={mesKey,txns:0,efectivo:0,tarjetas:0,total:0};
+      const tipoV=v.tipoVenta||'venta';
+      const isDev=tipoV==='devolucion';
+      const monto=isDev?(v.total||0):(tipoV==='apartado'||tipoV==='credito')?(v.anticipo||0):tipoV==='abono'?(v.monto||v.total||0):(v.total||0);
+      byMes[mesKey].txns++; byMes[mesKey].total+=monto;
+      const pg=(v.pago||'').toLowerCase().trim();
+      if(pg==='mixto'){byMes[mesKey].efectivo+=v.mixtoEfectivo||0;byMes[mesKey].tarjetas+=v.mixtoTarjeta||0;}
+      else if(pg==='bbva-efectivo'){byMes[mesKey].efectivo+=v.bbvaEfectivo||0;byMes[mesKey].tarjetas+=v.bbvaTarjeta||0;}
+      else if(pg==='tarjeta-efectivo'){byMes[mesKey].efectivo+=v.tarjetaEfEfectivo||0;byMes[mesKey].tarjetas+=v.tarjetaEfTarjeta||0;}
+      else if(pg==='efectivo'||pg==='monedero'||pg==='') byMes[mesKey].efectivo+=monto;
+      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) byMes[mesKey].tarjetas+=monto;
+      else byMes[mesKey].efectivo+=monto;
+    });
+    const meses=Object.values(byMes).sort((a,b)=>b.mesKey.localeCompare(a.mesKey));
+    if(!meses.length){
+      tbodyM.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin datos</td></tr>';
+      if(tfootM) tfootM.innerHTML=''; return;
+    }
+    const mesMax=Math.max(...meses.map(m=>m.total))||1;
+    const mEf=meses.reduce((a,m)=>a+m.efectivo,0);
+    const mTar=meses.reduce((a,m)=>a+m.tarjetas,0);
+    const mAll=meses.reduce((a,m)=>a+m.total,0);
+    const mTxn=meses.reduce((a,m)=>a+m.txns,0);
+    tbodyM.innerHTML=meses.map(m=>{
+      const [y,mo]=m.mesKey.split('-');
+      const nomMes=(MESES_N[parseInt(mo)-1]||mo)+' '+y.slice(2);
+      const pct=(m.total/mesMax*100).toFixed(0);
+      const esActual=m.mesKey===hoy().slice(0,7);
+      return `<tr style="border-bottom:1px solid var(--border)${esActual?';background:rgba(240,180,41,.05)':''}">
+        <td style="padding:6px 10px;white-space:nowrap">
+          <div style="font-size:14px;font-weight:700;color:${esActual?'var(--gold)':'var(--cream)'}">${nomMes}</div>
+          <div style="margin-top:3px;height:3px;width:100%;background:var(--s3);border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${esActual?'var(--gold)':'var(--accent)'};border-radius:2px"></div>
+          </div>
         </td>
-        <td style="padding:9px 12px;text-align:center;font-size:12px;color:var(--muted)">${d.txns}</td>
-        <td style="padding:9px 12px;text-align:right;font-family:var(--mono);color:var(--green);font-size:13px">${fmt(d.efectivo)}</td>
-        <td style="padding:9px 12px;text-align:right;font-family:var(--mono);color:var(--blue);font-size:13px">${fmt(d.tarjetas)}</td>
-        <td style="padding:9px 12px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--gold);font-size:14px">${fmt(d.total)}</td>
+        <td style="padding:6px;text-align:center;font-size:11px;color:var(--muted)">${m.txns}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--green)">${fmt(m.efectivo)}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--blue)">${fmt(m.tarjetas)}</td>
+        <td style="padding:6px 10px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">${fmt(m.total)}</td>
       </tr>`;
     }).join('');
-
-    if(tfootD) tfootD.innerHTML=`<tr style="border-top:2px solid var(--border2);background:var(--s2)">
-      <td style="padding:10px 12px;font-weight:700;font-size:13px;color:var(--cream)">TOTAL (${dias.length} días)</td>
-      <td style="padding:10px 12px;text-align:center;font-weight:700;color:var(--muted)">${totTxn}</td>
-      <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--green)">${fmt(totEf)}</td>
-      <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--blue)">${fmt(totTar)}</td>
-      <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:800;font-size:15px;color:var(--gold)">${fmt(totAll)}</td>
+    if(tfootM) tfootM.innerHTML=`<tr style="border-top:2px solid var(--border2);background:var(--s2)">
+      <td style="padding:8px 10px;font-size:11px;font-weight:700;color:var(--cream)">${meses.length} meses</td>
+      <td style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted)">${mTxn}</td>
+      <td style="padding:8px 8px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green)">${fmt(mEf)}</td>
+      <td style="padding:8px 8px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${fmt(mTar)}</td>
+      <td style="padding:8px 10px;text-align:right;font-family:var(--mono);font-size:14px;font-weight:800;color:var(--gold)">${fmt(mAll)}</td>
     </tr>`;
   })();
 }
@@ -12790,7 +12868,7 @@ function renderAnalisis(){
     return `<tr id="an-row-${a.p.id}" style="cursor:pointer" onclick="toggleAnDetalle('${a.p.id}')"
       onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background=''">
       <td style="text-align:center;font-size:13px">${isOpen?'▼':'▶'}</td>
-      <td><div class="thumb">${a.p.foto?`<img src="${a.p.foto}" alt="">`:'👟'}</div></td>
+      <td><div class="thumb" style="width:60px;height:60px;font-size:28px;border-radius:8px">${a.p.foto?`<img src="${a.p.foto}" alt="">`:'👟'}</div></td>
       <td><div class="mono" style="font-size:12px;font-weight:700;color:var(--cream)">${a.estilo}</div></td>
       <td>
         <div style="font-size:12px;font-weight:600;color:var(--cream)">${a.p.desc||'—'}</div>
@@ -13837,7 +13915,7 @@ async function renderRecuperacion(){
     const diasColor = dias===null?'var(--muted)':dias<=7?'var(--green)':dias<=30?'var(--gold)':'var(--red)';
     const diasLabel = dias===null?'—':`${dias}d`;
     return `<tr style="border-bottom:1px solid var(--border);${isPend?'':'opacity:0.65'}">
-      <td style="padding:6px 8px;text-align:center"><div class="thumb">${r.foto?`<img src="${r.foto}" alt="">`:'👟'}</div></td>
+      <td style="padding:6px 8px;text-align:center"><div class="thumb" style="width:60px;height:60px;font-size:28px;border-radius:8px;margin:0 auto">${r.foto?`<img src="${r.foto}" alt="">`:'👟'}</div></td>
       <td style="padding:10px 12px">
         <div style="font-weight:700;color:var(--cream);font-size:13px">${r.marca||r.sku}</div>
         <div style="font-size:10px;color:var(--muted);font-family:var(--mono)">${r.sku}</div>
