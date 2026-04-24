@@ -55,9 +55,9 @@ window._fb = { db, auth, storage:null, collection, doc, addDoc, setDoc, updateDo
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font);background:var(--bg);color:var(--cream);min-height:100vh;overflow-x:hidden}
-::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-track{background:var(--s1)}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:6px;border:2px solid var(--s1)}
 
 /* ══════════════════════════════════════════
    🎨 TEMAS DEL MÓDULO COBRAR VENTA
@@ -2048,6 +2048,15 @@ body{background:#071222!important}
                     <th style="padding:7px 8px;text-align:right;font-size:10px;color:var(--green);font-weight:600">EFECT.</th>
                     <th style="padding:7px 8px;text-align:right;font-size:10px;color:var(--blue);font-weight:600">TARJ.</th>
                     <th style="padding:7px 10px;text-align:right;font-size:10px;color:var(--gold);font-weight:600">TOTAL</th>
+                    <style>
+                      #dv-listado-dias-tbody td:first-child { font-size:22px !important; font-weight:900 !important; color:var(--cream) !important; line-height:1.1 !important; }
+                      #dv-listado-dias-tbody td:first-child .dv-dia-num { font-size:22px !important; font-weight:900 !important; }
+                      #dv-listado-dias-tbody td:first-child .dv-dia-label { font-size:11px !important; }
+                      /* Scrollbar más gruesa */
+                      #dv-listado-dias-card .card div[style*="overflow-y"]::-webkit-scrollbar { width:10px !important; height:10px !important; }
+                      #dv-listado-dias-card .card div[style*="overflow-y"]::-webkit-scrollbar-thumb { background:var(--border2) !important; border-radius:5px !important; }
+                      #dv-listado-dias-card .card div[style*="overflow-y"]::-webkit-scrollbar-track { background:var(--s2) !important; }
+                    </style>
                   </tr></thead>
                   <tbody id="dv-listado-dias-tbody">
                     <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin datos</td></tr>
@@ -2057,26 +2066,61 @@ body{background:#071222!important}
               </div>
             </div>
 
-            <!-- DERECHA: Acumulado por Mes -->
-            <div class="card" style="flex:1;min-width:280px;max-width:50%;padding:0;overflow:hidden">
-              <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border)">
-                <div style="font-size:13px;font-weight:700;color:var(--cream)">📅 Acumulado por Mes</div>
+            <!-- DERECHA: Acumulado por Mes + Semana -->
+            <div style="flex:1;min-width:280px;max-width:50%;display:flex;flex-direction:column;gap:16px">
+
+              <!-- Acumulado por Mes -->
+              <div class="card" style="padding:0;overflow:hidden">
+                <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border)">
+                  <div style="font-size:13px;font-weight:700;color:var(--cream)">📅 Acumulado por Mes</div>
+                </div>
+                <div style="overflow-y:auto;max-height:220px">
+                  <table style="width:100%;border-collapse:collapse">
+                    <thead style="position:sticky;top:0;background:var(--s2);z-index:1"><tr>
+                      <th style="padding:7px 10px;text-align:left;font-size:10px;color:var(--muted);font-weight:600">MES</th>
+                      <th style="padding:7px 6px;text-align:center;font-size:10px;color:var(--muted);font-weight:600">#</th>
+                      <th style="padding:7px 8px;text-align:right;font-size:10px;color:var(--green);font-weight:600">EFECT.</th>
+                      <th style="padding:7px 8px;text-align:right;font-size:10px;color:var(--blue);font-weight:600">TARJ.</th>
+                      <th style="padding:7px 10px;text-align:right;font-size:10px;color:var(--gold);font-weight:600">TOTAL</th>
+                    </tr></thead>
+                    <tbody id="dv-acum-mes-tbody">
+                      <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin datos</td></tr>
+                    </tbody>
+                    <tfoot id="dv-acum-mes-tfoot"></tfoot>
+                  </table>
+                </div>
               </div>
-              <div style="overflow-y:auto;max-height:480px">
-                <table style="width:100%;border-collapse:collapse">
-                  <thead style="position:sticky;top:0;background:var(--s2);z-index:1"><tr>
-                    <th style="padding:7px 10px;text-align:left;font-size:10px;color:var(--muted);font-weight:600">MES</th>
-                    <th style="padding:7px 6px;text-align:center;font-size:10px;color:var(--muted);font-weight:600">#</th>
-                    <th style="padding:7px 8px;text-align:right;font-size:10px;color:var(--green);font-weight:600">EFECT.</th>
-                    <th style="padding:7px 8px;text-align:right;font-size:10px;color:var(--blue);font-weight:600">TARJ.</th>
-                    <th style="padding:7px 10px;text-align:right;font-size:10px;color:var(--gold);font-weight:600">TOTAL</th>
-                  </tr></thead>
-                  <tbody id="dv-acum-mes-tbody">
-                    <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin datos</td></tr>
-                  </tbody>
-                  <tfoot id="dv-acum-mes-tfoot"></tfoot>
-                </table>
+
+              <!-- Acumulado por Semana -->
+              <div class="card" style="padding:0;overflow:hidden">
+                <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-size:13px;font-weight:700;color:var(--cream)">📆 Acumulado por Semana</div>
+                  <select id="dv-sem-mes-filtro" onchange="renderDVSemanas()"
+                    style="font-size:11px;padding:4px 8px;border-radius:6px;background:var(--s2);border:1px solid var(--border);color:var(--cream)">
+                    <option value="">Todos los meses</option>
+                    <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+                    <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+                    <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+                    <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+                  </select>
+                </div>
+                <div style="overflow-y:auto;max-height:220px">
+                  <table style="width:100%;border-collapse:collapse">
+                    <thead style="position:sticky;top:0;background:var(--s2);z-index:1"><tr>
+                      <th style="padding:7px 10px;text-align:left;font-size:10px;color:var(--muted);font-weight:600">SEMANA</th>
+                      <th style="padding:7px 8px;text-align:left;font-size:10px;color:var(--muted);font-weight:600">RANGO</th>
+                      <th style="padding:7px 6px;text-align:center;font-size:10px;color:var(--muted);font-weight:600">#</th>
+                      <th style="padding:7px 8px;text-align:right;font-size:10px;color:var(--green);font-weight:600">EFECT.</th>
+                      <th style="padding:7px 8px;text-align:right;font-size:10px;color:var(--blue);font-weight:600">TARJ.</th>
+                      <th style="padding:7px 10px;text-align:right;font-size:10px;color:var(--gold);font-weight:600">TOTAL</th>
+                    </tr></thead>
+                    <tbody id="dv-acum-sem-tbody">
+                      <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">Sin datos</td></tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
+
             </div>
 
           </div>
@@ -2159,11 +2203,17 @@ body{background:#071222!important}
             <div class="scard b"><div class="sl">Tarjeta</div><div class="sv b" id="h-total-tarjeta">$0</div></div>
             <div class="scard r"><div class="sl">Pendiente (Apart./Cred.)</div><div class="sv r" id="h-total-pendiente">$0</div></div>
           </div>
-          <div class="tw" style="overflow-x:auto"><table style="min-width:1300px"><thead><tr>
-            <th>Folio</th><th>#</th><th>Mes</th><th>Sem.</th><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Vendedor</th>
-            <th>Estilo</th><th>Producto</th><th>Talla</th><th>Cat.</th><th>Qty</th>
+          <div class="tw" style="overflow-x:auto"><table style="min-width:1200px"><thead><tr>
+            <th>Folio</th><th>#</th><th>Mes</th><th>Sem.</th><th>Fecha</th><th>Hora</th><th>Cliente</th>
+            <th style="font-size:13px;color:var(--gold);font-weight:800">ESTILO</th>
+            <th>Producto</th>
+            <th style="font-size:13px;color:var(--accent2);font-weight:800;text-align:center">TALLA</th>
+            <th>Cat.</th>
+            <th style="font-size:13px;color:var(--blue);font-weight:800;text-align:center">QTY</th>
             <th>Tipo</th><th>Pago / Detalle</th>
-            <th>Precio Unit.</th><th>Descuento</th><th>Costo Art.</th><th>Total Compra</th><th>Apart./Créd.</th><th>Cobrado</th>
+            <th>Precio Unit.</th><th>Descuento</th><th>Costo Art.</th>
+            <th style="font-size:13px;color:var(--gold);font-weight:800;text-align:right">TOTAL COMPRA</th>
+            <th>Apart./Créd.</th><th>Cobrado</th>
           </tr></thead>
           <tbody id="h-tbody"></tbody></table></div>
           <div class="empty" id="h-empty" style="display:none"><div class="empty-icon">📋</div><div>Sin ventas.</div></div>
@@ -8358,14 +8408,16 @@ function renderHist(){
       <td style="white-space:nowrap">${fmtFechaCorta(v.fecha)}</td>
       <td style="color:var(--muted)">${v.hora||'—'}</td>
       <td>${v.cliente}</td>
-      <td style="color:var(--muted)">${v.vendedor||'—'}</td>
-      <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+      <td>—</td><td>—</td>
+      <td style="font-size:14px;font-weight:800;color:var(--accent2);text-align:center">—</td>
+      <td>—</td>
+      <td style="font-size:15px;font-weight:800;color:var(--blue);text-align:center">—</td>
       <td><span class="badge ${isDev?'b-red':isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isDev?'↩ Devolución':isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
       <td>${fmtPago(v.pago,v)}</td>
       <td class="mono" style="color:var(--muted)">—</td>
       <td class="mono" style="color:var(--red);font-size:11px">${v.descuento>0?'-'+fmt(v.descuento):'—'}</td>
       <td class="mono" style="color:var(--muted);font-size:11px">—</td>
-      <td class="mono" style="color:var(--cream)">${fmt(cobrado)}</td>
+      <td class="mono" style="color:var(--gold);font-size:15px;font-weight:900">${fmt(cobrado)}</td>
       <td class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
       <td class="mono" style="color:${isDev?'var(--red)':'var(--green)'};font-weight:600">${fmt(cobrado)}${isDev?'<div style="font-size:9px;color:var(--red);opacity:.8">↩ resta</div>':''}</td>
       ${(usuarioActivo?.rol==='admin'||usuarioActivo?.rol==='manager')
@@ -8392,12 +8444,12 @@ function renderHist(){
         <td rowspan="${items.length}" style="white-space:nowrap">${fmtFechaCorta(v.fecha)}</td>
         <td rowspan="${items.length}" style="color:var(--muted)">${v.hora||'—'}</td>
         <td rowspan="${items.length}">${v.cliente}</td>
-        <td rowspan="${items.length}" style="color:var(--muted)">${v.vendedor||'—'}</td>`:''}
-        <td class="mono" style="font-size:11px;color:var(--muted)">${item.sku||item.barcode||'—'}</td>
+        `:''}
+        <td class="mono" style="font-size:14px;font-weight:800;color:var(--gold)">${item.sku||item.barcode||'—'}</td>
         <td style="font-size:12px">${item.desc||'—'}${item.esGratis?'<span class="badge b-green" style="font-size:9px;margin-left:4px">GRATIS</span>':''}${item.sinCodigo?'<span class="badge b-gold" style="font-size:9px;margin-left:4px">ART. SIN CÓDIGO</span>':''}</td>
-        <td class="mono" style="text-align:center">${item.talla||'—'}</td>
+        <td class="mono" style="text-align:center;font-size:16px;font-weight:900;color:var(--accent2)">${item.talla||'—'}</td>
         <td><span class="badge b-accent" style="font-size:10px">${item.cat||(productos.find(p=>p.barcode===item.sku||p.sku===item.sku||p.id===item.id)?.cat)||'—'}</span></td>
-        <td class="mono" style="text-align:center">${item.qty||1}</td>
+        <td class="mono" style="text-align:center;font-size:16px;font-weight:900;color:var(--blue)">${item.qty||1}</td>
         ${ii===0?`
         <td rowspan="${items.length}"><span class="badge ${isDev?'b-red':isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isDev?'↩ Devolución':isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
         <td rowspan="${items.length}">${fmtPago(v.pago,v)}</td>`:''}
@@ -8405,7 +8457,7 @@ function renderHist(){
         ${ii===0?`
         <td rowspan="${items.length}" class="mono" style="color:var(--red);font-size:11px">${v.descuento>0?'-'+fmt(v.descuento):'—'}</td>
         <td rowspan="${items.length}" class="mono" style="font-size:11px;color:var(--muted)">${costoVal>0?fmt(costoVal):'—'}</td>
-        <td rowspan="${items.length}" class="mono" style="color:var(--cream)">${fmt(cobrado)}</td>
+        <td rowspan="${items.length}" class="mono" style="color:var(--gold);font-size:15px;font-weight:900">${fmt(cobrado)}</td>
         <td rowspan="${items.length}" class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
         <td rowspan="${items.length}" class="mono" style="color:${isDev?'var(--red)':'var(--green)'};font-weight:600">${fmt(cobrado)}${isDev?'<div style="font-size:9px;color:var(--red);opacity:.8">↩ resta</div>':''}${!isDev&&isAC&&v.anticipo?'<div style="font-size:10px;color:var(--muted)">Ant: '+fmt(v.anticipo)+'</div>':''}</td>
         ${(usuarioActivo?.rol==='admin'||usuarioActivo?.rol==='manager')
@@ -12057,6 +12109,69 @@ function renderDashboardVentas(){
       <td style="padding:8px 10px;text-align:right;font-family:var(--mono);font-size:14px;font-weight:800;color:var(--gold)">${fmt(mAll)}</td>
     </tr>`;
   })();
+
+  // Render acumulado por semana
+  renderDVSemanas();
+}
+
+function renderDVSemanas(){
+  const tbodySem = document.getElementById('dv-acum-sem-tbody');
+  if(!tbodySem) return;
+  const mesFiltro = document.getElementById('dv-sem-mes-filtro')?.value||'';
+  const todasVentas = ventas||[];
+  const MESES_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  // Agrupar por semana del año
+  const bySem = {};
+  todasVentas.forEach(v=>{
+    const f=v.fecha||''; if(!f||f.length<10) return;
+    if(mesFiltro && f.slice(5,7)!==mesFiltro) return;
+    const tipoV=v.tipoVenta||'venta';
+    const isDev=tipoV==='devolucion';
+    const monto=isDev?(v.total||0):(tipoV==='apartado'||tipoV==='credito')?(v.anticipo||0):tipoV==='abono'?(v.monto||v.total||0):(v.total||0);
+    // Calcular semana
+    const d=new Date(f+'T12:00:00');
+    const startYear=new Date(d.getFullYear(),0,1);
+    const weekNum=Math.ceil(((d-startYear)/86400000+startYear.getDay()+1)/7);
+    const semKey=d.getFullYear()+'-W'+String(weekNum).padStart(2,'0');
+    if(!bySem[semKey]) {
+      // Calcular rango de la semana
+      const dow=d.getDay()||7;
+      const lun=new Date(d); lun.setDate(d.getDate()-(dow-1));
+      const dom=new Date(lun); dom.setDate(lun.getDate()+6);
+      const f2=dt=>String(dt.getDate()).padStart(2,'0')+'/'+(MESES_N[dt.getMonth()]||'');
+      bySem[semKey]={semKey,weekNum,anio:d.getFullYear(),rango:f2(lun)+' - '+f2(dom),txns:0,efectivo:0,tarjetas:0,total:0};
+    }
+    bySem[semKey].txns++;
+    bySem[semKey].total+=monto;
+    const pg=(v.pago||'').toLowerCase().trim();
+    if(pg==='mixto'){bySem[semKey].efectivo+=v.mixtoEfectivo||0;bySem[semKey].tarjetas+=v.mixtoTarjeta||0;}
+    else if(pg==='bbva-efectivo'){bySem[semKey].efectivo+=v.bbvaEfectivo||0;bySem[semKey].tarjetas+=v.bbvaTarjeta||0;}
+    else if(pg==='tarjeta-efectivo'){bySem[semKey].efectivo+=v.tarjetaEfEfectivo||0;bySem[semKey].tarjetas+=v.tarjetaEfTarjeta||0;}
+    else if(pg==='efectivo'||pg==='monedero'||pg==='') bySem[semKey].efectivo+=monto;
+    else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) bySem[semKey].tarjetas+=monto;
+    else bySem[semKey].efectivo+=monto;
+  });
+  const sems=Object.values(bySem).sort((a,b)=>b.semKey.localeCompare(a.semKey));
+  if(!sems.length){
+    tbodySem.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">Sin datos</td></tr>';
+    return;
+  }
+  const hoyW = hoy().slice(0,7);
+  tbodySem.innerHTML=sems.map(s=>{
+    const esActual=s.semKey.slice(0,4)+'-W'+String(Math.ceil(((new Date(hoy()+'T12:00:00')-new Date(new Date(hoy()+'T12:00:00').getFullYear(),0,1))/86400000+new Date(new Date(hoy()+'T12:00:00').getFullYear(),0,1).getDay()+1)/7)).padStart(2,'0')===s.semKey;
+    return `<tr style="border-bottom:1px solid var(--border)${esActual?';background:rgba(240,180,41,.06)':''}">
+      <td style="padding:6px 10px;white-space:nowrap">
+        <div style="font-size:13px;font-weight:800;color:${esActual?'var(--gold)':'var(--cream)'}">Sem. ${s.weekNum}</div>
+        <div style="font-size:10px;color:var(--muted)">${s.anio}</div>
+      </td>
+      <td style="padding:6px 8px;font-size:11px;color:var(--muted);white-space:nowrap">${s.rango}</td>
+      <td style="padding:6px;text-align:center;font-size:11px;color:var(--muted)">${s.txns}</td>
+      <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--green)">${fmt(s.efectivo)}</td>
+      <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--blue)">${fmt(s.tarjetas)}</td>
+      <td style="padding:6px 10px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">${fmt(s.total)}</td>
+    </tr>`;
+  }).join('');
 }
 
 function fmtFechaCorta(fecha){
