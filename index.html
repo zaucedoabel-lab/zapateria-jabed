@@ -2031,6 +2031,28 @@ body{background:#071222!important}
             <div class="card-title">📆 Ventas por Día de la Semana</div>
             <div id="dv-dias-bars"></div>
           </div>
+          <!-- Listado ventas por día -->
+          <div class="card" id="dv-listado-dias-card" style="margin-top:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+              <div class="card-title" style="margin:0">📋 Ventas por Día</div>
+              <button class="btn btn-ghost btn-sm" onclick="renderDashboardVentas()">🔄 Actualizar</button>
+            </div>
+            <div class="tw" style="overflow-x:auto">
+              <table style="min-width:480px;width:100%">
+                <thead><tr>
+                  <th style="text-align:left">Fecha</th>
+                  <th style="text-align:center">Transacc.</th>
+                  <th style="text-align:right">💵 Efectivo</th>
+                  <th style="text-align:right">💳 Tarjetas</th>
+                  <th style="text-align:right;color:var(--gold)">Total</th>
+                </tr></thead>
+                <tbody id="dv-listado-dias-tbody">
+                  <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin datos</td></tr>
+                </tbody>
+                <tfoot id="dv-listado-dias-tfoot"></tfoot>
+              </table>
+            </div>
+          </div>
         </div>
 
         <div id="page-historial" class="page">
@@ -2626,6 +2648,7 @@ body{background:#071222!important}
             <table style="min-width:1100px" id="an-table">
               <thead><tr>
                 <th style="width:32px"></th>
+                <th style="width:44px"></th>
                 <th>Estilo</th>
                 <th>Descripción</th>
                 <th>Cat.</th>
@@ -2679,6 +2702,7 @@ body{background:#071222!important}
           </div>
           <div class="tw" style="overflow-x:auto">
             <table style="min-width:1200px"><thead><tr>
+              <th style="width:44px"></th>
               <th>Fecha Alta</th>
               <th>Creado Por</th>
               <th>Código</th>
@@ -3061,18 +3085,20 @@ body{background:#071222!important}
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead>
           <tr style="background:var(--s2);border-bottom:1px solid var(--border)">
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;width:44px"></th>
             <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap">ESTILO / MARCA</th>
             <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">DESCRIPCIÓN</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">TALLA</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">VENDIDAS</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">EN BODEGA</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">SUCURSAL VENTA</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">DÍAS</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">STATUS</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">ACCIÓN</th>
           </tr>
         </thead>
         <tbody id="rec-tbody">
-          <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted)">Cargando...</td></tr>
+          <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">Cargando...</td></tr>
         </tbody>
       </table>
     </div>
@@ -11279,6 +11305,7 @@ function renderCostos(){
           ? '<span class="badge b-gold" style="font-size:10px">🔥 Oferta</span>'
           : '<span style="color:var(--faint);font-size:11px">—</span>');
     return `<tr>
+      <td style="padding:6px 8px"><div class="thumb">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div></td>
       <td style="white-space:nowrap;font-size:11px">
         <div style="color:var(--cream);font-weight:600">${fechaAlta}</div>
         <div style="color:var(--muted);font-size:10px">${horaAlta}</div>
@@ -11876,6 +11903,82 @@ function renderDashboardVentas(){
           </div>`).join('')}
       </div>`;
   }
+
+  // ── Listado ventas por día ──
+  (function renderListadoDias(){
+    const tbodyD  = document.getElementById('dv-listado-dias-tbody');
+    const tfootD  = document.getElementById('dv-listado-dias-tfoot');
+    if(!tbodyD) return;
+
+    // Agrupar por fecha
+    const byDay = {};
+    vFilt.forEach(v=>{
+      const f = v.fecha||'';
+      if(!f) return;
+      if(!byDay[f]) byDay[f]={fecha:f, txns:0, efectivo:0, tarjetas:0, total:0};
+      const tipoV = v.tipoVenta||'venta';
+      const isDev = tipoV==='devolucion';
+      const monto = isDev?(v.total||0):
+                    (tipoV==='apartado'||tipoV==='credito')?(v.anticipo||0):
+                    tipoV==='abono'?(v.monto||v.total||0):(v.total||0);
+      byDay[f].txns++;
+      byDay[f].total += monto;
+      const p=(v.pago||'').toLowerCase().trim();
+      if(p==='mixto'){
+        byDay[f].efectivo += v.mixtoEfectivo||0;
+        byDay[f].tarjetas += v.mixtoTarjeta||0;
+      } else if(p==='bbva-efectivo'){
+        byDay[f].efectivo += v.bbvaEfectivo||0;
+        byDay[f].tarjetas += v.bbvaTarjeta||0;
+      } else if(p==='tarjeta-efectivo'){
+        byDay[f].efectivo += v.tarjetaEfEfectivo||0;
+        byDay[f].tarjetas += v.tarjetaEfTarjeta||0;
+      } else if(p==='efectivo'||p==='monedero'||p==='') byDay[f].efectivo += monto;
+      else if(p.includes('tarjeta')||p.includes('bbva')||p.includes('mp')||p==='transferencia'||p.includes('transfer')) byDay[f].tarjetas += monto;
+      else byDay[f].efectivo += monto;
+    });
+
+    const dias = Object.values(byDay).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+
+    if(!dias.length){
+      tbodyD.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin ventas en este período</td></tr>';
+      if(tfootD) tfootD.innerHTML='';
+      return;
+    }
+
+    // Totales
+    const totEf  = dias.reduce((a,d)=>a+d.efectivo,0);
+    const totTar = dias.reduce((a,d)=>a+d.tarjetas,0);
+    const totAll = dias.reduce((a,d)=>a+d.total,0);
+    const totTxn = dias.reduce((a,d)=>a+d.txns,0);
+    const diasNomSemana=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+    tbodyD.innerHTML = dias.map(d=>{
+      const dt = new Date(d.fecha+'T12:00:00');
+      const nomDia = diasNomSemana[dt.getDay()];
+      const esSab = dt.getDay()===6;
+      const esDom = dt.getDay()===0;
+      const rowStyle = esDom?'background:rgba(239,68,68,.06)':esSab?'background:rgba(240,180,41,.05)':'';
+      return `<tr style="border-bottom:1px solid var(--border);${rowStyle}">
+        <td style="padding:9px 12px;white-space:nowrap">
+          <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--cream)">${fmtFechaCorta(d.fecha)}</span>
+          <span style="font-size:10px;color:var(--muted);margin-left:5px">${nomDia}</span>
+        </td>
+        <td style="padding:9px 12px;text-align:center;font-size:12px;color:var(--muted)">${d.txns}</td>
+        <td style="padding:9px 12px;text-align:right;font-family:var(--mono);color:var(--green);font-size:13px">${fmt(d.efectivo)}</td>
+        <td style="padding:9px 12px;text-align:right;font-family:var(--mono);color:var(--blue);font-size:13px">${fmt(d.tarjetas)}</td>
+        <td style="padding:9px 12px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--gold);font-size:14px">${fmt(d.total)}</td>
+      </tr>`;
+    }).join('');
+
+    if(tfootD) tfootD.innerHTML=`<tr style="border-top:2px solid var(--border2);background:var(--s2)">
+      <td style="padding:10px 12px;font-weight:700;font-size:13px;color:var(--cream)">TOTAL (${dias.length} días)</td>
+      <td style="padding:10px 12px;text-align:center;font-weight:700;color:var(--muted)">${totTxn}</td>
+      <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--green)">${fmt(totEf)}</td>
+      <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--blue)">${fmt(totTar)}</td>
+      <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:800;font-size:15px;color:var(--gold)">${fmt(totAll)}</td>
+    </tr>`;
+  })();
 }
 
 function fmtFechaCorta(fecha){
@@ -12687,6 +12790,7 @@ function renderAnalisis(){
     return `<tr id="an-row-${a.p.id}" style="cursor:pointer" onclick="toggleAnDetalle('${a.p.id}')"
       onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background=''">
       <td style="text-align:center;font-size:13px">${isOpen?'▼':'▶'}</td>
+      <td><div class="thumb">${a.p.foto?`<img src="${a.p.foto}" alt="">`:'👟'}</div></td>
       <td><div class="mono" style="font-size:12px;font-weight:700;color:var(--cream)">${a.estilo}</div></td>
       <td>
         <div style="font-size:12px;font-weight:600;color:var(--cream)">${a.p.desc||'—'}</div>
@@ -13609,9 +13713,11 @@ function _buildRecuperacionData(){
           sku:    item.sku||item.id,
           color:  item.color||'',
           totalVendido: 0,
+          fechaUltimaVenta: v.fecha||'',
         };
       }
       map[key].totalVendido += (item.qty||1);
+      if(v.fecha && v.fecha > map[key].fechaUltimaVenta) map[key].fechaUltimaVenta = v.fecha;
     });
   });
 
@@ -13663,6 +13769,9 @@ function _buildRecuperacionData(){
     row.stockTienda = stockTienda;
     row.stockBodega = stockBodega;
     row.status = status;
+    // Foto del producto
+    const prodObj = productos.find(p=>p.id===row.prodId||p.sku===row.sku||p.barcode===row.sku);
+    row.foto = prodObj?.foto||null;
     return row;
   }).filter(Boolean); // eliminar tallas con stock > 0 en tienda
 }
@@ -13701,8 +13810,16 @@ async function renderRecuperacion(){
   `;
 
   if(!data.length){
-    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted)">Sin registros${q?' para "'+q+'"':''}</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">Sin registros${q?' para "'+q+'"':''}</td></tr>`;
     return;
+  }
+
+  // Helper: días transcurridos desde fecha YYYY-MM-DD
+  function diasDesde(fechaStr){
+    if(!fechaStr) return null;
+    const hoyMs = new Date(hoy()+'T12:00:00').getTime();
+    const ventaMs = new Date(fechaStr+'T12:00:00').getTime();
+    return Math.round((hoyMs - ventaMs) / 86400000);
   }
 
   tbody.innerHTML = data.map(r=>{
@@ -13715,7 +13832,12 @@ async function renderRecuperacion(){
     const accionBtn = isPend
       ? `<button class="btn btn-accent btn-xs" onclick="marcarRecuperado('${r.key}')">✅ Marcar Recuperado</button>`
       : `<button class="btn btn-ghost btn-xs" onclick="marcarPendiente('${r.key}')">↩ Reabrir</button>`;
+    // Días transcurridos
+    const dias = diasDesde(r.fechaUltimaVenta);
+    const diasColor = dias===null?'var(--muted)':dias<=7?'var(--green)':dias<=30?'var(--gold)':'var(--red)';
+    const diasLabel = dias===null?'—':`${dias}d`;
     return `<tr style="border-bottom:1px solid var(--border);${isPend?'':'opacity:0.65'}">
+      <td style="padding:6px 8px;text-align:center"><div class="thumb">${r.foto?`<img src="${r.foto}" alt="">`:'👟'}</div></td>
       <td style="padding:10px 12px">
         <div style="font-weight:700;color:var(--cream);font-size:13px">${r.marca||r.sku}</div>
         <div style="font-size:10px;color:var(--muted);font-family:var(--mono)">${r.sku}</div>
@@ -13730,6 +13852,10 @@ async function renderRecuperacion(){
       <td style="padding:10px 12px;text-align:center;font-weight:700;color:var(--cream)">${r.totalVendido}</td>
       <td style="padding:10px 12px;text-align:center;font-weight:700;color:${stockColor}">${r.stockBodega} pza${r.stockBodega!==1?'s':''}</td>
       <td style="padding:10px 12px;text-align:center;font-size:12px;color:var(--muted)">${sucNombre}</td>
+      <td style="padding:10px 12px;text-align:center">
+        <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:${diasColor}">${diasLabel}</span>
+        ${r.fechaUltimaVenta?`<div style="font-size:9px;color:var(--faint)">${r.fechaUltimaVenta.slice(5).replace('-','/')}</div>`:''}
+      </td>
       <td style="padding:10px 12px;text-align:center">${statusBadge}</td>
       <td style="padding:10px 12px;text-align:center">${accionBtn}</td>
     </tr>`;
