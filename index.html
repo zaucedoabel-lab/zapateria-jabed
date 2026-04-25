@@ -10505,14 +10505,6 @@ function deleteVenta(id){
       <div style="background:#1a1a25;border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;color:#f0b429">
         ⚠️ Esta acción <strong>NO se puede deshacer</strong>.
       </div>
-      <div style="margin-bottom:16px">
-        <label style="font-size:12px;font-weight:600;color:#7a7890;display:block;margin-bottom:6px">🔑 CONTRASEÑA ADMIN / MANAGER</label>
-        <input id="del-pin-input" type="password" placeholder="Ingresa tu contraseña..." autocomplete="off"
-          style="width:100%;padding:11px 14px;border-radius:8px;border:2px solid #2e2e42;background:#0f0f16;color:#e8e6f0;font-size:15px;outline:none;font-family:inherit"
-          onkeydown="if(event.key==='Enter')confirmarDeleteVenta('${id}',${esAbono})"
-          onfocus="this.style.borderColor='#e05252'" onblur="this.style.borderColor='#2e2e42'">
-        <div id="del-pin-err" style="color:#e05252;font-size:11px;margin-top:5px;display:none">⚠️ Contraseña incorrecta</div>
-      </div>
       <div style="display:flex;gap:10px">
         <button onclick="document.getElementById('del-venta-overlay').remove()"
           style="flex:1;padding:12px;border-radius:10px;border:1px solid #2e2e42;background:transparent;color:#7a7890;cursor:pointer;font-size:14px;font-weight:600">
@@ -10525,24 +10517,14 @@ function deleteVenta(id){
       </div>
     </div>`;
   document.body.appendChild(overlay);
-  setTimeout(()=>document.getElementById('del-pin-input')?.focus(),80);
   // Cerrar al click fuera
   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
 }
 
 async function confirmarDeleteVenta(id, esAbono){
-  const pinInput = document.getElementById('del-pin-input');
-  const pinErr = document.getElementById('del-pin-err');
-  const pinVal = (pinInput?.value||'').trim();
-  // Verificar contraseña del usuario activo
-  const perfilActivo = currentProfile||usuarioActivo;
-  const passOk = perfilActivo?.password && pinVal===perfilActivo.password;
-  const masterOk = pinVal==='admin' || pinVal==='Admin' || pinVal==='ADMIN';
-  if(!passOk && !masterOk){
-    if(pinErr){pinErr.style.display='block';}
-    if(pinInput){pinInput.style.borderColor='#e05252';pinInput.value='';pinInput.focus();}
-    return;
-  }
+  // Solo verificar rol — sin contraseña
+  const rol = usuarioActivo?.rol||currentProfile?.rol||'';
+  if(rol!=='admin'&&rol!=='manager'){toast('⛔ Solo Admin o Manager pueden eliminar','err');return;}
   document.getElementById('del-venta-overlay')?.remove();
   const venta = ventas.find(v=>v.id===id);
   if(!venta){toast('Venta no encontrada','err');return;}
