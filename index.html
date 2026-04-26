@@ -2824,9 +2824,82 @@ body{background:#071222!important}
             <div class="scard g"><div class="sl">Total Movimientos</div><div class="sv g" id="bitacora-total">—</div></div>
             <div class="scard b"><div class="sl">Último Movimiento</div><div class="sv b" style="font-size:14px" id="bitacora-ultimo">—</div></div>
           </div>
-          <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
-            <button class="btn btn-ghost btn-sm" onclick="loadBitacora()">🔄 Actualizar</button>
+          <!-- ══ FILTROS BITÁCORA ══ -->
+          <div id="bitacora-filtros" style="background:var(--s2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+              <span style="font-size:12px;font-weight:600;color:var(--gold);letter-spacing:.5px">🔍 FILTROS</span>
+              <span id="bitacora-resultados" style="font-size:11px;color:var(--muted);margin-left:auto"></span>
+              <button class="btn btn-ghost btn-sm" onclick="limpiarFiltrosBitacora()" style="font-size:11px;padding:3px 10px">✕ Limpiar</button>
+              <button class="btn btn-ghost btn-sm" onclick="loadBitacora()" style="font-size:11px;padding:3px 10px">🔄 Actualizar</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:8px">
+              <!-- Búsqueda de estilo/SKU -->
+              <div>
+                <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">ESTILO / SKU</label>
+                <input id="bf-estilo" type="text" placeholder="Ej: S7055-M, 12345…"
+                  oninput="filtrarBitacora()"
+                  style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--cream);font-size:12px;font-family:var(--mono)">
+              </div>
+              <!-- Tipo -->
+              <div>
+                <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">TIPO</label>
+                <select id="bf-tipo" onchange="filtrarBitacora()"
+                  style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--cream);font-size:12px">
+                  <option value="">Todos</option>
+                  <option value="entrada">📥 Entrada</option>
+                  <option value="salida">📤 Salida</option>
+                  <option value="liquidacion">🏷️ Liquidación</option>
+                </select>
+              </div>
+              <!-- Estado -->
+              <div>
+                <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">ESTADO</label>
+                <select id="bf-estado" onchange="filtrarBitacora()"
+                  style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--cream);font-size:12px">
+                  <option value="">Todos</option>
+                  <option value="pendiente">⏳ Pendiente</option>
+                  <option value="aprobado">✅ Aprobado</option>
+                  <option value="rechazado">❌ Rechazado</option>
+                  <option value="cancelado">🔄 Cancelado</option>
+                </select>
+              </div>
+              <!-- Destino/Sucursal -->
+              <div>
+                <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">DESTINO</label>
+                <select id="bf-sucursal" onchange="filtrarBitacora()"
+                  style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--cream);font-size:12px">
+                  <option value="">Todas</option>
+                </select>
+              </div>
+              <!-- Usuario -->
+              <div>
+                <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">USUARIO</label>
+                <input id="bf-usuario" type="text" placeholder="Nombre de usuario…"
+                  oninput="filtrarBitacora()"
+                  style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--cream);font-size:12px">
+              </div>
+            </div>
+            <!-- Segunda fila: búsqueda libre + rango de fechas -->
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:8px">
+              <div>
+                <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">BÚSQUEDA LIBRE (descripción / comentario)</label>
+                <input id="bf-texto" type="text" placeholder="Buscar en descripción, proveedor, comentario…"
+                  oninput="filtrarBitacora()"
+                  style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--cream);font-size:12px">
+              </div>
+              <div>
+                <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">DESDE</label>
+                <input id="bf-desde" type="date" onchange="filtrarBitacora()"
+                  style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--cream);font-size:12px">
+              </div>
+              <div>
+                <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">HASTA</label>
+                <input id="bf-hasta" type="date" onchange="filtrarBitacora()"
+                  style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--cream);font-size:12px">
+              </div>
+            </div>
           </div>
+
           <div class="tw" style="overflow-x:auto">
             <table style="min-width:1300px"><thead><tr>
               <th>Fecha/Hora</th><th>Tipo</th><th>Descripción</th>
@@ -10854,97 +10927,180 @@ function getPermisosUsuario(u){
 
 
 // ══════════════════ BITÁCORA ══════════════════
+// Cache global para filtros
+let _bitacoraData = [];
+
 async function loadBitacora(){
   const tbody = document.getElementById('bitacora-tbody');
-  if(tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">Cargando…</td></tr>';
+  if(tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--muted)">Cargando…</td></tr>';
   try{
     const snap = await window._fb.getDocs(col('bitacora'));
-    const movimientos = snap.docs.map(d=>({id:d.id,...d.data()}))
-      .sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
-    // Update stats
-    const pendientes = movimientos.filter(m=>m.estado==='pendiente').length;
+    _bitacoraData = snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(b.createdAt||b.fecha||'').localeCompare(a.createdAt||a.fecha||''));
+
+    // Update stats (over full dataset, not filtered)
+    const pendientes = _bitacoraData.filter(m=>m.estado==='pendiente').length;
     const el=document.getElementById('bitacora-pend'); if(el) el.textContent=pendientes;
-    const et=document.getElementById('bitacora-total'); if(et) et.textContent=movimientos.length;
+    const et=document.getElementById('bitacora-total'); if(et) et.textContent=_bitacoraData.length;
     const eu=document.getElementById('bitacora-ultimo');
-    if(eu&&movimientos.length) eu.textContent=(movimientos[0].fecha||'')+(movimientos[0].hora?' '+movimientos[0].hora:'');
-    if(!tbody) return;
-    if(!movimientos.length){
-      tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">Sin movimientos registrados</td></tr>';
-      return;
+    if(eu&&_bitacoraData.length) eu.textContent=(_bitacoraData[0].fecha||'')+(_bitacoraData[0].hora?' '+_bitacoraData[0].hora:'');
+
+    // Populate sucursal dropdown dynamically
+    const bfSuc = document.getElementById('bf-sucursal');
+    if(bfSuc){
+      const idsEnBitacora = [...new Set(_bitacoraData.map(m=>m.datos?.sucursalId).filter(Boolean))];
+      const opcionesSuc = idsEnBitacora.map(sid=>{
+        const nombre = sucursales.find(s=>s.id===sid)?.nombre || sid;
+        return `<option value="${sid}">${nombre}</option>`;
+      }).join('');
+      bfSuc.innerHTML = '<option value="">Todas</option>' + opcionesSuc;
     }
-    const rolActivo = usuarioActivo?.rol||currentProfile?.rol||'';
-    const puedeAprobar = ['admin','manager','supervisor'].includes(rolActivo);
-    tbody.innerHTML = movimientos.map(m=>{
-      const estadoBadge = m.estado==='pendiente'
-        ? '<span class="badge b-gold">⏳ Pendiente</span>'
-        : m.estado==='rechazado'
-          ? '<span class="badge b-red">❌ Rechazado</span>'
-          : m.estado==='cancelado'
-            ? '<span class="badge b-gray">🔄 Cancelado</span>'
-            : '<span class="badge b-green">✅ Aprobado</span>';
-      const tipoBadge = m.tipo==='entrada'
-        ? '<span class="badge b-green">📥 Entrada</span>'
-        : m.tipo==='salida'
-          ? '<span class="badge b-red">📤 Salida</span>'
-          : m.tipo==='liquidacion'
-            ? '<span class="badge b-gold">🏷️ Liquidación</span>'
-            : '<span class="badge b-gray">'+m.tipo+'</span>';
-      const puedeModificar = ['admin','manager'].includes(rolActivo);
-      let acciones;
-      if(puedeAprobar && m.estado==='pendiente'){
-        acciones = `<div style="display:flex;flex-direction:column;gap:3px">
-          <div style="display:flex;gap:3px">
-            <button class="btn btn-accent btn-xs" onclick="aprobarMovimiento('${m.id}')">✅ Aprobar</button>
-            <button class="btn btn-red btn-xs" onclick="rechazarMovimiento('${m.id}')">❌ Rechazar</button>
-          </div>
-          ${(m.tipo==='entrada'||m.tipo==='salida')&&puedeModificar?`<button class="btn btn-ghost btn-xs" onclick="cambiarSucursalMovimiento('${m.id}')">🏪 Cambiar sucursal</button>`:''}
-        </div>`;
-      } else if(puedeModificar && m.estado==='aprobado' && (m.tipo==='entrada'||m.tipo==='salida'||m.tipo==='liquidacion')){
-        const esLiq = m.tipo==='liquidacion';
-        acciones = `<div style="display:flex;flex-direction:column;gap:3px">
-          <span style="font-size:10px;color:var(--muted)">Aprobó: ${m.aprobadoPor||'—'}</span>
-          ${!esLiq ? `<button class="btn btn-green btn-xs" onclick="reaplicarStockMovimiento('${m.id}')" title="Vuelve a aplicar el cambio de stock sin duplicar — lee el stock actual de Firestore antes de sumar/restar">
-            🔄 Re-aplicar Stock
-          </button>` : ''}
-          <button class="btn btn-red btn-xs" onclick="${esLiq?`cancelarLiquidacion('${m.id}')`:`cancelarMovimientoAprobado('${m.id}')`}">
-            ↩ ${esLiq?'Cancelar Liquidación':'Cancelar'}
-          </button>
-        </div>`;
-      } else {
-        acciones = m.aprobadoPor ? '<span style="font-size:11px;color:var(--muted)">Por: '+m.aprobadoPor+'</span>' : '—';
-      }
-      // Extra info from datos
-      const destSucNombre = m.datos?.sucursalId
-        ? (sucursales.find(s=>s.id===m.datos.sucursalId)?.nombre||m.datos.sucursalId)
-        : '—';
-      const totalPzas = m.datos?.lineas
-        ? m.datos.lineas.reduce((a,l)=>a+(l.cantidad||0),0)
-        : '—';
-      const comentario = m.datos?.comentario || m.datos?.proveedor
-        ? [m.datos.proveedor, m.datos.comentario].filter(Boolean).join(' | ')
-        : '—';
-      // Build list of estilos/barcodes from lineas
-      const estilosLista = m.datos?.lineas
-        ? [...new Set(m.datos.lineas.map(l=>l.sku||l.barcode||l.prodId||'—').filter(x=>x&&x!=='—'))].join(', ')
-        : '—';
-      return `<tr>
-        <td style="font-size:11px;color:var(--muted);white-space:nowrap">${m.fecha||'—'}<br>${m.hora||''}</td>
-        <td>${tipoBadge}</td>
-        <td style="font-size:11px;color:var(--cream);max-width:180px">${m.descripcion||'—'}</td>
-        <td style="font-size:12px;color:var(--cream);white-space:nowrap">
-          ${(m.tipo==='entrada'||m.tipo==='salida')
-            ? `<span class="badge ${destSucNombre.toLowerCase().includes('bod')?'b-orange':'b-green'}">${(m.tipo==='entrada'?'📥 ':'📤 ')+destSucNombre}</span>`
-            : '<span style="color:var(--faint)">—</span>'}
-        </td>
-        <td style="font-size:11px;font-family:var(--mono);color:var(--cream);max-width:150px;word-break:break-all">${estilosLista}</td>
-        <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:var(--gold)">${totalPzas}</td>
-        <td style="font-size:11px;color:var(--muted);max-width:140px">${comentario}</td>
-        <td style="font-size:11px;color:var(--cream)">${m.usuario||'—'}<br><span style="color:var(--muted);font-size:10px">${m.usuarioRol||''}</span></td>
-        <td>${estadoBadge}</td>
-        <td>${acciones}</td>
-      </tr>`;
-    }).join('');
+
+    filtrarBitacora();
   }catch(e){ console.error('loadBitacora error:',e); toast('Error cargando bitácora: '+e.message,'err'); }
+}
+
+function filtrarBitacora(){
+  const tbody = document.getElementById('bitacora-tbody');
+  if(!tbody || !_bitacoraData.length) return;
+
+  // Leer filtros
+  const fEstilo  = (document.getElementById('bf-estilo')?.value  || '').trim().toLowerCase();
+  const fTipo    = (document.getElementById('bf-tipo')?.value    || '');
+  const fEstado  = (document.getElementById('bf-estado')?.value  || '');
+  const fSucursal= (document.getElementById('bf-sucursal')?.value|| '');
+  const fUsuario = (document.getElementById('bf-usuario')?.value || '').trim().toLowerCase();
+  const fTexto   = (document.getElementById('bf-texto')?.value   || '').trim().toLowerCase();
+  const fDesde   = (document.getElementById('bf-desde')?.value   || '');
+  const fHasta   = (document.getElementById('bf-hasta')?.value   || '');
+
+  let filtrados = _bitacoraData.filter(m=>{
+    // Tipo
+    if(fTipo && m.tipo !== fTipo) return false;
+    // Estado
+    if(fEstado && m.estado !== fEstado) return false;
+    // Sucursal destino
+    if(fSucursal && m.datos?.sucursalId !== fSucursal) return false;
+    // Fecha desde/hasta
+    if(fDesde && (m.fecha||'') < fDesde) return false;
+    if(fHasta && (m.fecha||'') > fHasta) return false;
+    // Usuario
+    if(fUsuario && !(m.usuario||'').toLowerCase().includes(fUsuario)) return false;
+    // Estilo/SKU — busca en las lineas del movimiento
+    if(fEstilo){
+      const estilosLista = m.datos?.lineas
+        ? m.datos.lineas.map(l=>(l.sku||l.barcode||l.prodId||l.desc||'').toLowerCase()).join(' ')
+        : (m.descripcion||'').toLowerCase();
+      if(!estilosLista.includes(fEstilo)) return false;
+    }
+    // Búsqueda libre
+    if(fTexto){
+      const haystack = [
+        m.descripcion, m.datos?.comentario, m.datos?.proveedor,
+        m.aprobadoPor, m.usuario, m.usuarioRol
+      ].filter(Boolean).join(' ').toLowerCase();
+      if(!haystack.includes(fTexto)) return false;
+    }
+    return true;
+  });
+
+  // Contador resultado
+  const elRes = document.getElementById('bitacora-resultados');
+  if(elRes) elRes.textContent = filtrados.length === _bitacoraData.length
+    ? `${_bitacoraData.length} movimientos`
+    : `${filtrados.length} de ${_bitacoraData.length} movimientos`;
+
+  if(!filtrados.length){
+    tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--muted)">Sin resultados para los filtros aplicados</td></tr>';
+    return;
+  }
+
+  const rolActivo = usuarioActivo?.rol||currentProfile?.rol||'';
+  const puedeAprobar = ['admin','manager','supervisor'].includes(rolActivo);
+  const puedeModificar = ['admin','manager'].includes(rolActivo);
+
+  tbody.innerHTML = filtrados.map(m=>{
+    const estadoBadge = m.estado==='pendiente'
+      ? '<span class="badge b-gold">⏳ Pendiente</span>'
+      : m.estado==='rechazado'
+        ? '<span class="badge b-red">❌ Rechazado</span>'
+        : m.estado==='cancelado'
+          ? '<span class="badge b-gray">🔄 Cancelado</span>'
+          : '<span class="badge b-green">✅ Aprobado</span>';
+    const tipoBadge = m.tipo==='entrada'
+      ? '<span class="badge b-green">📥 Entrada</span>'
+      : m.tipo==='salida'
+        ? '<span class="badge b-red">📤 Salida</span>'
+        : m.tipo==='liquidacion'
+          ? '<span class="badge b-gold">🏷️ Liquidación</span>'
+          : '<span class="badge b-gray">'+m.tipo+'</span>';
+    let acciones;
+    if(puedeAprobar && m.estado==='pendiente'){
+      acciones = `<div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;gap:3px">
+          <button class="btn btn-accent btn-xs" onclick="aprobarMovimiento('${m.id}')">✅ Aprobar</button>
+          <button class="btn btn-red btn-xs" onclick="rechazarMovimiento('${m.id}')">❌ Rechazar</button>
+        </div>
+        ${(m.tipo==='entrada'||m.tipo==='salida')&&puedeModificar?`<button class="btn btn-ghost btn-xs" onclick="cambiarSucursalMovimiento('${m.id}')">🏪 Cambiar sucursal</button>`:''}
+      </div>`;
+    } else if(puedeModificar && m.estado==='aprobado' && (m.tipo==='entrada'||m.tipo==='salida'||m.tipo==='liquidacion')){
+      const esLiq = m.tipo==='liquidacion';
+      acciones = `<div style="display:flex;flex-direction:column;gap:3px">
+        <span style="font-size:10px;color:var(--muted)">Aprobó: ${m.aprobadoPor||'—'}</span>
+        ${!esLiq ? `<button class="btn btn-green btn-xs" onclick="reaplicarStockMovimiento('${m.id}')" title="Vuelve a aplicar el cambio de stock sin duplicar">
+          🔄 Re-aplicar Stock
+        </button>` : ''}
+        ${!esLiq ? `<button class="btn btn-xs" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);font-size:10px;padding:2px 6px;border-radius:5px;cursor:pointer" onclick="cancelarYReaprobarMovimiento('${m.id}')" title="Cancela el stock del destino actual y re-aprueba con otra sucursal">
+          🔀 Cambiar Destino
+        </button>` : ''}
+        <button class="btn btn-red btn-xs" onclick="${esLiq?`cancelarLiquidacion('${m.id}')`:`cancelarMovimientoAprobado('${m.id}')`}">
+          ↩ ${esLiq?'Cancelar Liquidación':'Cancelar'}
+        </button>
+      </div>`;
+    } else {
+      acciones = m.aprobadoPor ? '<span style="font-size:11px;color:var(--muted)">Por: '+m.aprobadoPor+'</span>' : '—';
+    }
+    const destSucNombre = m.datos?.sucursalId
+      ? (sucursales.find(s=>s.id===m.datos.sucursalId)?.nombre||m.datos.sucursalId)
+      : '—';
+    const totalPzas = m.datos?.lineas
+      ? m.datos.lineas.reduce((a,l)=>a+(l.cantidad||0),0)
+      : '—';
+    const comentario = m.datos?.comentario || m.datos?.proveedor
+      ? [m.datos.proveedor, m.datos.comentario].filter(Boolean).join(' | ')
+      : '—';
+    // Highlight matching estilo
+    const estilosRaw = m.datos?.lineas
+      ? [...new Set(m.datos.lineas.map(l=>l.sku||l.barcode||l.prodId||'—').filter(x=>x&&x!=='—'))]
+      : [];
+    const estilosLista = fEstilo
+      ? estilosRaw.map(e=>e.toLowerCase().includes(fEstilo)
+          ? `<mark style="background:var(--gold-dim);color:var(--gold);border-radius:3px;padding:1px 2px">${e}</mark>`
+          : e).join(', ')
+      : estilosRaw.join(', ') || '—';
+    return `<tr>
+      <td style="font-size:11px;color:var(--muted);white-space:nowrap">${m.fecha||'—'}<br>${m.hora||''}</td>
+      <td>${tipoBadge}</td>
+      <td style="font-size:11px;color:var(--cream);max-width:180px">${m.descripcion||'—'}</td>
+      <td style="font-size:12px;color:var(--cream);white-space:nowrap">
+        ${(m.tipo==='entrada'||m.tipo==='salida')
+          ? `<span class="badge ${destSucNombre.toLowerCase().includes('bod')?'b-orange':'b-green'}">${(m.tipo==='entrada'?'📥 ':'📤 ')+destSucNombre}</span>`
+          : '<span style="color:var(--faint)">—</span>'}
+      </td>
+      <td style="font-size:11px;font-family:var(--mono);color:var(--cream);max-width:150px;word-break:break-all">${estilosLista}</td>
+      <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:var(--gold)">${totalPzas}</td>
+      <td style="font-size:11px;color:var(--muted);max-width:140px">${comentario}</td>
+      <td style="font-size:11px;color:var(--cream)">${m.usuario||'—'}<br><span style="color:var(--muted);font-size:10px">${m.usuarioRol||''}</span></td>
+      <td>${estadoBadge}</td>
+      <td>${acciones}</td>
+    </tr>`;
+  }).join('');
+}
+
+function limpiarFiltrosBitacora(){
+  ['bf-estilo','bf-tipo','bf-estado','bf-sucursal','bf-usuario','bf-texto','bf-desde','bf-hasta']
+    .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  filtrarBitacora();
 }
 
 async function aprobarMovimiento(id){
@@ -11138,6 +11294,75 @@ async function cancelarMovimientoAprobado(id){
     toast('🔄 Movimiento cancelado — stock revertido');
     loadBitacora();
   }catch(e){ toast('Error al cancelar: '+e.message,'err'); console.error(e); }
+}
+
+// ══════════════════ CAMBIAR DESTINO DE MOVIMIENTO YA APROBADO ══════════════════
+async function cancelarYReaprobarMovimiento(id){
+  const rolActivo = usuarioActivo?.rol||currentProfile?.rol||'';
+  if(!['admin','manager'].includes(rolActivo)){
+    toast('Solo Admin o Manager pueden corregir el destino de movimientos aprobados','err'); return;
+  }
+  if(!sucursales.length){ toast('No hay sucursales disponibles','err'); return; }
+
+  const bSnap = await window._fb.getDoc(docRef('bitacora',id));
+  if(!bSnap.exists()){ toast('Movimiento no encontrado','err'); return; }
+  const mov = bSnap.data();
+
+  if(mov.estado!=='aprobado'){ toast('Solo se puede cambiar destino de movimientos APROBADOS','err'); return; }
+  if(!mov.datos?.lineas){ toast('El movimiento no tiene líneas de productos','err'); return; }
+
+  const sucActualNombre = sucursales.find(s=>s.id===mov.datos.sucursalId)?.nombre || mov.datos.sucursalId || '—';
+  const opciones = sucursales.map((s,i)=>`${i+1}. ${s.nombre} (${s.tipo})`).join('\n');
+  const sel = prompt(
+    `🔀 CAMBIAR DESTINO\n─────────────────────\nMovimiento: ${mov.descripcion||id}\nDestino actual: ${sucActualNombre}\n\nSelecciona el NUEVO destino:\n`+opciones
+  );
+  if(sel===null) return;
+  const idx = parseInt(sel)-1;
+  if(isNaN(idx)||idx<0||idx>=sucursales.length){ toast('Selección inválida','err'); return; }
+  const nuevaSuc = sucursales[idx];
+
+  if(nuevaSuc.id===mov.datos.sucursalId){
+    toast('El destino seleccionado es el mismo — sin cambios','err'); return;
+  }
+
+  const motivo = prompt(`Motivo de la corrección\n(${sucActualNombre} → ${nuevaSuc.nombre}):`);
+  if(motivo===null) return;
+
+  const corregidoPor = usuarioActivo?.nombre||currentProfile?.nombre||'Admin';
+  try{
+    // 1. Revertir stock del destino ANTERIOR
+    if(mov.tipo==='entrada'){
+      for(const linea of mov.datos.lineas) await aplicarStockEnSucursal(linea, mov.datos.sucursalId||'', -linea.cantidad);
+    } else if(mov.tipo==='salida'){
+      for(const linea of mov.datos.lineas){
+        const p=productos.find(x=>x.id===linea.prodId); if(!p) continue;
+        await setStockTalla(p.id, p.stock, linea.talla, ((p.stock||{})[linea.talla]||0)+linea.cantidad);
+      }
+    }
+    // 2. Aplicar stock al NUEVO destino
+    if(mov.tipo==='entrada'){
+      for(const linea of mov.datos.lineas) await aplicarStockEnSucursal(linea, nuevaSuc.id, linea.cantidad);
+    } else if(mov.tipo==='salida'){
+      for(const linea of mov.datos.lineas){
+        const p=productos.find(x=>x.id===linea.prodId); if(!p) continue;
+        await setStockTalla(p.id, p.stock, linea.talla, Math.max(0,((p.stock||{})[linea.talla]||0)-linea.cantidad));
+      }
+    }
+    // 3. Actualizar bitácora
+    await window._fb.setDoc(docRef('bitacora',id),{
+      datos:{...mov.datos, sucursalId:nuevaSuc.id},
+      destinoCorregidoPor: corregidoPor,
+      destinoCorregidoEn: new Date().toISOString(),
+      destinoAnterior: mov.datos.sucursalId||'—',
+      destinoAnteriorNombre: sucActualNombre,
+      motivoCorreccion: motivo||'Sin motivo'
+    },{merge:true});
+    if(mov.datos.entradaId) await window._fb.setDoc(docRef('entradas',mov.datos.entradaId),{sucursalId:nuevaSuc.id},{merge:true});
+    if(mov.datos.salidaId)  await window._fb.setDoc(docRef('salidas',mov.datos.salidaId),{sucursalId:nuevaSuc.id},{merge:true});
+    toast(`✅ Destino corregido: ${sucActualNombre} → ${nuevaSuc.nombre} — stock actualizado`);
+    renderInv(); renderPOS(); renderCatalogo();
+    loadBitacora();
+  }catch(e){ toast('Error al corregir destino: '+e.message,'err'); console.error(e); }
 }
 
 // ══════════════════ CAMBIAR SUCURSAL DE MOVIMIENTO PENDIENTE ══════════════════
