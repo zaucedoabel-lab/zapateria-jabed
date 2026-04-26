@@ -2392,7 +2392,7 @@ body{background:#071222!important}
               </div>
               <div id="tr-prod-sel" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px"></div>
               <div class="fr fr2">
-                <div class="fg"><label>Origen</label><select id="tr-origen"></select></div>
+                <div class="fg"><label>Origen</label><select id="tr-origen" onchange="actualizarTallasTransfer()"></select></div>
                 <div class="fg"><label>Destino</label><select id="tr-destino"></select></div>
               </div>
               <div class="fr fr2">
@@ -5591,55 +5591,139 @@ function calcCart(){
 
 // ══════════════════ TRANSFERENCIAS ══════════════════
 let trProdSel=null;
+let trProdTodos=[]; // todos los registros del producto seleccionado (uno por sucursal)
+
 function searchTransferProd(){
-  const q=(document.getElementById('tr-prod-q')?.value||'').toLowerCase();
+  const q=(document.getElementById('tr-prod-q')?.value||'').trim().toLowerCase();
   const res=document.getElementById('tr-prod-res');
   if(!q){res.innerHTML='';return;}
-  // ── BUG FIX 1: excluir duplicados por código; mostrar todas las sucursales (tienda y bodega)
-  // pero deduplicar para que el usuario elija el producto, no la sucursal
-  const seen = new Map();
-  productos.forEach(p=>{
-    const mq=(p.desc||'').toLowerCase().includes(q)||(p.sku||'').includes(q)||(p.barcode||'').includes(q);
-    if(!mq) return;
-    const key = (p.barcode||p.sku||p.desc||p.id).trim().toLowerCase();
-    const prev = seen.get(key);
-    const stockP = Object.values(p.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
-    const stockPrev = prev ? Object.values(prev.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0) : -1;
-    // Preferir el que tenga más stock (normalmentela tienda)
-    if(!prev || stockP > stockPrev) seen.set(key, p);
+
+  // ── BÚSQUEDA CASE-INSENSITIVE en desc, sku, barcode e ID de documento ──
+  const coinciden = productos.filter(p=>
+    (p.desc||'').toLowerCase().includes(q) ||
+    (p.sku||'').toLowerCase().includes(q)  ||
+    (p.barcode||'').toLowerCase().includes(q) ||
+    (p.id||'').toLowerCase().includes(q)
+  );
+
+  // Agrupar por código/nombre para mostrar stock de TODAS las sucursales juntas
+  const grupos = new Map();
+  coinciden.forEach(p=>{
+    const clave = ((p.barcode||p.sku||'').trim().toLowerCase()) || p.id;
+    if(!grupos.has(clave)) grupos.set(clave,{principal:p, variantes:[]});
+    grupos.get(clave).variantes.push(p);
   });
-  const lista = [...seen.values()].slice(0,5);
-  res.innerHTML=lista.map(p=>{
-    const suc=sucursales.find(s=>s.id===p.sucursalId);
-    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
-    return`<div onclick="selTransferProd('${p.id}')" style="padding:8px 10px;background:var(--s2);border:1px solid var(--border);border-radius:7px;cursor:pointer;margin-bottom:4px;font-size:13px;transition:background .15s" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
-      <b>${p.desc}</b> <span style="color:var(--muted)">${p.sku||p.barcode||''} · ${p.cat}</span>
-      <span class="badge ${tot>0?'b-green':'b-red'}" style="float:right">${tot} pzas · ${suc?.nombre||'—'}</span>
+
+  if(!grupos.size){
+    res.innerHTML='<div style="padding:8px;color:var(--muted);font-size:12px">Sin resultados para "'+q+'"</div>';
+    return;
+  }
+
+  res.innerHTML=[...grupos.values()].slice(0,8).map(g=>{
+    const p=g.principal;
+    // Resumen stock por sucursal
+    const porSuc = g.variantes.map(v=>{
+      const nombre=sucursales.find(s=>s.id===v.sucursalId)?.nombre||v.sucursalId||'—';
+      const tot=Object.values(v.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+      return `<span class="badge ${tot>0?'b-green':'b-gray'}" style="font-size:10px">${nombre}: ${tot}</span>`;
+    }).join(' ');
+    const codigoMostrar=p.sku||p.barcode||p.id||'';
+    const totalGlobal=g.variantes.reduce((s,v)=>s+Object.values(v.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0),0);
+    // onclick pasa la clave del grupo
+    const clave=((p.barcode||p.sku||'').trim())||p.id;
+    return`<div onclick="selTransferProdGrupo('${clave.replace(/'/g,"\\'")}','${p.id}')"
+      style="padding:9px 11px;background:var(--s2);border:1px solid var(--border);border-radius:7px;cursor:pointer;margin-bottom:5px;font-size:13px;transition:background .15s"
+      onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span><b>${p.desc}</b> <span style="color:var(--muted);font-size:11px">${codigoMostrar} · ${p.cat||''}</span></span>
+        <span style="font-size:11px;color:var(--gold);font-family:var(--mono)">${totalGlobal} pzas total</span>
+      </div>
+      <div style="margin-top:5px;display:flex;gap:4px;flex-wrap:wrap">${porSuc}</div>
     </div>`;
   }).join('');
 }
 
-function selTransferProd(id){
-  trProdSel=productos.find(x=>x.id===id);
-  if(!trProdSel)return;
+// Selecciona un producto por su código/clave, cargando TODOS sus registros de sucursal
+function selTransferProdGrupo(clave, idFallback){
+  // Reunir todos los registros con el mismo barcode/sku (case-insensitive)
+  const claveLow = clave.trim().toLowerCase();
+  trProdTodos = productos.filter(p=>
+    ((p.barcode||'').trim().toLowerCase()===claveLow && claveLow!=='') ||
+    ((p.sku||'').trim().toLowerCase()===claveLow     && claveLow!=='') ||
+    p.id === idFallback
+  );
+  // Si la búsqueda por código trajo registros de otro producto por coincidencia de ID, filtrar
+  if(trProdTodos.length>1){
+    const porCodigo=trProdTodos.filter(p=>
+      ((p.barcode||'').trim().toLowerCase()===claveLow && claveLow!=='') ||
+      ((p.sku||'').trim().toLowerCase()===claveLow     && claveLow!=='')
+    );
+    if(porCodigo.length) trProdTodos=porCodigo;
+  }
+  if(!trProdTodos.length){
+    const directo=productos.find(x=>x.id===idFallback);
+    if(directo) trProdTodos=[directo]; else return;
+  }
+
+  // Representante inicial = el que tenga mayor stock total
+  trProdSel=trProdTodos.reduce((a,b)=>{
+    const sa=Object.values(a.stock||{}).reduce((x,y)=>x+(Number(y)||0),0);
+    const sb=Object.values(b.stock||{}).reduce((x,y)=>x+(Number(y)||0),0);
+    return sb>sa?b:a;
+  }, trProdTodos[0]);
+
   document.getElementById('tr-prod-res').innerHTML='';
   document.getElementById('tr-prod-q').value=trProdSel.desc;
+
+  // Panel de producto seleccionado con stock desglosado por sucursal
   const div=document.getElementById('tr-prod-sel');
-  const suc=sucursales.find(s=>s.id===trProdSel.sucursalId);
-  const tot=Object.values(trProdSel.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
   div.style.display='block';
-  div.innerHTML=`<b>${trProdSel.desc}</b> · ${trProdSel.color||'—'}<br>
-    <span style="font-size:12px;color:var(--muted)">Sucursal: ${suc?.nombre||'—'} · ${tot} pzas totales</span>`;
-  // ── BUG FIX 3: talla select sorted with sortTallas ──
+  const porSucHTML=trProdTodos.map(v=>{
+    const nom=sucursales.find(s=>s.id===v.sucursalId)?.nombre||v.sucursalId||'—';
+    const tot=Object.values(v.stock||{}).reduce((a,b)=>a+(Number(b)||0),0);
+    const tallasStr=sortTallas(Object.keys(v.stock||{}).filter(t=>(v.stock[t]||0)>0))
+      .map(t=>`${t}:${v.stock[t]}`).join(' · ');
+    return`<div style="font-size:11px;padding:4px 8px;background:var(--s3);border-radius:6px;margin-top:4px">
+      <b style="color:${tot>0?'var(--accent2)':'var(--muted)'}">${nom}</b>
+      <span style="color:var(--gold);font-family:var(--mono);margin:0 6px">${tot} pzas</span>
+      <span style="color:var(--faint)">${tallasStr||'sin stock'}</span>
+    </div>`;
+  }).join('');
+  div.innerHTML=`<div style="font-size:13px;font-weight:600;color:var(--cream);margin-bottom:2px">${trProdSel.desc}</div>
+    <div style="font-size:11px;color:var(--muted)">${trProdSel.sku||trProdSel.barcode||trProdSel.id||'—'} · ${trProdSel.cat||''} · ${trProdSel.color||'—'}</div>
+    ${porSucHTML}`;
+
+  // Pre-seleccionar origen al registro con más stock
+  const origenSel=document.getElementById('tr-origen');
+  if(origenSel) origenSel.value=trProdSel.sucursalId||'';
+
+  // Cargar tallas del origen seleccionado
+  actualizarTallasTransfer();
+}
+
+// Actualiza el dropdown de tallas según el ORIGEN elegido
+function actualizarTallasTransfer(){
+  if(!trProdTodos||!trProdTodos.length) return;
+  const origenId=document.getElementById('tr-origen')?.value||'';
+  // Buscar el registro de este producto en la sucursal origen
+  let prodOrigen=trProdTodos.find(p=>p.sucursalId===origenId);
+  if(!prodOrigen) prodOrigen=trProdTodos[0]; // fallback si no hay registro en ese origen
+  trProdSel=prodOrigen; // sincronizar trProdSel con el origen activo
+
   const ts=document.getElementById('tr-talla');
-  const tallasConStock = sortTallas(
-    Object.keys(trProdSel.stock||{}).filter(t=>(trProdSel.stock[t]||0)>0)
+  const tallasConStock=sortTallas(
+    Object.keys(prodOrigen.stock||{}).filter(t=>(prodOrigen.stock[t]||0)>0)
   );
-  ts.innerHTML = tallasConStock.length
-    ? tallasConStock.map(t=>`<option value="${t}">${t} (${trProdSel.stock[t]} disponibles)</option>`).join('')
-    : '<option value="">Sin stock disponible</option>';
-  // Pre-select origen to the product's sucursal
-  document.getElementById('tr-origen').value=trProdSel.sucursalId||'';
+  const todasLasTallas=sortTallas(Object.keys(prodOrigen.stock||{}));
+  // Mostrar todas las tallas, marcando las que tienen stock
+  ts.innerHTML=todasLasTallas.length
+    ? todasLasTallas.map(t=>{
+        const qty=prodOrigen.stock[t]||0;
+        return`<option value="${t}" ${qty===0?'disabled style="color:var(--faint)"':''}>${t} (${qty} disp.)</option>`;
+      }).join('')
+    : '<option value="">Sin tallas en este origen</option>';
+  // Auto-seleccionar la primera talla con stock
+  if(tallasConStock.length) ts.value=tallasConStock[0];
 }
 
 async function hacerTransferencia(){
@@ -5721,6 +5805,7 @@ async function hacerTransferencia(){
   });
 
   trProdSel=null;
+  trProdTodos=[];
   document.getElementById('tr-prod-q').value='';
   document.getElementById('tr-prod-sel').style.display='none';
   document.getElementById('tr-qty').value=1;
