@@ -628,6 +628,7 @@ select option{background:var(--s2)}
 .flex-between{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .divider{height:1px;background:var(--border);margin:14px 0}
 .tag{display:inline-block;padding:2px 7px;background:var(--s3);border-radius:4px;font-size:11px;color:var(--muted);font-family:var(--mono);margin:2px}
+#inv-tbody tr td{vertical-align:middle;padding-top:5px;padding-bottom:5px}
 .search-wrap{position:relative;display:flex;align-items:center}
 .search-wrap input{padding-left:32px}
 .search-ico{position:absolute;left:10px;color:var(--faint);font-size:13px;pointer-events:none}
@@ -5117,7 +5118,7 @@ function renderInvLista(agrupadosPorSuc){
       stockCombinado[t] = (stockCombinado[t]||0) + v;
     });
     const ts = sortTallas(Object.keys(stockCombinado).filter(t=>stockCombinado[t]>0))
-      .map(t=>`<span class="tag">${t}(${stockCombinado[t]})</span>`).join('');
+      .map(t=>`<span style="display:inline-flex;align-items:center;gap:3px;background:var(--s3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;margin:2px;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--cream)">${t}<span style="background:var(--accent);color:#fff;border-radius:4px;padding:1px 6px;font-size:12px;font-weight:800;margin-left:3px">${stockCombinado[t]}</span></span>`).join('');
 
     const estado = tot===0
       ? '<span class="badge b-red">Sin stock</span>'
@@ -5135,7 +5136,7 @@ function renderInvLista(agrupadosPorSuc){
       totB === 0;
 
     return`<tr>
-      <td><div class="thumb">${p.foto?`<img src="${p.foto}" alt="">`:p.desc?.charAt(0)||'?'}</div></td>
+      <td><div class="thumb" style="width:80px;height:80px;font-size:30px;border-radius:10px">${p.foto?`<img src="${p.foto}" alt="">`:p.desc?.charAt(0)||'?'}</div></td>
       <td>
         <div class="mono" style="font-size:15px;font-weight:800;color:var(--gold);letter-spacing:.5px">${p.barcode||p.sku||'—'}</div>
         ${p.barcode&&p.sku?`<div style="font-size:11px;color:var(--faint);font-family:var(--mono)">${p.sku}</div>`:''}
@@ -5150,7 +5151,7 @@ function renderInvLista(agrupadosPorSuc){
       <td style="color:var(--muted);font-size:12px">${p.linea||'—'}</td>
       <td style="font-size:11px;color:var(--muted)">${p.temporada||'—'}</td>
       <td style="color:var(--muted)">${p.color||'—'}</td>
-      <td style="max-width:200px">${ts||'<span style="color:var(--faint)">Sin stock</span>'}</td>
+      <td style="max-width:360px;min-width:180px">${ts||'<span style="color:var(--faint);font-size:12px">Sin stock</span>'}</td>
       <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:${totT===0?'var(--faint)':'var(--accent2)'}">${totT}</td>
       <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:${tieneGemeloEsperando?'var(--blue)':totB===0?'var(--faint)':'var(--gold)'}">
         ${tieneGemeloEsperando ? '<span style="font-size:10px">⏳</span>' : totB}
