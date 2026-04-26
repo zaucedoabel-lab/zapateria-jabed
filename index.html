@@ -9,11 +9,6 @@
 <meta name="apple-mobile-web-app-title" content="JABED">
 <meta name="theme-color" content="#f0b429">
 <title>Zapatería JABED</title>
-<!-- SheetJS para Excel -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- jsPDF + AutoTable para PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;Zapatería JABED&quot;,&quot;short_name&quot;:&quot;JABED&quot;,&quot;start_url&quot;:&quot;/&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%230f0f12&quot;,&quot;theme_color&quot;:&quot;%23f0b429&quot;,&quot;orientation&quot;:&quot;any&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23f0b429'/%3E%3Ctext y='0.9em' font-size='75' text-anchor='middle' x='50'%3E👟%3C/text%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;any&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
@@ -1248,6 +1243,10 @@ body{background:#071222!important}
               <span id="inv-count" style="font-size:12px;color:var(--muted)">0 artículos</span>
               <span id="inv-total-stock" style="font-size:12px;color:var(--green)">Stock: 0 pzas</span>
               <span id="inv-total-valor" style="font-size:12px;color:var(--gold)">Valor: $0</span>
+              <div style="margin-left:auto;display:flex;gap:6px">
+                <button class="btn btn-ghost btn-sm" onclick="invDescargarExcel()" title="Exportar inventario a Excel">📥 Excel</button>
+                <button class="btn btn-ghost btn-sm" onclick="invDescargarPDF()" title="Exportar inventario a PDF">🖨️ PDF</button>
+              </div>
             </div>
           </div>
 
@@ -2051,11 +2050,7 @@ body{background:#071222!important}
             <div class="card" style="flex:1;min-width:280px;max-width:50%;padding:0;overflow:hidden">
               <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid var(--border)">
                 <div style="font-size:13px;font-weight:700;color:var(--cream)">📋 Ventas por Día</div>
-                <div style="display:flex;gap:6px;align-items:center">
-                  <button class="btn btn-ghost btn-sm" onclick="dvDescargarExcel('dias')" title="Descargar Excel">📥 XLS</button>
-                  <button class="btn btn-ghost btn-sm" onclick="dvDescargarPDF('dias')" title="Descargar PDF">🖨️ PDF</button>
-                  <button class="btn btn-ghost btn-sm" onclick="renderDashboardVentas()">🔄</button>
-                </div>
+                <button class="btn btn-ghost btn-sm" onclick="renderDashboardVentas()">🔄 Actualizar</button>
               </div>
               <div style="overflow-y:auto;max-height:480px">
                 <table style="width:100%;border-collapse:collapse">
@@ -2088,12 +2083,8 @@ body{background:#071222!important}
 
               <!-- Acumulado por Mes -->
               <div class="card" style="padding:0;overflow:hidden">
-                <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+                <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border)">
                   <div style="font-size:13px;font-weight:700;color:var(--cream)">📅 Acumulado por Mes</div>
-                  <div style="display:flex;gap:6px">
-                    <button class="btn btn-ghost btn-sm" onclick="dvDescargarExcel('mes')" title="Descargar Excel">📥 XLS</button>
-                    <button class="btn btn-ghost btn-sm" onclick="dvDescargarPDF('mes')" title="Descargar PDF">🖨️ PDF</button>
-                  </div>
                 </div>
                 <div style="overflow-y:auto;max-height:220px">
                   <table style="width:100%;border-collapse:collapse">
@@ -2114,20 +2105,16 @@ body{background:#071222!important}
 
               <!-- Acumulado por Semana -->
               <div class="card" style="padding:0;overflow:hidden">
-                <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+                <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
                   <div style="font-size:13px;font-weight:700;color:var(--cream)">📆 Acumulado por Semana</div>
-                  <div style="display:flex;gap:6px;align-items:center">
-                    <select id="dv-sem-mes-filtro" onchange="renderDVSemanas()"
-                      style="font-size:11px;padding:4px 8px;border-radius:6px;background:var(--s2);border:1px solid var(--border);color:var(--cream)">
-                      <option value="">Todos los meses</option>
-                      <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
-                      <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
-                      <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
-                      <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
-                    </select>
-                    <button class="btn btn-ghost btn-sm" onclick="dvDescargarExcel('semana')" title="Descargar Excel">📥 XLS</button>
-                    <button class="btn btn-ghost btn-sm" onclick="dvDescargarPDF('semana')" title="Descargar PDF">🖨️ PDF</button>
-                  </div>
+                  <select id="dv-sem-mes-filtro" onchange="renderDVSemanas()"
+                    style="font-size:11px;padding:4px 8px;border-radius:6px;background:var(--s2);border:1px solid var(--border);color:var(--cream)">
+                    <option value="">Todos los meses</option>
+                    <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+                    <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+                    <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+                    <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+                  </select>
                 </div>
                 <div style="overflow-y:auto;max-height:220px">
                   <table style="width:100%;border-collapse:collapse">
@@ -5266,6 +5253,113 @@ function renderInvLista(agrupadosPorSuc){
       </div></td>
     </tr>`;
   }).join('');
+}
+
+// ══════════════════════════════════════
+//  📥 INVENTARIO — EXPORTAR EXCEL / PDF
+// ══════════════════════════════════════
+function _invGetData(){
+  // Collect rendered data from the current agrupados (re-runs same filter)
+  const q=(document.getElementById('inv-q')?.value||'').toLowerCase();
+  const cat=document.getElementById('inv-cat')?.value||'';
+  const linea=document.getElementById('inv-linea')?.value||'';
+  const temp=document.getElementById('inv-temp')?.value||'';
+  const marca=(document.getElementById('inv-marca')?.value||'').toLowerCase();
+  const mostrar=document.getElementById('inv-mostrar')?.value||'todos';
+  const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+
+  let lista=productos.filter(p=>{
+    const mq=!q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.color||'').toLowerCase().includes(q)||(p.marca||'').toLowerCase().includes(q);
+    const mc=!cat||p.cat===cat;
+    const ml=!linea||p.linea===linea;
+    const mt=!temp||p.temporada===temp;
+    const mm=!marca||(p.marca||'').toLowerCase().includes(marca);
+    const ms=activeSucId==='all'?true:p.sucursalId===activeSucId||(!p.sucursalId&&sucursales.find(s=>s.id===activeSucId)?.tipo!=='bodega');
+    const tot=sumS(p.stock);
+    const isBod=sucursales.find(s=>s.id===p.sucursalId)?.tipo==='bodega';
+    const esGemelo=!!p.creadoDesde&&isBod&&tot===0;
+    const mstock=esGemelo||mostrar==='todos'||(mostrar==='con_stock'&&tot>0)||(mostrar==='sin_stock'&&tot===0)||(mostrar==='bajo_stock'&&tot>0&&tot<=3)||(mostrar==='sin_foto'&&!p.foto)||(mostrar==='sin_sku'&&!(p.barcode||p.sku));
+    return mq&&mc&&ml&&mt&&mm&&ms&&mstock;
+  });
+
+  // Agrupar como hace renderInv
+  const grupos={};
+  lista.forEach(p=>{
+    const baseKey=(p.sku||p.barcode||p.id)+'_'+(p.sucursalId||'');
+    const key=p.esLiquidacion?baseKey+'_LIQ':baseKey;
+    if(!grupos[key]){grupos[key]={...p,stock:{...p.stock}};}
+    else{Object.entries(p.stock||{}).forEach(([t,c])=>{grupos[key].stock[t]=(grupos[key].stock[t]||0)+(Number(c)||0);});}
+  });
+  const agrupados=Object.values(grupos);
+
+  // Collect all tallas present
+  const allTSet=new Set();
+  agrupados.forEach(p=>Object.keys(p.stock||{}).forEach(t=>allTSet.add(t)));
+  const allT=sortTallas([...allTSet]);
+
+  const headers=['Estilo/SKU','Descripcion','Marca','Categoria','Linea','Temporada','Color','Sucursal','Precio',...allT,'TOTAL'];
+  const rows=agrupados.map(p=>{
+    const suc=sucursales.find(s=>s.id===p.sucursalId)?.nombre||'Tienda';
+    const tallasVals=allT.map(t=>Number(p.stock?.[t]||0));
+    const tot=tallasVals.reduce((a,b)=>a+b,0);
+    return[p.barcode||p.sku||'—',p.desc||'—',p.marca||'—',p.cat||'—',p.linea||'—',p.temporada||'—',p.color||'—',suc,parseFloat(p.precio)||0,...tallasVals,tot];
+  });
+  const totRow=['TOTALES','','','','','','','','',...allT.map(t=>agrupados.reduce((a,p)=>a+(Number(p.stock?.[t]||0)),0)),agrupados.reduce((a,p)=>a+sumS(p.stock),0)];
+  rows.push(totRow);
+  return{headers,rows,allT,agrupados,fecha:hoy()};
+}
+
+function invDescargarExcel(){
+  if(typeof XLSX==='undefined'){toast('Cargando libreria Excel, intenta en 2s...');return;}
+  const{headers,rows,allT}=_invGetData();
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  // Precio col = 8, tallas empiezan en 9
+  const precioIdx=8; const tallaStart=9;
+  const numRows=rows.length;
+  for(let r=1;r<=numRows;r++){
+    const pcell=ws[XLSX.utils.encode_cell({c:precioIdx,r})];
+    if(pcell&&typeof pcell.v==='number'){pcell.z='"$"#,##0.00';pcell.t='n';}
+  }
+  ws['!cols']=[{wch:14},{wch:28},{wch:14},{wch:12},{wch:12},{wch:14},{wch:10},{wch:14},{wch:10},...allT.map(()=>({wch:7})),{wch:8}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Inventario');
+  XLSX.writeFile(wb,'JABED_inventario_'+hoy()+'.xlsx');
+  toast('Excel de inventario descargado');
+}
+
+function invDescargarPDF(){
+  if(typeof window.jspdf==='undefined'){toast('Cargando libreria PDF, intenta en 2s...');return;}
+  const{jsPDF}=window.jspdf;
+  const{headers,rows,allT,agrupados}=_invGetData();
+  // Para PDF limitamos columnas: SKU, Desc, Cat, Suc, Precio, Total (tallas omitidas si son muchas)
+  const useTallas=allT.length<=12; // con pocas tallas las incluimos
+  const colsHdr=useTallas?headers:['Estilo/SKU','Descripcion','Marca','Categoria','Sucursal','Precio','TOTAL'];
+  const colsRows=rows.map(r=>{
+    if(useTallas)return r.map((c,i)=>i===8?'$'+parseFloat(c||0).toLocaleString('es-MX',{minimumFractionDigits:2}):(c!=null?String(c):''));
+    // cols: 0=SKU,1=desc,2=marca,3=cat,7=suc,8=precio,last=total
+    return[r[0],r[1],r[2],r[3],r[7],'$'+parseFloat(r[8]||0).toLocaleString('es-MX',{minimumFractionDigits:2}),String(r[r.length-1])];
+  });
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'letter'});
+  doc.setFontSize(14);doc.setTextColor(30,30,30);
+  doc.text('Zapateria JABED  —  Inventario',14,13);
+  doc.setFontSize(9);doc.setTextColor(120,120,120);
+  doc.text('Generado: '+new Date().toLocaleString('es-MX')+(allT.length>12?' (resumen — abre Excel para ver tallas)':''),14,20);
+  const rightCols=useTallas?[8,...allT.map((_,i)=>9+i),9+allT.length]:[5,6];
+  doc.autoTable({
+    head:[colsHdr],body:colsRows,startY:25,theme:'grid',
+    headStyles:{fillColor:[26,158,92],textColor:255,fontStyle:'bold',fontSize:8},
+    bodyStyles:{fontSize:7,textColor:[30,30,30]},
+    alternateRowStyles:{fillColor:[245,250,247]},
+    columnStyles:rightCols.reduce((acc,i)=>{acc[i]={halign:'right'};return acc;},{}),
+    margin:{left:10,right:10},
+    didParseCell:function(data){
+      if(data.section==='body'&&data.row.index===colsRows.length-1){
+        data.cell.styles.fillColor=[240,180,41];data.cell.styles.fontStyle='bold';data.cell.styles.textColor=[30,30,30];
+      }
+    }
+  });
+  doc.save('JABED_inventario_'+hoy()+'.pdf');
+  toast('PDF de inventario descargado');
 }
 
 // ══════════════════ AJUSTE DIRECTO DE STOCK ══════════════════
@@ -8759,6 +8853,7 @@ function renderHist(){
       <td class="mono" style="color:${isDev?'var(--red)':'var(--green)'};font-weight:600">${fmt(cobrado)}${isDev?'<div style="font-size:9px;color:var(--red);opacity:.8">↩ resta</div>':''}</td>
       ${(usuarioActivo?.rol==='admin'||usuarioActivo?.rol==='manager')
         ?`<td><div style="display:flex;flex-direction:column;gap:3px">
+            <button class="btn btn-ghost btn-xs" onclick="abrirEditVenta('${v.id}')" title="Editar venta">✏️</button>
             <button class="btn btn-ghost btn-xs" onclick="editarFechaVenta('${v.id}','${v.fecha}','${v.hora||''}')">📅</button>
             <button class="btn btn-red btn-xs" onclick="deleteVenta('${v.id}')">🗑️</button>
           </div></td>`
@@ -8799,6 +8894,7 @@ function renderHist(){
         <td rowspan="${items.length}" class="mono" style="color:${isDev?'var(--red)':'var(--green)'};font-weight:600">${fmt(cobrado)}${isDev?'<div style="font-size:9px;color:var(--red);opacity:.8">↩ resta</div>':''}${!isDev&&isAC&&v.anticipo?'<div style="font-size:10px;color:var(--muted)">Ant: '+fmt(v.anticipo)+'</div>':''}</td>
         ${(usuarioActivo?.rol==='admin'||usuarioActivo?.rol==='manager')
           ?`<td rowspan="${items.length}"><div style="display:flex;flex-direction:column;gap:3px">
+              <button class="btn btn-ghost btn-xs" onclick="abrirEditVenta('${v.id}')" title="Editar venta">✏️</button>
               <button class="btn btn-ghost btn-xs" onclick="editarFechaVenta('${v.id}','${v.fecha}','${v.hora||''}')">📅</button>
               <button class="btn btn-red btn-xs" onclick="deleteVenta('${v.id}')">🗑️</button>
             </div></td>`
@@ -12472,7 +12568,6 @@ function renderDashboardVentas(){
     const inS=!sucId||v.sucursalId===sucId;
     return inR&&inS;
   });
-  window._dvFiltVentas=vFilt; // save for export functions
 
   // Totals — FIX: devoluciones restan del total y de la forma de pago correspondiente
   let total=0,efectivo=0,tarjeta=0,transferencia=0;
@@ -12652,7 +12747,7 @@ function renderDashboardVentas(){
       else if(pg==='bbva-efectivo'){byDay[f].efectivo+=v.bbvaEfectivo||0;byDay[f].tarjetas+=v.bbvaTarjeta||0;}
       else if(pg==='tarjeta-efectivo'){byDay[f].efectivo+=v.tarjetaEfEfectivo||0;byDay[f].tarjetas+=v.tarjetaEfTarjeta||0;}
       else if(pg==='efectivo'||pg==='monedero'||pg==='') byDay[f].efectivo+=monto;
-      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg.includes('mercado')||pg==='transferencia'||pg.includes('transfer')) byDay[f].tarjetas+=monto;
+      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) byDay[f].tarjetas+=monto;
       else byDay[f].efectivo+=monto;
     });
     const dias = Object.values(byDay).sort((a,b)=>b.fecha.localeCompare(a.fecha));
@@ -12711,7 +12806,7 @@ function renderDashboardVentas(){
       else if(pg==='bbva-efectivo'){byMes[mesKey].efectivo+=v.bbvaEfectivo||0;byMes[mesKey].tarjetas+=v.bbvaTarjeta||0;}
       else if(pg==='tarjeta-efectivo'){byMes[mesKey].efectivo+=v.tarjetaEfEfectivo||0;byMes[mesKey].tarjetas+=v.tarjetaEfTarjeta||0;}
       else if(pg==='efectivo'||pg==='monedero'||pg==='') byMes[mesKey].efectivo+=monto;
-      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg.includes('mercado')||pg==='transferencia'||pg.includes('transfer')) byMes[mesKey].tarjetas+=monto;
+      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) byMes[mesKey].tarjetas+=monto;
       else byMes[mesKey].efectivo+=monto;
     });
     const meses=Object.values(byMes).sort((a,b)=>b.mesKey.localeCompare(a.mesKey));
@@ -12790,7 +12885,7 @@ function renderDVSemanas(){
     else if(pg==='bbva-efectivo'){bySem[semKey].efectivo+=v.bbvaEfectivo||0;bySem[semKey].tarjetas+=v.bbvaTarjeta||0;}
     else if(pg==='tarjeta-efectivo'){bySem[semKey].efectivo+=v.tarjetaEfEfectivo||0;bySem[semKey].tarjetas+=v.tarjetaEfTarjeta||0;}
     else if(pg==='efectivo'||pg==='monedero'||pg==='') bySem[semKey].efectivo+=monto;
-    else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg.includes('mercado')||pg==='transferencia'||pg.includes('transfer')) bySem[semKey].tarjetas+=monto;
+    else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) bySem[semKey].tarjetas+=monto;
     else bySem[semKey].efectivo+=monto;
   });
   const sems=Object.values(bySem).sort((a,b)=>b.semKey.localeCompare(a.semKey));
@@ -12813,159 +12908,6 @@ function renderDVSemanas(){
       <td style="padding:6px 10px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">${fmt(s.total)}</td>
     </tr>`;
   }).join('');
-}
-
-// ══════════════════════════════════════
-//  📥 DESCARGAR EXCEL / PDF – DASHBOARD
-// ══════════════════════════════════════
-function dvGetTableData(tipo){
-  const MESES_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const diasNom=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  const todasVentas=ventas||[];
-  function calcMonto(v){
-    const t=v.tipoVenta||'venta';
-    return t==='devolucion'?(v.total||0):t==='apartado'||t==='credito'?(v.anticipo||0):t==='abono'?(v.monto||v.total||0):(v.total||0);
-  }
-  function categPago(pg,monto,v,obj){
-    if(pg==='mixto'){obj.efectivo+=(v.mixtoEfectivo||0);obj.tarjetas+=(v.mixtoTarjeta||0);}
-    else if(pg==='bbva-efectivo'){obj.efectivo+=(v.bbvaEfectivo||0);obj.tarjetas+=(v.bbvaTarjeta||0);}
-    else if(pg==='tarjeta-efectivo'){obj.efectivo+=(v.tarjetaEfEfectivo||0);obj.tarjetas+=(v.tarjetaEfTarjeta||0);}
-    else if(pg==='efectivo'||pg==='monedero'||pg==='')obj.efectivo+=monto;
-    else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg.includes('mercado')||pg==='transferencia'||pg.includes('transfer'))obj.tarjetas+=monto;
-    else obj.efectivo+=monto;
-  }
-  if(tipo==='dias'){
-    const vFilt=window._dvFiltVentas||todasVentas;
-    const byDay={};
-    vFilt.forEach(v=>{
-      const f=v.fecha||'';if(!f)return;
-      if(!byDay[f])byDay[f]={fecha:f,txns:0,efectivo:0,tarjetas:0,total:0};
-      const monto=calcMonto(v);
-      byDay[f].txns++;byDay[f].total+=monto;
-      categPago((v.pago||'').toLowerCase().trim(),monto,v,byDay[f]);
-    });
-    const rows=Object.values(byDay).sort((a,b)=>b.fecha.localeCompare(a.fecha));
-    const headers=['Fecha','Día','#','Efectivo','Tarjeta','Total'];
-    const data=rows.map(d=>{
-      const dt=new Date(d.fecha+'T12:00:00');
-      const dia=d.fecha.slice(8)+' '+(MESES_N[parseInt(d.fecha.slice(5,7))-1]||'');
-      return[dia,diasNom[dt.getDay()],d.txns,d.efectivo,d.tarjetas,d.total];
-    });
-    const totEf=rows.reduce((a,d)=>a+d.efectivo,0);
-    const totTar=rows.reduce((a,d)=>a+d.tarjetas,0);
-    const totAll=rows.reduce((a,d)=>a+d.total,0);
-    const totTxn=rows.reduce((a,d)=>a+d.txns,0);
-    data.push(['TOTAL','',totTxn,totEf,totTar,totAll]);
-    return{headers,data,title:'Ventas por Dia',filename:'ventas_por_dia'};
-  }
-  if(tipo==='mes'){
-    const byMes={};
-    todasVentas.forEach(v=>{
-      const f=v.fecha||'';if(!f||f.length<7)return;
-      const k=f.slice(0,7);
-      if(!byMes[k])byMes[k]={mesKey:k,txns:0,efectivo:0,tarjetas:0,total:0};
-      const monto=calcMonto(v);
-      byMes[k].txns++;byMes[k].total+=monto;
-      categPago((v.pago||'').toLowerCase().trim(),monto,v,byMes[k]);
-    });
-    const meses=Object.values(byMes).sort((a,b)=>b.mesKey.localeCompare(a.mesKey));
-    const headers=['Mes','#','Efectivo','Tarjeta','Total'];
-    const data=meses.map(m=>{
-      const[y,mo]=m.mesKey.split('-');
-      return[(MESES_N[parseInt(mo)-1]||mo)+' '+y,m.txns,m.efectivo,m.tarjetas,m.total];
-    });
-    const mEf=meses.reduce((a,m)=>a+m.efectivo,0);
-    const mTar=meses.reduce((a,m)=>a+m.tarjetas,0);
-    const mAll=meses.reduce((a,m)=>a+m.total,0);
-    const mTxn=meses.reduce((a,m)=>a+m.txns,0);
-    data.push(['TOTAL',mTxn,mEf,mTar,mAll]);
-    return{headers,data,title:'Acumulado por Mes',filename:'acumulado_por_mes'};
-  }
-  if(tipo==='semana'){
-    const mesFiltro=document.getElementById('dv-sem-mes-filtro')?.value||'';
-    const bySem={};
-    todasVentas.forEach(v=>{
-      const f=v.fecha||'';if(!f||f.length<10)return;
-      if(mesFiltro&&f.slice(5,7)!==mesFiltro)return;
-      const monto=calcMonto(v);
-      const d=new Date(f+'T12:00:00');
-      const startYear=new Date(d.getFullYear(),0,1);
-      const weekNum=Math.ceil(((d-startYear)/86400000+startYear.getDay()+1)/7);
-      const semKey=d.getFullYear()+'-W'+String(weekNum).padStart(2,'0');
-      if(!bySem[semKey]){
-        const dow=d.getDay()||7;
-        const lun=new Date(d);lun.setDate(d.getDate()-(dow-1));
-        const dom=new Date(lun);dom.setDate(lun.getDate()+6);
-        const f2=dt=>String(dt.getDate()).padStart(2,'0')+'/'+(MESES_N[dt.getMonth()]||'');
-        bySem[semKey]={semKey,weekNum,anio:d.getFullYear(),rango:f2(lun)+'-'+f2(dom),txns:0,efectivo:0,tarjetas:0,total:0};
-      }
-      bySem[semKey].txns++;bySem[semKey].total+=monto;
-      categPago((v.pago||'').toLowerCase().trim(),monto,v,bySem[semKey]);
-    });
-    const sems=Object.values(bySem).sort((a,b)=>b.semKey.localeCompare(a.semKey));
-    const headers=['Semana','Anio','Rango','#','Efectivo','Tarjeta','Total'];
-    const data=sems.map(s=>['Sem. '+s.weekNum,s.anio,s.rango,s.txns,s.efectivo,s.tarjetas,s.total]);
-    const sEf=sems.reduce((a,s)=>a+s.efectivo,0);
-    const sTar=sems.reduce((a,s)=>a+s.tarjetas,0);
-    const sAll=sems.reduce((a,s)=>a+s.total,0);
-    const sTxn=sems.reduce((a,s)=>a+s.txns,0);
-    data.push(['TOTAL','','',sTxn,sEf,sTar,sAll]);
-    return{headers,data,title:'Acumulado por Semana',filename:'acumulado_por_semana'};
-  }
-  return null;
-}
-
-function dvDescargarExcel(tipo){
-  if(typeof XLSX==='undefined'){toast('Cargando libreria Excel, intenta en 2s...');return;}
-  const td=dvGetTableData(tipo);if(!td)return;
-  const ws=XLSX.utils.aoa_to_sheet([td.headers,...td.data]);
-  const numRows=td.data.length;
-  const moneyIdx=tipo==='dias'?[3,4,5]:tipo==='mes'?[2,3,4]:[4,5,6];
-  moneyIdx.forEach(col=>{
-    for(let r=1;r<=numRows;r++){
-      const cell=ws[XLSX.utils.encode_cell({c:col,r})];
-      if(cell&&typeof cell.v==='number'){cell.z='"$"#,##0.00';cell.t='n';}
-    }
-  });
-  ws['!cols']=td.headers.map((_,i)=>({wch:moneyIdx.includes(i)?16:14}));
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,td.title.slice(0,31));
-  XLSX.writeFile(wb,'JABED_'+td.filename+'_'+hoy()+'.xlsx');
-  toast('Excel descargado');
-}
-
-function dvDescargarPDF(tipo){
-  if(typeof window.jspdf==='undefined'){toast('Cargando libreria PDF, intenta en 2s...');return;}
-  const{jsPDF}=window.jspdf;
-  const td=dvGetTableData(tipo);if(!td)return;
-  const fmtN=n=>typeof n==='number'?'$'+n.toLocaleString('es-MX',{minimumFractionDigits:2}):(n!=null?n:'');
-  const moneyIdx=tipo==='dias'?[3,4,5]:tipo==='mes'?[2,3,4]:[4,5,6];
-  const bodyRows=td.data.map(row=>row.map((cell,i)=>moneyIdx.includes(i)?fmtN(cell):(cell!=null?String(cell):'') ));
-  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'letter'});
-  doc.setFontSize(14);doc.setTextColor(30,30,30);
-  doc.text('Zapateria JABED  —  '+td.title,14,13);
-  doc.setFontSize(9);doc.setTextColor(120,120,120);
-  doc.text('Generado: '+new Date().toLocaleString('es-MX'),14,20);
-  doc.autoTable({
-    head:[td.headers],
-    body:bodyRows,
-    startY:25,
-    theme:'grid',
-    headStyles:{fillColor:[26,158,92],textColor:255,fontStyle:'bold',fontSize:9},
-    bodyStyles:{fontSize:8,textColor:[30,30,30]},
-    alternateRowStyles:{fillColor:[245,250,247]},
-    columnStyles:moneyIdx.reduce((acc,i)=>{acc[i]={halign:'right'};return acc;},{}),
-    margin:{left:12,right:12},
-    didParseCell:function(data){
-      if(data.section==='body'&&data.row.index===bodyRows.length-1){
-        data.cell.styles.fillColor=[240,180,41];
-        data.cell.styles.fontStyle='bold';
-        data.cell.styles.textColor=[30,30,30];
-      }
-    }
-  });
-  doc.save('JABED_'+td.filename+'_'+hoy()+'.pdf');
-  toast('PDF descargado');
 }
 
 function fmtFechaCorta(fecha){
@@ -15002,6 +14944,183 @@ let fbInterval=setInterval(()=>{
     }
   });
 },200);
+</script>
+<!-- ══ MODAL EDITAR VENTA (Admin/Manager) ══ -->
+<div id="edit-venta-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;align-items:center;justify-content:center" onclick="if(event.target===this)cerrarEditVenta()">
+  <div style="background:var(--s1);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:560px;margin:16px;box-shadow:0 20px 60px rgba(0,0,0,.7);overflow:hidden">
+    <!-- Header -->
+    <div style="background:var(--s2);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:var(--display);font-size:16px;font-weight:700;color:var(--cream)">✏️ Editar Venta</div>
+        <div id="ev-folio-label" style="font-size:11px;color:var(--muted);margin-top:2px">—</div>
+      </div>
+      <button onclick="cerrarEditVenta()" style="background:var(--s3);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:16px;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- Body -->
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+      <!-- Pago -->
+      <div>
+        <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">Forma de Pago</label>
+        <select id="ev-pago" style="width:100%;padding:9px 12px;border-radius:8px;background:var(--s2);border:1px solid var(--border2);color:var(--cream);font-size:13px">
+          <option value="efectivo">💵 Efectivo</option>
+          <option value="tarjeta-bbva">💳 Tarjeta BBVA</option>
+          <option value="tarjeta-mp">💳 Mercado Pago</option>
+          <option value="tarjeta">💳 Tarjeta (otro)</option>
+          <option value="transferencia">📲 Transferencia</option>
+          <option value="monedero">🪙 Monedero</option>
+          <option value="mixto">🔀 Mixto</option>
+          <option value="bbva-efectivo">💳+💵 BBVA + Efectivo</option>
+          <option value="tarjeta-efectivo">💳+💵 Tarjeta + Efectivo</option>
+        </select>
+      </div>
+      <!-- Mixto / BBVA+Ef desglose -->
+      <div id="ev-mixto-panel" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;gap:12px;display:none;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="display:block;font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">💵 Efectivo</label>
+          <input type="number" id="ev-mixto-ef" min="0" step="0.01" placeholder="0.00" style="width:100%;padding:8px 10px;border-radius:7px;background:var(--s3);border:1px solid var(--border2);color:var(--cream);font-size:13px">
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;color:var(--blue);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">💳 Tarjeta/BBVA</label>
+          <input type="number" id="ev-mixto-tar" min="0" step="0.01" placeholder="0.00" style="width:100%;padding:8px 10px;border-radius:7px;background:var(--s3);border:1px solid var(--border2);color:var(--cream);font-size:13px">
+        </div>
+      </div>
+      <!-- Total / Anticipo -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">Total Compra ($)</label>
+          <input type="number" id="ev-total" min="0" step="0.01" style="width:100%;padding:9px 12px;border-radius:8px;background:var(--s2);border:1px solid var(--border2);color:var(--cream);font-size:13px">
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">Descuento ($)</label>
+          <input type="number" id="ev-descuento" min="0" step="0.01" style="width:100%;padding:9px 12px;border-radius:8px;background:var(--s2);border:1px solid var(--border2);color:var(--cream);font-size:13px">
+        </div>
+      </div>
+      <!-- Cliente -->
+      <div>
+        <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">Cliente</label>
+        <input type="text" id="ev-cliente" placeholder="Cliente general" style="width:100%;padding:9px 12px;border-radius:8px;background:var(--s2);border:1px solid var(--border2);color:var(--cream);font-size:13px">
+      </div>
+      <!-- Notas -->
+      <div>
+        <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">Notas / Detalle</label>
+        <textarea id="ev-notas" rows="2" placeholder="Observaciones opcionales…" style="width:100%;padding:9px 12px;border-radius:8px;background:var(--s2);border:1px solid var(--border2);color:var(--cream);font-size:13px;resize:vertical;font-family:var(--font)"></textarea>
+      </div>
+      <!-- Aviso auditoría -->
+      <div style="background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.25);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--gold)">
+        ⚠️ Cada cambio queda registrado en auditoría con tu usuario y la hora exacta.
+      </div>
+    </div>
+    <!-- Footer -->
+    <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--s2)">
+      <button onclick="cerrarEditVenta()" class="btn btn-ghost">Cancelar</button>
+      <button onclick="guardarEditVenta()" class="btn btn-accent" style="min-width:130px">💾 Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+<script>
+// ══ EDITAR VENTA (Admin/Manager) ══
+let _editVentaId = null;
+let _editVentaOriginal = null;
+
+function abrirEditVenta(id){
+  const rolActivo = usuarioActivo?.rol||currentProfile?.rol||'';
+  if(!['admin','manager'].includes(rolActivo)){
+    toast('Solo Admin o Manager pueden editar ventas','err'); return;
+  }
+  const v = ventas.find(x=>x.id===id);
+  if(!v){ toast('Venta no encontrada','err'); return; }
+  _editVentaId = id;
+  _editVentaOriginal = {...v};
+
+  const folio = v.folio||id.slice(-6).toUpperCase();
+  document.getElementById('ev-folio-label').textContent = '#'+folio+' · '+fmtFechaCorta(v.fecha)+' · '+fmt(v.total||0);
+  document.getElementById('ev-pago').value = v.pago||'efectivo';
+  document.getElementById('ev-total').value = v.total||0;
+  document.getElementById('ev-descuento').value = v.descuento||0;
+  document.getElementById('ev-cliente').value = v.cliente||'Cliente general';
+  document.getElementById('ev-notas').value = v.notas||'';
+
+  // Mixto desglose
+  const mixtoEf  = v.mixtoEfectivo||v.bbvaEfectivo||v.tarjetaEfEfectivo||0;
+  const mixtoTar = v.mixtoTarjeta||v.bbvaTarjeta||v.tarjetaEfTarjeta||0;
+  document.getElementById('ev-mixto-ef').value  = mixtoEf;
+  document.getElementById('ev-mixto-tar').value = mixtoTar;
+  evToggleMixto(v.pago||'efectivo');
+
+  const modal = document.getElementById('edit-venta-modal');
+  modal.style.display = 'flex';
+  setTimeout(()=>{ document.getElementById('ev-pago').focus(); },100);
+}
+
+function evToggleMixto(pago){
+  const panel = document.getElementById('ev-mixto-panel');
+  const show = ['mixto','bbva-efectivo','tarjeta-efectivo'].includes(pago);
+  panel.style.display = show ? 'grid' : 'none';
+}
+
+document.getElementById('ev-pago').addEventListener('change', function(){ evToggleMixto(this.value); });
+
+function cerrarEditVenta(){
+  document.getElementById('edit-venta-modal').style.display='none';
+  _editVentaId = null; _editVentaOriginal = null;
+}
+
+async function guardarEditVenta(){
+  const rolActivo = usuarioActivo?.rol||currentProfile?.rol||'';
+  if(!['admin','manager'].includes(rolActivo)){
+    toast('Sin permiso','err'); return;
+  }
+  if(!_editVentaId){ toast('Sin venta seleccionada','err'); return; }
+
+  const pago      = document.getElementById('ev-pago').value;
+  const total     = parseFloat(document.getElementById('ev-total').value)||0;
+  const descuento = parseFloat(document.getElementById('ev-descuento').value)||0;
+  const cliente   = document.getElementById('ev-cliente').value.trim()||'Cliente general';
+  const notas     = document.getElementById('ev-notas').value.trim();
+  const mixtoEf   = parseFloat(document.getElementById('ev-mixto-ef').value)||0;
+  const mixtoTar  = parseFloat(document.getElementById('ev-mixto-tar').value)||0;
+
+  const isMixtoType = ['mixto','bbva-efectivo','tarjeta-efectivo'].includes(pago);
+
+  const cambios = {
+    pago, total, descuento, cliente, notas,
+    editadoPor: usuarioActivo?.nombre||currentProfile?.nombre||'Admin',
+    editadoEn:  new Date().toISOString(),
+    editadoCampos: []
+  };
+
+  // Registrar qué campos cambiaron para auditoría
+  const orig = _editVentaOriginal;
+  if(pago       !== (orig.pago||'efectivo')) cambios.editadoCampos.push('pago: '+orig.pago+'→'+pago);
+  if(total      !== (orig.total||0))         cambios.editadoCampos.push('total: '+orig.total+'→'+total);
+  if(descuento  !== (orig.descuento||0))     cambios.editadoCampos.push('descuento: '+orig.descuento+'→'+descuento);
+  if(cliente    !== (orig.cliente||''))      cambios.editadoCampos.push('cliente: '+orig.cliente+'→'+cliente);
+
+  if(isMixtoType){
+    cambios.mixtoEfectivo = mixtoEf;
+    cambios.mixtoTarjeta  = mixtoTar;
+    cambios.bbvaEfectivo  = pago==='bbva-efectivo'  ? mixtoTar : 0;
+    cambios.bbvaTarjeta   = pago==='bbva-efectivo'  ? mixtoTar : 0;
+    cambios.tarjetaEfEfectivo = pago==='tarjeta-efectivo' ? mixtoEf  : 0;
+    cambios.tarjetaEfTarjeta  = pago==='tarjeta-efectivo' ? mixtoTar : 0;
+    if(pago==='bbva-efectivo'){
+      cambios.bbvaEfectivo = mixtoEf; cambios.bbvaTarjeta = mixtoTar;
+    }
+    if(pago==='tarjeta-efectivo'){
+      cambios.tarjetaEfEfectivo = mixtoEf; cambios.tarjetaEfTarjeta = mixtoTar;
+    }
+  }
+
+  try{
+    await window._fb.setDoc(window._fb.doc(window._fb.db,'ventas',_editVentaId), cambios, {merge:true});
+    // Actualizar array local
+    const idx = ventas.findIndex(v=>v.id===_editVentaId);
+    if(idx>=0){ Object.assign(ventas[idx], cambios); }
+    toast('✅ Venta actualizada');
+    cerrarEditVenta();
+    renderHist();
+  }catch(e){ toast('Error al guardar: '+e.message,'err'); console.error(e); }
+}
 </script>
 </body>
 </html>
