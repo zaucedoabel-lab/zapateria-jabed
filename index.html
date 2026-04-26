@@ -2395,12 +2395,20 @@ body{background:#071222!important}
                 <div class="fg"><label>Origen</label><select id="tr-origen" onchange="actualizarTallasTransfer()"></select></div>
                 <div class="fg"><label>Destino</label><select id="tr-destino"></select></div>
               </div>
-              <div class="fr fr2">
-                <div class="fg"><label>Talla</label><select id="tr-talla"><option value="">Selecciona producto primero</option></select></div>
-                <div class="fg"><label>Cantidad</label><input type="number" id="tr-qty" value="1" min="1"></div>
+              <!-- Grid multi-talla -->
+              <div class="fg" id="tr-tallas-container" style="display:none">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <label style="margin:0">Tallas y Cantidades</label>
+                  <div style="display:flex;gap:6px">
+                    <button type="button" class="btn btn-ghost btn-xs" onclick="trSeleccionarTodas()" title="Poner qty=1 en todas las tallas con stock">Todas</button>
+                    <button type="button" class="btn btn-ghost btn-xs" onclick="trLimpiarTallas()">Limpiar</button>
+                  </div>
+                </div>
+                <div id="tr-tallas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px"></div>
+                <div id="tr-tallas-resumen" style="font-size:11px;color:var(--muted);margin-top:7px;min-height:16px"></div>
               </div>
               <div class="fg"><label>Notas</label><input type="text" id="tr-notas" placeholder="Motivo de la transferencia"></div>
-              <button class="btn btn-accent btn-full" onclick="hacerTransferencia()">↔️ Realizar Transferencia</button>
+              <button class="btn btn-accent btn-full" onclick="hacerTransferencia()">↔️ Enviar Transferencia</button>
             </div>
             <div class="card">
               <div class="card-title">Historial de Transferencias</div>
@@ -2848,6 +2856,7 @@ body{background:#071222!important}
                   <option value="">Todos</option>
                   <option value="entrada">📥 Entrada</option>
                   <option value="salida">📤 Salida</option>
+                  <option value="transferencia">↔️ Transferencia</option>
                   <option value="liquidacion">🏷️ Liquidación</option>
                 </select>
               </div>
@@ -5701,118 +5710,209 @@ function selTransferProdGrupo(clave, idFallback){
   actualizarTallasTransfer();
 }
 
-// Actualiza el dropdown de tallas según el ORIGEN elegido
+// Actualiza el grid de tallas según el ORIGEN elegido
 function actualizarTallasTransfer(){
   if(!trProdTodos||!trProdTodos.length) return;
   const origenId=document.getElementById('tr-origen')?.value||'';
-  // Buscar el registro de este producto en la sucursal origen
   let prodOrigen=trProdTodos.find(p=>p.sucursalId===origenId);
-  if(!prodOrigen) prodOrigen=trProdTodos[0]; // fallback si no hay registro en ese origen
-  trProdSel=prodOrigen; // sincronizar trProdSel con el origen activo
+  if(!prodOrigen) prodOrigen=trProdTodos[0];
+  trProdSel=prodOrigen;
 
-  const ts=document.getElementById('tr-talla');
-  const tallasConStock=sortTallas(
-    Object.keys(prodOrigen.stock||{}).filter(t=>(prodOrigen.stock[t]||0)>0)
-  );
-  const todasLasTallas=sortTallas(Object.keys(prodOrigen.stock||{}));
-  // Mostrar todas las tallas, marcando las que tienen stock
-  ts.innerHTML=todasLasTallas.length
-    ? todasLasTallas.map(t=>{
-        const qty=prodOrigen.stock[t]||0;
-        return`<option value="${t}" ${qty===0?'disabled style="color:var(--faint)"':''}>${t} (${qty} disp.)</option>`;
-      }).join('')
-    : '<option value="">Sin tallas en este origen</option>';
-  // Auto-seleccionar la primera talla con stock
-  if(tallasConStock.length) ts.value=tallasConStock[0];
+  const container=document.getElementById('tr-tallas-container');
+  const grid=document.getElementById('tr-tallas-grid');
+  if(!container||!grid) return;
+
+  const todasTallas=sortTallas(Object.keys(prodOrigen.stock||{}));
+  if(!todasTallas.length){
+    container.style.display='none'; return;
+  }
+  container.style.display='block';
+
+  grid.innerHTML=todasTallas.map(t=>{
+    const disp=prodOrigen.stock[t]||0;
+    const sinStock=disp===0;
+    return`<div style="background:var(--s3);border:1px solid ${sinStock?'var(--border)':'var(--border2)'};border-radius:8px;padding:7px 8px;text-align:center;opacity:${sinStock?'.45':'1'}">
+      <div style="font-family:var(--mono);font-size:13px;font-weight:600;color:${sinStock?'var(--muted)':'var(--cream)'}">${t}</div>
+      <div style="font-size:10px;color:${disp>0?'var(--accent2)':'var(--muted)'};margin:2px 0">${disp} disp.</div>
+      <input type="number" id="trt-${tallaToId(t)}" data-talla="${t}" data-max="${disp}"
+        value="0" min="0" max="${disp}" ${sinStock?'disabled':''}
+        oninput="clampTrTalla(this);actualizarResumenTransfer()"
+        style="width:100%;padding:3px 4px;font-size:12px;text-align:center;background:var(--s2);border:1px solid var(--border);border-radius:5px;color:var(--cream);font-family:var(--mono)">
+    </div>`;
+  }).join('');
+  actualizarResumenTransfer();
+}
+
+function clampTrTalla(input){
+  const max=parseInt(input.dataset.max)||0;
+  let v=parseInt(input.value)||0;
+  if(v<0)v=0; if(v>max)v=max;
+  input.value=v;
+  input.style.borderColor=v>0?'var(--accent2)':'var(--border)';
+}
+
+function actualizarResumenTransfer(){
+  const grid=document.getElementById('tr-tallas-grid');
+  const resumen=document.getElementById('tr-tallas-resumen');
+  if(!grid||!resumen) return;
+  const inputs=[...grid.querySelectorAll('input[data-talla]')];
+  const seleccionadas=inputs.filter(i=>(parseInt(i.value)||0)>0);
+  if(!seleccionadas.length){
+    resumen.textContent='Ingresa las cantidades a transferir en cada talla'; return;
+  }
+  const totalPzas=seleccionadas.reduce((s,i)=>s+(parseInt(i.value)||0),0);
+  const detalle=seleccionadas.map(i=>`${i.dataset.talla}:${i.value}`).join(' · ');
+  resumen.innerHTML=`<span style="color:var(--accent2);font-weight:600">${seleccionadas.length} talla(s) · ${totalPzas} pzas total</span> <span style="color:var(--faint)">${detalle}</span>`;
+}
+
+function trSeleccionarTodas(){
+  const grid=document.getElementById('tr-tallas-grid');
+  if(!grid) return;
+  grid.querySelectorAll('input[data-talla]:not([disabled])').forEach(i=>{
+    if((parseInt(i.dataset.max)||0)>0){ i.value=1; clampTrTalla(i); }
+  });
+  actualizarResumenTransfer();
+}
+function trLimpiarTallas(){
+  const grid=document.getElementById('tr-tallas-grid');
+  if(!grid) return;
+  grid.querySelectorAll('input[data-talla]').forEach(i=>{ i.value=0; i.style.borderColor='var(--border)'; });
+  actualizarResumenTransfer();
 }
 
 async function hacerTransferencia(){
-  if(!trProdSel){toast('Selecciona un producto','err');return;}
-  const origen=document.getElementById('tr-origen').value;
-  const destino=document.getElementById('tr-destino').value;
-  const talla=document.getElementById('tr-talla').value;
-  const qty=parseInt(document.getElementById('tr-qty').value)||1;
-  const notas=document.getElementById('tr-notas').value.trim();
-  if(!origen||!destino){toast('Selecciona origen y destino','err');return;}
-  if(origen===destino){toast('Origen y destino no pueden ser iguales','err');return;}
-  if(!talla){toast('Selecciona una talla','err');return;}
+  if(!trProdSel){ toast('Selecciona un producto','err'); return; }
+  const origen  = document.getElementById('tr-origen').value;
+  const destino = document.getElementById('tr-destino').value;
+  const notas   = document.getElementById('tr-notas').value.trim();
+  if(!origen||!destino){ toast('Selecciona origen y destino','err'); return; }
+  if(origen===destino){ toast('Origen y destino no pueden ser iguales','err'); return; }
 
-  // ── BUG FIX 4: leer stock fresco de Firestore antes de transferir ──
+  // ── Leer tallas seleccionadas del grid ──
+  const grid=document.getElementById('tr-tallas-grid');
+  if(!grid){ toast('Error: grid de tallas no encontrado','err'); return; }
+  const lineas=[];
+  grid.querySelectorAll('input[data-talla]').forEach(input=>{
+    const qty=parseInt(input.value)||0;
+    if(qty>0){
+      lineas.push({
+        talla:input.dataset.talla,
+        cantidad:qty,
+        prodId:trProdSel.id,
+        sku:trProdSel.sku||trProdSel.barcode||'',
+        barcode:trProdSel.barcode||trProdSel.sku||'',
+        desc:trProdSel.desc
+      });
+    }
+  });
+  if(!lineas.length){ toast('Ingresa al menos una talla con cantidad > 0','err'); return; }
+
+  // ── Validar stock disponible en origen (lectura fresca de Firestore) ──
   let stockFrescoOrigen;
   try{
-    const snap = await window._fb.getDoc(docRef('productos', trProdSel.id));
-    stockFrescoOrigen = snap.exists() ? (snap.data().stock||{}) : trProdSel.stock||{};
-  }catch(e){ stockFrescoOrigen = trProdSel.stock||{}; }
+    const snap=await window._fb.getDoc(docRef('productos',trProdSel.id));
+    stockFrescoOrigen=snap.exists()?(snap.data().stock||{}):trProdSel.stock||{};
+  }catch(e){ stockFrescoOrigen=trProdSel.stock||{}; }
 
-  const stockActual = (stockFrescoOrigen[talla]||0);
-  if(qty > stockActual){
-    toast(`Solo hay ${stockActual} pza(s) disponibles en talla ${talla} en ${sucursales.find(s=>s.id===origen)?.nombre||'origen'}`,'err');
-    return;
+  for(const l of lineas){
+    const disp=stockFrescoOrigen[l.talla]||0;
+    if(l.cantidad>disp){
+      toast(`Talla ${l.talla}: solo hay ${disp} pza(s) disponibles en ${sucursales.find(s=>s.id===origen)?.nombre||'origen'}  ─ ajusta la cantidad`,'err');
+      return;
+    }
   }
 
-  // Find product in destino — match by barcode/sku/creadoDesde
-  const codigoRef = (trProdSel.barcode||trProdSel.sku||'').trim();
-  let prodDestino = productos.find(p=>
-    p.id !== trProdSel.id &&
-    p.sucursalId === destino &&
-    (p.creadoDesde === trProdSel.id ||
-     (codigoRef && (p.barcode===codigoRef||p.sku===codigoRef)))
-  );
+  const rolActivo     = usuarioActivo?.rol||currentProfile?.rol||'';
+  const esPrivilegiado= ['admin','manager','supervisor'].includes(rolActivo);
+  const nombreUsuario = usuarioActivo?.nombre||currentProfile?.nombre||'—';
+  const origenNombre  = sucursales.find(s=>s.id===origen)?.nombre||origen;
+  const destinoNombre = sucursales.find(s=>s.id===destino)?.nombre||destino;
+  const totalPzas     = lineas.reduce((s,l)=>s+l.cantidad,0);
+  const codigoRef     = trProdSel.sku||trProdSel.barcode||'';
+  const {addDoc:fbAddDoc}=window._fb;
 
-  const {addDoc:fbAddDoc} = window._fb;
+  if(esPrivilegiado){
+    // ── APLICA INMEDIATAMENTE ──────────────────────────────────────────
+    // Buscar producto gemelo en destino
+    let prodDestino=productos.find(p=>
+      p.id!==trProdSel.id && p.sucursalId===destino &&
+      (p.creadoDesde===trProdSel.id||(codigoRef&&(p.barcode===codigoRef||p.sku===codigoRef)))
+    );
 
-  // Resta en origen (fresca)
-  await setStockTalla(trProdSel.id, stockFrescoOrigen, talla, Math.max(0, stockActual - qty));
+    for(const l of lineas){
+      // Resta en origen
+      await setStockTalla(trProdSel.id, stockFrescoOrigen, l.talla,
+        Math.max(0,(stockFrescoOrigen[l.talla]||0)-l.cantidad));
+      // Suma en destino
+      if(prodDestino){
+        let sfD; try{ const ds=await window._fb.getDoc(docRef('productos',prodDestino.id));
+          sfD=ds.exists()?(ds.data().stock||{}):prodDestino.stock||{};
+        }catch(e){ sfD=prodDestino.stock||{}; }
+        await setStockTalla(prodDestino.id,sfD,l.talla,(sfD[l.talla]||0)+l.cantidad);
+      } else {
+        // Crear gemelo en destino
+        const sND={}; Object.keys(trProdSel.stock||{}).forEach(t=>{ sND[t]=0; }); sND[l.talla]=l.cantidad;
+        const newDoc=await fbAddDoc(col('productos'),{
+          barcode:trProdSel.barcode||'', sku:trProdSel.sku||'',
+          desc:trProdSel.desc, cat:trProdSel.cat||'', linea:trProdSel.linea||'',
+          temporada:trProdSel.temporada||'', marca:trProdSel.marca||'', color:trProdSel.color||'',
+          precio:trProdSel.precio||0, costo:trProdSel.costo||0,
+          locacion:trProdSel.locacion||'', foto:trProdSel.foto||null,
+          barcodeTallas:trProdSel.barcodeTallas||{}, stock:sND,
+          sucursalId:destino, creadoDesde:trProdSel.id, createdAt:new Date().toISOString()
+        });
+        // Para las siguientes tallas, ya existe el gemelo
+        const prodNuevo={id:newDoc.id,sucursalId:destino,stock:{...sND},...trProdSel};
+        prodNuevo.id=newDoc.id; prodNuevo.sucursalId=destino; prodNuevo.stock={...sND};
+        prodDestino=prodNuevo; productos.push(prodNuevo);
+      }
+    }
 
-  // Suma en destino
-  if(prodDestino){
-    let stockFrescoDestino;
-    try{
-      const dSnap = await window._fb.getDoc(docRef('productos', prodDestino.id));
-      stockFrescoDestino = dSnap.exists() ? (dSnap.data().stock||{}) : prodDestino.stock||{};
-    }catch(e){ stockFrescoDestino = prodDestino.stock||{}; }
-    const curD = stockFrescoDestino[talla]||0;
-    await setStockTalla(prodDestino.id, stockFrescoDestino, talla, curD + qty);
-  } else {
-    // ── BUG FIX 5: crear gemelo en destino con la estructura correcta ──
-    // En lugar de copiar el objeto completo (que podría tener creadoDesde incorrecto),
-    // creamos un registro limpio con solo las tallas existentes a 0 + la talla transferida
-    const stockNuevoDestino = {};
-    Object.keys(trProdSel.stock||{}).forEach(t=>{ stockNuevoDestino[t]=0; });
-    stockNuevoDestino[talla] = qty;
-    await fbAddDoc(col('productos'),{
-      barcode:trProdSel.barcode||'', sku:trProdSel.sku||'',
-      desc:trProdSel.desc, cat:trProdSel.cat||'',
-      linea:trProdSel.linea||'', temporada:trProdSel.temporada||'',
-      marca:trProdSel.marca||'', color:trProdSel.color||'',
-      precio:trProdSel.precio||0, costo:trProdSel.costo||0,
-      locacion:trProdSel.locacion||'', foto:trProdSel.foto||null,
-      barcodeTallas:trProdSel.barcodeTallas||{},
-      stock: stockNuevoDestino,
-      sucursalId: destino,
-      creadoDesde: trProdSel.id,
-      createdAt: new Date().toISOString()
+    // Registro en transferencias (una entrada por talla para historial)
+    for(const l of lineas){
+      await fbAddDoc(col('transferencias'),{
+        productoId:trProdSel.id, productoDesc:trProdSel.desc,
+        talla:l.talla, qty:l.cantidad,
+        origenId:origen, origenNombre, destinoId:destino, destinoNombre,
+        notas, fecha:hoy(), hora:hora(),
+        usuario:nombreUsuario, usuarioRol:rolActivo,
+        createdAt:new Date().toISOString()
+      });
+    }
+
+    // Bitácora con estado aprobado
+    await fbAddDoc(col('bitacora'),{
+      tipo:'transferencia', estado:'aprobado',
+      descripcion:`Transferencia: ${trProdSel.desc} (${codigoRef||trProdSel.id}) · ${origenNombre} → ${destinoNombre}`,
+      usuario:nombreUsuario, usuarioRol:rolActivo,
+      aprobadoPor:nombreUsuario, aprobadoEn:new Date().toISOString(),
+      fecha:hoy(), hora:hora(), createdAt:new Date().toISOString(),
+      datos:{ productoDesc:trProdSel.desc, sku:codigoRef, origenId:origen, origenNombre,
+              destinoId:destino, destinoNombre, notas, lineas }
     });
+
+    toast(`↔️ Transferencia aplicada: ${totalPzas} pza(s) · ${origenNombre} → ${destinoNombre} ✓`);
+    renderInv(); renderPOS();
+  } else {
+    // ── VENDEDORA: envía a aprobación en bitácora ──────────────────────
+    await fbAddDoc(col('bitacora'),{
+      tipo:'transferencia', estado:'pendiente',
+      descripcion:`Transferencia pendiente: ${trProdSel.desc} (${codigoRef||trProdSel.id}) · ${origenNombre} → ${destinoNombre}`,
+      usuario:nombreUsuario, usuarioRol:rolActivo,
+      fecha:hoy(), hora:hora(), createdAt:new Date().toISOString(),
+      datos:{ productoDesc:trProdSel.desc, sku:codigoRef, origenId:origen, origenNombre,
+              destinoId:destino, destinoNombre, notas, lineas }
+    });
+    toast(`⏳ Transferencia enviada — pendiente de aprobación por Manager/Supervisor`);
   }
 
-  // Log transfer
-  await fbAddDoc(col('transferencias'),{
-    productoId:trProdSel.id, productoDesc:trProdSel.desc, talla, qty,
-    origenId:origen, origenNombre:sucursales.find(s=>s.id===origen)?.nombre||origen,
-    destinoId:destino, destinoNombre:sucursales.find(s=>s.id===destino)?.nombre||destino,
-    notas, fecha:hoy(), hora:hora(), usuario:currentProfile?.nombre||'—',
-    createdAt:new Date().toISOString()
-  });
-
-  trProdSel=null;
-  trProdTodos=[];
+  // Reset form
+  trProdSel=null; trProdTodos=[];
   document.getElementById('tr-prod-q').value='';
   document.getElementById('tr-prod-sel').style.display='none';
-  document.getElementById('tr-qty').value=1;
+  document.getElementById('tr-tallas-container').style.display='none';
   document.getElementById('tr-notas').value='';
-  // ── BUG FIX 4b: refrescar inventario tras transferencia ──
-  renderInv(); renderPOS();
-  toast(`↔️ Transferencia: ${qty} pza(s) talla ${talla} → ${sucursales.find(s=>s.id===destino)?.nombre||'destino'} ✓`);
+  renderTransferencias();
 }
 
 function renderTransferencias(){
@@ -11030,10 +11130,12 @@ async function loadBitacora(){
     const eu=document.getElementById('bitacora-ultimo');
     if(eu&&_bitacoraData.length) eu.textContent=(_bitacoraData[0].fecha||'')+(_bitacoraData[0].hora?' '+_bitacoraData[0].hora:'');
 
-    // Populate sucursal dropdown dynamically
+    // Populate sucursal dropdown dynamically (incluye origen y destino de transferencias)
     const bfSuc = document.getElementById('bf-sucursal');
     if(bfSuc){
-      const idsEnBitacora = [...new Set(_bitacoraData.map(m=>m.datos?.sucursalId).filter(Boolean))];
+      const idsEnBitacora = [...new Set(_bitacoraData.flatMap(m=>[
+        m.datos?.sucursalId, m.datos?.origenId, m.datos?.destinoId
+      ].filter(Boolean)))];
       const opcionesSuc = idsEnBitacora.map(sid=>{
         const nombre = sucursales.find(s=>s.id===sid)?.nombre || sid;
         return `<option value="${sid}">${nombre}</option>`;
@@ -11064,8 +11166,13 @@ function filtrarBitacora(){
     if(fTipo && m.tipo !== fTipo) return false;
     // Estado
     if(fEstado && m.estado !== fEstado) return false;
-    // Sucursal destino
-    if(fSucursal && m.datos?.sucursalId !== fSucursal) return false;
+    // Sucursal destino (para transferencias aplica a origenId o destinoId)
+    if(fSucursal){
+      const enSuc = m.datos?.sucursalId===fSucursal
+        || m.datos?.origenId===fSucursal
+        || m.datos?.destinoId===fSucursal;
+      if(!enSuc) return false;
+    }
     // Fecha desde/hasta
     if(fDesde && (m.fecha||'') < fDesde) return false;
     if(fHasta && (m.fecha||'') > fHasta) return false;
@@ -11116,9 +11223,11 @@ function filtrarBitacora(){
       ? '<span class="badge b-green">📥 Entrada</span>'
       : m.tipo==='salida'
         ? '<span class="badge b-red">📤 Salida</span>'
-        : m.tipo==='liquidacion'
-          ? '<span class="badge b-gold">🏷️ Liquidación</span>'
-          : '<span class="badge b-gray">'+m.tipo+'</span>';
+        : m.tipo==='transferencia'
+          ? '<span class="badge b-blue">↔️ Transferencia</span>'
+          : m.tipo==='liquidacion'
+            ? '<span class="badge b-gold">🏷️ Liquidación</span>'
+            : '<span class="badge b-gray">'+m.tipo+'</span>';
     let acciones;
     if(puedeAprobar && m.estado==='pendiente'){
       acciones = `<div style="display:flex;flex-direction:column;gap:3px">
@@ -11151,27 +11260,39 @@ function filtrarBitacora(){
     const totalPzas = m.datos?.lineas
       ? m.datos.lineas.reduce((a,l)=>a+(l.cantidad||0),0)
       : '—';
-    const comentario = m.datos?.comentario || m.datos?.proveedor
-      ? [m.datos.proveedor, m.datos.comentario].filter(Boolean).join(' | ')
-      : '—';
+    const comentario = m.tipo==='transferencia'
+      ? (m.datos?.notas||'—')
+      : (m.datos?.comentario || m.datos?.proveedor
+          ? [m.datos.proveedor, m.datos.comentario].filter(Boolean).join(' | ')
+          : '—');
     // Highlight matching estilo
     const estilosRaw = m.datos?.lineas
-      ? [...new Set(m.datos.lineas.map(l=>l.sku||l.barcode||l.prodId||'—').filter(x=>x&&x!=='—'))]
+      ? [...new Set(m.datos.lineas.map(l=>(l.sku||l.barcode||l.prodId||'—')).filter(x=>x&&x!=='—'))]
       : [];
     const estilosLista = fEstilo
       ? estilosRaw.map(e=>e.toLowerCase().includes(fEstilo)
           ? `<mark style="background:var(--gold-dim);color:var(--gold);border-radius:3px;padding:1px 2px">${e}</mark>`
           : e).join(', ')
       : estilosRaw.join(', ') || '—';
+    // Columna destino — para transferencias muestra Origen → Destino
+    let destinoCol;
+    if(m.tipo==='transferencia'){
+      const oNom=m.datos?.origenNombre||'—'; const dNom=m.datos?.destinoNombre||'—';
+      destinoCol=`<span style="font-size:11px;white-space:nowrap">
+        <span class="badge b-orange" style="font-size:10px">${oNom}</span>
+        <span style="color:var(--muted);margin:0 3px">→</span>
+        <span class="badge b-blue" style="font-size:10px">${dNom}</span>
+      </span>`;
+    } else if(m.tipo==='entrada'||m.tipo==='salida'){
+      destinoCol=`<span class="badge ${destSucNombre.toLowerCase().includes('bod')?'b-orange':'b-green'}">${(m.tipo==='entrada'?'📥 ':'📤 ')+destSucNombre}</span>`;
+    } else {
+      destinoCol='<span style="color:var(--faint)">—</span>';
+    }
     return `<tr>
       <td style="font-size:11px;color:var(--muted);white-space:nowrap">${m.fecha||'—'}<br>${m.hora||''}</td>
       <td>${tipoBadge}</td>
       <td style="font-size:11px;color:var(--cream);max-width:180px">${m.descripcion||'—'}</td>
-      <td style="font-size:12px;color:var(--cream);white-space:nowrap">
-        ${(m.tipo==='entrada'||m.tipo==='salida')
-          ? `<span class="badge ${destSucNombre.toLowerCase().includes('bod')?'b-orange':'b-green'}">${(m.tipo==='entrada'?'📥 ':'📤 ')+destSucNombre}</span>`
-          : '<span style="color:var(--faint)">—</span>'}
-      </td>
+      <td style="font-size:12px;color:var(--cream);white-space:nowrap">${destinoCol}</td>
       <td style="font-size:11px;font-family:var(--mono);color:var(--cream);max-width:150px;word-break:break-all">${estilosLista}</td>
       <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:var(--gold)">${totalPzas}</td>
       <td style="font-size:11px;color:var(--muted);max-width:140px">${comentario}</td>
@@ -11214,6 +11335,27 @@ async function aprobarMovimiento(id){
         await setStockTalla(p.id, p.stock, linea.talla, Math.max(0,stockActual-linea.cantidad));
       }
       if(mov.datos.salidaId) await window._fb.setDoc(docRef('salidas',mov.datos.salidaId),{estado:'aprobado',aprobadoPor},{merge:true});
+    }
+    if(mov.tipo==='transferencia' && mov.datos?.lineas){
+      const {origenId, destinoId} = mov.datos;
+      const {addDoc:fbAdd}=window._fb;
+      for(const linea of mov.datos.lineas){
+        // Resta en origen
+        await aplicarStockEnSucursal(linea, origenId, -linea.cantidad);
+        // Suma en destino
+        await aplicarStockEnSucursal(linea, destinoId, linea.cantidad);
+        // Registro en historial de transferencias
+        await fbAdd(col('transferencias'),{
+          productoId:linea.prodId||'', productoDesc:linea.desc||mov.datos.productoDesc||'',
+          talla:linea.talla, qty:linea.cantidad,
+          origenId, origenNombre:mov.datos.origenNombre||origenId,
+          destinoId, destinoNombre:mov.datos.destinoNombre||destinoId,
+          notas:mov.datos.notas||'', fecha:hoy(), hora:hora(),
+          usuario:aprobadoPor, usuarioRol:'aprobación',
+          solicitadoPor:mov.usuario||'—',
+          createdAt:new Date().toISOString()
+        });
+      }
     }
     // Mark as approved
     await window._fb.setDoc(docRef('bitacora',id),{
@@ -11368,6 +11510,15 @@ async function cancelarMovimientoAprobado(id){
         await setStockTalla(prodTarget.id, prodTarget.stock, linea.talla, stockActual+linea.cantidad);
       }
       if(mov.datos.salidaId) await window._fb.setDoc(docRef('salidas',mov.datos.salidaId),{estado:'cancelado',canceladoPor},{merge:true});
+    }
+    if(mov.tipo==='transferencia' && mov.datos?.lineas){
+      const {origenId, destinoId} = mov.datos;
+      for(const linea of mov.datos.lineas){
+        // Devolver al origen
+        await aplicarStockEnSucursal(linea, origenId, linea.cantidad);
+        // Quitar del destino
+        await aplicarStockEnSucursal(linea, destinoId, -linea.cantidad);
+      }
     }
     // Mark bitácora as cancelled
     await window._fb.setDoc(docRef('bitacora',id),{
