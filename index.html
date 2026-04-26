@@ -9,6 +9,11 @@
 <meta name="apple-mobile-web-app-title" content="JABED">
 <meta name="theme-color" content="#f0b429">
 <title>Zapatería JABED</title>
+<!-- SheetJS para Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- jsPDF + AutoTable para PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;Zapatería JABED&quot;,&quot;short_name&quot;:&quot;JABED&quot;,&quot;start_url&quot;:&quot;/&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%230f0f12&quot;,&quot;theme_color&quot;:&quot;%23f0b429&quot;,&quot;orientation&quot;:&quot;any&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23f0b429'/%3E%3Ctext y='0.9em' font-size='75' text-anchor='middle' x='50'%3E👟%3C/text%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;any&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
@@ -2046,7 +2051,11 @@ body{background:#071222!important}
             <div class="card" style="flex:1;min-width:280px;max-width:50%;padding:0;overflow:hidden">
               <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid var(--border)">
                 <div style="font-size:13px;font-weight:700;color:var(--cream)">📋 Ventas por Día</div>
-                <button class="btn btn-ghost btn-sm" onclick="renderDashboardVentas()">🔄 Actualizar</button>
+                <div style="display:flex;gap:6px;align-items:center">
+                  <button class="btn btn-ghost btn-sm" onclick="dvDescargarExcel('dias')" title="Descargar Excel">📥 XLS</button>
+                  <button class="btn btn-ghost btn-sm" onclick="dvDescargarPDF('dias')" title="Descargar PDF">🖨️ PDF</button>
+                  <button class="btn btn-ghost btn-sm" onclick="renderDashboardVentas()">🔄</button>
+                </div>
               </div>
               <div style="overflow-y:auto;max-height:480px">
                 <table style="width:100%;border-collapse:collapse">
@@ -2079,8 +2088,12 @@ body{background:#071222!important}
 
               <!-- Acumulado por Mes -->
               <div class="card" style="padding:0;overflow:hidden">
-                <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border)">
+                <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
                   <div style="font-size:13px;font-weight:700;color:var(--cream)">📅 Acumulado por Mes</div>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn btn-ghost btn-sm" onclick="dvDescargarExcel('mes')" title="Descargar Excel">📥 XLS</button>
+                    <button class="btn btn-ghost btn-sm" onclick="dvDescargarPDF('mes')" title="Descargar PDF">🖨️ PDF</button>
+                  </div>
                 </div>
                 <div style="overflow-y:auto;max-height:220px">
                   <table style="width:100%;border-collapse:collapse">
@@ -2101,16 +2114,20 @@ body{background:#071222!important}
 
               <!-- Acumulado por Semana -->
               <div class="card" style="padding:0;overflow:hidden">
-                <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+                <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
                   <div style="font-size:13px;font-weight:700;color:var(--cream)">📆 Acumulado por Semana</div>
-                  <select id="dv-sem-mes-filtro" onchange="renderDVSemanas()"
-                    style="font-size:11px;padding:4px 8px;border-radius:6px;background:var(--s2);border:1px solid var(--border);color:var(--cream)">
-                    <option value="">Todos los meses</option>
-                    <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
-                    <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
-                    <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
-                    <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
-                  </select>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <select id="dv-sem-mes-filtro" onchange="renderDVSemanas()"
+                      style="font-size:11px;padding:4px 8px;border-radius:6px;background:var(--s2);border:1px solid var(--border);color:var(--cream)">
+                      <option value="">Todos los meses</option>
+                      <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+                      <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+                      <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+                      <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+                    </select>
+                    <button class="btn btn-ghost btn-sm" onclick="dvDescargarExcel('semana')" title="Descargar Excel">📥 XLS</button>
+                    <button class="btn btn-ghost btn-sm" onclick="dvDescargarPDF('semana')" title="Descargar PDF">🖨️ PDF</button>
+                  </div>
                 </div>
                 <div style="overflow-y:auto;max-height:220px">
                   <table style="width:100%;border-collapse:collapse">
@@ -12455,6 +12472,7 @@ function renderDashboardVentas(){
     const inS=!sucId||v.sucursalId===sucId;
     return inR&&inS;
   });
+  window._dvFiltVentas=vFilt; // save for export functions
 
   // Totals — FIX: devoluciones restan del total y de la forma de pago correspondiente
   let total=0,efectivo=0,tarjeta=0,transferencia=0;
@@ -12634,7 +12652,7 @@ function renderDashboardVentas(){
       else if(pg==='bbva-efectivo'){byDay[f].efectivo+=v.bbvaEfectivo||0;byDay[f].tarjetas+=v.bbvaTarjeta||0;}
       else if(pg==='tarjeta-efectivo'){byDay[f].efectivo+=v.tarjetaEfEfectivo||0;byDay[f].tarjetas+=v.tarjetaEfTarjeta||0;}
       else if(pg==='efectivo'||pg==='monedero'||pg==='') byDay[f].efectivo+=monto;
-      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) byDay[f].tarjetas+=monto;
+      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg.includes('mercado')||pg==='transferencia'||pg.includes('transfer')) byDay[f].tarjetas+=monto;
       else byDay[f].efectivo+=monto;
     });
     const dias = Object.values(byDay).sort((a,b)=>b.fecha.localeCompare(a.fecha));
@@ -12693,7 +12711,7 @@ function renderDashboardVentas(){
       else if(pg==='bbva-efectivo'){byMes[mesKey].efectivo+=v.bbvaEfectivo||0;byMes[mesKey].tarjetas+=v.bbvaTarjeta||0;}
       else if(pg==='tarjeta-efectivo'){byMes[mesKey].efectivo+=v.tarjetaEfEfectivo||0;byMes[mesKey].tarjetas+=v.tarjetaEfTarjeta||0;}
       else if(pg==='efectivo'||pg==='monedero'||pg==='') byMes[mesKey].efectivo+=monto;
-      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) byMes[mesKey].tarjetas+=monto;
+      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg.includes('mercado')||pg==='transferencia'||pg.includes('transfer')) byMes[mesKey].tarjetas+=monto;
       else byMes[mesKey].efectivo+=monto;
     });
     const meses=Object.values(byMes).sort((a,b)=>b.mesKey.localeCompare(a.mesKey));
@@ -12772,7 +12790,7 @@ function renderDVSemanas(){
     else if(pg==='bbva-efectivo'){bySem[semKey].efectivo+=v.bbvaEfectivo||0;bySem[semKey].tarjetas+=v.bbvaTarjeta||0;}
     else if(pg==='tarjeta-efectivo'){bySem[semKey].efectivo+=v.tarjetaEfEfectivo||0;bySem[semKey].tarjetas+=v.tarjetaEfTarjeta||0;}
     else if(pg==='efectivo'||pg==='monedero'||pg==='') bySem[semKey].efectivo+=monto;
-    else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) bySem[semKey].tarjetas+=monto;
+    else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg.includes('mercado')||pg==='transferencia'||pg.includes('transfer')) bySem[semKey].tarjetas+=monto;
     else bySem[semKey].efectivo+=monto;
   });
   const sems=Object.values(bySem).sort((a,b)=>b.semKey.localeCompare(a.semKey));
@@ -12795,6 +12813,159 @@ function renderDVSemanas(){
       <td style="padding:6px 10px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">${fmt(s.total)}</td>
     </tr>`;
   }).join('');
+}
+
+// ══════════════════════════════════════
+//  📥 DESCARGAR EXCEL / PDF – DASHBOARD
+// ══════════════════════════════════════
+function dvGetTableData(tipo){
+  const MESES_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const diasNom=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const todasVentas=ventas||[];
+  function calcMonto(v){
+    const t=v.tipoVenta||'venta';
+    return t==='devolucion'?(v.total||0):t==='apartado'||t==='credito'?(v.anticipo||0):t==='abono'?(v.monto||v.total||0):(v.total||0);
+  }
+  function categPago(pg,monto,v,obj){
+    if(pg==='mixto'){obj.efectivo+=(v.mixtoEfectivo||0);obj.tarjetas+=(v.mixtoTarjeta||0);}
+    else if(pg==='bbva-efectivo'){obj.efectivo+=(v.bbvaEfectivo||0);obj.tarjetas+=(v.bbvaTarjeta||0);}
+    else if(pg==='tarjeta-efectivo'){obj.efectivo+=(v.tarjetaEfEfectivo||0);obj.tarjetas+=(v.tarjetaEfTarjeta||0);}
+    else if(pg==='efectivo'||pg==='monedero'||pg==='')obj.efectivo+=monto;
+    else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg.includes('mercado')||pg==='transferencia'||pg.includes('transfer'))obj.tarjetas+=monto;
+    else obj.efectivo+=monto;
+  }
+  if(tipo==='dias'){
+    const vFilt=window._dvFiltVentas||todasVentas;
+    const byDay={};
+    vFilt.forEach(v=>{
+      const f=v.fecha||'';if(!f)return;
+      if(!byDay[f])byDay[f]={fecha:f,txns:0,efectivo:0,tarjetas:0,total:0};
+      const monto=calcMonto(v);
+      byDay[f].txns++;byDay[f].total+=monto;
+      categPago((v.pago||'').toLowerCase().trim(),monto,v,byDay[f]);
+    });
+    const rows=Object.values(byDay).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+    const headers=['Fecha','Día','#','Efectivo','Tarjeta','Total'];
+    const data=rows.map(d=>{
+      const dt=new Date(d.fecha+'T12:00:00');
+      const dia=d.fecha.slice(8)+' '+(MESES_N[parseInt(d.fecha.slice(5,7))-1]||'');
+      return[dia,diasNom[dt.getDay()],d.txns,d.efectivo,d.tarjetas,d.total];
+    });
+    const totEf=rows.reduce((a,d)=>a+d.efectivo,0);
+    const totTar=rows.reduce((a,d)=>a+d.tarjetas,0);
+    const totAll=rows.reduce((a,d)=>a+d.total,0);
+    const totTxn=rows.reduce((a,d)=>a+d.txns,0);
+    data.push(['TOTAL','',totTxn,totEf,totTar,totAll]);
+    return{headers,data,title:'Ventas por Dia',filename:'ventas_por_dia'};
+  }
+  if(tipo==='mes'){
+    const byMes={};
+    todasVentas.forEach(v=>{
+      const f=v.fecha||'';if(!f||f.length<7)return;
+      const k=f.slice(0,7);
+      if(!byMes[k])byMes[k]={mesKey:k,txns:0,efectivo:0,tarjetas:0,total:0};
+      const monto=calcMonto(v);
+      byMes[k].txns++;byMes[k].total+=monto;
+      categPago((v.pago||'').toLowerCase().trim(),monto,v,byMes[k]);
+    });
+    const meses=Object.values(byMes).sort((a,b)=>b.mesKey.localeCompare(a.mesKey));
+    const headers=['Mes','#','Efectivo','Tarjeta','Total'];
+    const data=meses.map(m=>{
+      const[y,mo]=m.mesKey.split('-');
+      return[(MESES_N[parseInt(mo)-1]||mo)+' '+y,m.txns,m.efectivo,m.tarjetas,m.total];
+    });
+    const mEf=meses.reduce((a,m)=>a+m.efectivo,0);
+    const mTar=meses.reduce((a,m)=>a+m.tarjetas,0);
+    const mAll=meses.reduce((a,m)=>a+m.total,0);
+    const mTxn=meses.reduce((a,m)=>a+m.txns,0);
+    data.push(['TOTAL',mTxn,mEf,mTar,mAll]);
+    return{headers,data,title:'Acumulado por Mes',filename:'acumulado_por_mes'};
+  }
+  if(tipo==='semana'){
+    const mesFiltro=document.getElementById('dv-sem-mes-filtro')?.value||'';
+    const bySem={};
+    todasVentas.forEach(v=>{
+      const f=v.fecha||'';if(!f||f.length<10)return;
+      if(mesFiltro&&f.slice(5,7)!==mesFiltro)return;
+      const monto=calcMonto(v);
+      const d=new Date(f+'T12:00:00');
+      const startYear=new Date(d.getFullYear(),0,1);
+      const weekNum=Math.ceil(((d-startYear)/86400000+startYear.getDay()+1)/7);
+      const semKey=d.getFullYear()+'-W'+String(weekNum).padStart(2,'0');
+      if(!bySem[semKey]){
+        const dow=d.getDay()||7;
+        const lun=new Date(d);lun.setDate(d.getDate()-(dow-1));
+        const dom=new Date(lun);dom.setDate(lun.getDate()+6);
+        const f2=dt=>String(dt.getDate()).padStart(2,'0')+'/'+(MESES_N[dt.getMonth()]||'');
+        bySem[semKey]={semKey,weekNum,anio:d.getFullYear(),rango:f2(lun)+'-'+f2(dom),txns:0,efectivo:0,tarjetas:0,total:0};
+      }
+      bySem[semKey].txns++;bySem[semKey].total+=monto;
+      categPago((v.pago||'').toLowerCase().trim(),monto,v,bySem[semKey]);
+    });
+    const sems=Object.values(bySem).sort((a,b)=>b.semKey.localeCompare(a.semKey));
+    const headers=['Semana','Anio','Rango','#','Efectivo','Tarjeta','Total'];
+    const data=sems.map(s=>['Sem. '+s.weekNum,s.anio,s.rango,s.txns,s.efectivo,s.tarjetas,s.total]);
+    const sEf=sems.reduce((a,s)=>a+s.efectivo,0);
+    const sTar=sems.reduce((a,s)=>a+s.tarjetas,0);
+    const sAll=sems.reduce((a,s)=>a+s.total,0);
+    const sTxn=sems.reduce((a,s)=>a+s.txns,0);
+    data.push(['TOTAL','','',sTxn,sEf,sTar,sAll]);
+    return{headers,data,title:'Acumulado por Semana',filename:'acumulado_por_semana'};
+  }
+  return null;
+}
+
+function dvDescargarExcel(tipo){
+  if(typeof XLSX==='undefined'){toast('Cargando libreria Excel, intenta en 2s...');return;}
+  const td=dvGetTableData(tipo);if(!td)return;
+  const ws=XLSX.utils.aoa_to_sheet([td.headers,...td.data]);
+  const numRows=td.data.length;
+  const moneyIdx=tipo==='dias'?[3,4,5]:tipo==='mes'?[2,3,4]:[4,5,6];
+  moneyIdx.forEach(col=>{
+    for(let r=1;r<=numRows;r++){
+      const cell=ws[XLSX.utils.encode_cell({c:col,r})];
+      if(cell&&typeof cell.v==='number'){cell.z='"$"#,##0.00';cell.t='n';}
+    }
+  });
+  ws['!cols']=td.headers.map((_,i)=>({wch:moneyIdx.includes(i)?16:14}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,td.title.slice(0,31));
+  XLSX.writeFile(wb,'JABED_'+td.filename+'_'+hoy()+'.xlsx');
+  toast('Excel descargado');
+}
+
+function dvDescargarPDF(tipo){
+  if(typeof window.jspdf==='undefined'){toast('Cargando libreria PDF, intenta en 2s...');return;}
+  const{jsPDF}=window.jspdf;
+  const td=dvGetTableData(tipo);if(!td)return;
+  const fmtN=n=>typeof n==='number'?'$'+n.toLocaleString('es-MX',{minimumFractionDigits:2}):(n!=null?n:'');
+  const moneyIdx=tipo==='dias'?[3,4,5]:tipo==='mes'?[2,3,4]:[4,5,6];
+  const bodyRows=td.data.map(row=>row.map((cell,i)=>moneyIdx.includes(i)?fmtN(cell):(cell!=null?String(cell):'') ));
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'letter'});
+  doc.setFontSize(14);doc.setTextColor(30,30,30);
+  doc.text('Zapateria JABED  —  '+td.title,14,13);
+  doc.setFontSize(9);doc.setTextColor(120,120,120);
+  doc.text('Generado: '+new Date().toLocaleString('es-MX'),14,20);
+  doc.autoTable({
+    head:[td.headers],
+    body:bodyRows,
+    startY:25,
+    theme:'grid',
+    headStyles:{fillColor:[26,158,92],textColor:255,fontStyle:'bold',fontSize:9},
+    bodyStyles:{fontSize:8,textColor:[30,30,30]},
+    alternateRowStyles:{fillColor:[245,250,247]},
+    columnStyles:moneyIdx.reduce((acc,i)=>{acc[i]={halign:'right'};return acc;},{}),
+    margin:{left:12,right:12},
+    didParseCell:function(data){
+      if(data.section==='body'&&data.row.index===bodyRows.length-1){
+        data.cell.styles.fillColor=[240,180,41];
+        data.cell.styles.fontStyle='bold';
+        data.cell.styles.textColor=[30,30,30];
+      }
+    }
+  });
+  doc.save('JABED_'+td.filename+'_'+hoy()+'.pdf');
+  toast('PDF descargado');
 }
 
 function fmtFechaCorta(fecha){
