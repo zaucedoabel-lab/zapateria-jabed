@@ -628,7 +628,6 @@ select option{background:var(--s2)}
 .flex-between{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .divider{height:1px;background:var(--border);margin:14px 0}
 .tag{display:inline-block;padding:2px 7px;background:var(--s3);border-radius:4px;font-size:11px;color:var(--muted);font-family:var(--mono);margin:2px}
-#inv-tbody tr td{vertical-align:middle;padding-top:6px;padding-bottom:6px}
 .search-wrap{position:relative;display:flex;align-items:center}
 .search-wrap input{padding-left:32px}
 .search-ico{position:absolute;left:10px;color:var(--faint);font-size:13px;pointer-events:none}
@@ -711,23 +710,23 @@ select option{background:var(--s2)}
   align-items:center;
   gap:6px;
   padding:0 18px;
-  background:#ffffff;
+  background:transparent;
   border:none;
-  border-right:1px solid #cccccc;
+  border-right:1px solid var(--border);
   border-bottom:3px solid transparent;
   cursor:pointer;
   font-size:12px;
-  font-weight:700;
-  color:#111111;
+  font-weight:600;
+  color:var(--muted);
   white-space:nowrap;
   transition:all .15s;
 }
-.mod-tab:hover{background:#e8e8e8;color:#000000}
+.mod-tab:hover{background:var(--s2);color:var(--cream)}
 .mod-tab.active{
-  background:#ffffff;
-  color:#000000;
-  border-bottom-color:#000000;
-  font-weight:900;
+  background:var(--s2);
+  color:var(--accent2);
+  border-bottom-color:var(--accent);
+  font-weight:700;
 }
 .mod-module-label{
   display:flex;align-items:center;
@@ -1221,11 +1220,14 @@ body{background:#071222!important}
               </div>
               <div>
                 <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Mostrar</label>
-                <select id="inv-mostrar" onchange="renderInv()" style="width:140px">
+                <select id="inv-mostrar" onchange="renderInv()" style="width:160px">
                   <option value="todos">Todos los artículos</option>
                   <option value="con_stock">Solo con existencias</option>
                   <option value="sin_stock">Sin existencias</option>
                   <option value="bajo_stock">Stock bajo (≤3)</option>
+                  <option value="sin_foto">⚠️ Sin foto</option>
+                  <option value="sin_sku">⚠️ Sin SKU/Código</option>
+                  <option value="campos_vacios">⚠️ Campos incompletos</option>
                 </select>
               </div>
               <div>
@@ -4566,7 +4568,10 @@ function abrirModalProducto(id){
     populateProdCatalogSelect('p-marca','marcas','Seleccionar marca…','');
     populateProdCatalogSelect('p-color','colores','Seleccionar color…','');
     populateLocacionSelect('');
-    if(sucursales.length>0)sucSel.value=sucursales[0].id;
+    // Default: seleccionar primera sucursal de tipo TIENDA
+    const _primeraTienda = sucursales.find(s=>s.tipo!=='bodega');
+    if(_primeraTienda) sucSel.value=_primeraTienda.id;
+    else if(sucursales.length>0) sucSel.value=sucursales[0].id;
     renderTallasSel(null);
   }
   // Vendedor/bodeguero: can select tallas (to register the product) 
@@ -4641,10 +4646,31 @@ function getStockVals(){
 async function saveProducto(){
   const desc=document.getElementById('p-desc').value.trim();
   const precio=parseFloat(document.getElementById('p-precio').value);
-  if(!desc){toast('Falta descripción','err');return;}
-  if(isNaN(precio)||precio<0){toast('Precio inválido','err');return;}
   const sucId=document.getElementById('p-suc').value;
-  if(!sucId){toast('Selecciona una sucursal','err');return;}
+  // ── TAREA 2: Campos obligatorios para nuevo producto ────────────────────
+  const _sku=(document.getElementById('p-sku').value||'').trim();
+  const _cat=(document.getElementById('p-cat').value||'').trim();
+  const _linea=(document.getElementById('p-linea').value||'').trim();
+  const _temp=(document.getElementById('p-temporada').value||'').trim();
+  const _marca=(document.getElementById('p-marca').value||'').trim();
+  const _color=(document.getElementById('p-color').value||'').trim();
+  const _locacion=(document.getElementById('p-locacion')?.value||'').trim();
+  const _tallasSeleccionadas=[...document.querySelectorAll('#p-tallas-sel .tb.on')];
+  const _tieneStock=_tallasSeleccionadas.length>0;
+  const _tieneFoto=!!photoDataUrl||(editProdId&&!!productos.find(x=>x.id===editProdId)?.foto);
+  if(!_tieneFoto){toast('📸 La foto del producto es obligatoria','err');return;}
+  if(!_sku){toast('🔑 El SKU / Clave es obligatorio','err');document.getElementById('p-sku')?.focus();return;}
+  if(!desc){toast('📝 La descripción es obligatoria','err');document.getElementById('p-desc')?.focus();return;}
+  if(!_cat){toast('🏷️ La categoría es obligatoria','err');return;}
+  if(!_linea){toast('📂 La línea es obligatoria','err');return;}
+  if(!_temp){toast('🗓️ La temporada es obligatoria','err');return;}
+  if(!_marca){toast('🏭 La marca es obligatoria','err');return;}
+  if(isNaN(precio)||precio<=0){toast('💲 El precio de venta es obligatorio','err');document.getElementById('p-precio')?.focus();return;}
+  if(!_color){toast('🎨 El color es obligatorio','err');return;}
+  if(!_locacion){toast('📍 La locación es obligatoria','err');return;}
+  if(!_tieneStock){toast('👟 Selecciona al menos una talla','err');return;}
+  if(!sucId){toast('🏪 Selecciona una sucursal','err');return;}
+  // ────────────────────────────────────────────────────────────────────────
   // Get stock from form inputs
   let stock=getStockVals();
   // If editing: preserve any existing tallas not shown in current ALL_TALLAS list
@@ -4804,10 +4830,8 @@ async function saveProducto(){
           const codigoRef = (altaData.barcode||altaData.sku||'').trim();
           const yaExiste = productos.some(p=>{
             if(p.sucursalId !== bodega.id) return false;
-            // FIX6: vincular por código primero, luego por creadoDesde, luego por desc+cat
-            if(codigoRef && (p.barcode===codigoRef || p.sku===codigoRef)) return true;
-            if(p.creadoDesde && p.creadoDesde===ref.id) return true;
-            return false; // No crear por desc+cat — demasiado permisivo, podría fusionar productos distintos
+            if(codigoRef) return p.barcode===codigoRef || p.sku===codigoRef;
+            return (p.desc||'').toLowerCase()===(altaData.desc||'').toLowerCase() && p.cat===altaData.cat;
           });
           if(!yaExiste){
             const stockCero = {};
@@ -4918,19 +4942,20 @@ function renderInv(){
     const ms = activeSucId==='all'
       ? true
       : p.sucursalId===activeSucId
-        || (!p.sucursalId && sucursales.find(s=>s.id===activeSucId)?.tipo!=='bodega')
-        // FIX4: también incluir el gemelo de bodega cuando veamos su tienda origen
-        || (() => {
-          if(!p.creadoDesde) return false;
-          const pOrigen = productos.find(x=>x.id===p.creadoDesde);
-          return pOrigen?.sucursalId===activeSucId;
-        })();
+        || (!p.sucursalId && sucursales.find(s=>s.id===activeSucId)?.tipo!=='bodega');
     const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
     const tot=sumS(p.stock);
     // ── BUG FIX: gemelos de bodega (creadoDesde) siempre visibles en inventario
     // aunque tengan 0 stock — representan "ranuras" pendientes de surtir
     const esGemeloEsperando = !!p.creadoDesde && esBodegaP && tot===0;
-    const mstock = esGemeloEsperando || mostrar==='todos'||(mostrar==='con_stock'&&tot>0)||(mostrar==='sin_stock'&&tot===0)||(mostrar==='bajo_stock'&&tot>0&&tot<=3);
+    const _camposIncompletos = !p.foto||!(p.barcode||p.sku)||!p.cat||!p.linea||!p.temporada||!p.marca||!p.color||!p.locacion||!p.precio;
+    const mstock = esGemeloEsperando || mostrar==='todos'
+      ||(mostrar==='con_stock'&&tot>0)
+      ||(mostrar==='sin_stock'&&tot===0)
+      ||(mostrar==='bajo_stock'&&tot>0&&tot<=3)
+      ||(mostrar==='sin_foto'&&!p.foto)
+      ||(mostrar==='sin_sku'&&!(p.barcode||p.sku))
+      ||(mostrar==='campos_vacios'&&_camposIncompletos);
     return mq&&mc&&ml&&mt&&mm&&ms&&mstock;
   });
 
@@ -5022,7 +5047,7 @@ function renderInvMatriz(agrupados){
       : tot===0 ? 'opacity:.5' : tot<=3 ? 'background:rgba(240,180,41,.06)' : '';
     
     return`<tr style="${rowColor}">
-      <td><div class="thumb" style="width:72px;height:72px;font-size:28px;border-radius:8px">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div></td>
+      <td><div class="thumb" style="width:32px;height:32px;font-size:16px">${p.foto?`<img src="${p.foto}" alt="">`:'👟'}</div></td>
       <td><div class="mono" style="color:var(--cream);font-weight:600">${p.barcode||p.sku||'—'}</div></td>
       <td><div style="font-weight:500;color:var(--cream);font-size:12px;line-height:1.3">${p.desc}${p.esLiquidacion?' <span class=\"badge b-red\" style=\"font-size:9px\">🏷️LIQ</span>':''}</div><div style="font-size:10px;color:var(--muted)">${p.marca||''}</div></td>
       <td style="font-size:12px;color:var(--muted)">${p.color||'—'}</td>
@@ -5092,7 +5117,7 @@ function renderInvLista(agrupadosPorSuc){
       stockCombinado[t] = (stockCombinado[t]||0) + v;
     });
     const ts = sortTallas(Object.keys(stockCombinado).filter(t=>stockCombinado[t]>0))
-      .map(t=>`<span style="display:inline-flex;align-items:center;gap:3px;background:var(--s3);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;margin:2px;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--cream)">${t}<span style="background:var(--accent);color:#fff;border-radius:4px;padding:1px 5px;font-size:11px;font-weight:800;margin-left:2px">${stockCombinado[t]}</span></span>`).join('');
+      .map(t=>`<span class="tag">${t}(${stockCombinado[t]})</span>`).join('');
 
     const estado = tot===0
       ? '<span class="badge b-red">Sin stock</span>'
@@ -5110,14 +5135,22 @@ function renderInvLista(agrupadosPorSuc){
       totB === 0;
 
     return`<tr>
-      <td><div class="thumb" style="width:72px;height:72px;font-size:28px;border-radius:8px">${p.foto?`<img src="${p.foto}" alt="">`:p.desc?.charAt(0)||'?'}</div></td>
-      <td><div class="mono" style="font-size:15px;font-weight:800;color:var(--gold);letter-spacing:.5px">${p.barcode||p.sku||'—'}</div>${p.barcode&&p.sku?`<div style="font-size:11px;color:var(--faint);font-family:var(--mono)">${p.sku}</div>`:''}</td>
-      <td><div style="font-weight:500">${p.desc}${p.esLiquidacion?' <span class="badge b-red" style="font-size:9px">🏷️LIQ</span>':''}</div><div style="font-size:11px;color:var(--muted)">${p.marca||''}</div></td>
+      <td><div class="thumb">${p.foto?`<img src="${p.foto}" alt="">`:p.desc?.charAt(0)||'?'}</div></td>
+      <td>
+        <div class="mono" style="font-size:15px;font-weight:800;color:var(--gold);letter-spacing:.5px">${p.barcode||p.sku||'—'}</div>
+        ${p.barcode&&p.sku?`<div style="font-size:11px;color:var(--faint);font-family:var(--mono)">${p.sku}</div>`:''}
+        ${(()=>{const missing=[];if(!p.foto)missing.push('foto');if(!(p.barcode||p.sku))missing.push('SKU');if(!p.cat)missing.push('cat');if(!p.linea)missing.push('línea');if(!p.temporada)missing.push('temp');if(!p.marca)missing.push('marca');if(!p.color)missing.push('color');if(!p.locacion)missing.push('loc');if(!p.precio)missing.push('precio');return missing.length?`<div style="margin-top:3px"><span style="background:rgba(224,82,82,.15);border:1px solid rgba(224,82,82,.5);border-radius:5px;padding:2px 6px;font-size:9px;color:#e05252;font-weight:700">⚠️ Faltan: ${missing.join(', ')}</span></div>`:''})()}
+      </td>
+      <td>
+        <div style="font-weight:500">${p.desc}${p.esLiquidacion?' <span class="badge b-red" style="font-size:9px">🏷️LIQ</span>':''}</div>
+        <div style="font-size:11px;color:var(--muted)">${p.marca||''}</div>
+        ${(()=>{const m=[];if(!p.foto)m.push('foto');if(!(p.barcode||p.sku))m.push('SKU');if(!p.linea)m.push('línea');if(!p.temporada)m.push('temp');if(!p.marca)m.push('marca');if(!p.color)m.push('color');if(!p.locacion)m.push('loc');return m.length?`<span style="background:rgba(224,82,82,.15);border:1px solid rgba(224,82,82,.4);border-radius:4px;padding:1px 5px;font-size:9px;color:#e05252;font-weight:700">⚠️ ${m.join(', ')}</span>`:''})()}
+      </td>
       <td><span class="badge b-accent">${p.cat}</span></td>
       <td style="color:var(--muted);font-size:12px">${p.linea||'—'}</td>
       <td style="font-size:11px;color:var(--muted)">${p.temporada||'—'}</td>
       <td style="color:var(--muted)">${p.color||'—'}</td>
-      <td style="max-width:340px;min-width:180px">${ts||'<span style="color:var(--faint);font-size:12px">Sin stock</span>'}</td>
+      <td style="max-width:200px">${ts||'<span style="color:var(--faint)">Sin stock</span>'}</td>
       <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:${totT===0?'var(--faint)':'var(--accent2)'}">${totT}</td>
       <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:${tieneGemeloEsperando?'var(--blue)':totB===0?'var(--faint)':'var(--gold)'}">
         ${tieneGemeloEsperando ? '<span style="font-size:10px">⏳</span>' : totB}
@@ -10156,12 +10189,11 @@ function renderCatalogo(){
     });
   }
 
-  // FIX: Excluir bodegas del catálogo general — solo mostrar productos de Tienda
+  // Excluir bodegas — solo mostrar productos de Tienda en catálogo
   const bodegas = new Set(sucursales.filter(s=>s.tipo==='bodega').map(s=>s.id));
 
   const lista = productos.filter(p=>{
-    // Excluir registros de bodega
-    if(bodegas.has(p.sucursalId)) return false;
+    if(bodegas.has(p.sucursalId)) return false; // excluir bodega
     const mq = !q ||
       (p.desc||'').toLowerCase().includes(q) ||
       (p.barcode||'').includes(q) ||
@@ -10180,27 +10212,17 @@ function renderCatalogo(){
   if(countEl) countEl.textContent = lista.length+' productos';
 
   document.getElementById('cat-empty').style.display=lista.length?'none':'block';
-  const sumS = s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
+  const _sumS = s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
 
   document.getElementById('cat-grid').innerHTML=lista.map(p=>{
     const suc=sucursales.find(s=>s.id===p.sucursalId);
     const liqBadge = p.esLiquidacion ? '<span class="badge b-red" style="font-size:9px;display:block;margin-bottom:3px">🏷️ LIQUIDACIÓN</span>' : '';
-    // Stock tienda vs bodega
-    const codigoKey = (p.barcode||p.sku||'').trim();
-    const totTienda = sumS(p.stock);
-    const totBodega = codigoKey
-      ? productos.filter(x=>bodegas.has(x.sucursalId)&&(x.barcode===codigoKey||x.sku===codigoKey)).reduce((a,x)=>a+sumS(x.stock),0)
-      : 0;
-    const tot = totTienda + totBodega;
-    // Detectar si ya tiene gemelo en bodega
-    const tieneGemelo = bodegas.size===0 || productos.some(x=>
-      bodegas.has(x.sucursalId)&&(x.creadoDesde===p.id||(codigoKey&&(x.barcode===codigoKey||x.sku===codigoKey)))
-    );
-    const gemeloBadge = !tieneGemelo && bodegas.size>0
-      ? `<div style="background:rgba(224,82,82,.12);border:1px solid rgba(224,82,82,.4);border-radius:7px;padding:4px 8px;font-size:10px;color:#e05252;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between;gap:6px">
-           <span>⚠️ Sin gemelo bodega</span>
-           <button class="btn btn-xs" style="padding:2px 7px;font-size:10px;background:#c0392b;color:#fff;border:none;border-radius:5px;cursor:pointer" onclick="event.stopPropagation();crearGemeloManual('${p.id}')">+ Crear</button>
-         </div>` : '';
+    const codigoKey=(p.barcode||p.sku||'').trim();
+    const totT=_sumS(p.stock);
+    const totB=codigoKey?productos.filter(x=>bodegas.has(x.sucursalId)&&(x.barcode===codigoKey||x.sku===codigoKey)).reduce((a,x)=>a+_sumS(x.stock),0):0;
+    const tot=totT+totB;
+    const tieneGemelo=bodegas.size===0||productos.some(x=>bodegas.has(x.sucursalId)&&(x.creadoDesde===p.id||(codigoKey&&(x.barcode===codigoKey||x.sku===codigoKey))));
+    const gemeloBadge=!tieneGemelo&&bodegas.size>0?`<div style="background:rgba(224,82,82,.12);border:1px solid rgba(224,82,82,.4);border-radius:7px;padding:4px 8px;font-size:10px;color:#e05252;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span>⚠️ Sin gemelo bodega</span><button class="btn btn-xs" style="padding:2px 7px;font-size:10px;background:#c0392b;color:#fff;border:none;border-radius:5px;cursor:pointer" onclick="event.stopPropagation();crearGemeloManual('${p.id}')">+ Crear</button></div>`:'';
     return`<div class="prod-card">
       <div class="prod-img" onclick="abrirModalProducto('${p.id}')" style="aspect-ratio:1;height:auto;min-height:120px">
         ${p.foto?`<img src="${p.foto}" alt="${p.desc}" style="width:100%;height:100%;object-fit:cover">`:'<span style="font-size:36px">👟</span>'}
@@ -10214,11 +10236,8 @@ function renderCatalogo(){
         ${p.marca?`<div style="font-size:11px;color:var(--muted);margin-bottom:3px">${p.marca}${p.color?' · '+p.color:''}</div>`:''}
         ${p.locacion?`<div style="font-size:10px;color:var(--blue);margin-bottom:3px">📍 ${p.locacion}</div>`:''}
         ${suc?`<div style="font-size:11px;color:var(--muted);margin-bottom:4px">🏪 ${suc.nombre}</div>`:''}
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <span style="font-family:var(--mono);color:var(--gold);font-size:14px">${fmt(p.precio)}</span>
-          <span class="badge ${tot<=3?'b-gold':'b-green'}">${tot} pzas</span>
-        </div>
-        ${totBodega>0?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px">🏪 ${totTienda} · 📦 ${totBodega}</div>`:''}
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-family:var(--mono);color:var(--gold);font-size:14px">${fmt(p.precio)}</span><span class="badge ${tot<=3?'b-gold':'b-green'}">${tot} pzas</span></div>
+        ${totB>0?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px">🏪 ${totT} · 📦 ${totB}</div>`:''}
         <div style="display:flex;gap:4px">
           <button class="btn btn-ghost btn-xs" style="flex:1" onclick="abrirModalProducto('${p.id}')">✏️ Editar</button>
           <button class="btn btn-ghost btn-xs" onclick="imprimirEtiqueta('${p.id}')">🏷️</button>
@@ -10227,76 +10246,6 @@ function renderCatalogo(){
       </div>
     </div>`;
   }).join('');
-}
-
-// ══════════════════════════════════════════════════════════
-// GEMELOS: crear gemelo en bodega para un producto de tienda
-// ══════════════════════════════════════════════════════════
-
-async function crearGemeloManual(prodId){
-  const p = productos.find(x=>x.id===prodId);
-  if(!p){ toast('Producto no encontrado','err'); return; }
-  const bodegas = sucursales.filter(s=>s.tipo==='bodega');
-  if(!bodegas.length){ toast('No hay sucursal Bodega configurada','err'); return; }
-  const bodega = bodegas[0];
-  // Verificar que no exista ya
-  const codigoRef = (p.barcode||p.sku||'').trim();
-  const yaExiste = productos.some(x=>
-    x.sucursalId===bodega.id && x.id!==prodId &&
-    (x.creadoDesde===prodId || (codigoRef&&(x.barcode===codigoRef||x.sku===codigoRef)))
-  );
-  if(yaExiste){ toast('Ya existe un gemelo en bodega para este producto','err'); return; }
-  try{
-    const stockCero={};
-    Object.keys(p.stock||{}).forEach(t=>{ stockCero[t]=0; });
-    const bodegaData={
-      ...p, stock:stockCero,
-      sucursalId:bodega.id,
-      creadoDesde:prodId,
-      createdAt:new Date().toISOString()
-    };
-    delete bodegaData.id;
-    const {addDoc} = window._fb;
-    const ref = await addDoc(col('productos'), bodegaData);
-    productos.push({...bodegaData, id:ref.id});
-    toast('Gemelo creado en '+bodega.nombre+' ✓');
-    renderCatalogo();
-    renderInv();
-  }catch(e){ toast('Error al crear gemelo: '+e.message,'err'); console.error(e); }
-}
-
-async function crearTodosGemelos(){
-  const bodegas = sucursales.filter(s=>s.tipo==='bodega');
-  if(!bodegas.length){ toast('No hay sucursal Bodega configurada','err'); return; }
-  const bodega = bodegas[0];
-  const bodegaIds = new Set(sucursales.filter(s=>s.tipo==='bodega').map(s=>s.id));
-  // Productos de tienda sin gemelo
-  const sinGemelo = productos.filter(p=>{
-    if(bodegaIds.has(p.sucursalId)) return false; // es bodega, saltar
-    const codigoRef=(p.barcode||p.sku||'').trim();
-    return !productos.some(x=>
-      bodegaIds.has(x.sucursalId) &&
-      (x.creadoDesde===p.id||(codigoRef&&(x.barcode===codigoRef||x.sku===codigoRef)))
-    );
-  });
-  if(!sinGemelo.length){ toast('✅ Todos los productos tienen su gemelo en bodega'); return; }
-  if(!confirm(`Se crearán ${sinGemelo.length} gemelo(s) en "${bodega.nombre}" con stock 0. ¿Continuar?`)) return;
-  let ok=0, err=0;
-  const {addDoc} = window._fb;
-  for(const p of sinGemelo){
-    try{
-      const stockCero={};
-      Object.keys(p.stock||{}).forEach(t=>{ stockCero[t]=0; });
-      const d={...p, stock:stockCero, sucursalId:bodega.id, creadoDesde:p.id, createdAt:new Date().toISOString()};
-      delete d.id;
-      const ref = await addDoc(col('productos'), d);
-      productos.push({...d, id:ref.id});
-      ok++;
-    }catch(e){ console.error('Gemelo error para '+p.id, e); err++; }
-  }
-  toast(`${ok} gemelo(s) creados${err?' · '+err+' errores':''} ✓`);
-  renderCatalogo();
-  renderInv();
 }
 
 // Remove stock section from product modal — catalog is for registration only
@@ -10322,6 +10271,55 @@ function abrirModalProductoSinStock(id){
 }
 
 
+
+// ══════════════════════════════════════════════════════════
+// GEMELOS: crear gemelo en bodega para un producto de tienda
+// ══════════════════════════════════════════════════════════
+async function crearGemeloManual(prodId){
+  const p=productos.find(x=>x.id===prodId);
+  if(!p){toast('Producto no encontrado','err');return;}
+  const bodegas=sucursales.filter(s=>s.tipo==='bodega');
+  if(!bodegas.length){toast('No hay sucursal Bodega configurada','err');return;}
+  const bodega=bodegas[0];
+  const codigoRef=(p.barcode||p.sku||'').trim();
+  const yaExiste=productos.some(x=>x.sucursalId===bodega.id&&x.id!==prodId&&(x.creadoDesde===prodId||(codigoRef&&(x.barcode===codigoRef||x.sku===codigoRef))));
+  if(yaExiste){toast('Ya existe un gemelo en bodega','err');return;}
+  try{
+    const stockCero={};Object.keys(p.stock||{}).forEach(t=>{stockCero[t]=0;});
+    const d={...p,stock:stockCero,sucursalId:bodega.id,creadoDesde:prodId,createdAt:new Date().toISOString()};
+    delete d.id;
+    const ref=await window._fb.addDoc(col('productos'),d);
+    productos.push({...d,id:ref.id});
+    toast('Gemelo creado en '+bodega.nombre+' ✓');
+    renderCatalogo();renderInv();
+  }catch(e){toast('Error al crear gemelo: '+e.message,'err');console.error(e);}
+}
+
+async function crearTodosGemelos(){
+  const bodegas=sucursales.filter(s=>s.tipo==='bodega');
+  if(!bodegas.length){toast('No hay sucursal Bodega configurada','err');return;}
+  const bodega=bodegas[0];
+  const bodegaIds=new Set(sucursales.filter(s=>s.tipo==='bodega').map(s=>s.id));
+  const sinGemelo=productos.filter(p=>{
+    if(bodegaIds.has(p.sucursalId))return false;
+    const c=(p.barcode||p.sku||'').trim();
+    return!productos.some(x=>bodegaIds.has(x.sucursalId)&&(x.creadoDesde===p.id||(c&&(x.barcode===c||x.sku===c))));
+  });
+  if(!sinGemelo.length){toast('✅ Todos los productos ya tienen su gemelo en bodega');return;}
+  if(!confirm(`Se crearán ${sinGemelo.length} gemelo(s) en "${bodega.nombre}" con stock 0. ¿Continuar?`))return;
+  let ok=0,err=0;
+  for(const p of sinGemelo){
+    try{
+      const sc={};Object.keys(p.stock||{}).forEach(t=>{sc[t]=0;});
+      const d={...p,stock:sc,sucursalId:bodega.id,creadoDesde:p.id,createdAt:new Date().toISOString()};
+      delete d.id;
+      const ref=await window._fb.addDoc(col('productos'),d);
+      productos.push({...d,id:ref.id});ok++;
+    }catch(e){console.error('Gemelo error:',e);err++;}
+  }
+  toast(`${ok} gemelo(s) creados${err?' · '+err+' errores':''} ✓`);
+  renderCatalogo();renderInv();
+}
 
 // ══════════════════ TALLAS EN CATÁLOGOS ══════════════════
 function renderTallasCatalogUI(){
