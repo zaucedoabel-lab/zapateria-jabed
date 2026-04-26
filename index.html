@@ -9,6 +9,11 @@
 <meta name="apple-mobile-web-app-title" content="JABED">
 <meta name="theme-color" content="#f0b429">
 <title>Zapatería JABED</title>
+<!-- SheetJS — Excel export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- jsPDF + AutoTable — PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;Zapatería JABED&quot;,&quot;short_name&quot;:&quot;JABED&quot;,&quot;start_url&quot;:&quot;/&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%230f0f12&quot;,&quot;theme_color&quot;:&quot;%23f0b429&quot;,&quot;orientation&quot;:&quot;any&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23f0b429'/%3E%3Ctext y='0.9em' font-size='75' text-anchor='middle' x='50'%3E👟%3C/text%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;any&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
@@ -5255,6 +5260,31 @@ function renderInvLista(agrupadosPorSuc){
   }).join('');
 }
 
+// ── Carga dinámica de librerías de exportación ──
+const _libUrls={
+  xlsx:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+  jspdf:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  autotable:'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'
+};
+function _loadLibsAndRun(libs, cb){
+  const needed=libs.filter(k=>{
+    if(k==='xlsx')return typeof XLSX==='undefined';
+    if(k==='jspdf')return typeof window.jspdf==='undefined';
+    if(k==='autotable')return !(window.jspdf && typeof window.jspdf.jsPDF?.prototype?.autoTable==='function'||typeof window.jspdf?.jsPDF?.prototype?.autoTable==='function');
+    return false;
+  });
+  if(!needed.length){cb();return;}
+  let loaded=0;
+  needed.forEach(k=>{
+    const s=document.createElement('script');
+    s.src=_libUrls[k];
+    s.onload=()=>{loaded++;if(loaded===needed.length)cb();};
+    s.onerror=()=>toast('Error cargando librería '+k,'err');
+    document.head.appendChild(s);
+  });
+  toast('⏳ Cargando librería, espera…');
+}
+
 // ══════════════════════════════════════
 //  📥 INVENTARIO — EXPORTAR EXCEL / PDF
 // ══════════════════════════════════════
@@ -5310,56 +5340,54 @@ function _invGetData(){
 }
 
 function invDescargarExcel(){
-  if(typeof XLSX==='undefined'){toast('Cargando libreria Excel, intenta en 2s...');return;}
-  const{headers,rows,allT}=_invGetData();
-  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
-  // Precio col = 8, tallas empiezan en 9
-  const precioIdx=8; const tallaStart=9;
-  const numRows=rows.length;
-  for(let r=1;r<=numRows;r++){
-    const pcell=ws[XLSX.utils.encode_cell({c:precioIdx,r})];
-    if(pcell&&typeof pcell.v==='number'){pcell.z='"$"#,##0.00';pcell.t='n';}
-  }
-  ws['!cols']=[{wch:14},{wch:28},{wch:14},{wch:12},{wch:12},{wch:14},{wch:10},{wch:14},{wch:10},...allT.map(()=>({wch:7})),{wch:8}];
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Inventario');
-  XLSX.writeFile(wb,'JABED_inventario_'+hoy()+'.xlsx');
-  toast('Excel de inventario descargado');
+  _loadLibsAndRun(['xlsx'],()=>{
+    const{headers,rows,allT}=_invGetData();
+    const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+    for(let r=1;r<=rows.length;r++){
+      const pc=ws[XLSX.utils.encode_cell({c:8,r})];
+      if(pc&&typeof pc.v==='number'){pc.z='"$"#,##0.00';pc.t='n';}
+    }
+    ws['!cols']=[{wch:14},{wch:28},{wch:14},{wch:12},{wch:12},{wch:14},{wch:10},{wch:14},{wch:10},...allT.map(()=>({wch:7})),{wch:8}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Inventario');
+    XLSX.writeFile(wb,'JABED_inventario_'+hoy()+'.xlsx');
+    toast('✅ Excel descargado');
+  });
 }
 
 function invDescargarPDF(){
-  if(typeof window.jspdf==='undefined'){toast('Cargando libreria PDF, intenta en 2s...');return;}
-  const{jsPDF}=window.jspdf;
-  const{headers,rows,allT,agrupados}=_invGetData();
-  // Para PDF limitamos columnas: SKU, Desc, Cat, Suc, Precio, Total (tallas omitidas si son muchas)
-  const useTallas=allT.length<=12; // con pocas tallas las incluimos
-  const colsHdr=useTallas?headers:['Estilo/SKU','Descripcion','Marca','Categoria','Sucursal','Precio','TOTAL'];
-  const colsRows=rows.map(r=>{
-    if(useTallas)return r.map((c,i)=>i===8?'$'+parseFloat(c||0).toLocaleString('es-MX',{minimumFractionDigits:2}):(c!=null?String(c):''));
-    // cols: 0=SKU,1=desc,2=marca,3=cat,7=suc,8=precio,last=total
-    return[r[0],r[1],r[2],r[3],r[7],'$'+parseFloat(r[8]||0).toLocaleString('es-MX',{minimumFractionDigits:2}),String(r[r.length-1])];
-  });
-  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'letter'});
-  doc.setFontSize(14);doc.setTextColor(30,30,30);
-  doc.text('Zapateria JABED  —  Inventario',14,13);
-  doc.setFontSize(9);doc.setTextColor(120,120,120);
-  doc.text('Generado: '+new Date().toLocaleString('es-MX')+(allT.length>12?' (resumen — abre Excel para ver tallas)':''),14,20);
-  const rightCols=useTallas?[8,...allT.map((_,i)=>9+i),9+allT.length]:[5,6];
-  doc.autoTable({
-    head:[colsHdr],body:colsRows,startY:25,theme:'grid',
-    headStyles:{fillColor:[26,158,92],textColor:255,fontStyle:'bold',fontSize:8},
-    bodyStyles:{fontSize:7,textColor:[30,30,30]},
-    alternateRowStyles:{fillColor:[245,250,247]},
-    columnStyles:rightCols.reduce((acc,i)=>{acc[i]={halign:'right'};return acc;},{}),
-    margin:{left:10,right:10},
-    didParseCell:function(data){
-      if(data.section==='body'&&data.row.index===colsRows.length-1){
-        data.cell.styles.fillColor=[240,180,41];data.cell.styles.fontStyle='bold';data.cell.styles.textColor=[30,30,30];
+  _loadLibsAndRun(['jspdf','autotable'],()=>{
+    const{jsPDF}=window.jspdf;
+    const{headers,rows,allT}=_invGetData();
+    const useTallas=allT.length<=10;
+    const colsHdr=useTallas?headers:['Estilo/SKU','Descripcion','Marca','Categoria','Sucursal','Precio','TOTAL'];
+    const fmtP=n=>'$'+parseFloat(n||0).toLocaleString('es-MX',{minimumFractionDigits:2});
+    const colsRows=rows.map(r=>{
+      if(useTallas)return r.map((c,i)=>i===8?fmtP(c):(c!=null?String(c):''));
+      return[r[0],r[1],r[2],r[3],r[7],fmtP(r[8]),String(r[r.length-1])];
+    });
+    const rightCols=useTallas?[8,...allT.map((_,i)=>9+i),9+allT.length]:[5,6];
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'letter'});
+    doc.setFontSize(14);doc.setTextColor(30,30,30);
+    doc.text('Zapateria JABED  —  Inventario',14,13);
+    doc.setFontSize(9);doc.setTextColor(120,120,120);
+    doc.text('Generado: '+new Date().toLocaleString('es-MX')+(allT.length>10?' | Muchas tallas: abre Excel para ver detalle':''),14,20);
+    doc.autoTable({
+      head:[colsHdr],body:colsRows,startY:25,theme:'grid',
+      headStyles:{fillColor:[26,158,92],textColor:255,fontStyle:'bold',fontSize:8},
+      bodyStyles:{fontSize:7,textColor:[30,30,30]},
+      alternateRowStyles:{fillColor:[245,250,247]},
+      columnStyles:rightCols.reduce((acc,i)=>{acc[i]={halign:'right'};return acc;},{}),
+      margin:{left:10,right:10},
+      didParseCell(data){
+        if(data.section==='body'&&data.row.index===colsRows.length-1){
+          data.cell.styles.fillColor=[240,180,41];data.cell.styles.fontStyle='bold';data.cell.styles.textColor=[30,30,30];
+        }
       }
-    }
+    });
+    doc.save('JABED_inventario_'+hoy()+'.pdf');
+    toast('✅ PDF descargado');
   });
-  doc.save('JABED_inventario_'+hoy()+'.pdf');
-  toast('PDF de inventario descargado');
 }
 
 // ══════════════════ AJUSTE DIRECTO DE STOCK ══════════════════
@@ -15082,44 +15110,50 @@ async function guardarEditVenta(){
 
   const isMixtoType = ['mixto','bbva-efectivo','tarjeta-efectivo'].includes(pago);
 
+  // Construir campos auditables
+  const orig = _editVentaOriginal;
+  const audCambios = [];
+  if(pago      !== (orig.pago||'efectivo')) audCambios.push('pago:'+orig.pago+'→'+pago);
+  if(total     !== (orig.total||0))         audCambios.push('total:'+orig.total+'→'+total);
+  if(descuento !== (orig.descuento||0))     audCambios.push('desc:'+orig.descuento+'→'+descuento);
+  if(cliente   !== (orig.cliente||''))      audCambios.push('cliente:'+orig.cliente+'→'+cliente);
+
   const cambios = {
     pago, total, descuento, cliente, notas,
-    editadoPor: usuarioActivo?.nombre||currentProfile?.nombre||'Admin',
-    editadoEn:  new Date().toISOString(),
-    editadoCampos: []
+    editadoPor:    usuarioActivo?.nombre||currentProfile?.nombre||'Admin',
+    editadoEn:     new Date().toISOString(),
+    editadoCampos: audCambios.join(' | ') || 'sin cambios',
+    // Limpiar campos mixto previos
+    mixtoEfectivo: 0, mixtoTarjeta: 0,
+    bbvaEfectivo:  0, bbvaTarjeta:  0,
+    tarjetaEfEfectivo: 0, tarjetaEfTarjeta: 0,
   };
 
-  // Registrar qué campos cambiaron para auditoría
-  const orig = _editVentaOriginal;
-  if(pago       !== (orig.pago||'efectivo')) cambios.editadoCampos.push('pago: '+orig.pago+'→'+pago);
-  if(total      !== (orig.total||0))         cambios.editadoCampos.push('total: '+orig.total+'→'+total);
-  if(descuento  !== (orig.descuento||0))     cambios.editadoCampos.push('descuento: '+orig.descuento+'→'+descuento);
-  if(cliente    !== (orig.cliente||''))      cambios.editadoCampos.push('cliente: '+orig.cliente+'→'+cliente);
-
-  if(isMixtoType){
+  // Asignar desglose según tipo de pago
+  if(pago === 'mixto'){
     cambios.mixtoEfectivo = mixtoEf;
     cambios.mixtoTarjeta  = mixtoTar;
-    cambios.bbvaEfectivo  = pago==='bbva-efectivo'  ? mixtoTar : 0;
-    cambios.bbvaTarjeta   = pago==='bbva-efectivo'  ? mixtoTar : 0;
-    cambios.tarjetaEfEfectivo = pago==='tarjeta-efectivo' ? mixtoEf  : 0;
-    cambios.tarjetaEfTarjeta  = pago==='tarjeta-efectivo' ? mixtoTar : 0;
-    if(pago==='bbva-efectivo'){
-      cambios.bbvaEfectivo = mixtoEf; cambios.bbvaTarjeta = mixtoTar;
-    }
-    if(pago==='tarjeta-efectivo'){
-      cambios.tarjetaEfEfectivo = mixtoEf; cambios.tarjetaEfTarjeta = mixtoTar;
-    }
+  } else if(pago === 'bbva-efectivo'){
+    cambios.bbvaEfectivo = mixtoEf;
+    cambios.bbvaTarjeta  = mixtoTar;
+  } else if(pago === 'tarjeta-efectivo'){
+    cambios.tarjetaEfEfectivo = mixtoEf;
+    cambios.tarjetaEfTarjeta  = mixtoTar;
   }
 
   try{
-    await window._fb.setDoc(window._fb.doc(window._fb.db,'ventas',_editVentaId), cambios, {merge:true});
-    // Actualizar array local
+    // ── FIX: usar docRef() que incluye el path de tenant correcto ──
+    await window._fb.setDoc(docRef('ventas', _editVentaId), cambios, {merge:true});
+    // Actualizar array local sin recargar Firebase
     const idx = ventas.findIndex(v=>v.id===_editVentaId);
     if(idx>=0){ Object.assign(ventas[idx], cambios); }
-    toast('✅ Venta actualizada');
+    toast('✅ Venta actualizada correctamente');
     cerrarEditVenta();
     renderHist();
-  }catch(e){ toast('Error al guardar: '+e.message,'err'); console.error(e); }
+  }catch(e){
+    console.error('guardarEditVenta error:', e);
+    toast('Error al guardar: '+e.message,'err');
+  }
 }
 </script>
 </body>
