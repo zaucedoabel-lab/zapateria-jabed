@@ -4893,7 +4893,7 @@ function renderInv(){
     const mq=!q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.color||'').toLowerCase().includes(q)||(p.marca||'').toLowerCase().includes(q);
     const mc=!cat||p.cat===cat;
     const ml=!linea||p.linea===linea;
-    const mloc=!loc||(p.locacion||'').toLowerCase().includes(loc);
+    const mloc=!loc||(p.locacion||'').toLowerCase()===loc||(p.locacion||'').toLowerCase().startsWith(loc+'-')||(p.locacion||'').toLowerCase().includes(loc)&&loc.length>2;
     const mt=!temp||p.temporada===temp;
     const mm=!marca||(p.marca||'').toLowerCase().includes(marca);
     // ── SUCURSAL FILTER FIX ──
@@ -6319,8 +6319,35 @@ function updateProductoSelects(){
   upd('p-temporada',getCatalogList('temporadas'),'Seleccionar…');
   upd('inv-cat',getCatalogList('categorias'),'Todas');
   upd('inv-linea',getCatalogList('lineas'),'Todas');
-  upd('inv-loc',getCatalogList('locaciones'),'Todas');
   upd('inv-temp',getCatalogList('temporadas'),'Todas');
+  // ── Locación: opciones agrupadas por prefijo (A → A-1, A-2…) ──
+  (function populateLocFilter(){
+    const sel = document.getElementById('inv-loc'); if(!sel) return;
+    const prev = sel.value;
+    const locs = getCatalogList('locaciones'); // ['A-1','A-2','B-1',…]
+    // Extraer prefijos únicos (parte antes del primer '-' o número)
+    const prefMap = {}; // {A:[A-1,A-2], B:[B-1,B-3]}
+    locs.forEach(l=>{
+      const pre = l.split('-')[0] || l;
+      if(!prefMap[pre]) prefMap[pre]=[];
+      prefMap[pre].push(l);
+    });
+    const prefijos = Object.keys(prefMap).sort();
+    let html = '<option value="">📍 Todas</option>';
+    prefijos.forEach(pre=>{
+      const hijos = prefMap[pre];
+      if(hijos.length > 1){
+        // Opción de grupo (ej: "Zona A")
+        html += `<option value="${pre}" style="font-weight:700;color:var(--gold)">📦 Zona ${pre}  (${hijos.length} locs)</option>`;
+      }
+      // Opciones individuales con indentación visual
+      hijos.sort().forEach(loc=>{
+        html += `<option value="${loc}">&nbsp;&nbsp;└ ${loc}</option>`;
+      });
+    });
+    sel.innerHTML = html;
+    if(prev) sel.value = prev;
+  })();
   // Marca y Color — re-poblar si el modal está abierto
   upd('p-marca',getCatalogList('marcas'),'Seleccionar marca…');
   upd('p-color',getCatalogList('colores'),'Seleccionar color…');
