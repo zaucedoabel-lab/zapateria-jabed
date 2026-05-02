@@ -4907,6 +4907,36 @@ async function saveProducto(){
   }
 }
 
+async function crearGemelo(prodId){
+  const p = productos.find(x=>x.id===prodId); if(!p){ toast('Producto no encontrado','err'); return; }
+  const bodega = sucursales.find(s=>s.tipo==='bodega');
+  if(!bodega){ toast('No hay sucursal Bodega configurada','err'); return; }
+  const codigoRef = (p.barcode||p.sku||'').trim();
+  const yaExiste = productos.some(x=>{
+    if(x.sucursalId !== bodega.id) return false;
+    if(codigoRef) return x.barcode===codigoRef || x.sku===codigoRef;
+    return (x.desc||'').toLowerCase()===(p.desc||'').toLowerCase() && x.cat===p.cat;
+  });
+  if(yaExiste){ toast('Ya existe un gemelo en Bodega para este producto','err'); return; }
+  if(!confirm(`¿Crear gemelo de stock en Bodega para:\n"${p.desc}"?\n\nSe creará con stock 0 en todas las tallas.`)) return;
+  try{
+    const stockCero = {};
+    Object.keys(p.stock||{}).forEach(t=>{ stockCero[t]=0; });
+    const bodegaData = {
+      ...p,
+      stock: stockCero,
+      sucursalId: bodega.id,
+      creadoDesde: prodId,
+      createdAt: new Date().toISOString()
+    };
+    delete bodegaData.id;
+    const ref = await window._fb.addDoc(window._fb.col(window._fb.db,'tiendas/'+window._fb.auth.currentUser.uid+'/productos'), bodegaData);
+    productos.push({...bodegaData, id:ref.id});
+    toast('✅ Gemelo creado en Bodega');
+    renderCatalogo(); renderInv();
+  }catch(e){ toast('Error: '+e.message,'err'); console.error(e); }
+}
+
 async function deleteProducto(id){
   if(!confirm('¿Eliminar este producto?\n\nSi tiene un gemelo en Bodega, también se eliminará.'))return;
   try{
@@ -5402,9 +5432,10 @@ function renderCatalogo(){
           <span class="badge ${tot<=3?'b-gold':'b-green'}">${tot} pzas</span>
         </div>
         ${totBodega>0?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px">🏪 ${totTienda} · 📦 ${totBodega}</div>`:''}
-        <div style="display:flex;gap:4px">
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-xs" style="flex:1" onclick="abrirModalProducto('${p.id}')">✏️ Editar</button>
           <button class="btn btn-ghost btn-xs" onclick="imprimirEtiqueta('${p.id}')">🏷️</button>
+          ${totBodega===0?`<button class="btn btn-ghost btn-xs" title="Crear gemelo en Bodega" onclick="crearGemelo('${p.id}')">📦+</button>`:''}
           <button class="btn btn-red btn-xs btn-icon" onclick="deleteProducto('${p.id}')">🗑️</button>
         </div>
       </div>
