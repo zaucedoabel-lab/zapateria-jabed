@@ -5435,7 +5435,7 @@ function renderCatalogo(){
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-xs" style="flex:1" onclick="abrirModalProducto('${p.id}')">✏️ Editar</button>
           <button class="btn btn-ghost btn-xs" onclick="imprimirEtiqueta('${p.id}')">🏷️</button>
-          ${!productos.some(x=>sucursales.find(s=>s.id===x.sucursalId)?.tipo==='bodega'&&(x.barcode===codigoKey||x.sku===codigoKey||x.creadoDesde===p.id))?`<button class="btn btn-ghost btn-xs" title="Crear gemelo de stock en Bodega" onclick="crearGemelo('${p.id}')">📦+</button>`:''}
+          ${!productos.some(x=>x.creadoDesde===p.id)?`<button class="btn btn-ghost btn-xs" title="Crear gemelo de stock en Bodega" onclick="crearGemelo('${p.id}')">📦+</button>`:''}
           <button class="btn btn-red btn-xs btn-icon" onclick="deleteProducto('${p.id}')">🗑️</button>
         </div>
       </div>
