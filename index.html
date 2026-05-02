@@ -1240,9 +1240,16 @@ body{background:#071222!important}
               </div>
             </div>
             <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <span id="inv-count" style="font-size:12px;color:var(--muted)">0 artículos</span>
-              <span id="inv-total-stock" style="font-size:12px;color:var(--green)">Stock: 0 pzas</span>
-              <span id="inv-total-valor" style="font-size:12px;color:var(--gold)">Valor: $0</span>
+              <span id="inv-count" style="font-size:13px;font-weight:700;color:var(--cream)">0 artículos</span>
+              <span style="color:var(--border2)">|</span>
+              <span id="inv-total-tienda" style="font-size:13px;font-weight:700;color:var(--accent2)">🏪 Tienda: 0</span>
+              <span style="color:var(--border2)">|</span>
+              <span id="inv-total-bodega" style="font-size:13px;font-weight:700;color:var(--gold)">📦 Bodega: 0</span>
+              <span style="color:var(--border2)">|</span>
+              <span id="inv-total-stock" style="font-size:13px;font-weight:700;color:var(--green)">Total: 0 pzas</span>
+              <span style="color:var(--border2)">|</span>
+              <span id="inv-total-valor" style="font-size:13px;color:var(--gold)">Valor: $0</span>
+              <span id="inv-cat-badge" style="display:none;padding:3px 10px;border-radius:20px;background:rgba(116,97,239,.2);border:1px solid rgba(116,97,239,.4);font-size:12px;font-weight:700;color:var(--accent)"></span>
             </div>
           </div>
 
@@ -1258,8 +1265,24 @@ body{background:#071222!important}
 
           <!-- VISTA LISTA -->
           <div id="inv-vista-lista" style="display:none">
-            <div class="tw">
-              <table><thead><tr><th></th><th>Código</th><th>Descripción</th><th>Cat.</th><th>Línea</th><th>📍 Locación</th><th>Temporada</th><th>Color</th><th>Tallas/Stock</th><th style="text-align:center">🏪 Tienda</th><th style="text-align:center">📦 Bodega</th><th style="text-align:center">Total</th><th>Precio</th><th>Estado</th><th></th></tr></thead>
+            <div class="tw" style="overflow-x:auto">
+              <table style="min-width:1500px"><thead><tr style="font-size:14px;font-weight:800;letter-spacing:.4px;background:var(--s2)">
+                <th style="width:72px;padding:10px 8px"></th>
+                <th style="padding:10px 12px">Código</th>
+                <th style="padding:10px 12px">Descripción</th>
+                <th style="padding:10px 8px">Cat.</th>
+                <th style="padding:10px 8px">Línea</th>
+                <th style="padding:10px 8px">📍 Locación</th>
+                <th style="padding:10px 8px">Temporada</th>
+                <th style="padding:10px 8px">Color</th>
+                <th style="padding:10px 12px">Tallas / Stock</th>
+                <th style="padding:10px 12px;text-align:center">🏪 Tienda</th>
+                <th style="padding:10px 12px;text-align:center">📦 Bodega</th>
+                <th style="padding:10px 12px;text-align:center">Total</th>
+                <th style="padding:10px 12px">Precio</th>
+                <th style="padding:10px 8px">Estado</th>
+                <th style="padding:10px 8px"></th>
+              </tr></thead>
               <tbody id="inv-tbody"></tbody>
             </table></div>
           </div>
@@ -1824,7 +1847,8 @@ body{background:#071222!important}
 
           <div class="flex-between" style="margin-bottom:14px">
             <div class="flex-row" style="gap:8px;flex-wrap:wrap">
-              <div class="search-wrap" style="width:200px"><span class="search-ico">🔍</span><input type="text" id="cta-q" placeholder="Buscar cliente…" oninput="renderCuentas()"></div>
+              <div class="search-wrap" style="width:180px"><span class="search-ico">🔍</span><input type="text" id="cta-q" placeholder="Buscar cliente…" oninput="renderCuentas()"></div>
+              <div class="search-wrap" style="width:160px"><span class="search-ico">#</span><input type="text" id="cta-nota-q" placeholder="Nº de nota…" inputmode="numeric" oninput="renderCuentas()" style="font-family:var(--mono);font-weight:700;letter-spacing:1px"></div>
               <div>
                 <select id="cta-tipo" onchange="renderCuentas()" style="width:130px">
                   <option value="">Todos</option>
@@ -2040,9 +2064,27 @@ body{background:#071222!important}
 
             <!-- IZQUIERDA: Ventas por Día -->
             <div class="card" style="flex:1;min-width:280px;max-width:50%;padding:0;overflow:hidden">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid var(--border)">
-                <div style="font-size:13px;font-weight:700;color:var(--cream)">📋 Ventas por Día</div>
-                <button class="btn btn-ghost btn-sm" onclick="renderDashboardVentas()">🔄 Actualizar</button>
+              <div style="padding:10px 14px 10px;border-bottom:1px solid var(--border)">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+                  <div style="font-size:13px;font-weight:700;color:var(--cream)">📋 Ventas por Día</div>
+                  <button class="btn btn-ghost btn-sm" onclick="renderDashboardVentas()">🔄 Actualizar</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
+                  <select id="dv-dias-mes" onchange="renderListadoDiasStandalone()"
+                    style="flex:1;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--s2);color:var(--cream);font-size:12px;font-weight:600">
+                    <option value="">📅 Todos los meses</option>
+                  </select>
+                  <div style="display:flex;border:1px solid var(--border2);border-radius:7px;overflow:hidden">
+                    <button id="dv-view-dias" onclick="setDVDiasView('dias')"
+                      style="padding:5px 12px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;border:none;cursor:pointer">
+                      Días
+                    </button>
+                    <button id="dv-view-semanas" onclick="setDVDiasView('semanas')"
+                      style="padding:5px 12px;font-size:11px;font-weight:700;background:var(--s3);color:var(--muted);border:none;cursor:pointer">
+                      Semanas
+                    </button>
+                  </div>
+                </div>
               </div>
               <div style="overflow-y:auto;max-height:480px">
                 <table style="width:100%;border-collapse:collapse">
@@ -2163,11 +2205,11 @@ body{background:#071222!important}
             <div class="scard b"><div class="sl">Tarjeta</div><div class="sv b" id="h-total-tarjeta">$0</div></div>
             <div class="scard r"><div class="sl">Pendiente (Apart./Cred.)</div><div class="sv r" id="h-total-pendiente">$0</div></div>
           </div>
-          <div class="tw" style="overflow-x:auto"><table style="min-width:1300px"><thead><tr>
+          <div class="tw" style="overflow-x:auto"><table style="min-width:1150px"><thead><tr>
             <th>Folio</th><th>#</th><th>Mes</th><th>Sem.</th><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Vendedor</th>
             <th>Estilo</th><th>Producto</th><th>Talla</th><th>Cat.</th><th>Qty</th>
             <th>Tipo</th><th>Pago / Detalle</th>
-            <th>Precio Unit.</th><th>Descuento</th><th>Costo Art.</th><th>Total Compra</th><th>Apart./Créd.</th><th>Cobrado</th>
+            <th>Precio Unit.</th><th>Descuento</th><th>Apart./Créd.</th><th>Cobrado</th>
           </tr></thead>
           <tbody id="h-tbody"></tbody></table></div>
           <div class="empty" id="h-empty" style="display:none"><div class="empty-icon">📋</div><div>Sin ventas.</div></div>
@@ -3116,12 +3158,13 @@ body{background:#071222!important}
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead>
           <tr style="background:var(--s2);border-bottom:1px solid var(--border)">
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;width:68px"></th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;width:80px"></th>
             <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap">ESTILO / MARCA</th>
             <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">DESCRIPCIÓN</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">TALLA</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">VENDIDAS</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">EN BODEGA</th>
+            <th style="padding:10px 12px;text-align:right;font-size:11px;color:var(--gold);font-weight:600">PRECIO</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">SUCURSAL VENTA</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">DÍAS</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--muted);font-weight:600">STATUS</th>
@@ -3129,7 +3172,7 @@ body{background:#071222!important}
           </tr>
         </thead>
         <tbody id="rec-tbody">
-          <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">Cargando...</td></tr>
+          <tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">Cargando...</td></tr>
         </tbody>
       </table>
     </div>
@@ -3693,27 +3736,48 @@ body{background:#071222!important}
 
 <!-- Modal Abono -->
 <div class="mo" id="mo-abono">
-  <div class="md">
-    <div class="mh">
-      <div class="mt">Registrar Abono / Liquidar</div>
+  <div class="md" style="max-width:560px;width:95%">
+    <div class="mh" style="padding:18px 24px">
+      <div class="mt" style="font-size:18px">💰 Registrar Abono / Liquidar</div>
       <button class="xbtn" onclick="closeM('mo-abono')">✕</button>
     </div>
-    <div class="mb">
-      <div id="abono-info" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px"></div>
-      <div class="fg"><label>Monto del Abono ($)</label><input type="number" id="ab-monto" placeholder="0.00" step="0.01" min="0"></div>
-      <div class="fg"><label>Forma de Pago</label>
-        <select id="ab-pago">
+    <div class="mb" style="padding:20px 24px;gap:16px">
+
+      <!-- Info del cliente y producto -->
+      <div id="abono-info-header" style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:4px;font-size:13px"></div>
+
+      <!-- Bloque financiero grande -->
+      <div id="abono-info-montos" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:4px"></div>
+
+      <!-- Alerta liquidar -->
+      <div class="warn" id="ab-liquidar-warn" style="display:none;font-size:14px;font-weight:700;padding:12px 16px">⚠️ Este abono <b>liquida el saldo completo</b>.</div>
+
+      <!-- Monto -->
+      <div class="fg">
+        <label style="font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase">Monto del Abono ($)</label>
+        <input type="number" id="ab-monto" placeholder="Ingresa el monto..." step="0.01" min="0"
+          style="font-size:24px;font-weight:800;color:var(--cream);padding:14px 16px;border-radius:10px;border:2px solid var(--border2);background:var(--s2);width:100%">
+      </div>
+
+      <!-- Forma de pago -->
+      <div class="fg">
+        <label style="font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase">Forma de Pago</label>
+        <select id="ab-pago" style="font-size:15px;padding:10px 14px;border-radius:10px;border:2px solid var(--border2);background:var(--s2);color:var(--cream);width:100%">
           <option value="efectivo">💵 Efectivo</option>
           <option value="tarjeta">💳 Tarjeta</option>
           <option value="transferencia">📲 Transferencia</option>
         </select>
       </div>
-      <div class="fg"><label>Notas</label><input type="text" id="ab-notas" placeholder="Opcional"></div>
-      <div class="warn" id="ab-liquidar-warn" style="display:none">⚠️ Este abono <b>liquida el saldo completo</b>.</div>
+
+      <!-- Notas -->
+      <div class="fg">
+        <label style="font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase">Notas</label>
+        <input type="text" id="ab-notas" placeholder="Opcional" style="font-size:14px;padding:10px 14px;border-radius:10px;border:1px solid var(--border2);background:var(--s2);color:var(--cream);width:100%">
+      </div>
     </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeM('mo-abono')">Cancelar</button>
-      <button class="btn btn-green" onclick="guardarAbono()">✅ Registrar Abono</button>
+    <div class="mf" style="padding:16px 24px;gap:12px">
+      <button class="btn btn-ghost" style="font-size:14px;padding:12px 20px" onclick="closeM('mo-abono')">Cancelar</button>
+      <button class="btn btn-green" style="font-size:16px;font-weight:800;padding:14px 28px;flex:1" onclick="guardarAbono()">✅ Registrar Abono</button>
     </div>
   </div>
 </div>
@@ -4943,15 +5007,29 @@ function renderInv(){
   const totalValor=agrupados.filter(p=>tiendasIds.has(p.sucursalId)||(!p.sucursalId&&tiendasIds.size===0))
     .reduce((a,p)=>a+(parseFloat(p.precio)||0)*sumStock(p.stock),0);
 
-  const countEl = document.getElementById('inv-count');
-  const stockEl = document.getElementById('inv-total-stock');
-  const valorEl = document.getElementById('inv-total-valor');
-  if(countEl) countEl.textContent=agrupados.length+' artículos';
-  if(stockEl) stockEl.textContent=
-    (pzasBodega>0
-      ? `🏪 ${pzasTienda.toLocaleString('es-MX')} · 📦 ${pzasBodega.toLocaleString('es-MX')} = ${totalPzas.toLocaleString('es-MX')} pzas`
-      : `Stock: ${totalPzas.toLocaleString('es-MX')} pzas`);
-  if(valorEl) valorEl.textContent='Valor tienda: '+fmt(totalValor);
+  const countEl  = document.getElementById('inv-count');
+  const tienEl   = document.getElementById('inv-total-tienda');
+  const bodEl    = document.getElementById('inv-total-bodega');
+  const stockEl  = document.getElementById('inv-total-stock');
+  const valorEl  = document.getElementById('inv-total-valor');
+  const catBadge = document.getElementById('inv-cat-badge');
+  if(countEl) countEl.textContent = agrupados.length+' artículos';
+  if(tienEl)  tienEl.textContent  = '🏪 Tienda: '+pzasTienda.toLocaleString('es-MX')+' pzas';
+  if(bodEl)   bodEl.textContent   = '📦 Bodega: '+pzasBodega.toLocaleString('es-MX')+' pzas';
+  if(stockEl) stockEl.textContent = 'Total: '+totalPzas.toLocaleString('es-MX')+' pzas';
+  if(valorEl) valorEl.textContent = 'Valor tienda: '+fmt(totalValor);
+  // Badge de categoría activa
+  const catActiva = document.getElementById('inv-cat')?.value||'';
+  const lineaActiva = document.getElementById('inv-linea')?.value||'';
+  if(catBadge){
+    const labels = [catActiva, lineaActiva].filter(Boolean);
+    if(labels.length){
+      catBadge.textContent = '📂 '+labels.join(' · ');
+      catBadge.style.display='inline-block';
+    } else {
+      catBadge.style.display='none';
+    }
+  }
   document.getElementById('inv-empty').style.display=agrupados.length?'none':'block';
 
   if(invVista==='matriz'){
@@ -5071,8 +5149,15 @@ function renderInvLista(agrupadosPorSuc){
     [...Object.entries(p._stockTienda), ...Object.entries(p._stockBodega)].forEach(([t,v])=>{
       stockCombinado[t] = (stockCombinado[t]||0) + v;
     });
+    const maxStock = Math.max(...Object.values(stockCombinado).filter(n=>n>0), 0);
     const ts = sortTallas(Object.keys(stockCombinado).filter(t=>stockCombinado[t]>0))
-      .map(t=>`<span class="tag">${t}(${stockCombinado[t]})</span>`).join('');
+      .map(t=>{
+        const qty = stockCombinado[t];
+        const isMax = qty === maxStock && maxStock > 0;
+        return isMax
+          ? `<span style="display:inline-block;font-size:13px;padding:4px 10px;margin:2px;color:#fff;font-weight:900;border-radius:6px;background:var(--green);font-family:var(--mono)">${t} <span style="opacity:.85">(${qty})</span></span>`
+          : `<span style="display:inline-block;font-size:12px;padding:3px 8px;margin:2px;color:var(--green);font-weight:700;border-radius:6px;border:1px solid rgba(82,201,122,.5);background:rgba(82,201,122,.08);font-family:var(--mono)">${t} <span style="font-weight:600">(${qty})</span></span>`;
+      }).join('');
 
     const estado = tot===0
       ? '<span class="badge b-red">Sin stock</span>'
@@ -5089,22 +5174,26 @@ function renderInvLista(agrupadosPorSuc){
       productos.find(x=>x.id===p._idBodega)?.creadoDesde &&
       totB === 0;
 
+    // Código principal: barcode si existe, si no sku, si no "—"
+    const codigoPrincipal = (p.barcode&&p.barcode!=='—'&&p.barcode!=='')?p.barcode:(p.sku||'—');
+    const codigoSecundario = (p.barcode&&p.barcode!=='—'&&p.sku&&p.sku!==p.barcode)?p.sku:'';
+
     return`<tr>
-      <td><div class="thumb">${p.foto?`<img src="${p.foto}" alt="">`:p.desc?.charAt(0)||'?'}</div></td>
-      <td><div class="mono">${p.barcode||'—'}</div><div style="font-size:10px;color:var(--faint)">${p.sku||''}</div></td>
-      <td><div style="font-weight:500">${p.desc}${p.esLiquidacion?' <span class="badge b-red" style="font-size:9px">🏷️LIQ</span>':''}</div><div style="font-size:11px;color:var(--muted)">${p.marca||''}</div></td>
+      <td style="padding:6px 8px"><div class="thumb" style="width:72px;height:72px;font-size:30px;border-radius:10px">${p.foto?`<img src="${p.foto}" alt="">`:p.desc?.charAt(0)||'?'}</div></td>
+      <td><div class="mono" style="font-size:18px;font-weight:900;color:var(--gold);line-height:1.1">${codigoPrincipal}</div>${codigoSecundario?`<div style="font-size:10px;color:var(--faint)">${codigoSecundario}</div>`:''}</td>
+      <td style="min-width:160px"><div style="font-weight:600;font-size:14px">${p.desc}${p.esLiquidacion?' <span class="badge b-red" style="font-size:9px">🏷️LIQ</span>':''}</div><div style="font-size:12px;color:var(--muted)">${p.marca||''}</div></td>
       <td><span class="badge b-accent">${p.cat}</span></td>
-      <td style="color:var(--muted);font-size:12px">${p.linea||'—'}</td>
-      <td style="font-size:12px;color:var(--accent2);font-weight:600;white-space:nowrap">${p.locacion?`<span style="background:rgba(240,180,41,.12);border:1px solid rgba(240,180,41,.3);border-radius:6px;padding:2px 8px;font-family:var(--mono)">📍 ${p.locacion}</span>`:'<span style="color:var(--faint)">—</span>'}</td>
-      <td style="font-size:11px;color:var(--muted)">${p.temporada||'—'}</td>
-      <td style="color:var(--muted)">${p.color||'—'}</td>
-      <td style="max-width:200px">${ts||'<span style="color:var(--faint)">Sin stock</span>'}</td>
+      <td style="color:var(--cream);font-size:13px;font-weight:500">${p.linea||'—'}</td>
+      <td style="font-size:12px;color:var(--accent2);font-weight:600;white-space:nowrap">${p.locacion?`<span style="background:rgba(240,180,41,.12);border:1px solid rgba(240,180,41,.3);border-radius:6px;padding:3px 9px;font-family:var(--mono)">📍 ${p.locacion}</span>`:'<span style="color:var(--faint)">—</span>'}</td>
+      <td style="font-size:12px;color:var(--muted)">${p.temporada||'—'}</td>
+      <td style="color:var(--muted);font-size:12px">${p.color||'—'}</td>
+      <td style="min-width:220px">${ts||'<span style="color:var(--faint)">Sin stock</span>'}</td>
       <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:${totT===0?'var(--faint)':'var(--accent2)'}">${totT}</td>
       <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:${tieneGemeloEsperando?'var(--blue)':totB===0?'var(--faint)':'var(--gold)'}">
         ${tieneGemeloEsperando ? '<span style="font-size:10px">⏳</span>' : totB}
       </td>
       <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:15px;color:${tot===0?'var(--red)':tot<=3?'var(--gold)':'var(--cream)'}">${tot}</td>
-      <td class="mono">${fmt(p.precio)}</td>
+      <td><div class="mono" style="font-size:15px;font-weight:800;color:var(--cream)">${fmt(p.precio)}</div></td>
       <td>${estado}</td>
       <td><div class="flex-row">
         <button class="btn btn-ghost btn-xs btn-icon" title="Imprimir etiqueta" onclick="imprimirEtiqueta('${editId}')">🏷️</button>
@@ -6978,6 +7067,7 @@ function getNumSemana(fecha){
 
 function renderCuentas(){
   const q=(document.getElementById('cta-q')?.value||'').toLowerCase();
+  const notaQ=(document.getElementById('cta-nota-q')?.value||'').trim();
   const tipo=document.getElementById('cta-tipo')?.value||'';
   const estado=document.getElementById('cta-estado')?.value||'';
   const mes=document.getElementById('cta-mes')?.value||'';
@@ -6986,12 +7076,13 @@ function renderCuentas(){
     const esCuenta=v.tipoVenta==='apartado'||v.tipoVenta==='credito';
     if(!esCuenta)return false;
     const matchQ=!q||(v.cliente||'').toLowerCase().includes(q)||(v.notaNombre||'').toLowerCase().includes(q);
+    const matchNota=!notaQ||(v.notaFolio||'').includes(notaQ)||(v.id||'').toLowerCase().includes(notaQ.toLowerCase());
     const matchTipo=!tipo||v.tipoVenta===tipo;
     const matchMes=!mes||(v.fecha||'').split('-')[1]===mes;
     const saldo=getSaldo(v);
     const estadoActual=saldo<=0?'liquidado':'pendiente';
     const matchEstado=!estado||estadoActual===estado;
-    return matchQ&&matchTipo&&matchMes&&matchEstado;
+    return matchQ&&matchNota&&matchTipo&&matchMes&&matchEstado;
   }).sort((a,b)=>b.fecha.localeCompare(a.fecha));
 
   const apartadosActivos=lista.filter(v=>v.tipoVenta==='apartado'&&getSaldo(v)>0).length;
@@ -7013,9 +7104,9 @@ function renderCuentas(){
     const semana=getNumSemana(v.fecha);
     const notaFolioDisp = v.notaFolio||'—';
     return`<tr>
-      <td class="mono" style="font-size:12px;font-weight:700;color:var(--accent2);cursor:pointer;white-space:nowrap"
+      <td class="mono" style="font-size:18px;font-weight:900;color:var(--accent2);cursor:pointer;white-space:nowrap"
         onclick="navigator.clipboard?.writeText('${v.notaFolio||''}')" title="${v.notaFolio?'Clic para copiar':'Sin folio'}">
-        ${v.notaFolio?'#'+v.notaFolio:'<span style=\'color:var(--faint)\'>—</span>'}
+        ${v.notaFolio?'#'+v.notaFolio:'<span style=\'color:var(--faint);font-size:13px\'>—</span>'}
       </td>
       <td style="font-size:12px;white-space:nowrap">${mesNombre}</td>
       <td style="font-size:11px;color:var(--muted);white-space:nowrap">${semana}</td>
@@ -7031,7 +7122,11 @@ function renderCuentas(){
       <td style="font-size:11px;color:var(--muted)">${v.notaNombre||v.cliente||'—'}<br>${v.notaTel||''}</td>
       <td>
         <div class="flex-row" style="gap:3px;flex-direction:column">
-          ${!liquidado?`<button class="btn btn-green btn-xs" onclick="abrirAbono('${v.id}')">💰 Abonar</button>`:''}
+          ${!liquidado?`<button onclick="abrirAbono('${v.id}')"
+            style="background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:900;cursor:pointer;letter-spacing:.5px;box-shadow:0 2px 8px rgba(34,197,94,.4);white-space:nowrap;width:100%"
+            onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+            💰 ABONAR
+          </button>`:''}
           <button class="btn btn-ghost btn-xs" onclick="verHistorialAbonos('${v.id}')">📋 Abonos</button>
           <button class="btn btn-ghost btn-xs" onclick="reimprNotaSep('${v.id}')">🖨️ Nota</button>
         </div>
@@ -7056,27 +7151,58 @@ function abrirAbono(id){
   const saldo = getSaldo(v);
   const abonado = getAbonado(v);
   const tipoLabel = v.tipoVenta==='credito'?'Crédito':'Apartado';
-  document.getElementById('abono-info').innerHTML=`
-    <div style="display:flex;gap:16px;flex-wrap:wrap">
-      <div><div style="font-size:10px;color:var(--muted)">CLIENTE</div><div style="font-weight:600">${v.cliente}</div></div>
-      <div><div style="font-size:10px;color:var(--muted)">TIPO</div><div>${tipoLabel}</div></div>
-      <div><div style="font-size:10px;color:var(--muted)">TOTAL</div><div class="mono">${fmt(v.total)}</div></div>
-      <div><div style="font-size:10px;color:var(--muted)">ANTICIPO</div><div class="mono" style="color:var(--green)">${fmt(v.anticipo||0)}</div></div>
-      <div><div style="font-size:10px;color:var(--muted)">ABONADO</div><div class="mono" style="color:var(--blue)">${fmt(abonado)}</div></div>
-      <div><div style="font-size:10px;color:var(--muted)">SALDO</div><div class="mono" style="color:var(--red);font-size:18px;font-weight:700">${fmt(saldo)}</div></div>
+
+  // Encabezado: cliente, tipo, productos
+  const hdr = document.getElementById('abono-info-header');
+  if(hdr) hdr.innerHTML = `
+    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+      <div>
+        <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.8px;text-transform:uppercase">Cliente</div>
+        <div style="font-size:16px;font-weight:800;color:var(--cream)">${v.cliente||'Cliente general'}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.8px;text-transform:uppercase">Tipo</div>
+        <div style="font-size:15px;font-weight:700;color:var(--accent)">${tipoLabel}</div>
+      </div>
+      ${v.notaFolio?`<div>
+        <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.8px;text-transform:uppercase">Nota #</div>
+        <div style="font-size:15px;font-weight:800;color:var(--gold);font-family:var(--mono)">#${v.notaFolio}</div>
+      </div>`:''}
     </div>
-    <div style="margin-top:8px;font-size:12px;color:var(--muted)">${(v.items||[]).map(x=>`${x.desc} T${x.talla}`).join(' · ')}</div>`;
-  document.getElementById('ab-monto').value = saldo.toFixed(2);
-  document.getElementById('ab-monto').max = saldo;
+    <div style="font-size:12px;color:var(--muted);line-height:1.5">${(v.items||[]).map(x=>`${x.desc||''}${x.talla&&x.talla!=='—'?' T'+x.talla:''}`).join(' · ')||'—'}</div>`;
+
+  // Bloques financieros grandes
+  const mon = document.getElementById('abono-info-montos');
+  if(mon) mon.innerHTML = `
+    <div style="background:var(--s3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px">Total</div>
+      <div style="font-size:20px;font-weight:900;color:var(--cream);font-family:var(--mono)">${fmt(v.total)}</div>
+    </div>
+    <div style="background:rgba(82,201,122,.08);border:1px solid rgba(82,201,122,.3);border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:10px;color:var(--green);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px">Anticipo</div>
+      <div style="font-size:20px;font-weight:900;color:var(--green);font-family:var(--mono)">${fmt(v.anticipo||0)}</div>
+    </div>
+    <div style="background:rgba(99,179,237,.08);border:1px solid rgba(99,179,237,.3);border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:10px;color:var(--blue);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px">Abonado</div>
+      <div style="font-size:20px;font-weight:900;color:var(--blue);font-family:var(--mono)">${fmt(abonado)}</div>
+    </div>
+    <div style="background:rgba(224,82,82,.12);border:2px solid rgba(224,82,82,.5);border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:10px;color:var(--red);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px">⚠️ Saldo</div>
+      <div style="font-size:26px;font-weight:900;color:var(--red);font-family:var(--mono)">${fmt(saldo)}</div>
+    </div>`;
+
+  // Campo monto: vacío — la cajera lo ingresa
+  const montoEl = document.getElementById('ab-monto');
+  if(montoEl){ montoEl.value=''; montoEl.max=saldo; montoEl.placeholder=`Máx. ${fmt(saldo)}`; }
   document.getElementById('ab-notas').value = '';
   document.getElementById('ab-pago').value = 'efectivo';
-  // Show liquidar warning if amount equals saldo
-  document.getElementById('ab-liquidar-warn').style.display='block';
-  document.getElementById('ab-monto').oninput = function(){
+  document.getElementById('ab-liquidar-warn').style.display='none';
+  if(montoEl) montoEl.oninput = function(){
     const val = parseFloat(this.value)||0;
     document.getElementById('ab-liquidar-warn').style.display = val>=saldo?'block':'none';
   };
   openM('mo-abono');
+  setTimeout(()=>montoEl?.focus(),200);
 }
 
 async function guardarAbono(){
@@ -8371,7 +8497,7 @@ function renderHist(){
   });
 
   // ── BUG FIX: devoluciones tienen total NEGATIVO — deben RESTAR del cobrado ──
-  let totalCobrado=0, totalEfectivo=0, totalTarjeta=0, totalPendiente=0;
+  let totalCobrado=0, totalEfectivo=0, totalTarjeta=0;
   lista.forEach(v=>{
     const tipoV = v.tipoVenta||'venta';
     const isAC  = tipoV==='apartado'||tipoV==='credito';
@@ -8427,7 +8553,6 @@ function renderHist(){
         totalEfectivo += cobrado;
       }
     }
-    if(isAC) totalPendiente += Math.max(0,(v.total||0)-(v.anticipo||0));
   });
 
   // Update stat cards
@@ -8435,6 +8560,13 @@ function renderHist(){
   setEl('h-total-cobrado',fmt(totalCobrado));
   setEl('h-total-efectivo',fmt(totalEfectivo));
   setEl('h-total-tarjeta',fmt(totalTarjeta));
+
+  // Pendiente real a la fecha: saldo vigente de TODOS los apart/cred (independiente del filtro de período)
+  const totalPendiente = (ventas||[]).reduce((acc,vv)=>{
+    const t=vv.tipoVenta||'venta';
+    if(t!=='apartado'&&t!=='credito') return acc;
+    return acc + Math.max(0, getSaldo(vv));
+  }, 0);
   setEl('h-total-pendiente',fmt(totalPendiente));
   const legBadge=document.getElementById('h-total');
   if(legBadge)legBadge.textContent='Total cobrado: '+fmt(totalCobrado);
@@ -8510,8 +8642,6 @@ function renderHist(){
       <td>${fmtPago(v.pago,v)}</td>
       <td class="mono" style="color:var(--muted)">—</td>
       <td class="mono" style="color:var(--red);font-size:11px">${v.descuento>0?'-'+fmt(v.descuento):'—'}</td>
-      <td class="mono" style="color:var(--muted);font-size:11px">—</td>
-      <td class="mono" style="color:var(--cream)">${fmt(cobrado)}</td>
       <td class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
       <td class="mono" style="color:${isDev?'var(--red)':'var(--green)'};font-weight:600">${fmt(cobrado)}${isDev?'<div style="font-size:9px;color:var(--red);opacity:.8">↩ resta</div>':''}</td>
       ${(usuarioActivo?.rol==='admin'||usuarioActivo?.rol==='manager')
@@ -8539,9 +8669,9 @@ function renderHist(){
         <td rowspan="${items.length}" style="color:var(--muted)">${v.hora||'—'}</td>
         <td rowspan="${items.length}">${v.cliente}</td>
         <td rowspan="${items.length}" style="color:var(--muted)">${v.vendedor||'—'}</td>`:''}
-        <td class="mono" style="font-size:11px;color:var(--muted)">${item.sku||item.barcode||'—'}</td>
+        <td><span style="background:rgba(240,180,41,.15);border:1px solid rgba(240,180,41,.4);border-radius:6px;padding:2px 8px;font-family:var(--mono);font-size:13px;font-weight:800;color:var(--gold);white-space:nowrap">${item.sku||item.barcode||'—'}</span></td>
         <td style="font-size:12px">${item.desc||'—'}${item.esGratis?'<span class="badge b-green" style="font-size:9px;margin-left:4px">GRATIS</span>':''}${item.sinCodigo?'<span class="badge b-gold" style="font-size:9px;margin-left:4px">ART. SIN CÓDIGO</span>':''}</td>
-        <td class="mono" style="text-align:center">${item.talla||'—'}</td>
+        <td style="text-align:center"><span style="background:var(--s3);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-family:var(--mono);font-size:14px;font-weight:900;color:var(--cream);white-space:nowrap">${item.talla||'—'}</span></td>
         <td><span class="badge b-accent" style="font-size:10px">${item.cat||(productos.find(p=>p.barcode===item.sku||p.sku===item.sku||p.id===item.id)?.cat)||'—'}</span></td>
         <td class="mono" style="text-align:center">${item.qty||1}</td>
         ${ii===0?`
@@ -8550,8 +8680,6 @@ function renderHist(){
         <td class="mono" style="color:var(--gold);font-size:12px;font-weight:700">${fmt(item.price||0)}</td>
         ${ii===0?`
         <td rowspan="${items.length}" class="mono" style="color:var(--red);font-size:11px">${v.descuento>0?'-'+fmt(v.descuento):'—'}</td>
-        <td rowspan="${items.length}" class="mono" style="font-size:11px;color:var(--muted)">${costoVal>0?fmt(costoVal):'—'}</td>
-        <td rowspan="${items.length}" class="mono" style="color:var(--cream)">${fmt(cobrado)}</td>
         <td rowspan="${items.length}" class="mono" style="color:${isAC?'var(--gold)':'var(--muted)'}">${isAC?fmt(v.total):'—'}</td>
         <td rowspan="${items.length}" class="mono" style="color:${isDev?'var(--red)':'var(--green)'};font-weight:600">${fmt(cobrado)}${isDev?'<div style="font-size:9px;color:var(--red);opacity:.8">↩ resta</div>':''}${!isDev&&isAC&&v.anticipo?'<div style="font-size:10px;color:var(--muted)">Ant: '+fmt(v.anticipo)+'</div>':''}</td>
         ${(usuarioActivo?.rol==='admin'||usuarioActivo?.rol==='manager')
@@ -9638,14 +9766,14 @@ function populateLocacionSelect(selectedVal){
 let usuariosInternos = []; // loaded from Firestore
 let usuarioActivo = null;  // {id, nombre, rol, pin}
 
-const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','dashboard-ventas','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','recuperacion','sucursales','usuarios','importar','bitacora','publicaciones','analisis','histcambios'];
+const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','dashboard-ventas','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','recuperacion','sucursales','usuarios','importar','bitacora','publicaciones','analisis','histcambios','costos'];
 const PERMISOS_ROL_DEFAULT = {
-  admin:      [...TODOS_MODULOS,'dashboard-ventas'],
+  admin:      [...TODOS_MODULOS],
   manager:    [...TODOS_MODULOS],
-  supervisor: [],  // Empty by default — Abel assigns modules manually
+  supervisor: [],
   vendedor:   ['pos','historial','clientes','cuentas','inventario','catalogo'],
-  bodeguero:  ['inventario','catalogo','entradas','salidas','transfer','transferencias','etiquetas','recuperacion'],
-  lectura:    ['inventario','catalogo','historial','reportes','resumen']
+  bodeguero:  ['inventario','catalogo','entradas','salidas','transfer','etiquetas','recuperacion'],
+  lectura:    ['inventario','catalogo','historial','reportes','resumen','analisis']
 };
 // Roles that DON'T need to re-identify on every module change
 const ROLES_SIN_REAUTH = ['supervisor','vendedor','bodeguero','lectura','manager'];
@@ -10599,27 +10727,32 @@ async function deleteVenta(id){
 
 // ══════════════════ MÓDULOS ACCESIBLES POR USUARIO ══════════════════
 const MODULO_LABELS = {
-  'inventario':'📦 Inventario',
-  'catalogo':'🗂️ Catálogo General',
-  'entradas':'📥 Entrada Mercancía',
-  'salidas':'📤 Salida Mercancía',
-  'pos':'🛒 Punto de Venta',
-  'historial':'📋 Historial Ventas',
-  'clientes':'👤 Clientes',
-  'transfer':'↔️ Transferencias',
-  'cuentas':'📒 Apartados/Créditos',
-  'gastos':'💸 Gastos',
-  'corte':'🏦 Corte de Caja',
-  'reportes':'📈 Reportes',
-  'resumen':'📊 Resumen Anual',
-  'promociones':'🎁 Promociones',
-  'catalogos-cfg':'⚙️ Configuración',
-  'etiquetas':'🏷️ Etiquetas',
-  'sucursales':'🏪 Sucursales',
-  'usuarios':'👥 Usuarios y Roles',
-  'importar':'📥 Importar CSV',
-  'bitacora':'📜 Bitácora',
-  'costos':'💹 Costos y Utilidad'
+  'pos':            '🛒 Punto de Venta',
+  'historial':      '📋 Historial Ventas',
+  'dashboard-ventas':'📊 Dashboard Ventas',
+  'cuentas':        '📒 Apartados/Créditos',
+  'clientes':       '👤 Clientes',
+  'inventario':     '📦 Inventario',
+  'catalogo':       '🗂️ Catálogo General',
+  'analisis':       '📈 Análisis de Stock',
+  'costos':         '💹 Costos y Utilidad',
+  'entradas':       '📥 Entrada Mercancía',
+  'salidas':        '📤 Salida Mercancía',
+  'transfer':       '↔️ Transferencias',
+  'etiquetas':      '🏷️ Etiquetas',
+  'recuperacion':   '🔄 Recuperar Tallas',
+  'publicaciones':  '📣 Publicaciones',
+  'promociones':    '🎁 Promociones',
+  'gastos':         '💸 Gastos',
+  'corte':          '🏦 Corte de Caja',
+  'reportes':       '📈 Reportes',
+  'resumen':        '📊 Resumen Anual',
+  'histcambios':    '🕓 Historial Cambios',
+  'bitacora':       '📜 Bitácora',
+  'importar':       '📥 Importar CSV',
+  'catalogos-cfg':  '⚙️ Configuración',
+  'sucursales':     '🏪 Sucursales',
+  'usuarios':       '👥 Usuarios y Roles',
 };
 
 let _editPermisosId = null;
@@ -12077,83 +12210,36 @@ function renderDashboardVentas(){
       </div>`;
   }
 
-  // ── Listado ventas por día + acumulado mensual ──
-  (function renderListadoDias(){
-    const tbodyD  = document.getElementById('dv-listado-dias-tbody');
-    const tfootD  = document.getElementById('dv-listado-dias-tfoot');
-    const tbodyM  = document.getElementById('dv-acum-mes-tbody');
-    const tfootM  = document.getElementById('dv-acum-mes-tfoot');
-    if(!tbodyD) return;
-
-    const diasNomSemana=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  // ── Poblar selector de mes con todos los meses que tienen ventas ──
+  (function poblarMeses(){
+    const sel = document.getElementById('dv-dias-mes'); if(!sel) return;
+    const prev = sel.value;
     const MESES_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-
-    // ── Usar TODAS las ventas para el acumulado mensual (no solo vFilt de período) ──
-    const todasVentas = ventas||[];
-
-    // Agrupar vFilt por DÍA
-    const byDay = {};
-    vFilt.forEach(v=>{
-      const f = v.fecha||''; if(!f) return;
-      if(!byDay[f]) byDay[f]={fecha:f,txns:0,efectivo:0,tarjetas:0,total:0};
-      const tipoV=v.tipoVenta||'venta';
-      const isDev=tipoV==='devolucion';
-      const monto=isDev?(v.total||0):(tipoV==='apartado'||tipoV==='credito')?(v.anticipo||0):tipoV==='abono'?(v.monto||v.total||0):(v.total||0);
-      byDay[f].txns++; byDay[f].total+=monto;
-      const pg=(v.pago||'').toLowerCase().trim();
-      if(pg==='mixto'){byDay[f].efectivo+=v.mixtoEfectivo||0;byDay[f].tarjetas+=v.mixtoTarjeta||0;}
-      else if(pg==='bbva-efectivo'){byDay[f].efectivo+=v.bbvaEfectivo||0;byDay[f].tarjetas+=v.bbvaTarjeta||0;}
-      else if(pg==='tarjeta-efectivo'){byDay[f].efectivo+=v.tarjetaEfEfectivo||0;byDay[f].tarjetas+=v.tarjetaEfTarjeta||0;}
-      else if(pg==='efectivo'||pg==='monedero'||pg==='') byDay[f].efectivo+=monto;
-      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) byDay[f].tarjetas+=monto;
-      else byDay[f].efectivo+=monto;
-    });
-    const dias = Object.values(byDay).sort((a,b)=>b.fecha.localeCompare(a.fecha));
-
-    // ── Tabla Ventas por Día ──
-    if(!dias.length){
-      tbodyD.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin ventas en este período</td></tr>';
-      if(tfootD) tfootD.innerHTML='';
-    } else {
-      const totEf=dias.reduce((a,d)=>a+d.efectivo,0);
-      const totTar=dias.reduce((a,d)=>a+d.tarjetas,0);
-      const totAll=dias.reduce((a,d)=>a+d.total,0);
-      const totTxn=dias.reduce((a,d)=>a+d.txns,0);
-      tbodyD.innerHTML=dias.map(d=>{
-        const dt=new Date(d.fecha+'T12:00:00');
-        const dow=dt.getDay();
-        const nomDia=diasNomSemana[dow];
-        const esDom=dow===0; const esSab=dow===6;
-        const rowBg=esDom?'background:rgba(239,68,68,.07)':esSab?'background:rgba(240,180,41,.05)':'';
-        const dia=d.fecha.slice(8);  // "23"
-        const mesIdx=parseInt(d.fecha.slice(5,7))-1;
-        const mesNom=MESES_N[mesIdx]||'';
-        return `<tr style="border-bottom:1px solid var(--border);${rowBg}">
-          <td style="padding:6px 10px;white-space:nowrap">
-            <span style="font-family:var(--mono);font-size:22px;font-weight:900;color:var(--cream);line-height:1">${dia}</span>
-            <span style="font-size:10px;color:var(--muted);display:block;line-height:1.2">${mesNom} · ${nomDia}</span>
-          </td>
-          <td style="padding:6px;text-align:center;font-size:11px;color:var(--muted)">${d.txns}</td>
-          <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--green)">${fmt(d.efectivo)}</td>
-          <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--blue)">${fmt(d.tarjetas)}</td>
-          <td style="padding:6px 10px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">${fmt(d.total)}</td>
-        </tr>`;
+    const mesKeys = [...new Set((ventas||[]).map(v=>(v.fecha||'').slice(0,7)).filter(m=>m.length===7))].sort().reverse();
+    const mesActual = hoy().slice(0,7);
+    sel.innerHTML = '<option value="">📅 Todos los meses</option>' +
+      mesKeys.map(mk=>{
+        const [y,mo] = mk.split('-');
+        const label = (MESES_N[parseInt(mo)-1]||mo)+' '+y;
+        const esActual = mk===mesActual;
+        return `<option value="${mk}"${esActual&&!prev?' selected':''}${mk===prev?' selected':''}>${esActual?'⭐ ':''}${label}</option>`;
       }).join('');
-      if(tfootD) tfootD.innerHTML=`<tr style="border-top:2px solid var(--border2);background:var(--s2)">
-        <td style="padding:8px 10px;font-size:11px;font-weight:700;color:var(--cream)">${dias.length}d</td>
-        <td style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted)">${totTxn}</td>
-        <td style="padding:8px 8px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green)">${fmt(totEf)}</td>
-        <td style="padding:8px 8px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${fmt(totTar)}</td>
-        <td style="padding:8px 10px;text-align:right;font-family:var(--mono);font-size:14px;font-weight:800;color:var(--gold)">${fmt(totAll)}</td>
-      </tr>`;
-    }
+  })();
 
-    // ── Tabla Acumulado por Mes (todas las ventas, sin filtro de período) ──
+  // Llamar render independiente de días
+  renderListadoDiasStandalone();
+
+  // ── Tabla Acumulado por Mes (todas las ventas, sin filtro de período) ──
+  (function renderAcumMes(){
+    const tbodyM = document.getElementById('dv-acum-mes-tbody');
+    const tfootM = document.getElementById('dv-acum-mes-tfoot');
     if(!tbodyM) return;
+    const MESES_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const todasVentas = ventas||[];
     const byMes = {};
     todasVentas.forEach(v=>{
       const f=v.fecha||''; if(!f||f.length<7) return;
-      const mesKey=f.slice(0,7); // "2026-04"
+      const mesKey=f.slice(0,7);
       if(!byMes[mesKey]) byMes[mesKey]={mesKey,txns:0,efectivo:0,tarjetas:0,total:0};
       const tipoV=v.tipoVenta||'venta';
       const isDev=tipoV==='devolucion';
@@ -12168,10 +12254,7 @@ function renderDashboardVentas(){
       else byMes[mesKey].efectivo+=monto;
     });
     const meses=Object.values(byMes).sort((a,b)=>b.mesKey.localeCompare(a.mesKey));
-    if(!meses.length){
-      tbodyM.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin datos</td></tr>';
-      if(tfootM) tfootM.innerHTML=''; return;
-    }
+    if(!meses.length){ tbodyM.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin datos</td></tr>'; if(tfootM)tfootM.innerHTML=''; return; }
     const mesMax=Math.max(...meses.map(m=>m.total))||1;
     const mEf=meses.reduce((a,m)=>a+m.efectivo,0);
     const mTar=meses.reduce((a,m)=>a+m.tarjetas,0);
@@ -12183,7 +12266,7 @@ function renderDashboardVentas(){
       const pct=(m.total/mesMax*100).toFixed(0);
       const esActual=m.mesKey===hoy().slice(0,7);
       return `<tr style="border-bottom:1px solid var(--border)${esActual?';background:rgba(240,180,41,.05)':''}">
-        <td style="padding:6px 10px;white-space:nowrap">
+        <td style="padding:6px 10px;white-space:nowrap;cursor:pointer" onclick="filtrarDiasPorMes('${m.mesKey}')" title="Ver días de ${nomMes}">
           <div style="font-size:14px;font-weight:700;color:${esActual?'var(--gold)':'var(--cream)'}">${nomMes}</div>
           <div style="margin-top:3px;height:3px;width:100%;background:var(--s3);border-radius:2px;overflow:hidden">
             <div style="height:100%;width:${pct}%;background:${esActual?'var(--gold)':'var(--accent)'};border-radius:2px"></div>
@@ -12203,6 +12286,158 @@ function renderDashboardVentas(){
       <td style="padding:8px 10px;text-align:right;font-family:var(--mono);font-size:14px;font-weight:800;color:var(--gold)">${fmt(mAll)}</td>
     </tr>`;
   })();
+}
+
+// ── Estado del panel Días: mes seleccionado y vista ──
+let _dvDiasVista = 'dias'; // 'dias' | 'semanas'
+
+function setDVDiasView(v){
+  _dvDiasVista = v;
+  ['dias','semanas'].forEach(k=>{
+    const btn = document.getElementById('dv-view-'+k);
+    if(btn){ btn.style.background = k===v?'var(--accent)':'var(--s3)'; btn.style.color = k===v?'#fff':'var(--muted)'; }
+  });
+  renderListadoDiasStandalone();
+}
+
+function filtrarDiasPorMes(mesKey){
+  const sel = document.getElementById('dv-dias-mes');
+  if(sel){ sel.value = mesKey; }
+  renderListadoDiasStandalone();
+  // Scroll up to the dias panel
+  document.getElementById('dv-listado-dias-card')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderListadoDiasStandalone(){
+  const tbodyD = document.getElementById('dv-listado-dias-tbody');
+  const tfootD = document.getElementById('dv-listado-dias-tfoot');
+  if(!tbodyD) return;
+
+  const MESES_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const diasNomSemana=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const mesFiltro = document.getElementById('dv-dias-mes')?.value||''; // "2026-04" o ""
+  const vista = _dvDiasVista||'dias';
+
+  // ── Acumulador de pago para una venta ──
+  function acumPago(obj, key, v){
+    const tipoV=v.tipoVenta||'venta';
+    const isDev=tipoV==='devolucion';
+    const monto=isDev?(v.total||0):(tipoV==='apartado'||tipoV==='credito')?(v.anticipo||0):tipoV==='abono'?(v.monto||v.total||0):(v.total||0);
+    obj[key].txns++; obj[key].total+=monto;
+    const pg=(v.pago||'').toLowerCase().trim();
+    if(pg==='mixto'){obj[key].efectivo+=v.mixtoEfectivo||0;obj[key].tarjetas+=v.mixtoTarjeta||0;}
+    else if(pg==='bbva-efectivo'){obj[key].efectivo+=v.bbvaEfectivo||0;obj[key].tarjetas+=v.bbvaTarjeta||0;}
+    else if(pg==='tarjeta-efectivo'){obj[key].efectivo+=v.tarjetaEfEfectivo||0;obj[key].tarjetas+=v.tarjetaEfTarjeta||0;}
+    else if(pg==='efectivo'||pg==='monedero'||pg==='') obj[key].efectivo+=monto;
+    else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) obj[key].tarjetas+=monto;
+    else obj[key].efectivo+=monto;
+  }
+
+  // Filtrar ventas por mes seleccionado (o todas si vacío)
+  const fuenteVentas = (ventas||[]).filter(v=>{
+    const f=v.fecha||''; if(!f) return false;
+    return !mesFiltro || f.startsWith(mesFiltro);
+  });
+
+  if(vista==='dias'){
+    // ── VISTA POR DÍA ──
+    const byDay={};
+    fuenteVentas.forEach(v=>{
+      const f=v.fecha||''; if(!f) return;
+      if(!byDay[f]) byDay[f]={fecha:f,txns:0,efectivo:0,tarjetas:0,total:0};
+      acumPago(byDay,f,v);
+    });
+    const dias=Object.values(byDay).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+    if(!dias.length){
+      tbodyD.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin ventas'+(mesFiltro?' en este mes':'')+'</td></tr>';
+      if(tfootD) tfootD.innerHTML=''; return;
+    }
+    const totEf=dias.reduce((a,d)=>a+d.efectivo,0);
+    const totTar=dias.reduce((a,d)=>a+d.tarjetas,0);
+    const totAll=dias.reduce((a,d)=>a+d.total,0);
+    const totTxn=dias.reduce((a,d)=>a+d.txns,0);
+    tbodyD.innerHTML=dias.map(d=>{
+      const dt=new Date(d.fecha+'T12:00:00');
+      const dow=dt.getDay();
+      const nomDia=diasNomSemana[dow];
+      const esDom=dow===0; const esSab=dow===6;
+      const rowBg=esDom?'background:rgba(239,68,68,.07)':esSab?'background:rgba(240,180,41,.05)':'';
+      const dia=d.fecha.slice(8);
+      const mesIdx=parseInt(d.fecha.slice(5,7))-1;
+      const mesNom=MESES_N[mesIdx]||'';
+      return `<tr style="border-bottom:1px solid var(--border);${rowBg}">
+        <td style="padding:6px 10px;white-space:nowrap">
+          <span style="font-family:var(--mono);font-size:22px;font-weight:900;color:var(--cream);line-height:1">${dia}</span>
+          <span style="font-size:10px;color:var(--muted);display:block;line-height:1.2">${mesNom} · ${nomDia}</span>
+        </td>
+        <td style="padding:6px;text-align:center;font-size:11px;color:var(--muted)">${d.txns}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--green)">${fmt(d.efectivo)}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--blue)">${fmt(d.tarjetas)}</td>
+        <td style="padding:6px 10px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">${fmt(d.total)}</td>
+      </tr>`;
+    }).join('');
+    if(tfootD) tfootD.innerHTML=`<tr style="border-top:2px solid var(--border2);background:var(--s2)">
+      <td style="padding:8px 10px;font-size:11px;font-weight:700;color:var(--cream)">${dias.length}d</td>
+      <td style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted)">${totTxn}</td>
+      <td style="padding:8px 8px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green)">${fmt(totEf)}</td>
+      <td style="padding:8px 8px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${fmt(totTar)}</td>
+      <td style="padding:8px 10px;text-align:right;font-family:var(--mono);font-size:14px;font-weight:800;color:var(--gold)">${fmt(totAll)}</td>
+    </tr>`;
+
+  } else {
+    // ── VISTA POR SEMANA ──
+    // Agrupa los días del mes en semanas Lun-Dom
+    function getLunes(dateStr){
+      const dt = new Date(dateStr+'T12:00:00');
+      const dow = dt.getDay(); // 0=Dom
+      const diff = dow===0 ? -6 : 1 - dow; // días hasta el lunes previo
+      const lunes = new Date(dt.getTime() + diff*86400000);
+      return lunes.toISOString().slice(0,10);
+    }
+    const bySem={};
+    fuenteVentas.forEach(v=>{
+      const f=v.fecha||''; if(!f) return;
+      const semKey=getLunes(f);
+      if(!bySem[semKey]) bySem[semKey]={semKey,txns:0,efectivo:0,tarjetas:0,total:0,dias:new Set()};
+      bySem[semKey].dias.add(f);
+      acumPago(bySem,semKey,v);
+    });
+    const semanas=Object.values(bySem).sort((a,b)=>b.semKey.localeCompare(a.semKey));
+    if(!semanas.length){
+      tbodyD.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin ventas'+(mesFiltro?' en este mes':'')+'</td></tr>';
+      if(tfootD) tfootD.innerHTML=''; return;
+    }
+    const totEf=semanas.reduce((a,s)=>a+s.efectivo,0);
+    const totTar=semanas.reduce((a,s)=>a+s.tarjetas,0);
+    const totAll=semanas.reduce((a,s)=>a+s.total,0);
+    const totTxn=semanas.reduce((a,s)=>a+s.txns,0);
+    tbodyD.innerHTML=semanas.map(s=>{
+      // calcular domingo de la semana
+      const lunesDt=new Date(s.semKey+'T12:00:00');
+      const domDt=new Date(lunesDt.getTime()+6*86400000);
+      const fmtShort=dt=>`${String(dt.getDate()).padStart(2,'0')} ${MESES_N[dt.getMonth()]||''}`;
+      const rangoLabel=`${fmtShort(lunesDt)} – ${fmtShort(domDt)}`;
+      const semNum=semanas.length-semanas.indexOf(s);
+      return `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:7px 10px;white-space:nowrap">
+          <div style="font-size:12px;font-weight:800;color:var(--accent)">Sem. ${semNum}</div>
+          <div style="font-size:11px;color:var(--muted);font-family:var(--mono)">${rangoLabel}</div>
+          <div style="font-size:10px;color:var(--faint)">${s.dias.size} día${s.dias.size!==1?'s':''} con ventas</div>
+        </td>
+        <td style="padding:7px 6px;text-align:center;font-size:11px;color:var(--muted)">${s.txns}</td>
+        <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--green)">${fmt(s.efectivo)}</td>
+        <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--blue)">${fmt(s.tarjetas)}</td>
+        <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">${fmt(s.total)}</td>
+      </tr>`;
+    }).join('');
+    if(tfootD) tfootD.innerHTML=`<tr style="border-top:2px solid var(--border2);background:var(--s2)">
+      <td style="padding:8px 10px;font-size:11px;font-weight:700;color:var(--cream)">${semanas.length} sem.</td>
+      <td style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted)">${totTxn}</td>
+      <td style="padding:8px 8px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green)">${fmt(totEf)}</td>
+      <td style="padding:8px 8px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${fmt(totTar)}</td>
+      <td style="padding:8px 10px;text-align:right;font-family:var(--mono);font-size:14px;font-weight:800;color:var(--gold)">${fmt(totAll)}</td>
+    </tr>`;
+  }
 }
 
 function fmtFechaCorta(fecha){
@@ -13993,9 +14228,10 @@ function _buildRecuperacionData(){
     row.stockTienda = stockTienda;
     row.stockBodega = stockBodega;
     row.status = status;
-    // Foto del producto
+    // Foto y precio del producto
     const prodObj = productos.find(p=>p.id===row.prodId||p.sku===row.sku||p.barcode===row.sku);
-    row.foto = prodObj?.foto||null;
+    row.foto   = prodObj?.foto||null;
+    row.precio = parseFloat(prodObj?.precio||0);
     return row;
   }).filter(Boolean); // eliminar tallas con stock > 0 en tienda
 }
@@ -14034,7 +14270,7 @@ async function renderRecuperacion(){
   `;
 
   if(!data.length){
-    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">Sin registros${q?' para "'+q+'"':''}</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">Sin registros${q?' para "'+q+'"':''}</td></tr>`;
     return;
   }
 
@@ -14060,10 +14296,21 @@ async function renderRecuperacion(){
     const dias = diasDesde(r.fechaUltimaVenta);
     const diasColor = dias===null?'var(--muted)':dias<=7?'var(--green)':dias<=30?'var(--gold)':'var(--red)';
     const diasLabel = dias===null?'—':`${dias}d`;
+    // Talla: convertir decimal a fracción para display (23.5 → 23 1/2)
+    const fmtTalla = t => {
+      if(!t) return '—';
+      const s = String(t).trim();
+      const n = parseFloat(s);
+      if(isNaN(n)) return s;
+      const entero = Math.floor(n);
+      const dec = Math.round((n - entero) * 10);
+      if(dec === 5) return entero > 0 ? `${entero} 1/2` : '1/2';
+      return s;
+    };
     return `<tr style="border-bottom:1px solid var(--border);${isPend?'':'opacity:0.65'}">
-      <td style="padding:6px 8px;text-align:center"><div class="thumb" style="width:60px;height:60px;font-size:28px;border-radius:8px;margin:0 auto">${r.foto?`<img src="${r.foto}" alt="">`:'👟'}</div></td>
+      <td style="padding:6px 8px;text-align:center"><div class="thumb" style="width:72px;height:72px;font-size:30px;border-radius:10px;margin:0 auto">${r.foto?`<img src="${r.foto}" alt="">`:'👟'}</div></td>
       <td style="padding:10px 12px">
-        <div style="font-weight:700;color:var(--cream);font-size:13px">${r.marca||r.sku}</div>
+        <div style="font-weight:700;color:var(--gold);font-size:14px">${r.marca||r.sku}</div>
         <div style="font-size:10px;color:var(--muted);font-family:var(--mono)">${r.sku}</div>
       </td>
       <td style="padding:10px 12px">
@@ -14071,10 +14318,11 @@ async function renderRecuperacion(){
         <div style="font-size:11px;color:var(--muted)">${r.color||''}</div>
       </td>
       <td style="padding:10px 12px;text-align:center">
-        <span style="background:var(--s3);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-weight:900;font-size:14px;font-family:var(--mono)">${r.talla}</span>
+        <span style="background:var(--s3);border:1px solid var(--border2);border-radius:6px;padding:4px 12px;font-weight:900;font-size:15px;font-family:var(--mono);white-space:nowrap">${fmtTalla(r.talla)}</span>
       </td>
       <td style="padding:10px 12px;text-align:center;font-weight:700;color:var(--cream)">${r.totalVendido}</td>
       <td style="padding:10px 12px;text-align:center;font-weight:700;color:${stockColor}">${r.stockBodega} pza${r.stockBodega!==1?'s':''}</td>
+      <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:700;font-size:14px;color:var(--gold)">${r.precio>0?fmt(r.precio):'<span style="color:var(--faint)">—</span>'}</td>
       <td style="padding:10px 12px;text-align:center;font-size:12px;color:var(--muted)">${sucNombre}</td>
       <td style="padding:10px 12px;text-align:center">
         <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:${diasColor}">${diasLabel}</span>
