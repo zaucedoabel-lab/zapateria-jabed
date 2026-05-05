@@ -850,6 +850,7 @@ body{background:#071222!important}
 .bar-item .bar-val{font-size:12px;font-family:var(--mono);color:var(--muted);flex-shrink:0;min-width:60px;text-align:right}
 
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -2067,7 +2068,11 @@ body{background:#071222!important}
               <div style="padding:10px 14px 10px;border-bottom:1px solid var(--border)">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
                   <div style="font-size:13px;font-weight:700;color:var(--cream)">📋 Ventas por Día</div>
-                  <button class="btn btn-ghost btn-sm" onclick="renderDashboardVentas()">🔄 Actualizar</button>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <button class="btn btn-ghost btn-sm" onclick="renderDashboardVentas()">🔄</button>
+                    <button class="btn btn-ghost btn-sm" onclick="exportDiasExcel()" title="Exportar Excel">📊 Excel</button>
+                    <button class="btn btn-ghost btn-sm" onclick="exportDiasPDF()" title="Exportar PDF">📄 PDF</button>
+                  </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
                   <select id="dv-dias-mes" onchange="renderListadoDiasStandalone()"
@@ -2076,17 +2081,17 @@ body{background:#071222!important}
                   </select>
                   <div style="display:flex;border:1px solid var(--border2);border-radius:7px;overflow:hidden">
                     <button id="dv-view-dias" onclick="setDVDiasView('dias')"
-                      style="padding:5px 12px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;border:none;cursor:pointer">
-                      Días
-                    </button>
+                      style="padding:5px 12px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;border:none;cursor:pointer">Días</button>
                     <button id="dv-view-semanas" onclick="setDVDiasView('semanas')"
-                      style="padding:5px 12px;font-size:11px;font-weight:700;background:var(--s3);color:var(--muted);border:none;cursor:pointer">
-                      Semanas
-                    </button>
+                      style="padding:5px 12px;font-size:11px;font-weight:700;background:var(--s3);color:var(--muted);border:none;cursor:pointer">Semanas</button>
                   </div>
                 </div>
               </div>
-              <div style="overflow-y:auto;max-height:480px">
+              <!-- Gráfica días -->
+              <div style="padding:10px 12px 4px;background:var(--s2)">
+                <canvas id="dv-chart-dias" height="90" style="width:100%"></canvas>
+              </div>
+              <div style="overflow-y:auto;max-height:400px">
                 <table style="width:100%;border-collapse:collapse">
                   <thead style="position:sticky;top:0;background:var(--s2);z-index:1"><tr>
                     <th style="padding:7px 10px;text-align:left;font-size:10px;color:var(--muted);font-weight:600;white-space:nowrap">FECHA</th>
@@ -2106,9 +2111,19 @@ body{background:#071222!important}
             <!-- DERECHA: Acumulado por Mes -->
             <div class="card" style="flex:1;min-width:280px;max-width:50%;padding:0;overflow:hidden">
               <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border)">
-                <div style="font-size:13px;font-weight:700;color:var(--cream)">📅 Acumulado por Mes</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+                  <div style="font-size:13px;font-weight:700;color:var(--cream)">📅 Acumulado por Mes</div>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn btn-ghost btn-sm" onclick="exportMesExcel()" title="Exportar Excel">📊 Excel</button>
+                    <button class="btn btn-ghost btn-sm" onclick="exportMesPDF()" title="Exportar PDF">📄 PDF</button>
+                  </div>
+                </div>
               </div>
-              <div style="overflow-y:auto;max-height:480px">
+              <!-- Gráfica meses -->
+              <div style="padding:10px 12px 4px;background:var(--s2)">
+                <canvas id="dv-chart-mes" height="90" style="width:100%"></canvas>
+              </div>
+              <div style="overflow-y:auto;max-height:400px">
                 <table style="width:100%;border-collapse:collapse">
                   <thead style="position:sticky;top:0;background:var(--s2);z-index:1"><tr>
                     <th style="padding:7px 10px;text-align:left;font-size:10px;color:var(--muted);font-weight:600">MES</th>
@@ -5624,16 +5639,41 @@ function selTransferProd(id){
   div.style.display='block';
   div.innerHTML=`<b>${trProdSel.desc}</b> · ${trProdSel.color||'—'}<br>
     <span style="font-size:12px;color:var(--muted)">Sucursal: ${suc?.nombre||'—'} · ${tot} pzas totales</span>`;
-  // ── BUG FIX 3: talla select sorted with sortTallas ──
-  const ts=document.getElementById('tr-talla');
-  const tallasConStock = sortTallas(
-    Object.keys(trProdSel.stock||{}).filter(t=>(trProdSel.stock[t]||0)>0)
-  );
-  ts.innerHTML = tallasConStock.length
-    ? tallasConStock.map(t=>`<option value="${t}">${t} (${trProdSel.stock[t]} disponibles)</option>`).join('')
-    : '<option value="">Sin stock disponible</option>';
   // Pre-select origen to the product's sucursal
   document.getElementById('tr-origen').value=trProdSel.sucursalId||'';
+  // Load tallas based on current origen
+  actualizarTallasTransfer();
+  // When origen changes, reload tallas from that sucursal's product record
+  document.getElementById('tr-origen').onchange = actualizarTallasTransfer;
+}
+
+function actualizarTallasTransfer(){
+  if(!trProdSel) return;
+  const origenId = document.getElementById('tr-origen').value;
+  const ts = document.getElementById('tr-talla');
+  // Find the product record for this origen (match by barcode/sku/creadoDesde)
+  const codigoRef = (trProdSel.barcode||trProdSel.sku||'').trim();
+  const prodOrigen = origenId === trProdSel.sucursalId
+    ? trProdSel
+    : productos.find(p=>
+        p.sucursalId === origenId &&
+        p.id !== trProdSel.id &&
+        (p.creadoDesde === trProdSel.id ||
+         trProdSel.creadoDesde === p.id ||
+         (codigoRef && (p.barcode===codigoRef||p.sku===codigoRef)))
+      );
+  if(!prodOrigen){
+    ts.innerHTML='<option value="">Sin producto en este origen</option>';
+    return;
+  }
+  // Update trProdSel to the origen product so hacerTransferencia uses the right stock
+  trProdSel = prodOrigen;
+  const tallasConStock = sortTallas(
+    Object.keys(prodOrigen.stock||{}).filter(t=>(prodOrigen.stock[t]||0)>0)
+  );
+  ts.innerHTML = tallasConStock.length
+    ? tallasConStock.map(t=>`<option value="${t}">${t} (${prodOrigen.stock[t]} disponibles)</option>`).join('')
+    : '<option value="">Sin stock disponible en este origen</option>';
 }
 
 async function hacerTransferencia(){
@@ -7500,7 +7540,146 @@ function toggleApartado(){
 
 // mostrarNotaSeparo moved
 
-// ══════════════════ WHATSAPP TICKET ══════════════════
+// ══════════════════ CHARTS + EXPORTS DASHBOARD ══════════════════
+let _dvDiasData = [];  // último dataset de días
+let _dvMesData  = [];  // último dataset de meses
+let _dvChartDias = null;
+let _dvChartMes  = null;
+
+function dibujarChartDias(rows){
+  const canvas = document.getElementById('dv-chart-dias');
+  if(!canvas) return;
+  const labels = rows.map(r=>{
+    if(r.semKey){ // semanas
+      const d=new Date(r.semKey+'T12:00:00');
+      return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+    }
+    return r.fecha?r.fecha.slice(5).replace('-','/'):r.label||'';
+  }).reverse();
+  const ef  = rows.map(r=>Math.round(r.efectivo||0)).reverse();
+  const tar = rows.map(r=>Math.round(r.tarjetas||0)).reverse();
+  if(_dvChartDias) _dvChartDias.destroy();
+  _dvChartDias = new Chart(canvas.getContext('2d'),{
+    type:'bar',
+    data:{ labels,
+      datasets:[
+        {label:'Efectivo',data:ef,backgroundColor:'rgba(82,201,122,.75)',stack:'s'},
+        {label:'Tarjeta',data:tar,backgroundColor:'rgba(99,179,237,.75)',stack:'s'}
+      ]},
+    options:{responsive:true,plugins:{legend:{labels:{color:'#aaa',font:{size:10}}},
+      tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString('es-MX')}`}}},
+      scales:{x:{stacked:true,ticks:{color:'#888',font:{size:9}},grid:{color:'rgba(255,255,255,.05)'}},
+              y:{stacked:true,ticks:{color:'#888',font:{size:9},callback:v=>'$'+v.toLocaleString('es-MX')},grid:{color:'rgba(255,255,255,.05)'}}}}
+  });
+}
+
+function dibujarChartMes(rows){
+  const canvas = document.getElementById('dv-chart-mes');
+  if(!canvas) return;
+  const MESES_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const labels = rows.map(r=>{const[y,m]=r.mesKey.split('-');return (MESES_N[parseInt(m)-1]||m)+' '+y.slice(2);}).reverse();
+  const ef  = rows.map(r=>Math.round(r.efectivo||0)).reverse();
+  const tar = rows.map(r=>Math.round(r.tarjetas||0)).reverse();
+  if(_dvChartMes) _dvChartMes.destroy();
+  _dvChartMes = new Chart(canvas.getContext('2d'),{
+    type:'bar',
+    data:{ labels,
+      datasets:[
+        {label:'Efectivo',data:ef,backgroundColor:'rgba(82,201,122,.75)',stack:'s'},
+        {label:'Tarjeta',data:tar,backgroundColor:'rgba(99,179,237,.75)',stack:'s'}
+      ]},
+    options:{responsive:true,plugins:{legend:{labels:{color:'#aaa',font:{size:10}}},
+      tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString('es-MX')}`}}},
+      scales:{x:{stacked:true,ticks:{color:'#888',font:{size:9}},grid:{color:'rgba(255,255,255,.05)'}},
+              y:{stacked:true,ticks:{color:'#888',font:{size:9},callback:v=>'$'+v.toLocaleString('es-MX')},grid:{color:'rgba(255,255,255,.05)'}}}}
+  });
+}
+
+// ── Excel helpers ──
+function _dvToCSV(rows, headers, mapFn){
+  const esc=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  return [headers.map(esc).join(','),
+    ...rows.map(r=>mapFn(r).map(esc).join(','))].join('\n');
+}
+function _downloadCSV(csv, filename){
+  const bom='\uFEFF';
+  const blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=filename; a.click();
+}
+
+function exportDiasExcel(){
+  if(!_dvDiasData.length){toast('Sin datos para exportar','err');return;}
+  const MESES_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const headers=['Fecha','Día','Transacciones','Efectivo','Tarjeta','Total'];
+  const DN=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const csv=_dvToCSV(_dvDiasData, headers, d=>{
+    const isS=!!d.semKey;
+    if(isS){
+      const ld=new Date(d.semKey+'T12:00:00');
+      const dd=new Date(ld.getTime()+6*86400000);
+      const rng=`${String(ld.getDate()).padStart(2,'0')}/${String(ld.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}/${String(dd.getMonth()+1).padStart(2,'0')}`;
+      return[rng,'Semana',d.txns,d.efectivo.toFixed(2),d.tarjetas.toFixed(2),d.total.toFixed(2)];
+    }
+    const dt=new Date(d.fecha+'T12:00:00');
+    return[d.fecha,DN[dt.getDay()]||'',d.txns,d.efectivo.toFixed(2),d.tarjetas.toFixed(2),d.total.toFixed(2)];
+  });
+  const mes=document.getElementById('dv-dias-mes')?.value||'';
+  _downloadCSV(csv,`ventas_dias${mes?'_'+mes:''}.csv`);
+  toast('✅ Excel descargado');
+}
+
+function exportMesExcel(){
+  if(!_dvMesData.length){toast('Sin datos para exportar','err');return;}
+  const MESES_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const headers=['Mes','Año','Transacciones','Efectivo','Tarjeta','Total'];
+  const csv=_dvToCSV(_dvMesData, headers, m=>{
+    const[y,mo]=m.mesKey.split('-');
+    return[(MESES_N[parseInt(mo)-1]||mo),y,m.txns,m.efectivo.toFixed(2),m.tarjetas.toFixed(2),m.total.toFixed(2)];
+  });
+  _downloadCSV(csv,'ventas_acumulado_mensual.csv');
+  toast('✅ Excel descargado');
+}
+
+// ── PDF via canvas+window.print ──
+function _dvPDFPrint(titulo, tableId, tfootId, chartId){
+  const tbl=document.getElementById(tableId)?.closest('table');
+  const chartCanvas=document.getElementById(chartId);
+  const chartImg=chartCanvas?chartCanvas.toDataURL('image/png'):'';
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>${titulo}</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:11px;color:#111;margin:20px}
+    h2{font-size:15px;margin-bottom:8px}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th{background:#1a1a2e;color:#fff;padding:6px 8px;text-align:left;font-size:10px}
+    td{padding:5px 8px;border-bottom:1px solid #e0e0e0;font-size:11px}
+    tfoot td{font-weight:700;background:#f5f5f5;border-top:2px solid #333}
+    img{max-width:100%;margin-bottom:12px;border-radius:6px}
+    @media print{@page{margin:15mm}}
+  </style></head><body>
+  <h2>${titulo}</h2>
+  ${chartImg?`<img src="${chartImg}">`:'' }
+  ${tbl?tbl.outerHTML:'<p>Sin datos</p>'}
+  </body></html>`;
+  const w=window.open('','_blank','width=900,height=700');
+  w.document.write(html); w.document.close();
+  w.onload=()=>{ w.print(); };
+}
+
+function exportDiasPDF(){
+  const mes=document.getElementById('dv-dias-mes')?.value||'';
+  const MESES_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  let tit='Ventas por Día';
+  if(mes){const[y,m]=mes.split('-');tit+=' — '+(MESES_N[parseInt(m)-1]||m)+' '+y;}
+  _dvPDFPrint(tit,'dv-listado-dias-tbody','dv-listado-dias-tfoot','dv-chart-dias');
+}
+
+function exportMesPDF(){
+  _dvPDFPrint('Acumulado por Mes — Zapatería JABED','dv-acum-mes-tbody','dv-acum-mes-tfoot','dv-chart-mes');
+}
+
+// ══════════════════ END CHARTS + EXPORTS ══════════════════
 let _waTicketTexto = '';
 
 function mostrarTicketWA(v){
@@ -12291,8 +12470,7 @@ function renderDashboardVentas(){
     const mTar=meses.reduce((a,m)=>a+m.tarjetas,0);
     const mAll=meses.reduce((a,m)=>a+m.total,0);
     const mTxn=meses.reduce((a,m)=>a+m.txns,0);
-    tbodyM.innerHTML=meses.map(m=>{
-      const [y,mo]=m.mesKey.split('-');
+    tbodyM.innerHTML=meses.map(m=>{      const [y,mo]=m.mesKey.split('-');
       const nomMes=(MESES_N[parseInt(mo)-1]||mo)+' '+y.slice(2);
       const pct=(m.total/mesMax*100).toFixed(0);
       const esActual=m.mesKey===hoy().slice(0,7);
@@ -12316,6 +12494,8 @@ function renderDashboardVentas(){
       <td style="padding:8px 8px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${fmt(mTar)}</td>
       <td style="padding:8px 10px;text-align:right;font-family:var(--mono);font-size:14px;font-weight:800;color:var(--gold)">${fmt(mAll)}</td>
     </tr>`;
+    _dvMesData = meses;
+    setTimeout(()=>dibujarChartMes(meses),50);
   })();
 }
 
@@ -12407,6 +12587,8 @@ function renderListadoDiasStandalone(){
         <td style="padding:6px 10px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">${fmt(d.total)}</td>
       </tr>`;
     }).join('');
+    _dvDiasData = dias;
+    setTimeout(()=>dibujarChartDias(dias),50);
     if(tfootD) tfootD.innerHTML=`<tr style="border-top:2px solid var(--border2);background:var(--s2)">
       <td style="padding:8px 10px;font-size:11px;font-weight:700;color:var(--cream)">${dias.length}d</td>
       <td style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted)">${totTxn}</td>
@@ -12461,6 +12643,8 @@ function renderListadoDiasStandalone(){
         <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">${fmt(s.total)}</td>
       </tr>`;
     }).join('');
+    _dvDiasData = semanas;
+    setTimeout(()=>dibujarChartDias(semanas),50);
     if(tfootD) tfootD.innerHTML=`<tr style="border-top:2px solid var(--border2);background:var(--s2)">
       <td style="padding:8px 10px;font-size:11px;font-weight:700;color:var(--cream)">${semanas.length} sem.</td>
       <td style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted)">${totTxn}</td>
