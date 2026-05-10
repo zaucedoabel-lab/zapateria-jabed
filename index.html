@@ -8495,30 +8495,64 @@ function exportarEntradasExcel(){
 // ── SALIDAS ──
 function buscarProdSalida(){
   const q=(document.getElementById('sal-prod-q')?.value||'').toLowerCase();
+  const sucId=document.getElementById('sal-sucursal')?.value||'';
   const res=document.getElementById('sal-prod-res'); if(!res)return;
   if(!q){res.innerHTML='';return;}
-  const lista=productos.filter(p=>(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q)).slice(0,8);
-  res.innerHTML=lista.map(p=>`
-    <div onclick="selProdSalida('${p.id}')" style="padding:8px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:4px" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
+  // Filtrar por sucursal seleccionada y que tengan stock > 0
+  let lista=productos.filter(p=>{
+    const matchQ=(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q);
+    const matchSuc=!sucId||p.sucursalId===sucId;
+    const tieneStock=Object.values(p.stock||{}).some(v=>(v||0)>0);
+    return matchQ&&matchSuc&&tieneStock;
+  }).slice(0,8);
+  // Si no hay resultados con stock, mostrar igual pero indicándolo
+  if(!lista.length){
+    lista=productos.filter(p=>{
+      const matchQ=(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q);
+      const matchSuc=!sucId||p.sucursalId===sucId;
+      return matchQ&&matchSuc;
+    }).slice(0,8);
+  }
+  const sucNom = s=>sucursales.find(x=>x.id===s?.sucursalId)?.nombre||'';
+  res.innerHTML=lista.map(p=>{
+    const tot=Object.values(p.stock||{}).reduce((a,v)=>a+(v||0),0);
+    return`<div onclick="selProdSalida('${p.id}')" style="padding:8px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:4px" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
       <div style="font-weight:600;font-size:13px;color:var(--cream)">${p.desc}</div>
-      <div style="font-size:11px;color:var(--muted)">${p.barcode||p.sku||'—'} · ${p.cat||'—'}</div>
-    </div>`).join('');
+      <div style="font-size:11px;color:var(--muted)">${p.barcode||p.sku||'—'} · ${p.cat||'—'} · <span style="color:${tot>0?'var(--green)':'var(--red)'}">${tot} pzas</span>${sucId?'':' · '+sucNom(p)}</div>
+    </div>`;
+  }).join('')||'<div style="padding:8px;color:var(--muted);font-size:12px">Sin resultados en esta sucursal</div>';
 }
 
 function selProdSalida(id){
-  salProdSel=productos.find(x=>x.id===id); if(!salProdSel)return;
+  const p=productos.find(x=>x.id===id); if(!p)return;
+  const sucId=document.getElementById('sal-sucursal')?.value||'';
+  // Si el producto seleccionado NO pertenece a la sucursal activa, buscar el gemelo correcto
+  if(sucId && p.sucursalId!==sucId){
+    const codigoRef=(p.barcode||p.sku||'').trim();
+    const alt=productos.find(x=>
+      x.sucursalId===sucId &&
+      (x.id===p.creadoDesde||x.creadoDesde===p.id||
+       (codigoRef&&(x.barcode===codigoRef||x.sku===codigoRef)))
+    );
+    if(alt){ salProdSel=alt; }
+    else { salProdSel=p; }
+  } else {
+    salProdSel=p;
+  }
   document.getElementById('sal-prod-q').value=salProdSel.desc;
   document.getElementById('sal-prod-res').innerHTML='';
   document.getElementById('sal-prod-sel').style.display='block';
+  const sucNom=sucursales.find(s=>s.id===salProdSel.sucursalId)?.nombre||'—';
+  const totStock=Object.values(salProdSel.stock||{}).reduce((a,v)=>a+(v||0),0);
   document.getElementById('sal-prod-info').innerHTML=`
     <div style="font-weight:600;color:var(--cream)">${salProdSel.desc}</div>
-    <div style="font-size:12px;color:var(--muted)">${salProdSel.barcode||salProdSel.sku||'—'} · ${salProdSel.marca||'—'}</div>`;
+    <div style="font-size:12px;color:var(--muted)">${salProdSel.barcode||salProdSel.sku||'—'} · ${salProdSel.marca||'—'}</div>
+    <div style="font-size:11px;color:var(--green);margin-top:2px">🏪 ${sucNom} · ${totStock} pzas disponibles</div>`;
   const stockSal=salProdSel.stock||{};
-  // ── BUG FIX: usar sortTallas para orden correcto (fracciones + CH/MM/GD) ──
   const tallasConStock = sortTallas(Object.keys(stockSal).filter(t=>(stockSal[t]||0)>0))
     .map(t=>[t, stockSal[t]]);
   if(!tallasConStock.length){
-    document.getElementById('sal-tallas-grid').innerHTML='<div style="color:var(--red);font-size:12px">Sin stock disponible</div>';
+    document.getElementById('sal-tallas-grid').innerHTML='<div style="color:var(--red);font-size:12px">Sin stock disponible en esta sucursal</div>';
     return;
   }
   document.getElementById('sal-tallas-grid').innerHTML=tallasConStock.map(([t,s])=>`
