@@ -3872,34 +3872,59 @@ body{background:#071222!important}
 
 <!-- Modal WhatsApp Ticket -->
 <div class="mo" id="mo-wa-ticket">
-  <div class="md" style="max-width:420px">
-    <div class="mh">
-      <div class="mt">📲 Enviar Ticket por WhatsApp</div>
-      <button class="xbtn" onclick="closeM('mo-wa-ticket')">✕</button>
+  <div class="md" style="max-width:460px;background:var(--s1);border:1px solid var(--border2)">
+    <!-- Header verde igual al POS -->
+    <div style="background:linear-gradient(135deg,#0d2818,#133d22);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #22c55e33">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="background:#22c55e;border-radius:8px;padding:6px;font-size:16px;line-height:1">📲</div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#fff">Enviar Ticket por WhatsApp</div>
+          <div style="font-size:11px;color:#86efac;margin-top:1px">Comparte el resumen de la venta</div>
+        </div>
+      </div>
+      <button onclick="closeM('mo-wa-ticket')" style="background:rgba(255,255,255,.1);border:none;color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;line-height:1">✕</button>
     </div>
-    <div class="mb" style="padding:20px 24px">
 
-      <!-- Resumen venta -->
-      <div id="wa-ticket-resumen" style="background:var(--s3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-size:13px;margin-bottom:18px;max-height:240px;overflow-y:auto;white-space:pre-wrap;font-family:monospace;line-height:1.6;color:var(--cream)"></div>
+    <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+
+      <!-- Ticket preview — estilo recibo oscuro -->
+      <div style="background:#0a0a0f;border:1px solid #22c55e33;border-radius:12px;overflow:hidden">
+        <div style="background:#111827;padding:8px 14px;border-bottom:1px solid #1f2937;display:flex;align-items:center;gap:6px">
+          <span style="font-size:11px;color:#6b7280;font-weight:600;letter-spacing:.8px;text-transform:uppercase">Vista previa del ticket</span>
+        </div>
+        <div id="wa-ticket-resumen" style="padding:14px 16px;font-size:12px;max-height:220px;overflow-y:auto;white-space:pre-wrap;font-family:'Courier New',monospace;line-height:1.7;color:#d1fae5"></div>
+      </div>
 
       <!-- Campo teléfono -->
-      <label style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.8px;text-transform:uppercase;display:block;margin-bottom:6px">Número de WhatsApp del cliente</label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span style="font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap">+52</span>
-        <input id="wa-ticket-tel" type="tel" inputmode="numeric" maxlength="10"
-          placeholder="10 dígitos ej. 8991234567"
-          style="flex:1;padding:10px 12px;border-radius:8px;border:2px solid var(--border2);background:var(--s2);color:var(--cream);font-size:15px;font-family:monospace;letter-spacing:1px"
-          oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
-      </div>
-      <div id="wa-ticket-tel-hint" style="font-size:11px;color:var(--muted);margin-top:5px">
-        Se detectó número del cliente: <span id="wa-ticket-tel-detected" style="color:var(--accent);font-weight:700"></span>
+      <div>
+        <label style="font-size:10px;color:#6b7280;font-weight:700;letter-spacing:.8px;text-transform:uppercase;display:block;margin-bottom:6px">📱 Número de WhatsApp del cliente</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:14px;font-weight:700;color:#9ca3af;white-space:nowrap;background:#1f2937;padding:10px 12px;border-radius:8px;border:2px solid #374151">+52</span>
+          <input id="wa-ticket-tel" type="tel" inputmode="numeric" maxlength="10"
+            placeholder="8991234567"
+            style="flex:1;padding:11px 14px;border-radius:8px;border:2px solid #374151;background:#1f2937;color:#fff;font-size:16px;font-family:'Courier New',monospace;letter-spacing:2px;outline:none"
+            onfocus="this.style.borderColor='#22c55e'" onblur="this.style.borderColor='#374151'"
+            oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
+        </div>
+        <div id="wa-ticket-tel-hint" style="font-size:11px;color:#6b7280;margin-top:5px;display:none">
+          ✓ Número detectado: <span id="wa-ticket-tel-detected" style="color:#22c55e;font-weight:700"></span>
+        </div>
       </div>
 
     </div>
-    <div class="mf" style="gap:10px">
-      <button class="btn btn-ghost" onclick="closeM('mo-wa-ticket')">Omitir</button>
-      <button class="btn btn-accent" style="background:#25D366;border-color:#25D366;gap:8px;font-size:14px"
-        onclick="enviarTicketWA()">
+
+    <!-- Footer con botones -->
+    <div style="padding:14px 20px;border-top:1px solid #1f2937;display:flex;gap:10px">
+      <button onclick="closeM('mo-wa-ticket')"
+        style="padding:11px 18px;border-radius:10px;border:2px solid #374151;background:transparent;color:#9ca3af;font-size:13px;font-weight:600;cursor:pointer">
+        Omitir
+      </button>
+      <button onclick="descargarTicketPDF()"
+        style="padding:11px 16px;border-radius:10px;border:2px solid #374151;background:#1f2937;color:#d1d5db;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px">
+        📄 PDF
+      </button>
+      <button onclick="enviarTicketWA()"
+        style="flex:1;padding:12px 16px;border-radius:10px;border:none;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 12px rgba(34,197,94,.35)">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
         Enviar por WhatsApp
       </button>
@@ -7681,8 +7706,10 @@ function exportMesPDF(){
 
 // ══════════════════ END CHARTS + EXPORTS ══════════════════
 let _waTicketTexto = '';
+let _waTicketVenta = null;
 
 function mostrarTicketWA(v){
+  _waTicketVenta = v;
   // Construir texto del ticket
   const sucNom = sucursales.find(s=>s.id===v.sucursalId)?.nombre||'Zapatería JABED';
   const pagoLabel={
@@ -7749,6 +7776,84 @@ function enviarTicketWA(){
   const url    = `https://wa.me/${numero}?text=${texto}`;
   window.open(url,'_blank');
   closeM('mo-wa-ticket');
+}
+
+function descargarTicketPDF(){
+  const v = _waTicketVenta;
+  if(!v){ toast('Sin datos de venta','err'); return; }
+  const sucNom = sucursales.find(s=>s.id===v.sucursalId)?.nombre||'Zapatería JABED';
+  const pagoLabel={efectivo:'Efectivo',tarjeta:'Tarjeta',transferencia:'Transferencia',
+    monedero:'Monedero',mixto:'Mixto','bbva-efectivo':'BBVA+Efectivo','tarjeta-efectivo':'Tarjeta+Efectivo'
+  }[v.pago]||(v.pago||'Efectivo');
+  const esSeparo = v.tipoVenta==='apartado'||v.tipoVenta==='credito';
+  const tipoLabel={venta:'Venta',apartado:'Apartado',credito:'Crédito',devolucion:'Devolución'}[v.tipoVenta]||'Venta';
+  const itemsHTML = (v.items||[]).map(i=>{
+    const talla=i.talla&&i.talla!=='—'?` T${i.talla}`:'';
+    return `<tr>
+      <td style="padding:7px 8px;border-bottom:1px solid #1f2937;color:#d1fae5;font-size:13px">${i.desc||'—'}${talla}</td>
+      <td style="padding:7px 8px;border-bottom:1px solid #1f2937;text-align:center;color:#9ca3af">${i.qty||1}</td>
+      <td style="padding:7px 8px;border-bottom:1px solid #1f2937;text-align:right;color:#fbbf24;font-weight:700">$${((i.price||0)*(i.qty||1)).toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>Ticket ${sucNom}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0f0f12;color:#e5e7eb;font-family:'Courier New',monospace;display:flex;justify-content:center;padding:20px}
+    .ticket{background:#111827;border:1px solid #22c55e44;border-radius:14px;width:320px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.6)}
+    .hdr{background:linear-gradient(135deg,#0d2818,#133d22);padding:16px;text-align:center;border-bottom:2px solid #22c55e44}
+    .hdr h1{font-size:18px;font-weight:900;color:#fff;letter-spacing:.5px}
+    .hdr p{font-size:11px;color:#86efac;margin-top:3px}
+    .body{padding:16px}
+    .row{display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px}
+    .label{color:#6b7280}
+    .val{color:#e5e7eb;font-weight:600}
+    .divider{border:none;border-top:1px dashed #374151;margin:12px 0}
+    table{width:100%;border-collapse:collapse;margin:8px 0}
+    th{font-size:10px;color:#6b7280;text-align:left;padding:4px 8px;text-transform:uppercase;letter-spacing:.6px}
+    .total-box{background:#0a1f0e;border:2px solid #22c55e44;border-radius:10px;padding:12px;margin-top:10px;text-align:center}
+    .total-box .lbl{font-size:11px;color:#86efac;letter-spacing:.8px;text-transform:uppercase}
+    .total-box .amt{font-size:28px;font-weight:900;color:#22c55e;margin-top:2px}
+    .footer{background:#0a0a0f;padding:12px;text-align:center;border-top:1px solid #1f2937}
+    .footer p{font-size:11px;color:#6b7280}
+    .footer .thanks{font-size:13px;color:#86efac;font-weight:700;margin-bottom:4px}
+    @media print{body{background:#0f0f12!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style></head><body>
+  <div class="ticket">
+    <div class="hdr">
+      <h1>🏪 ${sucNom}</h1>
+      <p>Ticket de ${tipoLabel}</p>
+    </div>
+    <div class="body">
+      <div class="row"><span class="label">📅 Fecha</span><span class="val">${v.fecha||hoy()}</span></div>
+      <div class="row"><span class="label">🕐 Hora</span><span class="val">${v.hora||hora()}</span></div>
+      ${v.cliente&&v.cliente!=='Cliente general'?`<div class="row"><span class="label">👤 Cliente</span><span class="val">${v.cliente}</span></div>`:''}
+      <hr class="divider">
+      <table>
+        <thead><tr><th>Producto</th><th style="text-align:center">Cant.</th><th style="text-align:right">Importe</th></tr></thead>
+        <tbody>${itemsHTML}</tbody>
+      </table>
+      <hr class="divider">
+      ${v.descuento>0?`<div class="row"><span class="label">Subtotal</span><span class="val">$${(v.subtotal||0).toFixed(2)}</span></div>
+      <div class="row"><span class="label" style="color:#f87171">Descuento</span><span class="val" style="color:#f87171">-$${(v.descuento||0).toFixed(2)}</span></div>`:''}
+      ${esSeparo?`<div class="row"><span class="label">Anticipo</span><span class="val" style="color:#22c55e">$${(v.anticipo||0).toFixed(2)}</span></div>
+      <div class="row"><span class="label" style="color:#f87171">Restante</span><span class="val" style="color:#f87171">$${Math.max(0,(v.total||0)-(v.anticipo||0)).toFixed(2)}</span></div>`:''}
+      <div class="total-box">
+        <div class="lbl">TOTAL</div>
+        <div class="amt">$${(v.total||0).toFixed(2)}</div>
+        <div style="font-size:11px;color:#86efac;margin-top:4px">${pagoLabel}</div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="thanks">¡Gracias por su compra! 🙏</div>
+      <p>Bulevar Los Almendros, Reynosa Tamps.</p>
+    </div>
+  </div>
+  <script>window.onload=()=>{window.print();}<\/script>
+  </body></html>`;
+  const w=window.open('','_blank','width=400,height=700');
+  w.document.write(html); w.document.close();
 }
 
 function imprimirNotaSeparo(){
