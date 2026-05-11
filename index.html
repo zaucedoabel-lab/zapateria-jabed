@@ -9073,7 +9073,6 @@ function renderHist(){
       <td style="${p};${b};background:#1e293b;color:#fbbf24;font-weight:800;font-size:11px;text-align:right">${fmt(dias.filter(f=>f<=corteStr).reduce((a,f)=>a+(byDia[f][r.key]||0),0))}</td>
     </tr>`).join('');
   })();
-  })();
   const legBadge=document.getElementById('h-total');
   if(legBadge)legBadge.textContent='Total cobrado: '+fmt(totalCobrado);
 
