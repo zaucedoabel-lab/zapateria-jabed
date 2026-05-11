@@ -2156,69 +2156,80 @@ body{background:#071222!important}
   <div class="mod-tabs" id="tabs-historial"></div>
 </div>
 
-          <!-- Filtros rápidos -->
-          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-            <button class="btn btn-ghost btn-sm" onclick="filtroHistRapido('hoy')" id="fh-hoy">📅 Hoy</button>
-            <button class="btn btn-ghost btn-sm" onclick="filtroHistRapido('ayer')" id="fh-ayer">⬅️ Ayer</button>
-            <button class="btn btn-ghost btn-sm" onclick="filtroHistRapido('semana')" id="fh-semana">📆 Esta semana</button>
-            <div style="display:flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:3px 8px">
-              <span style="font-size:11px;color:var(--muted)">Sem. #</span>
+          <!-- Filtros rápidos compactos -->
+          <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;font-weight:700" onclick="filtroHistRapido('hoy')" id="fh-hoy">Hoy</button>
+            <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="filtroHistRapido('ayer')" id="fh-ayer">Ayer</button>
+            <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="filtroHistRapido('semana')" id="fh-semana">Sem. actual</button>
+            <div style="display:flex;align-items:center;gap:3px;background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:2px 6px">
+              <span style="font-size:10px;color:var(--muted)">Sem.#</span>
               <input type="number" id="fh-num-semana" min="1" max="53" placeholder="N°"
-                style="width:52px;padding:3px 6px;font-size:12px;background:transparent;border:none;color:var(--cream)"
+                style="width:40px;padding:2px 4px;font-size:11px;background:transparent;border:none;color:var(--cream)"
                 onchange="filtroHistRapido('nSemana')">
             </div>
-            <button class="btn btn-ghost btn-sm" onclick="filtroHistRapido('mes')" id="fh-mes">📅 Este mes</button>
-            <button class="btn btn-ghost btn-sm" onclick="limpiarFiltrosHist()" style="color:var(--muted)">✕ Limpiar</button>
+            <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="filtroHistRapido('mes')" id="fh-mes">Este mes</button>
+            <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;color:var(--muted)" onclick="limpiarFiltrosHist()">✕</button>
+            <div style="margin-left:auto"><button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="exportarHistorialExcel()">📊 Excel</button></div>
           </div>
-          <!-- Filtros -->
-          <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px">
-            <div class="flex-row" style="flex-wrap:wrap;gap:10px;align-items:flex-end">
-              <div>
-                <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Desde</label>
-                <input type="date" id="h-desde" oninput="renderHist()" style="width:145px">
+
+          <!-- Filtros compactos en una línea -->
+          <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;margin-bottom:10px">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+              <div style="display:flex;align-items:center;gap:5px">
+                <label style="font-size:10px;color:var(--muted);white-space:nowrap">Desde</label>
+                <input type="date" id="h-desde" oninput="renderHist()" style="width:130px;padding:4px 6px;font-size:11px">
               </div>
-              <div>
-                <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Hasta</label>
-                <input type="date" id="h-hasta" oninput="renderHist()" style="width:145px">
+              <div style="display:flex;align-items:center;gap:5px">
+                <label style="font-size:10px;color:var(--muted);white-space:nowrap">Hasta</label>
+                <input type="date" id="h-hasta" oninput="renderHist()" style="width:130px;padding:4px 6px;font-size:11px">
               </div>
-              <div>
-                <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Forma de Pago</label>
-                <select id="h-pago" onchange="renderHist()" style="width:155px">
-                  <option value="">Todos los pagos</option>
-                  <option value="efectivo">💵 Efectivo</option>
-                  <option value="tarjeta-bbva">💳 Tarjeta BBVA</option>
-                  <option value="tarjeta-mp">💳 Tarjeta Mercado Pago</option>
-                  <option value="tarjeta">💳 Tarjeta (otro)</option>
-                  <option value="transferencia">📲 Transferencia</option>
-                  <option value="monedero">🪙 Monedero</option>
-                  <option value="mixto">🔀 Mixto</option>
-                </select>
-              </div>
-              <div>
-                <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Tipo</label>
-                <select id="h-tipo" onchange="renderHist()" style="width:130px">
-                  <option value="">Todos</option>
-                  <option value="venta">💵 Venta</option>
-                  <option value="apartado">📦 Apartado</option>
-                  <option value="credito">💳 Crédito</option>
-                  <option value="abono">💰 Abono</option>
-                </select>
-              </div>
-              <div>
-                <label style="display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Sucursal</label>
-                <select id="h-suc" onchange="renderHist()" style="width:140px"><option value="">Todas</option></select>
-              </div>
-              <div style="margin-left:auto">
-                <button class="btn btn-ghost btn-sm" onclick="exportarHistorialExcel()">📊 Exportar Excel</button>
-              </div>
+              <select id="h-pago" onchange="renderHist()" style="padding:4px 6px;font-size:11px;width:130px">
+                <option value="">Todos los pagos</option>
+                <option value="efectivo">Efectivo</option>
+                <option value="tarjeta-bbva">BBVA</option>
+                <option value="tarjeta-mp">Mercado Pago</option>
+                <option value="tarjeta">Tarjeta</option>
+                <option value="transferencia">Transferencia</option>
+                <option value="monedero">Monedero</option>
+                <option value="mixto">Mixto</option>
+              </select>
+              <select id="h-tipo" onchange="renderHist()" style="padding:4px 6px;font-size:11px;width:110px">
+                <option value="">Todos</option>
+                <option value="venta">Venta</option>
+                <option value="apartado">Apartado</option>
+                <option value="credito">Crédito</option>
+                <option value="abono">Abono</option>
+              </select>
+              <select id="h-suc" onchange="renderHist()" style="padding:4px 6px;font-size:11px;width:130px"><option value="">Todas sucursales</option></select>
             </div>
           </div>
+
           <!-- Totales resumen -->
-          <div class="stat-grid sg4" style="margin-bottom:12px">
+          <div class="stat-grid sg4" style="margin-bottom:10px">
             <div class="scard gold"><div class="sl">Total Cobrado</div><div class="sv gold" id="h-total-cobrado">$0</div></div>
             <div class="scard g"><div class="sl">Efectivo</div><div class="sv g" id="h-total-efectivo">$0</div></div>
             <div class="scard b"><div class="sl">Tarjeta</div><div class="sv b" id="h-total-tarjeta">$0</div></div>
             <div class="scard r"><div class="sl">Pendiente (Apart./Cred.)</div><div class="sv r" id="h-total-pendiente">$0</div></div>
+          </div>
+
+          <!-- Tabla semanal -->
+          <div id="h-semana-tabla-wrap" style="margin-bottom:10px;overflow-x:auto">
+            <table id="h-semana-tabla" style="border-collapse:collapse;font-size:12px;min-width:600px">
+              <thead>
+                <tr style="background:var(--s2)">
+                  <th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--muted);border:1px solid var(--border)"></th>
+                  <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--muted);border:1px solid var(--border)">LUN</th>
+                  <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--muted);border:1px solid var(--border)">MAR</th>
+                  <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--muted);border:1px solid var(--border)">MIERC.</th>
+                  <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--muted);border:1px solid var(--border)">JUEV</th>
+                  <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--muted);border:1px solid var(--border)">VIE</th>
+                  <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--muted);border:1px solid var(--border)">SAB</th>
+                  <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--muted);border:1px solid var(--border)">DOM</th>
+                  <th style="padding:6px 10px;text-align:right;font-size:11px;font-weight:800;color:var(--gold);border:1px solid var(--border)">Total</th>
+                </tr>
+              </thead>
+              <tbody id="h-semana-tbody"></tbody>
+            </table>
           </div>
           <div class="tw" style="overflow-x:auto"><table style="min-width:1150px"><thead><tr>
             <th>Folio</th><th>#</th><th>Mes</th><th>Sem.</th><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Vendedor</th>
@@ -7710,39 +7721,39 @@ let _waTicketVenta = null;
 
 function mostrarTicketWA(v){
   _waTicketVenta = v;
-  // Construir texto del ticket
+  // Construir texto del ticket — sin emojis que se corrompen en URL
   const sucNom = sucursales.find(s=>s.id===v.sucursalId)?.nombre||'Zapatería JABED';
   const pagoLabel={
-    efectivo:'💵 Efectivo', tarjeta:'💳 Tarjeta', transferencia:'📲 Transferencia',
-    monedero:'🪙 Monedero', mixto:'🔀 Mixto', 'bbva-efectivo':'🏦 BBVA+Efectivo',
-    'tarjeta-efectivo':'💳+💵 Tarjeta+Efectivo'
+    efectivo:'Efectivo', tarjeta:'Tarjeta', transferencia:'Transferencia',
+    monedero:'Monedero', mixto:'Mixto', 'bbva-efectivo':'BBVA+Efectivo',
+    'tarjeta-efectivo':'Tarjeta+Efectivo'
   }[v.pago]||(v.pago||'Efectivo');
 
   const lineas = (v.items||[]).map(i=>{
     const precio = i.price||0;
     const qty = i.qty||1;
     const talla = i.talla&&i.talla!=='—'?' T'+i.talla:'';
-    return `  • ${i.desc||i.id}${talla} x${qty}  $${(precio*qty).toFixed(2)}`;
+    return `  - ${i.desc||i.id}${talla} x${qty}  $${(precio*qty).toFixed(2)}`;
   }).join('\n');
 
-  const tipoLabel={venta:'🛍 Venta',apartado:'📦 Apartado',credito:'💳 Crédito',devolucion:'↩ Devolución'}[v.tipoVenta]||'🛍 Venta';
+  const tipoLabel={venta:'Venta',apartado:'Apartado',credito:'Credito',devolucion:'Devolucion'}[v.tipoVenta]||'Venta';
   const esSeparo = v.tipoVenta==='apartado'||v.tipoVenta==='credito';
 
   _waTicketTexto = [
-    `🏪 *${sucNom}*`,
-    `━━━━━━━━━━━━━━━━━━━━`,
-    `📅 ${v.fecha||hoy()}  🕐 ${v.hora||hora()}`,
-    `${tipoLabel}${v.cliente&&v.cliente!=='Cliente general'?' · '+v.cliente:''}`,
-    `━━━━━━━━━━━━━━━━━━━━`,
+    `*${sucNom}*`,
+    `--------------------`,
+    `Fecha: ${v.fecha||hoy()}  Hora: ${v.hora||hora()}`,
+    `${tipoLabel}${v.cliente&&v.cliente!=='Cliente general'?' - '+v.cliente:''}`,
+    `--------------------`,
     lineas,
-    `━━━━━━━━━━━━━━━━━━━━`,
+    `--------------------`,
     v.descuento>0?`  Subtotal:  $${(v.subtotal||0).toFixed(2)}\n  Descuento: -$${(v.descuento||0).toFixed(2)}`:'',
     esSeparo
-      ? `  *Total: $${(v.total||0).toFixed(2)}*\n  Anticipo pagado: $${(v.anticipo||0).toFixed(2)}\n  Restante: $${Math.max(0,(v.total||0)-(v.anticipo||0)).toFixed(2)}`
+      ? `  *Total: $${(v.total||0).toFixed(2)}*\n  Anticipo: $${(v.anticipo||0).toFixed(2)}\n  Restante: $${Math.max(0,(v.total||0)-(v.anticipo||0)).toFixed(2)}`
       : `  *Total: $${(v.total||0).toFixed(2)}*`,
-    `  Forma de pago: ${pagoLabel}`,
-    `━━━━━━━━━━━━━━━━━━━━`,
-    `¡Gracias por su compra! 🙏`,
+    `  Pago: ${pagoLabel}`,
+    `--------------------`,
+    `Gracias por su compra!`,
     `Bulevar Los Almendros, Reynosa Tamps.`
   ].filter(l=>l!=='').join('\n');
 
@@ -7760,7 +7771,6 @@ function mostrarTicketWA(v){
   if(telDet)   telDet.textContent = telLimpio ? telLimpio : '';
 
   openM('mo-wa-ticket');
-  // Focus en el campo de teléfono si está vacío
   if(!telLimpio && telInput) setTimeout(()=>telInput.focus(),200);
 }
 
@@ -7773,8 +7783,16 @@ function enviarTicketWA(){
   }
   const numero = '521'+tel;
   const texto  = encodeURIComponent(_waTicketTexto);
-  const url    = `https://wa.me/${numero}?text=${texto}`;
-  window.open(url,'_blank');
+  // Intenta abrir WhatsApp Desktop/App directo (sin página intermedia)
+  // Si no funciona en 1.5s, cae a wa.me web
+  const appUrl = `whatsapp://send?phone=${numero}&text=${texto}`;
+  const webUrl = `https://wa.me/${numero}?text=${texto}`;
+  const w = window.open(appUrl, '_blank');
+  // Fallback a wa.me si no se abre la app
+  setTimeout(()=>{
+    try{ if(!w||w.closed) window.open(webUrl,'_blank'); }
+    catch(e){ window.open(webUrl,'_blank'); }
+  },1500);
   closeM('mo-wa-ticket');
 }
 
@@ -8910,13 +8928,87 @@ function renderHist(){
   setEl('h-total-efectivo',fmt(totalEfectivo));
   setEl('h-total-tarjeta',fmt(totalTarjeta));
 
-  // Pendiente real a la fecha: saldo vigente de TODOS los apart/cred (independiente del filtro de período)
+  // Pendiente real a la fecha
   const totalPendiente = (ventas||[]).reduce((acc,vv)=>{
     const t=vv.tipoVenta||'venta';
     if(t!=='apartado'&&t!=='credito') return acc;
     return acc + Math.max(0, getSaldo(vv));
   }, 0);
   setEl('h-total-pendiente',fmt(totalPendiente));
+
+  // ── Tabla semanal ──
+  (function renderTablaSemanal(){
+    const tbody = document.getElementById('h-semana-tbody'); if(!tbody) return;
+    const hoyStr = hoy();
+
+    // Determinar la semana a mostrar según el filtro activo
+    const desde = document.getElementById('h-desde')?.value||'';
+    const hasta  = document.getElementById('h-hasta')?.value||'';
+
+    // Referencia: si hay filtro, usar la fecha "desde" como ancla; si no, usar hoy
+    const ancla = desde || hoyStr;
+    const anclaDt = new Date(ancla+'T12:00:00');
+    const dow = anclaDt.getDay(); // 0=Dom
+    const diffLunes = dow===0 ? -6 : 1-dow;
+    const lunesDt = new Date(anclaDt.getTime() + diffLunes*86400000);
+
+    // Generar los 7 días Lun-Dom de la semana del ancla
+    const dias = Array.from({length:7},(_,i)=>{
+      const d=new Date(lunesDt.getTime()+i*86400000);
+      return d.toISOString().slice(0,10);
+    });
+
+    // Fuente de datos:
+    // - Si filtro es "hoy" (desde===hasta===hoyStr) → toda la semana actual con todas las ventas (tiempo real)
+    // - Si hay filtro de período → usar "lista" (ya filtrada) pero solo los días de esa semana
+    // - Si no hay filtro → semana actual con todas las ventas
+    const esHoy = desde===hoyStr && (hasta===hoyStr||!hasta);
+    const fuenteVentas = (esHoy || !desde) ? (ventas||[]) : lista;
+
+    // Acumular por día dentro de la semana calculada
+    const byDia = {};
+    dias.forEach(f=>{ byDia[f]={ef:0,tar:0,tot:0}; });
+    fuenteVentas.forEach(v=>{
+      const f=v.fecha||''; if(!byDia[f]) return;
+      const tipoV=v.tipoVenta||'venta';
+      const isDev=tipoV==='devolucion';
+      const monto=isDev?(v.total||0):(tipoV==='apartado'||tipoV==='credito')?(v.anticipo||0):tipoV==='abono'?(v.monto||v.total||0):(v.total||0);
+      byDia[f].tot+=monto;
+      const pg=(v.pago||'').toLowerCase().trim();
+      if(pg==='mixto'){byDia[f].ef+=v.mixtoEfectivo||0;byDia[f].tar+=v.mixtoTarjeta||0;}
+      else if(pg==='bbva-efectivo'){byDia[f].ef+=v.bbvaEfectivo||0;byDia[f].tar+=v.bbvaTarjeta||0;}
+      else if(pg==='tarjeta-efectivo'){byDia[f].ef+=v.tarjetaEfEfectivo||0;byDia[f].tar+=v.tarjetaEfTarjeta||0;}
+      else if(pg==='efectivo'||pg==='monedero'||pg==='') byDia[f].ef+=monto;
+      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) byDia[f].tar+=monto;
+      else byDia[f].ef+=monto;
+    });
+
+    const fmtV = n => n===0
+      ? '<span style="color:var(--faint)">0</span>'
+      : `<span style="font-weight:700">${fmt(n)}</span>`;
+
+    const rowData = [
+      {label:'EFECTIVO',color:'#22c55e',key:'ef'},
+      {label:'TARJETA', color:'#60a5fa',key:'tar'},
+      {label:'Total',   color:'#fbbf24',key:'tot',bold:true},
+    ];
+
+    const celStyle = f => {
+      const esHoyCell = f===hoyStr;
+      const esFuturo  = f>hoyStr;
+      const base = 'padding:5px 10px;text-align:right;border:1px solid var(--border)';
+      if(esHoyCell) return base+';background:rgba(240,180,41,.1);border-color:rgba(240,180,41,.3)';
+      if(esFuturo)  return base+';opacity:.35';
+      return base;
+    };
+
+    tbody.innerHTML = rowData.map(r=>`
+      <tr style="${r.bold?'border-top:2px solid var(--border2);background:var(--s2)':''}">
+        <td style="padding:5px 10px;border:1px solid var(--border);font-size:11px;font-weight:${r.bold?800:700};color:${r.color};white-space:nowrap">${r.label}</td>
+        ${dias.map(f=>`<td style="${celStyle(f)};font-size:12px;color:${r.bold?'var(--gold)':r.color}">${fmtV(byDia[f][r.key])}</td>`).join('')}
+        <td style="padding:5px 10px;text-align:right;border:1px solid var(--border);font-size:13px;font-weight:800;color:${r.bold?'var(--gold)':r.color}">${fmt(dias.reduce((a,f)=>a+(byDia[f][r.key]||0),0))}</td>
+      </tr>`).join('');
+  })();
   const legBadge=document.getElementById('h-total');
   if(legBadge)legBadge.textContent='Total cobrado: '+fmt(totalCobrado);
 
