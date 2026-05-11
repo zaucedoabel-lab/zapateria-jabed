@@ -2480,7 +2480,7 @@ body{background:#071222!important}
             <div class="scard r"><div class="sl">Gastos Este Mes</div><div class="sv r" id="g-mes">$0</div></div>
             <div class="scard b"><div class="sl">Categoría Top</div><div class="sv" id="g-top" style="font-size:14px;margin-top:4px">—</div></div>
           </div>
-          <div class="tw"><table><thead><tr><th>Fecha</th><th>Concepto / Detalle</th><th>Categoría</th><th>Beneficiario</th><th>Fuente</th><th>Sucursal</th><th>Monto</th><th></th></tr></thead>
+          <div class="tw" style="overflow-x:auto"><table style="min-width:900px"><thead><tr><th>Fecha</th><th>Mes</th><th>Sem.</th><th>Concepto / Detalle</th><th>Categoría</th><th>Beneficiario</th><th>Fuente</th><th>Sucursal</th><th>Monto</th><th></th></tr></thead>
           <tbody id="g-tbody"></tbody></table></div>
           <div class="empty" id="g-empty" style="display:none"><div class="empty-icon">💸</div><div>Sin gastos.</div></div>
         </div>
@@ -5802,10 +5802,17 @@ function renderTransferencias(){
 // ══════════════════ GASTOS ══════════════════
 function abrirModalGasto(){
   gastoCat='';
+  _gastoEditId = null;
   ['g-conc','g-notas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('g-monto').value='';
   document.getElementById('g-fecha').value=hoy();
-  if(sucursales.length>0)document.getElementById('g-suc').value=activeSucId!=='all'?activeSucId:sucursales[0].id;
+  // Default sucursal: tienda
+  const tiendaSuc = sucursales.find(s=>s.tipo==='tienda'||s.nombre?.toLowerCase().includes('jabed')||s.nombre?.toLowerCase().includes('tienda'));
+  if(tiendaSuc) document.getElementById('g-suc').value=tiendaSuc.id;
+  else if(sucursales.length>0) document.getElementById('g-suc').value=sucursales[0].id;
+  // Título y botón por defecto
+  const mt=document.querySelector('#mo-gasto .mt'); if(mt) mt.textContent='Registrar Gasto';
+  const btn=document.querySelector('#mo-gasto .btn-accent'); if(btn) btn.textContent='💾 Guardar';
   // Use catalogos if available, else fallback to GASTO_CATS
   const gastoCatsList = getCatalogList('gastoCategorias').length>0
     ? getCatalogList('gastoCategorias')
@@ -5818,6 +5825,13 @@ function abrirModalGasto(){
   // Reset fields
   ['g-conc','g-beneficiario','g-notas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('g-fuente').value='';
+  // Default sucursal = Tienda
+  const sucTienda = sucursales.find(s=>
+    (s.nombre||'').toLowerCase().includes('tienda') ||
+    (s.tipo||'').toLowerCase()==='tienda'
+  ) || sucursales[0];
+  const gSucEl = document.getElementById('g-suc');
+  if(gSucEl && sucTienda) gSucEl.value = sucTienda.id;
   openM('mo-gasto');
 }
 
@@ -5837,16 +5851,23 @@ async function saveGasto(){
   if(isNaN(monto)||monto<=0){toast('Monto inválido','err');return;}
   const beneficiario = document.getElementById('g-beneficiario')?.value.trim()||'';
   const fuente = document.getElementById('g-fuente')?.value||gastoFuente||'';
-  await window._fb.addDoc(col('gastos'),{
-    concepto:conc,monto,cat:gastoCat||'Varios',
-    beneficiario,
-    fuente,
+  const data = {
+    concepto:conc, monto, cat:gastoCat||'Varios',
+    beneficiario, fuente,
     fecha:document.getElementById('g-fecha').value||hoy(),
     sucursalId:document.getElementById('g-suc').value,
     notas:document.getElementById('g-notas').value.trim(),
-    createdAt:new Date().toISOString()
-  });
-  closeM('mo-gasto');toast('Gasto registrado ✓');
+  };
+  if(_gastoEditId){
+    await window._fb.updateDoc(window._fb.docRef('gastos',_gastoEditId), data);
+    const idx=gastos.findIndex(g=>g.id===_gastoEditId);
+    if(idx>=0) gastos[idx]={...gastos[idx],...data};
+    _gastoEditId=null;
+    closeM('mo-gasto'); renderGastos(); toast('Gasto actualizado ✓');
+  } else {
+    await window._fb.addDoc(col('gastos'),{...data,createdAt:new Date().toISOString()});
+    closeM('mo-gasto'); toast('Gasto registrado ✓');
+  }
 }
 async function deleteGasto(id){if(!confirm('¿Eliminar?'))return;await window._fb.deleteDoc(docRef('gastos',id));toast('Eliminado');}
 function renderGastos(){
@@ -5858,16 +5879,60 @@ function renderGastos(){
   document.getElementById('g-top').textContent=top?top[0]:'—';
   document.getElementById('g-empty').style.display=gastos.length?'none':'block';
   const getSuc=id=>sucursales.find(s=>s.id===id)?.nombre||'—';
+  const MESES_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const getSemanaNro=fecha=>{
+    const d=new Date(fecha+'T12:00:00');
+    const start=new Date(d.getFullYear(),0,1);
+    return Math.ceil(((d-start)/86400000+start.getDay()+1)/7);
+  };
+  const getMesNom=fecha=>{
+    if(!fecha||fecha.length<7) return '—';
+    const [y,m]=fecha.split('-');
+    return (MESES_N[parseInt(m)-1]||m)+' '+y.slice(2);
+  };
   document.getElementById('g-tbody').innerHTML=gastos.map(g=>`<tr>
-    <td>${g.fecha}</td>
+    <td style="font-size:12px;white-space:nowrap">${g.fecha}</td>
+    <td style="font-size:12px;color:var(--muted);white-space:nowrap">${getMesNom(g.fecha)}</td>
+    <td style="font-size:12px;text-align:center;color:var(--muted)">${getSemanaNro(g.fecha)}</td>
     <td><div style="font-weight:600;color:var(--cream)">${g.concepto}</div>${g.notas?`<div style="font-size:10px;color:var(--muted)">${g.notas}</div>`:''}</td>
-    <td><span class="badge b-blue" style="font-size:10px">${g.cat}</span></td>
+    <td><span class="badge b-blue" style="font-size:13px;font-weight:700;padding:4px 10px">${g.cat}</span></td>
     <td style="font-size:12px;color:var(--cream)">${g.beneficiario||'—'}</td>
     <td style="font-size:12px;color:var(--accent2)">${g.fuente||'—'}</td>
     <td style="color:var(--muted);font-size:12px">${getSuc(g.sucursalId)}</td>
     <td class="mono" style="color:var(--red);font-weight:700">${fmt(g.monto)}</td>
-    <td><button class="btn btn-red btn-xs btn-icon" onclick="deleteGasto('${g.id}')">🗑️</button></td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-ghost btn-xs btn-icon" title="Editar" onclick="editarGasto('${g.id}')">✏️</button>
+      <button class="btn btn-red btn-xs btn-icon" onclick="deleteGasto('${g.id}')">🗑️</button>
+    </td>
   </tr>`).join('');
+}
+
+let _gastoEditId = null;
+
+function editarGasto(id){
+  const g = gastos.find(x=>x.id===id); if(!g) return;
+  _gastoEditId = id;
+  abrirModalGasto();
+  // Pre-llenar campos con datos del gasto
+  setTimeout(()=>{
+    document.getElementById('g-conc').value = g.concepto||'';
+    document.getElementById('g-monto').value = g.monto||'';
+    document.getElementById('g-fecha').value = g.fecha||hoy();
+    document.getElementById('g-notas').value = g.notas||'';
+    document.getElementById('g-beneficiario').value = g.beneficiario||'';
+    document.getElementById('g-fuente').value = g.fuente||'';
+    if(g.sucursalId) document.getElementById('g-suc').value = g.sucursalId;
+    // Seleccionar categoría
+    if(g.cat){
+      selGCat(document.querySelector(`.gcat[onclick*="${g.cat}"]`)||null, g.cat);
+    }
+    // Cambiar título del modal
+    const mt = document.querySelector('#mo-gasto .mt');
+    if(mt) mt.textContent = '✏️ Editar Gasto';
+    // Cambiar texto del botón guardar
+    const btn = document.querySelector('#mo-gasto .btn-accent');
+    if(btn) btn.textContent = '💾 Actualizar Gasto';
+  }, 50);
 }
 
 // ══════════════════ CORTE ══════════════════
