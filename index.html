@@ -967,7 +967,7 @@ body{background:#071222!important}
       <div id="nav-usuarios"></div><div id="nav-importar"></div>
       <div id="nav-bitacora"></div><div id="nav-costos"></div>
       <div id="nav-publicaciones"></div><div id="nav-analisis"></div><div id="nav-histcambios"></div>
-      <div id="nav-dashboard-ventas"></div>
+      <div id="nav-dashboard-ventas"></div><div id="nav-finanzas"></div>
       <div id="usr-activo-label"></div>
     </div>
 
@@ -2160,7 +2160,9 @@ body{background:#071222!important}
           <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
             <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;font-weight:700" onclick="filtroHistRapido('hoy')" id="fh-hoy">Hoy</button>
             <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="filtroHistRapido('ayer')" id="fh-ayer">Ayer</button>
-            <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="filtroHistRapido('semana')" id="fh-semana">Sem. actual</button>
+            <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="filtroHistRapido('semana')" id="fh-semana">
+              Sem. actual <span id="fh-semana-num" style="font-family:monospace;font-weight:900;color:var(--gold);margin-left:3px"></span>
+            </button>
             <div style="display:flex;align-items:center;gap:3px;background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:2px 6px">
               <span style="font-size:10px;color:var(--muted)">Sem.#</span>
               <input type="number" id="fh-num-semana" min="1" max="53" placeholder="N°"
@@ -2485,7 +2487,105 @@ body{background:#071222!important}
           <div class="empty" id="g-empty" style="display:none"><div class="empty-icon">💸</div><div>Sin gastos.</div></div>
         </div>
 
-        <!-- ══════════ CORTE DE CAJA ══════════ -->
+        <!-- ══════════ FINANZAS SEMANALES ══════════ -->
+        <div id="page-finanzas" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
+  <div class="mod-tabs" id="tabs-finanzas"></div>
+</div>
+
+          <!-- Filtros -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:5px 12px">
+              <label style="font-size:10px;color:var(--muted);font-weight:600">AÑO</label>
+              <button onclick="fnzCambiarAnio(-1)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px">‹</button>
+              <span id="fnz-anio" style="font-size:15px;font-weight:800;color:var(--cream);min-width:46px;text-align:center"></span>
+              <button onclick="fnzCambiarAnio(1)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px">›</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:5px 12px">
+              <label style="font-size:10px;color:var(--muted);font-weight:600">SUCURSAL</label>
+              <select id="fnz-suc" onchange="renderFinanzas()" style="background:transparent;border:none;color:var(--cream);font-size:12px;font-weight:600"><option value="">Todas</option></select>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="renderFinanzas()">🔄</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportarFinanzasExcel()">📊 Excel</button>
+            <span id="fnz-status" style="font-size:11px;color:var(--muted);margin-left:4px"></span>
+          </div>
+
+          <!-- Tarjetas resumen anual -->
+          <div class="stat-grid sg4" style="margin-bottom:12px">
+            <div class="scard gold"><div class="sl">Total Ventas (año)</div><div class="sv gold" id="fnz-total-ventas">$0</div></div>
+            <div class="scard g"><div class="sl">Efectivo (año)</div><div class="sv g" id="fnz-total-ef">$0</div></div>
+            <div class="scard b"><div class="sl">Total Gastos (año)</div><div class="sv b" id="fnz-total-gastos">$0</div></div>
+            <div class="scard" style="border-color:var(--accent)"><div class="sl">Utilidad Neta (año)</div><div class="sv" id="fnz-total-util" style="color:var(--accent)">$0</div></div>
+          </div>
+
+          <!-- Split 50/50: Semanal | Mensual -->
+          <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+
+            <!-- IZQUIERDA: Semanal -->
+            <div style="flex:1;min-width:280px;max-width:50%">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <div style="font-size:13px;font-weight:800;color:var(--cream)">📅 Por Semana</div>
+                <span id="fnz-sem-label" style="font-size:10px;color:var(--muted)"></span>
+              </div>
+              <div style="overflow-y:auto;max-height:520px;border:1px solid var(--border);border-radius:10px;overflow-x:auto">
+                <table id="fnz-tabla" style="width:100%;min-width:440px;border-collapse:collapse">
+                  <thead style="position:sticky;top:0;z-index:1;background:var(--s2)">
+                    <tr style="border-bottom:2px solid var(--border2)">
+                      <th style="padding:8px 10px;text-align:center;font-size:10px;color:var(--muted);font-weight:700;width:44px">SEM.</th>
+                      <th style="padding:8px 10px;text-align:left;font-size:10px;color:var(--muted);font-weight:700">PERÍODO</th>
+                      <th style="padding:8px 10px;text-align:right;font-size:10px;color:var(--green);font-weight:700">EFECT.</th>
+                      <th style="padding:8px 10px;text-align:right;font-size:10px;color:var(--blue);font-weight:700">TARJ.</th>
+                      <th style="padding:8px 10px;text-align:right;font-size:10px;color:var(--gold);font-weight:700">VENTAS</th>
+                      <th style="padding:8px 10px;text-align:right;font-size:10px;color:var(--red);font-weight:700">GASTOS</th>
+                      <th style="padding:8px 10px;text-align:right;font-size:10px;color:var(--accent);font-weight:700">UTIL.</th>
+                      <th style="padding:8px 10px;text-align:right;font-size:10px;color:var(--muted);font-weight:700">%</th>
+                    </tr>
+                  </thead>
+                  <tbody id="fnz-tbody">
+                    <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">Cargando...</td></tr>
+                  </tbody>
+                  <tfoot id="fnz-tfoot"></tfoot>
+                </table>
+              </div>
+            </div>
+
+            <!-- DERECHA: Mensual -->
+            <div style="flex:1;min-width:280px;max-width:50%">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <div style="font-size:13px;font-weight:800;color:var(--cream)">📆 Por Mes</div>
+                <span style="font-size:10px;color:var(--muted)" id="fnz-mes-label"></span>
+              </div>
+              <div style="overflow-y:auto;max-height:520px;border:1px solid var(--border);border-radius:10px;overflow-x:auto">
+                <table style="width:100%;min-width:380px;border-collapse:collapse">
+                  <thead style="position:sticky;top:0;z-index:1;background:var(--s2)">
+                    <tr style="border-bottom:2px solid var(--border2)">
+                      <th style="padding:8px 10px;text-align:left;font-size:10px;color:var(--muted);font-weight:700">MES</th>
+                      <th style="padding:8px 10px;text-align:right;font-size:10px;color:var(--green);font-weight:700">EFECT.</th>
+                      <th style="padding:8px 10px;text-align:right;font-size:10px;color:var(--blue);font-weight:700">TARJ.</th>
+                      <th style="padding:8px 10px;text-align:right;font-size:10px;color:var(--gold);font-weight:700">VENTAS</th>
+                      <th style="padding:8px 10px;text-align:right;font-size:10px;color:var(--red);font-weight:700">GASTOS</th>
+                      <th style="padding:8px 10px;text-align:right;font-size:10px;color:var(--accent);font-weight:700">UTIL.</th>
+                      <th style="padding:8px 10px;text-align:right;font-size:10px;color:var(--muted);font-weight:700">%</th>
+                    </tr>
+                  </thead>
+                  <tbody id="fnz-mes-tbody">
+                    <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">Cargando...</td></tr>
+                  </tbody>
+                  <tfoot id="fnz-mes-tfoot"></tfoot>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
         <div id="page-corte" class="page">
 <div class="mod-nav-bar">
   <button class="mod-back-btn" onclick="toggleGridMenu()">
@@ -5880,11 +5980,7 @@ function renderGastos(){
   document.getElementById('g-empty').style.display=gastos.length?'none':'block';
   const getSuc=id=>sucursales.find(s=>s.id===id)?.nombre||'—';
   const MESES_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const getSemanaNro=fecha=>{
-    const d=new Date(fecha+'T12:00:00');
-    const start=new Date(d.getFullYear(),0,1);
-    return Math.ceil(((d-start)/86400000+start.getDay()+1)/7);
-  };
+  const getSemanaNro=fecha=>getNumSemana(fecha);
   const getMesNom=fecha=>{
     if(!fecha||fecha.length<7) return '—';
     const [y,m]=fecha.split('-');
@@ -7220,9 +7316,15 @@ function getNombreMes(fecha){
 function getNumSemana(fecha){
   if(!fecha)return'—';
   const d=new Date(fecha+'T12:00:00');
-  const startYear=new Date(d.getFullYear(),0,1);
-  const week=Math.ceil(((d-startYear)/86400000+startYear.getDay()+1)/7);
-  return String(week);
+  const year=d.getFullYear();
+  const jan1=new Date(year,0,1);
+  const jan1Dow=jan1.getDay()||7; // 1=Lun 7=Dom
+  // Primer lunes del año (igual que usa filtroHistRapido 'nSemana')
+  const firstMon=new Date(jan1);
+  firstMon.setDate(jan1.getDate()+(jan1Dow===1?0:8-jan1Dow));
+  if(d<firstMon) return '1'; // días de ene antes del primer lunes = sem 1
+  const diffDays=Math.floor((d-firstMon)/86400000);
+  return String(Math.floor(diffDays/7)+1);
 }
 
 function renderCuentas(){
@@ -7767,6 +7869,201 @@ function exportDiasPDF(){
 function exportMesPDF(){
   _dvPDFPrint('Acumulado por Mes — Zapatería JABED','dv-acum-mes-tbody','dv-acum-mes-tfoot','dv-chart-mes');
 }
+
+// ══════════════════ FINANZAS SEMANALES ══════════════════
+let _fnzAnio = new Date().getFullYear();
+
+function initFinanzas(){
+  _fnzAnio = new Date().getFullYear();
+  document.getElementById('fnz-anio').textContent = _fnzAnio;
+  const sel = document.getElementById('fnz-suc');
+  if(sel) sel.innerHTML = '<option value="">Todas</option>'+sucursales.map(s=>`<option value="${s.id}">${s.nombre}</option>`).join('');
+  renderFinanzas();
+}
+
+function fnzCambiarAnio(delta){
+  _fnzAnio += delta;
+  document.getElementById('fnz-anio').textContent = _fnzAnio;
+  renderFinanzas();
+}
+
+function renderFinanzas(){
+  const anio = _fnzAnio;
+  const sucId = document.getElementById('fnz-suc')?.value||'';
+  const MESES_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const jan1=new Date(anio,0,1);
+  const jan1Dow=jan1.getDay()||7;
+  const firstMon=new Date(jan1);
+  firstMon.setDate(jan1.getDate()+(jan1Dow===1?0:8-jan1Dow));
+
+  function acumPago(obj,key,v){
+    const tipoV=v.tipoVenta||'venta';
+    const isDev=tipoV==='devolucion';
+    const monto=isDev?(v.total||0):(tipoV==='apartado'||tipoV==='credito')?(v.anticipo||0):tipoV==='abono'?(v.monto||v.total||0):(v.total||0);
+    if(!obj[key]) obj[key]={ef:0,tar:0,tot:0};
+    obj[key].tot+=monto;
+    const pg=(v.pago||'').toLowerCase().trim();
+    if(pg==='mixto'){obj[key].ef+=v.mixtoEfectivo||0;obj[key].tar+=v.mixtoTarjeta||0;}
+    else if(pg==='bbva-efectivo'){obj[key].ef+=v.bbvaEfectivo||0;obj[key].tar+=v.bbvaTarjeta||0;}
+    else if(pg==='tarjeta-efectivo'){obj[key].ef+=v.tarjetaEfEfectivo||0;obj[key].tar+=v.tarjetaEfTarjeta||0;}
+    else if(pg==='efectivo'||pg==='monedero'||pg==='') obj[key].ef+=monto;
+    else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) obj[key].tar+=monto;
+    else obj[key].ef+=monto;
+  }
+
+  const byWeek={},byMes={},gastosByWeek={},gastosByMes={};
+  (ventas||[]).forEach(v=>{
+    const f=v.fecha||''; if(!f||!f.startsWith(anio)) return;
+    if(sucId&&v.sucursalId!==sucId) return;
+    const ns=parseInt(getNumSemana(f)); if(!ns) return;
+    const mk=f.slice(5,7);
+    acumPago(byWeek,ns,v); acumPago(byMes,mk,v);
+  });
+  (gastos||[]).forEach(g=>{
+    const f=g.fecha||''; if(!f||!f.startsWith(anio)) return;
+    if(sucId&&g.sucursalId!==sucId) return;
+    const ns=parseInt(getNumSemana(f)); if(!ns) return;
+    const mk=f.slice(5,7);
+    gastosByWeek[ns]=(gastosByWeek[ns]||0)+(g.monto||0);
+    gastosByMes[mk]=(gastosByMes[mk]||0)+(g.monto||0);
+  });
+
+  const totVentas=Object.values(byWeek).reduce((a,w)=>a+w.tot,0);
+  const totEf=Object.values(byWeek).reduce((a,w)=>a+w.ef,0);
+  const totTar=Object.values(byWeek).reduce((a,w)=>a+w.tar,0);
+  const totGastos=Object.values(gastosByWeek).reduce((a,v)=>a+v,0);
+  const totUtil=totVentas-totGastos;
+  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setEl('fnz-total-ventas',fmt(totVentas));
+  setEl('fnz-total-ef',fmt(totEf));
+  setEl('fnz-total-gastos',fmt(totGastos));
+  const utilEl=document.getElementById('fnz-total-util');
+  if(utilEl){utilEl.textContent=fmt(totUtil);utilEl.style.color=totUtil>=0?'var(--green)':'var(--red)';}
+
+  const fmtPer=dt=>`${String(dt.getDate()).padStart(2,'0')} ${MESES_N[dt.getMonth()]||''}`;
+  const semActual=parseInt(getNumSemana(new Date().toISOString().slice(0,10)));
+  const mesActual=String(new Date().getMonth()+1).padStart(2,'0');
+  const anioActual=new Date().getFullYear();
+
+  const rN=(n,color,bold)=>n>0
+    ?`<span style="font-family:var(--mono);font-size:12px;font-weight:${bold?800:600};color:${color}">${fmt(n)}</span>`
+    :'<span style="color:var(--faint);font-size:11px">—</span>';
+
+  // ── SEMANAL ──
+  const semsK=new Set([...Object.keys(byWeek),...Object.keys(gastosByWeek)].map(Number));
+  const maxSem=anio===anioActual?Math.max(semActual,...semsK,1):Math.max(...semsK,0);
+  const weeks=[];
+  for(let s=1;s<=maxSem;s++){
+    const lunes=new Date(firstMon); lunes.setDate(firstMon.getDate()+(s-1)*7);
+    const dom=new Date(lunes); dom.setDate(lunes.getDate()+6);
+    const vd=byWeek[s]||{ef:0,tar:0,tot:0};
+    const g=gastosByWeek[s]||0;
+    const util=vd.tot-g;
+    const margen=vd.tot>0?(util/vd.tot*100):0;
+    weeks.push({sem:s,lunes,dom,ef:vd.ef,tar:vd.tar,ventas:vd.tot,gastos:g,util,margen});
+  }
+
+  document.getElementById('fnz-tbody').innerHTML=weeks.slice().reverse().map(w=>{
+    const esSem=w.sem===semActual&&anio===anioActual;
+    const tieneData=w.ventas>0||w.gastos>0;
+    const uc=w.util>=0?'var(--green)':'var(--red)';
+    const mc=w.margen>=30?'var(--green)':w.margen>=15?'var(--gold)':'var(--red)';
+    return `<tr style="border-bottom:1px solid var(--border);${esSem?'background:rgba(116,97,239,.09);border-left:3px solid var(--accent)':''}${!tieneData&&!esSem?';opacity:.28':''}">
+      <td style="padding:7px 10px;text-align:center">
+        <div style="font-family:var(--mono);font-size:15px;font-weight:900;color:${esSem?'var(--accent)':'var(--cream)'}">${w.sem}</div>
+        ${esSem?'<div style="font-size:8px;color:var(--accent);font-weight:800">ACTUAL</div>':''}
+      </td>
+      <td style="padding:7px 10px;white-space:nowrap;font-size:11px;font-weight:600;color:var(--cream)">${fmtPer(w.lunes)}-${fmtPer(w.dom)}</td>
+      <td style="padding:7px 10px;text-align:right">${rN(w.ef,'var(--green)')}</td>
+      <td style="padding:7px 10px;text-align:right">${rN(w.tar,'var(--blue)')}</td>
+      <td style="padding:7px 10px;text-align:right">${rN(w.ventas,'var(--gold)',true)}</td>
+      <td style="padding:7px 10px;text-align:right">${w.gastos>0?`<span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--red)">-${fmt(w.gastos)}</span>`:'<span style="color:var(--faint)">—</span>'}</td>
+      <td style="padding:7px 10px;text-align:right">${tieneData?`<span style="font-family:var(--mono);font-size:12px;font-weight:800;color:${uc}">${(w.util>=0?'+':'')+fmt(w.util)}</span>`:'<span style="color:var(--faint)">—</span>'}</td>
+      <td style="padding:7px 10px;text-align:right">${tieneData?`<span style="font-size:11px;font-weight:700;color:${mc}">${w.margen.toFixed(1)}%</span>`:'<span style="color:var(--faint)">—</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  const tfootS=document.getElementById('fnz-tfoot');
+  if(tfootS){
+    const tu=weeks.reduce((a,w)=>a+w.util,0);
+    const tm=totVentas>0?(tu/totVentas*100):0;
+    tfootS.innerHTML=`<tr style="border-top:2px solid var(--border2);background:var(--s2)">
+      <td colspan="2" style="padding:7px 10px;font-size:11px;font-weight:800;color:var(--cream)">TOTAL ${anio}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green)">${fmt(totEf)}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${fmt(totTar)}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:900;color:var(--gold)">${fmt(totVentas)}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--red)">-${fmt(totGastos)}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:900;color:${tu>=0?'var(--green)':'var(--red)'};">${(tu>=0?'+':'')+fmt(tu)}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:700;color:${tm>=30?'var(--green)':tm>=15?'var(--gold)':'var(--red)'}">${tm.toFixed(1)}%</td>
+    </tr>`;
+  }
+  setEl('fnz-sem-label',weeks.length+' semanas');
+
+  // ── MENSUAL ──
+  const meses12=Array.from({length:12},(_,i)=>String(i+1).padStart(2,'0'));
+  const mesRows=meses12.map(mk=>{
+    const vd=byMes[mk]||{ef:0,tar:0,tot:0};
+    const g=gastosByMes[mk]||0;
+    const util=vd.tot-g;
+    const margen=vd.tot>0?(util/vd.tot*100):0;
+    return{mes:mk,ef:vd.ef,tar:vd.tar,ventas:vd.tot,gastos:g,util,margen};
+  }).filter(m=>m.ventas>0||m.gastos>0||(m.mes===mesActual&&anio===anioActual));
+
+  document.getElementById('fnz-mes-tbody').innerHTML=mesRows.slice().reverse().map(m=>{
+    const esMes=m.mes===mesActual&&anio===anioActual;
+    const tieneData=m.ventas>0||m.gastos>0;
+    const nomMes=(MESES_N[parseInt(m.mes)-1]||m.mes)+' '+anio.toString().slice(2);
+    const uc=m.util>=0?'var(--green)':'var(--red)';
+    const mc=m.margen>=30?'var(--green)':m.margen>=15?'var(--gold)':'var(--red)';
+    return `<tr style="border-bottom:1px solid var(--border);${esMes?'background:rgba(240,180,41,.07);border-left:3px solid var(--gold)':''}${!tieneData&&!esMes?';opacity:.25':''}">
+      <td style="padding:8px 10px">
+        <div style="font-size:13px;font-weight:800;color:${esMes?'var(--gold)':'var(--cream)'}">${nomMes}</div>
+        ${esMes?'<div style="font-size:8px;color:var(--gold);font-weight:700">ACTUAL</div>':''}
+      </td>
+      <td style="padding:8px 10px;text-align:right">${rN(m.ef,'var(--green)')}</td>
+      <td style="padding:8px 10px;text-align:right">${rN(m.tar,'var(--blue)')}</td>
+      <td style="padding:8px 10px;text-align:right">${rN(m.ventas,'var(--gold)',true)}</td>
+      <td style="padding:8px 10px;text-align:right">${m.gastos>0?`<span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--red)">-${fmt(m.gastos)}</span>`:'<span style="color:var(--faint)">—</span>'}</td>
+      <td style="padding:8px 10px;text-align:right">${tieneData?`<span style="font-family:var(--mono);font-size:13px;font-weight:800;color:${uc}">${(m.util>=0?'+':'')+fmt(m.util)}</span>`:'<span style="color:var(--faint)">—</span>'}</td>
+      <td style="padding:8px 10px;text-align:right">${tieneData?`<span style="font-size:11px;font-weight:700;color:${mc}">${m.margen.toFixed(1)}%</span>`:'<span style="color:var(--faint)">—</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  const tfootM=document.getElementById('fnz-mes-tfoot');
+  if(tfootM){
+    const mEf=Object.values(byMes).reduce((a,v)=>a+v.ef,0);
+    const mTar=Object.values(byMes).reduce((a,v)=>a+v.tar,0);
+    const mV=Object.values(byMes).reduce((a,v)=>a+v.tot,0);
+    const mG=Object.values(gastosByMes).reduce((a,v)=>a+v,0);
+    const mU=mV-mG; const mM=mV>0?(mU/mV*100):0;
+    tfootM.innerHTML=`<tr style="border-top:2px solid var(--border2);background:var(--s2)">
+      <td style="padding:7px 10px;font-size:11px;font-weight:800;color:var(--cream)">TOTAL ${anio}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green)">${fmt(mEf)}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${fmt(mTar)}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:900;color:var(--gold)">${fmt(mV)}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--red)">-${fmt(mG)}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:900;color:${mU>=0?'var(--green)':'var(--red)'};">${(mU>=0?'+':'')+fmt(mU)}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:11px;font-weight:700;color:${mM>=30?'var(--green)':mM>=15?'var(--gold)':'var(--red)'}">${mM.toFixed(1)}%</td>
+    </tr>`;
+  }
+  setEl('fnz-mes-label',mesRows.length+' meses con datos');
+  setEl('fnz-status',`${weeks.length} sem · ${anio}`);
+}
+
+
+function exportarFinanzasExcel(){
+  const tbody=document.getElementById('fnz-tbody'); if(!tbody) return;
+  const rows=[['Sem.','Período','Efectivo','Tarjeta','Total Ventas','Gastos','Utilidad','% Margen']];
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const tds=[...tr.querySelectorAll('td')].map(td=>td.textContent.trim().replace(/[\n\r\s]+/g,' '));
+    if(tds.length>=8) rows.push(tds);
+  });
+  const csv=rows.map(r=>r.map(v=>'"'+v.replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`finanzas_${_fnzAnio}.csv`; a.click();
+  toast('✅ Excel descargado');
+}
+// ══════════════════ END FINANZAS ══════════════════
 
 // ══════════════════ END CHARTS + EXPORTS ══════════════════
 let _waTicketTexto = '';
@@ -8900,6 +9197,10 @@ function exportarSalidasExcel(){
 
 // ══════════════════ TAREA 1: HISTORIAL MEJORADO ══════════════════
 function renderHist(){
+  // Actualizar badge de semana actual en el botón
+  const semBadge=document.getElementById('fh-semana-num');
+  if(semBadge) semBadge.textContent='#'+getNumSemana(hoy());
+
   const desde=document.getElementById('h-desde')?.value||'';
   const hasta=document.getElementById('h-hasta')?.value||'';
   const pago=document.getElementById('h-pago')?.value||'';
@@ -10271,7 +10572,7 @@ function populateLocacionSelect(selectedVal){
 let usuariosInternos = []; // loaded from Firestore
 let usuarioActivo = null;  // {id, nombre, rol, pin}
 
-const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','dashboard-ventas','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','recuperacion','sucursales','usuarios','importar','bitacora','publicaciones','analisis','histcambios','costos'];
+const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','dashboard-ventas','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','recuperacion','sucursales','usuarios','importar','bitacora','publicaciones','analisis','histcambios','costos','finanzas'];
 const PERMISOS_ROL_DEFAULT = {
   admin:      [...TODOS_MODULOS],
   manager:    [...TODOS_MODULOS],
@@ -11241,6 +11542,7 @@ const MODULO_LABELS = {
   'catalogo':       '🗂️ Catálogo General',
   'analisis':       '📈 Análisis de Stock',
   'costos':         '💹 Costos y Utilidad',
+  'finanzas':       '📊 Finanzas Semanales',
   'entradas':       '📥 Entrada Mercancía',
   'salidas':        '📤 Salida Mercancía',
   'transfer':       '↔️ Transferencias',
@@ -13121,6 +13423,7 @@ function _navigateTo(page, el){
   if(page==='dashboard')renderDashboard();
   if(page==='clientes')loadClientes();
   if(page==='gastos')renderGastos();
+  if(page==='finanzas')initFinanzas();
   if(page==='cuentas')renderCuentas();
   if(page==='reportes')initReportes();
   if(page==='resumen'){renderResumenAnual();initReporteSemanal();}
@@ -13175,6 +13478,7 @@ const GM_CATS = {
   },
   finanzas: {
     title: '💰 Finanzas', mods: [
+      {icon:'📊', name:'Finanzas Semanales',page:'finanzas', gold:true},
       {icon:'💸', name:'Gastos',           page:'gastos'},
       {icon:'🏦', name:'Corte de Caja',    page:'corte'},
       {icon:'📈', name:'Reportes',         page:'reportes'},
@@ -13384,7 +13688,8 @@ function goFromGrid(page){
     'etiquetas':'nav-etiquetas','promociones':'nav-promociones',
     'recuperacion':'nav-recuperacion',
     'catalogos-cfg':'nav-catalogos-cfg','usuarios':'nav-usuarios',
-    'sucursales':'nav-sucursales','importar':'nav-importar','bitacora':'nav-bitacora'
+    'sucursales':'nav-sucursales','importar':'nav-importar','bitacora':'nav-bitacora',
+    'finanzas':'nav-finanzas'
   };
   const navEl = document.getElementById(navMap[page]||'');
   go(page, navEl);
