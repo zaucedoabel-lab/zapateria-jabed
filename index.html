@@ -567,6 +567,7 @@ select option{background:var(--s2)}
 /* ══ TALLAS ══ */
 .tg{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
 .tb{min-width:40px;height:34px;border:1px solid var(--border);border-radius:6px;background:var(--s2);color:var(--muted);font-size:12px;font-family:var(--mono);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:0 6px}
+[id^="ct-"].on{background:var(--accent)!important;border-color:var(--accent)!important;color:#fff!important;transform:scale(1.06);box-shadow:0 0 0 3px rgba(116,97,239,.35)}
 .tb:hover{border-color:rgba(108,99,255,.4);color:var(--accent2)}
 .tb.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
 
@@ -2930,10 +2931,18 @@ body{background:#071222!important}
             <button class="btn btn-ghost btn-sm" onclick="loadBitacora()">🔄 Actualizar</button>
           </div>
           <div class="tw" style="overflow-x:auto">
-            <table style="min-width:1300px"><thead><tr>
-              <th>Fecha/Hora</th><th>Tipo</th><th>Descripción</th>
-              <th>Destino</th><th>Estilos</th><th>Piezas</th><th>Comentario</th>
-              <th>Usuario</th><th>Estado</th><th>Acciones</th>
+            <table style="min-width:1200px;table-layout:fixed"><thead><tr>
+              <th style="width:90px">Fecha/Hora</th>
+              <th style="width:80px">Tipo</th>
+              <th style="width:160px">Descripción</th>
+              <th style="width:100px">Destino</th>
+              <th style="width:68px"></th>
+              <th style="width:110px">Estilos</th>
+              <th style="width:54px;text-align:center">Piezas</th>
+              <th style="width:130px">Comentario</th>
+              <th style="width:80px">Usuario</th>
+              <th style="width:90px">Estado</th>
+              <th style="width:170px">Acciones</th>
             </tr></thead>
             <tbody id="bitacora-tbody"></tbody></table>
           </div>
@@ -3751,14 +3760,28 @@ body{background:#071222!important}
 
 <!-- Modal Add Cart -->
 <div class="mo" id="mo-cart">
-  <div class="md">
-    <div class="mh"><div class="mt">Agregar al Carrito</div><button class="xbtn" onclick="closeM('mo-cart')">✕</button></div>
-    <div class="mb" id="mc-body"></div>
-    <div class="mf"><button class="btn btn-ghost" onclick="closeM('mo-cart')">Cancelar</button><button class="btn btn-accent" onclick="addToCart()"
-    style="width:100%;padding:16px;font-size:18px;font-weight:900;border-radius:14px;
-    letter-spacing:.5px;box-shadow:0 4px 16px rgba(108,99,255,.4);margin-top:8px">
-    🛒 AGREGAR AL CARRITO
-  </button></div>
+  <div class="md" style="max-width:580px;width:96%;background:var(--s1);border:1px solid var(--border2)">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase">🛒 Agregar al Carrito</div>
+      <button onclick="closeM('mo-cart')" style="background:rgba(255,255,255,.08);border:none;color:var(--cream);border-radius:8px;padding:5px 11px;cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <!-- Body -->
+    <div id="mc-body" style="padding:22px 22px 8px"></div>
+    <!-- Footer -->
+    <div style="padding:14px 22px 20px;display:flex;gap:10px">
+      <button onclick="closeM('mo-cart')"
+        style="padding:13px 22px;border-radius:12px;border:2px solid var(--border2);background:transparent;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap">
+        Cancelar
+      </button>
+      <button onclick="addToCart()"
+        style="flex:1;padding:16px;font-size:20px;font-weight:900;border-radius:14px;border:none;
+        background:linear-gradient(135deg,#5b48d9,#7c6de8);color:#fff;cursor:pointer;letter-spacing:.5px;
+        box-shadow:0 4px 20px rgba(108,99,255,.45);transition:transform .1s"
+        onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+        🛒 AGREGAR AL CARRITO
+      </button>
+    </div>
   </div>
 </div>
 
@@ -5631,17 +5654,50 @@ function openAddCart(id){
   posProducto=p; posTalla=null;
   const ts=Object.entries(p.stock||{}).filter(([,v])=>v>0);
   document.getElementById('mc-body').innerHTML=`
-      <div style="width:70px;height:70px;border-radius:8px;overflow:hidden;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">${p.foto?`<img src="${p.foto}" style="width:100%;height:100%;object-fit:cover">`:' 👟'}</div>
-      <div>
-        <div style="font-size:16px;font-weight:600;color:var(--cream)">${p.desc}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">${p.cat} · ${p.color||'—'}</div>
-        ${suc?`<div style="font-size:12px;color:var(--muted)">${suc.tipo==='bodega'?'📦':'🏪'} ${suc.nombre}</div>`:''}
+    <!-- Producto info -->
+    <div style="display:flex;gap:20px;align-items:flex-start;margin-bottom:20px">
+      <div style="width:160px;height:160px;border-radius:16px;overflow:hidden;background:var(--s2);
+        display:flex;align-items:center;justify-content:center;font-size:56px;flex-shrink:0;
+        border:2px solid var(--border2)">
+        ${p.foto?`<img src="${p.foto}" style="width:100%;height:100%;object-fit:cover">`:'👟'}
+      </div>
+      <div style="flex:1;min-width:0;padding-top:4px">
+        <div style="font-size:28px;font-weight:900;color:var(--gold);letter-spacing:1px;font-family:var(--mono);margin-bottom:6px">${p.barcode||p.sku||'—'}</div>
+        <div style="font-size:22px;font-weight:800;color:var(--cream);line-height:1.2;margin-bottom:8px">${p.desc}</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:3px">${p.cat} · ${p.color||'VARIOS'}</div>
+        ${suc?`<div style="font-size:13px;color:var(--muted);margin-bottom:6px">${suc.tipo==='bodega'?'📦':'🏪'} ${suc.nombre}</div>`:''}
+        <div style="font-size:32px;font-weight:900;color:var(--green);margin-top:8px;font-family:var(--mono)">$${parseFloat(p.precio||0).toFixed(2)}</div>
       </div>
     </div>
-    <div class="fg"><label>Talla</label><div class="tg">${ts.map(([t,c])=>`<button type="button" class="tb" id="ct-${tallaToId(t)}" onclick="selTalla(this,'${t}')">${t}<br><span style="font-size:9px;opacity:.6">(${c})</span></button>`).join('')}</div></div>
-    <div class="fr fr2">
-      <div class="fg"><label>Cantidad</label><input type="number" id="a-qty" value="1" min="1"></div>
-      <div class="fg"><label>Precio</label><input type="number" id="a-price" value="${p.precio}" step="0.01"></div>
+
+    <!-- Tallas -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px">TALLA</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        ${ts.map(([t,c])=>`
+          <button type="button" id="ct-${tallaToId(t)}" onclick="selTalla(this,'${t}')"
+            style="min-width:66px;padding:12px 16px;border-radius:12px;border:2px solid var(--border2);
+            background:var(--s2);color:var(--cream);cursor:pointer;font-size:16px;font-weight:900;
+            transition:all .15s;text-align:center;line-height:1.3;font-family:var(--mono)">
+            ${t}<br><span style="font-size:12px;font-weight:700;color:var(--green)">(${c})</span>
+          </button>`).join('')}
+      </div>
+    </div>
+
+    <!-- Cantidad y precio -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px">CANTIDAD</div>
+        <input type="number" id="a-qty" value="1" min="1"
+          style="width:100%;padding:16px;border-radius:12px;border:2px solid var(--border2);
+          background:var(--s2);color:var(--cream);font-size:28px;font-weight:900;text-align:center;box-sizing:border-box">
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px">PRECIO</div>
+        <input type="number" id="a-price" value="${p.precio}" step="0.01"
+          style="width:100%;padding:16px;border-radius:12px;border:2px solid var(--border2);
+          background:var(--s2);color:var(--green);font-size:26px;font-weight:900;text-align:center;box-sizing:border-box">
+      </div>
     </div>`;
   if(ts.length===1){posTalla=ts[0][0];setTimeout(()=>{const b=document.getElementById('ct-'+tallaToId(ts[0][0]));if(b)b.classList.add('on');},30);}
   openM('mo-cart');
@@ -11290,6 +11346,7 @@ function abrirModalCobro(){
           ${item.foto ? `<img src="${item.foto}" style="width:100%;height:100%;object-fit:cover" alt="">` : `<span style="font-size:30px">👟</span>`}
         </div>
         <div style="flex:1;min-width:0">
+          ${(item.sku||item.barcode)?`<div style="font-size:12px;font-weight:800;color:var(--gold);font-family:var(--mono);letter-spacing:.5px;margin-bottom:2px">${item.sku||item.barcode}</div>`:''}
           <div class="cobro-item-name" style="font-size:15px;font-weight:700;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.desc}</div>
           <div style="display:flex;gap:8px;align-items:center;margin-top:5px;flex-wrap:wrap">
             <span style="font-size:20px;font-weight:900;color:var(--accent2);background:var(--accent-dim);padding:2px 10px;border-radius:6px">T${item.talla}</span>
@@ -11799,21 +11856,32 @@ async function loadBitacora(){
       const estilosLista = m.datos?.lineas
         ? [...new Set(m.datos.lineas.map(l=>l.sku||l.barcode||l.prodId||'—').filter(x=>x&&x!=='—'))].join(', ')
         : '—';
+      // Foto del primer producto referenciado
+      const primerSku = m.datos?.lineas?.[0]?.sku || m.datos?.lineas?.[0]?.barcode || '';
+      const prodFoto = primerSku
+        ? (productos.find(p=>p.sku===primerSku||p.barcode===primerSku)?.foto || null)
+        : null;
       return `<tr>
-        <td style="font-size:11px;color:var(--muted);white-space:nowrap">${m.fecha||'—'}<br>${m.hora||''}</td>
-        <td>${tipoBadge}</td>
-        <td style="font-size:11px;color:var(--cream);max-width:180px">${m.descripcion||'—'}</td>
-        <td style="font-size:12px;color:var(--cream);white-space:nowrap">
+        <td style="padding:6px 8px;font-size:10px;color:var(--muted);white-space:nowrap">${m.fecha||'—'}<br>${m.hora||''}</td>
+        <td style="padding:6px 8px">${tipoBadge}</td>
+        <td style="padding:6px 8px;font-size:11px;color:var(--cream);overflow:hidden;text-overflow:ellipsis">${m.descripcion||'—'}</td>
+        <td style="padding:6px 8px;font-size:11px;color:var(--cream);white-space:nowrap;overflow:hidden">
           ${(m.tipo==='entrada'||m.tipo==='salida')
-            ? `<span class="badge ${destSucNombre.toLowerCase().includes('bod')?'b-orange':'b-green'}">${(m.tipo==='entrada'?'📥 ':'📤 ')+destSucNombre}</span>`
+            ? `<span class="badge ${destSucNombre.toLowerCase().includes('bod')?'b-orange':'b-green'}" style="font-size:10px">${(m.tipo==='entrada'?'📥 ':'📤 ')+destSucNombre}</span>`
             : '<span style="color:var(--faint)">—</span>'}
         </td>
-        <td style="font-size:11px;font-family:var(--mono);color:var(--cream);max-width:150px;word-break:break-all">${estilosLista}</td>
-        <td style="text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:var(--gold)">${totalPzas}</td>
-        <td style="font-size:11px;color:var(--muted);max-width:140px">${comentario}</td>
-        <td style="font-size:11px;color:var(--cream)">${m.usuario||'—'}<br><span style="color:var(--muted);font-size:10px">${m.usuarioRol||''}</span></td>
-        <td>${estadoBadge}</td>
-        <td>${acciones}</td>
+        <td style="padding:4px 6px">
+          <div style="width:58px;height:58px;border-radius:8px;overflow:hidden;background:var(--s3);
+            display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--border2)">
+            ${prodFoto?`<img src="${prodFoto}" style="width:100%;height:100%;object-fit:cover" alt="">`:'👟'}
+          </div>
+        </td>
+        <td style="padding:6px 8px;font-size:14px;font-family:var(--mono);font-weight:800;color:var(--gold);overflow:hidden;text-overflow:ellipsis">${estilosLista}</td>
+        <td style="padding:6px 8px;text-align:center;font-family:var(--mono);font-weight:700;font-size:14px;color:var(--gold)">${totalPzas}</td>
+        <td style="padding:6px 8px;font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis">${comentario}</td>
+        <td style="padding:6px 8px;font-size:10px;color:var(--cream)">${m.usuario||'—'}<br><span style="color:var(--muted);font-size:9px">${m.usuarioRol||''}</span></td>
+        <td style="padding:6px 8px">${estadoBadge}</td>
+        <td style="padding:6px 8px">${acciones}</td>
       </tr>`;
     }).join('');
   }catch(e){ console.error('loadBitacora error:',e); toast('Error cargando bitácora: '+e.message,'err'); }
