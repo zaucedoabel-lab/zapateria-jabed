@@ -2874,10 +2874,23 @@ body{background:#071222!important}
 </div>
 
           <div class="flex-between" style="margin-bottom:14px">
-            <div class="flex-row" style="gap:8px">
+            <div class="flex-row" style="gap:8px;flex-wrap:wrap">
               <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" id="costo-q" placeholder="Buscar producto…" oninput="renderCostos()"></div>
-              <select id="costo-cat" onchange="renderCostos()" style="width:130px"><option value="">Todas Cat.</option></select>
-              <select id="costo-linea" onchange="renderCostos()" style="width:130px"><option value="">Todas Líneas</option></select>
+              <select id="costo-cat" onchange="renderCostos()" style="width:120px"><option value="">Todas Cat.</option></select>
+              <select id="costo-linea" onchange="renderCostos()" style="width:120px"><option value="">Todas Líneas</option></select>
+              <select id="costo-sin-costo" onchange="renderCostos()" style="width:145px">
+                <option value="">Todos los artículos</option>
+                <option value="sin_costo">❌ Sin costo de compra</option>
+                <option value="con_costo">✅ Con costo registrado</option>
+              </select>
+              <select id="costo-orden" onchange="renderCostos()" style="width:155px">
+                <option value="">Ordenar por fecha</option>
+                <option value="margen_asc">% Margen: menor → mayor</option>
+                <option value="margen_desc">% Margen: mayor → menor</option>
+                <option value="utilidad_desc">Utilidad: mayor → menor</option>
+                <option value="precio_desc">Precio: mayor → menor</option>
+              </select>
+              <button class="btn btn-ghost btn-sm" onclick="renderCostos()" title="Actualizar">🔄</button>
             </div>
             <button class="btn btn-ghost btn-sm" onclick="exportarCostosExcel()">📊 Exportar Excel</button>
           </div>
@@ -5140,7 +5153,8 @@ function renderInv(){
   const q=(document.getElementById('inv-q')?.value||'').toLowerCase();
   const cat=document.getElementById('inv-cat')?.value||'';
   const linea=document.getElementById('inv-linea')?.value||'';
-  const loc=(document.getElementById('inv-loc')?.value||'').toLowerCase();
+  const locRaw=(document.getElementById('inv-loc')?.value||'');
+  const loc=locRaw==='__sin_loc__'?'__sin_loc__':locRaw.toLowerCase();
   const temp=document.getElementById('inv-temp')?.value||'';
   const marca=(document.getElementById('inv-marca')?.value||'').toLowerCase();
   const mostrar=document.getElementById('inv-mostrar')?.value||'todos';
@@ -5149,7 +5163,13 @@ function renderInv(){
     const mq=!q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.color||'').toLowerCase().includes(q)||(p.marca||'').toLowerCase().includes(q);
     const mc=!cat||p.cat===cat;
     const ml=!linea||p.linea===linea;
-    const mloc=!loc||(p.locacion||'').toLowerCase()===loc||(p.locacion||'').toLowerCase().startsWith(loc+'-')||(p.locacion||'').toLowerCase().includes(loc)&&loc.length>2;
+    const mloc = !loc
+      ? true
+      : loc==='__sin_loc__'
+        ? !(p.locacion||'').trim()   // sin locación asignada
+        : (p.locacion||'').toLowerCase()===loc
+          || (p.locacion||'').toLowerCase().startsWith(loc+'-')
+          || ((p.locacion||'').toLowerCase().includes(loc) && loc.length>2);
     const mt=!temp||p.temporada===temp;
     const mm=!marca||(p.marca||'').toLowerCase().includes(marca);
     // ── SUCURSAL FILTER FIX ──
@@ -5157,16 +5177,24 @@ function renderInv(){
     // al ver una tienda específica (no bodega)
     const sucP = sucursales.find(s=>s.id===p.sucursalId);
     const esBodegaP = sucP?.tipo==='bodega';
+    const sucActiva = sucursales.find(s=>s.id===activeSucId);
+    const esBodegaActiva = sucActiva?.tipo==='bodega';
     const ms = activeSucId==='all'
       ? true
-      : p.sucursalId===activeSucId
-        || (!p.sucursalId && sucursales.find(s=>s.id===activeSucId)?.tipo!=='bodega');
+      : esBodegaActiva
+        // Si el filtro activo ES una bodega → solo mostrar productos de esa bodega exacta
+        ? p.sucursalId===activeSucId
+        // Si el filtro activo es tienda → mostrar su sucursal + productos sin sucursalId (tienda principal)
+        : p.sucursalId===activeSucId || !p.sucursalId;
     const sumS=s=>Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
     const tot=sumS(p.stock);
-    // ── BUG FIX: gemelos de bodega (creadoDesde) siempre visibles en inventario
-    // aunque tengan 0 stock — representan "ranuras" pendientes de surtir
+    // ── STOCK FILTER: cuando hay sucursal activa, usar solo su stock ──
+    // Si el usuario filtra por STOCK (bodega) y el producto tiene 0 piezas ahí, no mostrar
     const esGemeloEsperando = !!p.creadoDesde && esBodegaP && tot===0;
-    const mstock = esGemeloEsperando || mostrar==='todos'||(mostrar==='con_stock'&&tot>0)||(mostrar==='sin_stock'&&tot===0)||(mostrar==='bajo_stock'&&tot>0&&tot<=3);
+    const mstock = esGemeloEsperando || mostrar==='todos'
+      || (mostrar==='con_stock' && tot>0)
+      || (mostrar==='sin_stock' && tot===0)
+      || (mostrar==='bajo_stock' && tot>0 && tot<=3);
     return mq&&mc&&ml&&mloc&&mt&&mm&&ms&&mstock;
   });
 
@@ -6735,6 +6763,7 @@ function updateProductoSelects(){
     });
     const prefijos = Object.keys(prefMap).sort();
     let html = '<option value="">📍 Todas</option>';
+    html += '<option value="__sin_loc__">❌ Sin Locación</option>';
     prefijos.forEach(pre=>{
       const hijos = prefMap[pre];
       if(hijos.length > 1){
@@ -12406,9 +12435,11 @@ function renderCostos(){
     setTimeout(renderCostos, 1500);
     return;
   }
-  const q     = (document.getElementById('costo-q')?.value||'').toLowerCase();
-  const cat   = document.getElementById('costo-cat')?.value||'';
-  const linea = document.getElementById('costo-linea')?.value||'';
+  const q      = (document.getElementById('costo-q')?.value||'').toLowerCase();
+  const cat    = document.getElementById('costo-cat')?.value||'';
+  const linea  = document.getElementById('costo-linea')?.value||'';
+  const sinCostoFiltro = document.getElementById('costo-sin-costo')?.value||'';
+  const orden  = document.getElementById('costo-orden')?.value||'';
 
   // Populate category filter if empty
   const catSel = document.getElementById('costo-cat');
@@ -12426,7 +12457,7 @@ function renderCostos(){
 
   const sumS = s => Object.values(s||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
 
-  const lista = productos.filter(p=>{
+  let lista = productos.filter(p=>{
     const mq = !q
       || (p.desc||'').toLowerCase().includes(q)
       || (p.barcode||'').toLowerCase().includes(q)
@@ -12434,15 +12465,36 @@ function renderCostos(){
       || (p.marca||'').toLowerCase().includes(q);
     const mc = !cat   || p.cat===cat;
     const ml = !linea || p.linea===linea;
-    return mq&&mc&&ml;
+    const costo = parseFloat(p.costoCompra||p.costo||0);
+    const tieneCosto = costo > 0;
+    const mSinCosto = !sinCostoFiltro
+      || (sinCostoFiltro==='sin_costo' && !tieneCosto)
+      || (sinCostoFiltro==='con_costo' &&  tieneCosto);
+    return mq&&mc&&ml&&mSinCosto;
   });
+
+  // Ordenar
+  if(orden){
+    lista = lista.slice().sort((a,b)=>{
+      const pA=parseFloat(a.precio||0), pB=parseFloat(b.precio||0);
+      const cA=parseFloat(a.costoCompra||0), cB=parseFloat(b.costoCompra||0);
+      const mA=pA>0?((pA-cA)/pA*100):0;
+      const mB=pB>0?((pB-cB)/pB*100):0;
+      const uA=pA-cA, uB=pB-cB;
+      if(orden==='margen_asc')    return mA-mB;
+      if(orden==='margen_desc')   return mB-mA;
+      if(orden==='utilidad_desc') return uB-uA;
+      if(orden==='precio_desc')   return pB-pA;
+      return 0;
+    });
+  }
 
   // Summary stats
   let totalCosto=0, totalVenta=0;
   lista.forEach(p=>{
     const stock = sumS(p.stock);
-    totalCosto += (p.costo||0)*stock;
-    totalVenta += (p.precio||0)*stock;
+    totalCosto += parseFloat(p.costoCompra||p.costo||0)*stock;
+    totalVenta += parseFloat(p.precio||0)*stock;
   });
   const utilidadTotal = totalVenta - totalCosto;
   const margenProm = totalVenta>0 ? ((utilidadTotal/totalVenta)*100).toFixed(1) : 0;
@@ -12463,8 +12515,8 @@ function renderCostos(){
   }
   tbody.innerHTML = lista.map(p=>{
     const stock   = sumS(p.stock);
-    const costo   = p.costo||0;
-    const precio  = p.precio||0;
+    const costo   = parseFloat(p.costoCompra||p.costo||0);
+    const precio  = parseFloat(p.precio||0);
     const utilPza = precio - costo;
     const margen  = precio>0 ? ((utilPza/precio)*100).toFixed(1) : 0;
     const utilTot = utilPza * stock;
