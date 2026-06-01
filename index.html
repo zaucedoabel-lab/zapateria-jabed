@@ -969,6 +969,9 @@ body{background:#071222!important}
       <div id="nav-bitacora"></div><div id="nav-costos"></div>
       <div id="nav-publicaciones"></div><div id="nav-analisis"></div><div id="nav-histcambios"></div>
       <div id="nav-dashboard-ventas"></div><div id="nav-finanzas"></div>
+      <div id="nav-lavado"></div>
+      <div id="nav-lavado-servicios"></div>
+      <div id="nav-lavado-status"></div>
       <div id="usr-activo-label"></div>
     </div>
 
@@ -1173,7 +1176,35 @@ body{background:#071222!important}
               </div>
             </div>
 
-          </div>
+            <!-- LAVADO DE TENIS — burbuja + cepillo -->
+            <div class="gm-cat-card" onclick="goFromGrid('lavado')" style="background:linear-gradient(135deg,rgba(6,182,212,.18),rgba(8,145,178,.12));border-color:rgba(6,182,212,.35)">
+              <div class="gm-cat-bg">
+                <div class="gm-cat-svg-wrap" style="background:rgba(6,182,212,.18);border-color:rgba(6,182,212,.45)">
+                  <svg viewBox="0 0 80 80" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Tenis silueta simplificada -->
+                    <path d="M10 52 C10 52 14 44 24 44 C30 44 36 48 44 48 C52 48 58 44 66 46 L68 52 C68 52 62 56 52 56 C42 56 34 52 24 52 C18 52 10 56 10 56 Z"/>
+                    <!-- Cepillo -->
+                    <rect x="48" y="20" width="20" height="8" rx="3"/>
+                    <line x1="50" y1="28" x2="50" y2="34"/>
+                    <line x1="54" y1="28" x2="54" y2="35"/>
+                    <line x1="58" y1="28" x2="58" y2="34"/>
+                    <line x1="62" y1="28" x2="62" y2="33"/>
+                    <line x1="66" y1="28" x2="66" y2="34"/>
+                    <!-- Burbujas de jabón -->
+                    <circle cx="22" cy="28" r="4"/>
+                    <circle cx="34" cy="22" r="5.5"/>
+                    <circle cx="16" cy="18" r="3"/>
+                    <circle cx="30" cy="34" r="3"/>
+                  </svg>
+                </div>
+                <div class="gm-cat-bottom">
+                  <div class="gm-cat-name">LAVADO</div>
+                  <div class="gm-cat-count">TENIS</div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /gm-cats -->
 
           <!-- Submodules grid (hidden until cat selected) -->
           <div id="gm-mods" class="gm-grid" style="display:none"></div>
@@ -2216,7 +2247,7 @@ body{background:#071222!important}
           </div>
 
           <!-- Tabla semanal -->
-          <div id="h-semana-tabla-wrap" style="margin-bottom:10px;overflow-x:auto;max-width:50%;min-width:300px">
+          <div id="h-semana-tabla-wrap" style="margin-bottom:10px;overflow-x:auto;max-width:100%;min-width:300px">
             <table id="h-semana-tabla" style="border-collapse:collapse;table-layout:fixed;width:100%;border:2px solid #cbd5e1;border-radius:6px;overflow:hidden">
               <thead><tr></tr></thead>
               <tbody id="h-semana-tbody"></tbody>
@@ -3476,6 +3507,131 @@ body{background:#071222!important}
           </div>
         </div>
 
+        <!-- ══════════ LAVADO DE TENIS ══════════ -->
+        <div id="page-lavado" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
+  <div class="mod-tabs" id="tabs-lavado"></div>
+</div>
+
+<!-- Stats rápidas -->
+<div class="stat-grid sg4" style="margin-bottom:16px">
+  <div class="scard b"><div class="sl">Total Órdenes</div><div class="sv b" id="lav-stat-total">0</div></div>
+  <div class="scard gold"><div class="sl">En Proceso</div><div class="sv gold" id="lav-stat-proceso">0</div></div>
+  <div class="scard g"><div class="sl">Listas p/ entregar</div><div class="sv g" id="lav-stat-listas">0</div></div>
+  <div class="scard a"><div class="sl">Entregadas hoy</div><div class="sv a" id="lav-stat-hoy">0</div></div>
+</div>
+<!-- Barra de acciones -->
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+  <button class="btn btn-accent" onclick="abrirNuevaOrdenLavado()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Nueva Orden
+  </button>
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <button class="btn btn-ghost btn-sm" onclick="filtrarLavado('')" id="lav-f-todas" style="border-color:var(--accent2);color:var(--accent2)">Todas</button>
+    <button class="btn btn-ghost btn-sm" onclick="filtrarLavado('recibido')" id="lav-f-recibido">🟡 Recibido</button>
+    <button class="btn btn-ghost btn-sm" onclick="filtrarLavado('proceso')" id="lav-f-proceso">🔵 En Proceso</button>
+    <button class="btn btn-ghost btn-sm" onclick="filtrarLavado('listo')" id="lav-f-listo">🟢 Listo</button>
+    <button class="btn btn-ghost btn-sm" onclick="filtrarLavado('entregado')" id="lav-f-entregado">✅ Entregado</button>
+  </div>
+  <div style="flex:1"></div>
+  <div style="position:relative">
+    <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none">🔍</span>
+    <input type="text" id="lav-q" placeholder="Buscar cliente o folio…" oninput="renderOrdenesLavado()" style="padding-left:32px;width:200px">
+  </div>
+</div>
+<!-- Tabla de órdenes -->
+<div class="tw">
+  <table>
+    <thead><tr>
+      <th>Folio</th><th>Foto</th><th>Fecha</th><th>Cliente</th><th>Calzado</th>
+      <th>Servicio</th><th>Precio</th><th>Estado</th><th>Entrega</th><th>Acciones</th>
+    </tr></thead>
+    <tbody id="lav-tbody">
+      <tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted)">Sin órdenes registradas. Crea la primera con + Nueva Orden.</td></tr>
+    </tbody>
+  </table>
+</div>
+        </div><!-- /page-lavado -->
+
+        <!-- ══════════ LAVADO SERVICIOS Y COSTOS ══════════ -->
+        <div id="page-lavado-servicios" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
+  <div class="mod-tabs" id="tabs-lavado-servicios"></div>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+  <div>
+    <div style="font-size:18px;font-weight:800;color:var(--cream)">💰 Catálogo de Servicios</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px">Administra los servicios disponibles y sus precios en el módulo de lavado</div>
+  </div>
+  <button class="btn btn-accent" onclick="abrirNuevoServicioLavado()">＋ Nuevo Servicio</button>
+</div>
+
+<!-- Cards de servicios -->
+<div id="lav-servicios-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">
+  <div style="text-align:center;padding:40px;color:var(--muted);grid-column:1/-1">Cargando servicios…</div>
+</div>
+        </div><!-- /page-lavado-servicios -->
+
+        <!-- ══════════ LAVADO STATUS BOARD ══════════ -->
+        <div id="page-lavado-status" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()">
+  <span class="btn-arrow">⌂</span>
+  <span class="btn-label">
+    <span class="btn-line1">← REGRESAR A</span>
+    <span class="btn-line2">MENÚ PRINCIPAL</span>
+  </span>
+</button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
+  <div class="mod-tabs" id="tabs-lavado-status"></div>
+</div>
+
+<!-- Barra superior del tablero -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+  <div>
+    <div style="font-size:18px;font-weight:800;color:var(--cream)">📋 Tablero de Status</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px" id="lav-status-updated">—</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer">
+      <input type="checkbox" id="lav-status-show-done" style="accent-color:var(--accent)" onchange="renderLavadoStatus()">
+      Mostrar entregados
+    </label>
+    <button class="btn btn-ghost btn-sm" onclick="initLavadoStatus()">🔄 Actualizar</button>
+  </div>
+</div>
+
+<!-- Stats rápidas del tablero -->
+<div class="stat-grid sg4" style="margin-bottom:16px">
+  <div class="scard gold"><div class="sl">🟡 Recibidos</div><div class="sv gold" id="ls-cnt-recibido">0</div></div>
+  <div class="scard b">  <div class="sl">🔵 En Proceso</div><div class="sv b"    id="ls-cnt-proceso">0</div></div>
+  <div class="scard g">  <div class="sl">🟢 Listos</div>    <div class="sv g"    id="ls-cnt-listo">0</div></div>
+  <div class="scard">    <div class="sl">✅ Entregados hoy</div><div class="sv"  id="ls-cnt-entregado">0</div></div>
+</div>
+
+<!-- Tablero Kanban -->
+<div id="lav-status-board" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start">
+  <!-- Renderizado dinámico -->
+</div>
+        </div><!-- /page-lavado-status -->
+
       </div><!-- /content -->
     </div><!-- /main -->
   </div><!-- /body-wrap -->
@@ -3548,6 +3704,290 @@ body{background:#071222!important}
             <div style="font-size:13px;color:var(--muted)">Ajusta los filtros o da clic en Actualizar</div>
           </div>
         </div>
+
+<!-- ══ MODAL: Nuevo/Editar Servicio de Lavado ══ -->
+<div class="mo" id="mo-lavado-servicio">
+  <div class="md" style="max-width:460px">
+    <div class="mh">
+      <div class="mt" id="lav-svc-mo-title">＋ Nuevo Servicio</div>
+      <button class="xbtn" onclick="closeM('mo-lavado-servicio')">✕</button>
+    </div>
+    <div class="mb">
+      <div class="fg"><label>Nombre del Servicio</label>
+        <input type="text" id="lav-svc-nombre" placeholder="Ej: Lavado Básico, Express…">
+      </div>
+      <div class="fg"><label>Descripción corta <span style="color:var(--muted)">(opcional)</span></label>
+        <input type="text" id="lav-svc-desc" placeholder="Ej: Limpieza exterior + agujetas">
+      </div>
+      <div class="fr fr2">
+        <div class="fg"><label>Precio ($)</label>
+          <input type="number" id="lav-svc-precio" step="0.01" min="0" placeholder="0.00">
+        </div>
+        <div class="fg"><label>Duración estimada</label>
+          <select id="lav-svc-duracion">
+            <option value="">Sin especificar</option>
+            <option value="mismo dia">Mismo día</option>
+            <option value="24 hrs">24 horas</option>
+            <option value="48 hrs">48 horas</option>
+            <option value="3 dias">3 días</option>
+            <option value="5 dias">5 días</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>Color de tarjeta</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <button type="button" onclick="selColorSvcLavado('accent')" id="lav-svc-col-accent"
+            style="width:32px;height:32px;border-radius:8px;border:2px solid var(--accent);background:var(--accent-dim);cursor:pointer;transition:transform .15s" title="Verde"></button>
+          <button type="button" onclick="selColorSvcLavado('blue')" id="lav-svc-col-blue"
+            style="width:32px;height:32px;border-radius:8px;border:2px solid var(--border);background:#0e1e2a;cursor:pointer;transition:transform .15s" title="Azul"></button>
+          <button type="button" onclick="selColorSvcLavado('gold')" id="lav-svc-col-gold"
+            style="width:32px;height:32px;border-radius:8px;border:2px solid var(--border);background:var(--gold-dim);cursor:pointer;transition:transform .15s" title="Dorado"></button>
+          <button type="button" onclick="selColorSvcLavado('orange')" id="lav-svc-col-orange"
+            style="width:32px;height:32px;border-radius:8px;border:2px solid var(--border);background:#2a1808;cursor:pointer;transition:transform .15s" title="Naranja"></button>
+          <button type="button" onclick="selColorSvcLavado('red')" id="lav-svc-col-red"
+            style="width:32px;height:32px;border-radius:8px;border:2px solid var(--border);background:#2a1010;cursor:pointer;transition:transform .15s" title="Rojo"></button>
+        </div>
+        <input type="hidden" id="lav-svc-color" value="accent">
+      </div>
+      <div class="fg" style="margin-top:4px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--cream);text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="lav-svc-activo" checked style="width:16px;height:16px;accent-color:var(--accent)">
+          Servicio activo (visible en Nueva Orden)
+        </label>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeM('mo-lavado-servicio')">Cancelar</button>
+      <button class="btn btn-accent" onclick="guardarServicioLavado()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Flujo de la Orden ══ -->
+<div class="mo" id="mo-lavado-flujo">
+  <div class="md wide" style="max-width:600px">
+    <div class="mh">
+      <div>
+        <div class="mt" id="lav-flujo-title">📊 Flujo de Orden</div>
+        <div id="lav-flujo-subtitle" style="font-size:11px;color:var(--muted);margin-top:2px"></div>
+      </div>
+      <button class="xbtn" onclick="closeM('mo-lavado-flujo')">✕</button>
+    </div>
+    <div class="mb" id="lav-flujo-body" style="padding:24px 22px">
+      <!-- Renderizado dinámico por renderFlujoOrden() -->
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Avanzar Estado — selección de empleada ══ -->
+<div class="mo" id="mo-lavado-avanzar">
+  <div class="md" style="max-width:420px">
+    <div class="mh">
+      <div class="mt" id="lav-av-title">Avanzar Estado</div>
+      <button class="xbtn" onclick="closeM('mo-lavado-avanzar')">✕</button>
+    </div>
+    <div class="mb">
+      <!-- Indicador de cambio -->
+      <div id="lav-av-cambio" style="display:flex;align-items:center;justify-content:center;gap:12px;padding:16px;background:var(--s2);border-radius:10px;margin-bottom:18px;flex-wrap:wrap">
+        <!-- Renderizado dinámico -->
+      </div>
+      <!-- Selección de empleada -->
+      <div class="fg">
+        <label>👩‍💼 ¿Quién realiza este paso?</label>
+        <select id="lav-av-empleada" style="font-size:14px;padding:10px 12px">
+          <option value="">— Sin especificar —</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>📝 Nota del paso <span style="color:var(--faint)">(opcional)</span></label>
+        <input type="text" id="lav-av-nota" placeholder="Ej: Requirió cepillado extra…" maxlength="120">
+      </div>
+      <input type="hidden" id="lav-av-orden-id">
+      <input type="hidden" id="lav-av-estado-sig">
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeM('mo-lavado-avanzar')">Cancelar</button>
+      <button class="btn btn-accent" id="lav-av-confirmar-btn" onclick="confirmarAvanzarEstado()">✅ Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Nueva/Editar Orden de Lavado ══ -->
+<div class="mo" id="mo-lavado-orden">
+  <div class="md wide" style="max-width:640px">
+    <div class="mh">
+      <div class="mt" id="lav-mo-title">🧽 Nueva Orden de Lavado</div>
+      <button class="xbtn" onclick="closeM('mo-lavado-orden')">✕</button>
+    </div>
+    <div class="mb" style="max-height:75vh;overflow-y:auto">
+
+      <!-- Semáforo de materiales -->
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:10px">🚦 Material del Calzado</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <button type="button" id="lav-mat-verde" onclick="selMaterialLavado('verde')"
+            style="padding:10px 8px;border-radius:8px;border:2px solid #166534;background:rgba(21,128,61,.15);color:#4ade80;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center">
+            🟢 VERDE<br><span style="font-weight:400;font-size:10px;opacity:.8">Lona / Malla / Goma</span>
+          </button>
+          <button type="button" id="lav-mat-amarillo" onclick="selMaterialLavado('amarillo')"
+            style="padding:10px 8px;border-radius:8px;border:2px solid var(--border);background:var(--s3);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center">
+            🟡 AMARILLO<br><span style="font-weight:400;font-size:10px;opacity:.8">Piel Sintética / Cuero</span>
+          </button>
+          <button type="button" id="lav-mat-rojo" onclick="selMaterialLavado('rojo')"
+            style="padding:10px 8px;border-radius:8px;border:2px solid var(--border);background:var(--s3);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center">
+            🔴 ROJO<br><span style="font-weight:400;font-size:10px;opacity:.8">Gamuza / Suede / Tejido fino</span>
+          </button>
+        </div>
+        <div id="lav-mat-alerta" style="display:none;margin-top:10px;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600"></div>
+        <input type="hidden" id="lav-material">
+      </div>
+
+      <div class="fr fr2">
+        <div class="fg"><label>Nombre del Cliente</label><input type="text" id="lav-cliente" placeholder="Nombre completo"></div>
+        <div class="fg"><label>Teléfono / WhatsApp</label><input type="text" id="lav-tel" placeholder="8671234567" maxlength="15"></div>
+      </div>
+
+      <div class="fr fr2">
+        <div class="fg"><label>Marca / Modelo</label><input type="text" id="lav-marca" placeholder="Nike Air Max, Adidas…"></div>
+        <div class="fg"><label>Color</label><input type="text" id="lav-color" placeholder="Blanco, negro…"></div>
+      </div>
+
+      <div class="fg"><label>Servicio Solicitado</label>
+        <select id="lav-servicio" onchange="actualizarPrecioLavado()">
+          <option value="basico" data-precio="100">Lavado Básico — $100</option>
+          <option value="profundo" data-precio="180">Lavado Profundo — $180</option>
+          <option value="impermeabilizado" data-precio="250">Lavado + Impermeabilizado — $250</option>
+          <option value="blanqueado" data-precio="130">Blanqueado de Suela — $130</option>
+          <option value="restauracion" data-precio="350">Restauración de Color — $350</option>
+          <option value="express" data-precio="220">Servicio Express (mismo día) — $220</option>
+          <option value="personalizado" data-precio="0">Precio personalizado…</option>
+        </select>
+      </div>
+
+      <div class="fr fr2">
+        <div class="fg"><label>Precio ($)</label><input type="number" id="lav-precio" step="0.01" placeholder="0.00" min="0"></div>
+        <div class="fg"><label>Fecha de Entrega Prometida</label><input type="date" id="lav-fecha-entrega"></div>
+      </div>
+
+      <!-- Condición previa -->
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--cream);margin-bottom:10px">📋 Condición al Recibir <span style="font-size:10px;font-weight:400;color:var(--muted)">(protege al negocio de reclamos)</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--cream)">
+            <input type="checkbox" id="lav-cond-manchas" style="width:16px;height:16px;accent-color:var(--accent)"> Manchas difíciles previas
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--cream)">
+            <input type="checkbox" id="lav-cond-raspones" style="width:16px;height:16px;accent-color:var(--accent)"> Raspones o rayones
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--cream)">
+            <input type="checkbox" id="lav-cond-suela" style="width:16px;height:16px;accent-color:var(--accent)"> Suela desgastada
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--cream)">
+            <input type="checkbox" id="lav-cond-despega" style="width:16px;height:16px;accent-color:var(--accent)"> Suela despegada
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--cream)">
+            <input type="checkbox" id="lav-cond-agujas" style="width:16px;height:16px;accent-color:var(--accent)"> Sin agujetas originales
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--cream)">
+            <input type="checkbox" id="lav-cond-color" style="width:16px;height:16px;accent-color:var(--accent)"> Decoloración previa
+          </label>
+        </div>
+
+        <!-- Foto de referencia -->
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">
+            📷 Foto de Referencia <span style="font-weight:400;color:var(--faint)">(evidencia del estado al recibir)</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+            <!-- Preview área -->
+            <div id="lav-foto-zona" onclick="triggerLavadoFoto()"
+              style="width:140px;height:140px;border:2px dashed var(--border);border-radius:10px;
+                cursor:pointer;overflow:hidden;flex-shrink:0;position:relative;
+                background:var(--s3);display:flex;align-items:center;justify-content:center;
+                transition:border-color .15s"
+              onmouseover="this.style.borderColor='rgba(26,158,92,.6)'"
+              onmouseout="this.style.borderColor='var(--border)'">
+              <!-- Placeholder -->
+              <div id="lav-foto-placeholder" style="text-align:center;padding:10px">
+                <div style="font-size:32px;margin-bottom:6px">📷</div>
+                <div style="font-size:11px;color:var(--muted);line-height:1.4">Tomar foto<br>o subir imagen</div>
+              </div>
+              <!-- Preview -->
+              <img id="lav-foto-preview" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0">
+              <!-- Input files — oculto, acepta cámara en móvil -->
+              <input type="file" id="lav-foto-input" accept="image/*" capture="environment"
+                style="display:none" onchange="handleLavadoFoto(this)">
+            </div>
+            <!-- Botones de acción -->
+            <div style="display:flex;flex-direction:column;gap:8px;justify-content:center;flex:1;min-width:140px">
+              <button type="button" class="btn btn-accent btn-sm" onclick="triggerLavadoFoto()" style="justify-content:center">
+                📷 Tomar foto
+              </button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="subirFotoLavado()" style="justify-content:center">
+                🖼 Subir imagen
+              </button>
+              <button type="button" id="lav-foto-quitar" class="btn btn-red btn-sm" onclick="quitarFotoLavado()" style="display:none;justify-content:center">
+                🗑 Quitar foto
+              </button>
+              <div id="lav-foto-badge" style="display:none;font-size:10px;color:var(--green);font-weight:600;text-align:center">✅ Foto guardada</div>
+            </div>
+          </div>
+          <!-- Input para subir desde galería (sin capture) -->
+          <input type="file" id="lav-foto-input-galeria" accept="image/*"
+            style="display:none" onchange="handleLavadoFoto(this)">
+        </div>
+      </div>
+
+      <div class="fg"><label>Notas adicionales</label>
+        <textarea id="lav-notas" rows="2" placeholder="Instrucciones especiales, preferencias del cliente…" style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeM('mo-lavado-orden')">Cancelar</button>
+      <button class="btn btn-accent" onclick="guardarOrdenLavado()">💾 Guardar Orden</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Ticket / Entregar Orden ══ -->
+<div class="mo" id="mo-lavado-ticket">
+  <div class="md" style="max-width:480px">
+    <div class="mh">
+      <div class="mt">🎫 Ticket de Orden</div>
+      <button class="xbtn" onclick="closeM('mo-lavado-ticket')">✕</button>
+    </div>
+    <div class="mb">
+      <div id="lav-ticket-preview" style="background:#fff;border-radius:10px;padding:20px;color:#111;font-size:13px;line-height:1.7;font-family:monospace;white-space:pre-wrap;border:1px solid #e5e7eb;max-height:320px;overflow-y:auto"></div>
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Opciones de Envío</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-green btn-sm" onclick="enviarTicketWALavado()" style="flex:1">
+            💬 WhatsApp (texto)
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="imprimirTicketLavado()" style="flex:1">
+            🖨️ Imprimir / PDF
+          </button>
+        </div>
+        <div id="lav-tel-wa-row" style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:12px;color:var(--muted);white-space:nowrap">Tel:</span>
+          <input type="text" id="lav-ticket-tel" placeholder="8671234567" style="flex:1;font-size:13px">
+        </div>
+      </div>
+      <div id="lav-entregar-section" style="margin-top:16px;padding:14px;background:rgba(26,158,92,.08);border:1px solid rgba(26,158,92,.3);border-radius:10px;display:none">
+        <div style="font-size:13px;font-weight:700;color:var(--accent2);margin-bottom:8px">✅ Marcar como Entregado</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">¿Cobrar el servicio en el Punto de Venta?</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-accent btn-sm" onclick="entregarYCobrarLavado()" style="flex:1">
+            🛒 Entregar + Abrir POS
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="entregarSinCobrarLavado()" style="flex:1">
+            ✅ Solo Entregar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ══════════ MODALES ══════════ -->
 
@@ -4280,15 +4720,22 @@ body{background:#071222!important}
 
 <!-- Modal Editor de Permisos -->
 <div class="mo" id="mo-permisos">
-  <div class="md" style="max-width:560px">
-    <div class="mh"><div class="mt" id="ep-titulo">🔐 Módulos accesibles</div><button class="xbtn" onclick="closeM('mo-permisos')">✕</button></div>
-    <div class="mb">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Marca los módulos a los que este empleado puede acceder. Los cambios aplican en la próxima sesión.</div>
-      <div style="display:flex;gap:8px;margin-bottom:12px">
+  <div class="md wide" style="max-width:680px">
+    <div class="mh">
+      <div>
+        <div class="mt" id="ep-titulo">🔐 Módulos accesibles</div>
+        <div id="ep-subtitulo" style="font-size:11px;color:var(--muted);margin-top:2px">Marca los módulos a los que este empleado puede acceder.</div>
+      </div>
+      <button class="xbtn" onclick="closeM('mo-permisos')">✕</button>
+    </div>
+    <div class="mb" style="max-height:70vh;overflow-y:auto">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
         <button class="btn btn-accent btn-sm" onclick="seleccionarTodosPermisos(true)">✅ Todos</button>
         <button class="btn btn-ghost btn-sm" onclick="seleccionarTodosPermisos(false)">☐ Ninguno</button>
+        <div style="flex:1"></div>
+        <div id="ep-contador" style="font-size:11px;color:var(--muted)"></div>
       </div>
-      <div id="ep-modulos" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:360px;overflow-y:auto"></div>
+      <div id="ep-modulos"></div>
     </div>
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeM('mo-permisos')">Cancelar</button>
@@ -4484,6 +4931,13 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementB
 
 // ══════════════════ INIT APP ══════════════════
 async function initApp(user){
+  // ── Limpiar listeners anteriores antes de crear nuevos ──
+  // Esto previene la acumulación de onSnapshot duplicados cuando
+  // Firebase renueva el token silenciosamente (cada ~1 hora)
+  if(unsubList.length){
+    unsubList.forEach(u=>{ try{ u(); }catch(e){} });
+    unsubList = [];
+  }
   currentUser=user;
   document.getElementById('tb-email').textContent=user.email;
   // Load Firebase user profile (used as admin fallback only)
@@ -7174,6 +7628,20 @@ function exportarExcel(){
 // ══════════════════ COBRAR VENTA ══════════════════
 async function cobrar(){
   if(!carrito.length){toast('Carrito vacío','err');return;}
+  // ── Guard contra doble clic / doble tap ──
+  if(cobrar._busy){ toast('Procesando…','warn'); return; }
+  cobrar._busy = true;
+  const btnCobrar = document.querySelector('#pos-cobro-modal button[onclick="cobrar()"]');
+  if(btnCobrar){ btnCobrar.disabled=true; btnCobrar.style.opacity='.6'; }
+  try{ await _cobrarInternal(); }
+  finally{
+    cobrar._busy = false;
+    if(btnCobrar){ btnCobrar.disabled=false; btnCobrar.style.opacity='1'; }
+  }
+}
+
+async function _cobrarInternal(){
+  if(!carrito.length){toast('Carrito vacío','err');return;}
   // ── Sincronizar descuento del modal antes de cualquier cálculo ──
   calcCartFromModal();
   const sub=carrito.reduce((a,c)=>a+c.price*c.qty,0);
@@ -9294,6 +9762,10 @@ function renderHist(){
 
   let lista=ventas.filter(v=>{
     const tipoV=v.tipoVenta||'venta';
+    // ── FIX cobros dobles: excluir abonos del historial principal
+    // Los abonos son pagos parciales de apartados/créditos ya registrados.
+    // Solo se muestran si el filtro de tipo los selecciona explícitamente.
+    if(tipoV==='abono' && tipo!=='abono') return false;
     const matchDesde=!desde||v.fecha>=desde;
     const matchHasta=!hasta||v.fecha<=hasta;
     const matchPago=!pago||v.pago===pago||(pago==='tarjeta'&&(v.pago||'').startsWith('tarjeta'));
@@ -9382,82 +9854,125 @@ function renderHist(){
     const desde = document.getElementById('h-desde')?.value||'';
     const hasta  = document.getElementById('h-hasta')?.value||hoyStr;
 
-    // Semana de la fecha ancla (desde si hay filtro, si no hoy)
+    // ── Calcular todas las semanas (lunes) que caen dentro del rango ──
+    // Siempre empezar en el lunes de la semana que contiene "desde"
     const ancla = desde || hoyStr;
     const anclaDt = new Date(ancla+'T12:00:00');
     const dow = anclaDt.getDay();
     const diffLunes = dow===0 ? -6 : 1-dow;
-    const lunesDt = new Date(anclaDt.getTime() + diffLunes*86400000);
-    const lunesStr = lunesDt.toISOString().slice(0,10);
-    const dias = Array.from({length:7},(_,i)=>{
-      const d=new Date(lunesDt.getTime()+i*86400000);
-      return d.toISOString().slice(0,10);
-    });
+    const primerLunesDt = new Date(anclaDt.getTime() + diffLunes*86400000);
 
-    // SIEMPRE usar todas las ventas, filtradas a los días de esa semana hasta "hasta"
-    const byDia = {};
-    dias.forEach(f=>{ byDia[f]={ef:0,tar:0,tot:0}; });
-    (ventas||[]).forEach(v=>{
-      const f=v.fecha||'';
-      // Solo días dentro de la semana calculada Y hasta la fecha de corte
-      if(!byDia[f]) return;
-      if(f > hasta) return;  // no mostrar días futuros al filtro
+    // Construir lista de semanas hasta cubrir "hasta"
+    const semanas = [];           // [{lunes, dias:[7 fechas-str]}]
+    let curLunesDt = new Date(primerLunesDt);
+    const hastaLimite = hasta || hoyStr;
+    let guard = 0;
+    while(guard++ < 60){          // max 60 semanas (~1 año)
+      const lunesStr = curLunesDt.toISOString().slice(0,10);
+      if(lunesStr > hastaLimite) break;
+      const dias = Array.from({length:7},(_,i)=>{
+        const d = new Date(curLunesDt.getTime()+i*86400000);
+        return d.toISOString().slice(0,10);
+      });
+      semanas.push({lunes:lunesStr, dias});
+      curLunesDt = new Date(curLunesDt.getTime()+7*86400000);
+    }
+
+    // ── Acumular totales por fecha ──
+    const byFecha = {};           // {fecha: {ef,tar,tot}}
+    const ventasFiltradas = lista; // ya filtradas por el renderHist padre
+
+    // Usar TODAS las ventas del rango (incluidas las filtradas por pago/tipo/suc)
+    // pero mantener consistencia con los totales de las stat-cards
+    ventasFiltradas.forEach(v=>{
+      const f = v.fecha||'';
+      if(!byFecha[f]) byFecha[f]={ef:0,tar:0,tot:0};
       const tipoV=v.tipoVenta||'venta';
       const isDev=tipoV==='devolucion';
       const monto=isDev?(v.total||0):(tipoV==='apartado'||tipoV==='credito')?(v.anticipo||0):tipoV==='abono'?(v.monto||v.total||0):(v.total||0);
-      byDia[f].tot+=monto;
+      byFecha[f].tot+=monto;
       const pg=(v.pago||'').toLowerCase().trim();
-      if(pg==='mixto'){byDia[f].ef+=v.mixtoEfectivo||0;byDia[f].tar+=v.mixtoTarjeta||0;}
-      else if(pg==='bbva-efectivo'){byDia[f].ef+=v.bbvaEfectivo||0;byDia[f].tar+=v.bbvaTarjeta||0;}
-      else if(pg==='tarjeta-efectivo'){byDia[f].ef+=v.tarjetaEfEfectivo||0;byDia[f].tar+=v.tarjetaEfTarjeta||0;}
-      else if(pg==='efectivo'||pg==='monedero'||pg==='') byDia[f].ef+=monto;
-      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) byDia[f].tar+=monto;
-      else byDia[f].ef+=monto;
+      if(pg==='mixto'){byFecha[f].ef+=v.mixtoEfectivo||0;byFecha[f].tar+=v.mixtoTarjeta||0;}
+      else if(pg==='bbva-efectivo'){byFecha[f].ef+=v.bbvaEfectivo||0;byFecha[f].tar+=v.bbvaTarjeta||0;}
+      else if(pg==='tarjeta-efectivo'){byFecha[f].ef+=v.tarjetaEfEfectivo||0;byFecha[f].tar+=v.tarjetaEfTarjeta||0;}
+      else if(pg==='efectivo'||pg==='monedero'||pg==='') byFecha[f].ef+=monto;
+      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) byFecha[f].tar+=monto;
+      else byFecha[f].ef+=monto;
     });
 
     const DIAS_LABEL=['LUN','MAR','MIERC.','JUEV','VIE','SAB','DOM'];
     const p='padding:3px 6px';
     const b='border:1px solid #d1d5db';
 
-    // Resaltar el día del filtro "hasta" (columna de corte)
-    const corteStr = hasta;
-
+    // ── Encabezado ──
     const tabla=document.getElementById('h-semana-tabla');
     if(tabla) tabla.querySelector('thead').innerHTML=`<tr>
-      <th style="${p};${b};background:#e5e7eb;font-size:10px;color:#6b7280;font-weight:700;width:68px"></th>
-      ${dias.map((f,i)=>{
-        const esCorte = f===corteStr;
-        const esPasado = f<=corteStr;
-        const esFuturo = f>corteStr;
-        const bg = esCorte ? '#fef08a' : esPasado ? '#f3f4f6' : '#f9fafb';
-        const col = esCorte ? '#713f12' : esPasado ? '#374151' : '#9ca3af';
-        return `<th style="${p};${b};background:${bg};color:${col};font-size:10px;font-weight:${esCorte?800:700};text-align:right;width:60px">${DIAS_LABEL[i]}</th>`;
-      }).join('')}
-      <th style="${p};${b};background:#1e293b;color:#fbbf24;font-size:10px;font-weight:800;text-align:right;width:70px">Total</th>
+      <th style="${p};${b};background:#e5e7eb;font-size:10px;color:#6b7280;font-weight:700;width:78px">SEMANA</th>
+      ${DIAS_LABEL.map(dl=>`<th style="${p};${b};background:#f3f4f6;color:#374151;font-size:10px;font-weight:700;text-align:right;width:60px">${dl}</th>`).join('')}
+      <th style="${p};${b};background:#1e293b;color:#fbbf24;font-size:10px;font-weight:800;text-align:right;width:72px">TOTAL</th>
     </tr>`;
 
-    const rows=[
-      {label:'EFECTIVO',bg:'#16a34a',key:'ef'},
-      {label:'TARJETA', bg:'#1d4ed8',key:'tar'},
-      {label:'Total',   bg:'#ca8a04',key:'tot'},
-    ];
-
-    const fmtN=(n,esPasado)=>{
+    const fmtC=(n,esPasado)=>{
       if(!esPasado) return `<span style="color:#e5e7eb">—</span>`;
       if(n===0) return `<span style="color:#9ca3af">0</span>`;
       return `<b style="color:#111">${fmt(n)}</b>`;
     };
 
-    tbody.innerHTML=rows.map(r=>`<tr>
-      <td style="${p};${b};background:${r.bg};color:#fff;font-size:10px;font-weight:800;white-space:nowrap">${r.label}</td>
-      ${dias.map((f,i)=>{
-        const esCorte=f===corteStr;
-        const esPasado=f<=corteStr;
-        const bg=esCorte?'#fefce8':esPasado?'#fff':'#f9fafb';
-        return `<td style="${p};${b};background:${bg};text-align:right;font-size:11px">${fmtN(byDia[f][r.key],esPasado)}</td>`;
-      }).join('')}
-      <td style="${p};${b};background:#1e293b;color:#fbbf24;font-weight:800;font-size:11px;text-align:right">${fmt(dias.filter(f=>f<=corteStr).reduce((a,f)=>a+(byDia[f][r.key]||0),0))}</td>
-    </tr>`).join('');
+    // ── Acumuladores globales del período ──
+    const totGlobal={ef:0,tar:0,tot:0};
+
+    // ── Una fila por semana con subtotales ef/tar/tot ──
+    const rowsHtml = semanas.map(sem=>{
+      const semEf={}, semTar={}, semTot={};
+      const semSum={ef:0,tar:0,tot:0};
+
+      sem.dias.forEach(f=>{
+        const esDentroRango = f >= (desde||'') && f <= hastaLimite && f <= hoyStr;
+        const d = byFecha[f]||{ef:0,tar:0,tot:0};
+        semEf[f] = esDentroRango ? d.ef : null;
+        semTar[f]= esDentroRango ? d.tar : null;
+        semTot[f]= esDentroRango ? d.tot : null;
+        if(esDentroRango){ semSum.ef+=d.ef; semSum.tar+=d.tar; semSum.tot+=d.tot; }
+      });
+      totGlobal.ef+=semSum.ef; totGlobal.tar+=semSum.tar; totGlobal.tot+=semSum.tot;
+
+      // Número de semana del año
+      const numSem = getNumSemana(sem.lunes);
+      // Mostrar fechas inicio-fin visibles de la semana dentro del rango
+      const diasVis = sem.dias.filter(f=>f>=(desde||'')&&f<=hastaLimite);
+      const rangoLabel = diasVis.length
+        ? diasVis[0].slice(8)+'–'+diasVis[diasVis.length-1].slice(8)+'/'+diasVis[0].slice(5,7)
+        : sem.lunes.slice(8)+'/'+sem.lunes.slice(5,7);
+
+      const buildRow=(label,bg,mapFn,sumVal)=>`<tr>
+        <td style="${p};${b};background:${bg};color:#fff;font-size:10px;font-weight:800;white-space:nowrap">
+          ${label}
+        </td>
+        ${sem.dias.map(f=>{
+          const val = mapFn(f);
+          const esPasado = val !== null;
+          const bg2 = f===hoyStr?'#fefce8':esPasado?'#fff':'#f9fafb';
+          return `<td style="${p};${b};background:${bg2};text-align:right;font-size:11px">${fmtC(val||0,esPasado)}</td>`;
+        }).join('')}
+        <td style="${p};${b};background:#1e293b;color:#fbbf24;font-weight:800;font-size:11px;text-align:right">${fmt(sumVal)}</td>
+      </tr>`;
+
+      return `
+      <tr><td colspan="9" style="padding:2px 6px;background:#0f172a;color:#94a3b8;font-size:10px;font-weight:700;border:1px solid #d1d5db;letter-spacing:.5px">
+        Sem. #${numSem} &nbsp;·&nbsp; ${rangoLabel}
+      </td></tr>
+      ${buildRow('EFECTIVO','#16a34a',f=>semEf[f],semSum.ef)}
+      ${buildRow('TARJETA', '#1d4ed8',f=>semTar[f],semSum.tar)}
+      ${buildRow('Total',   '#ca8a04',f=>semTot[f],semSum.tot)}`;
+    }).join('');
+
+    // ── Fila de gran total ──
+    const grandTotalRow = `<tr>
+      <td colspan="8" style="${p};${b};background:#0f172a;color:#fbbf24;font-size:11px;font-weight:800;text-align:right">TOTAL DEL PERÍODO</td>
+      <td style="${p};${b};background:#0f172a;color:#fbbf24;font-size:13px;font-weight:900;text-align:right">${fmt(totGlobal.tot)}</td>
+    </tr>`;
+
+    tbody.innerHTML = rowsHtml + grandTotalRow;
   })();
   const legBadge=document.getElementById('h-total');
   if(legBadge)legBadge.textContent='Total cobrado: '+fmt(totalCobrado);
@@ -10657,7 +11172,7 @@ function populateLocacionSelect(selectedVal){
 let usuariosInternos = []; // loaded from Firestore
 let usuarioActivo = null;  // {id, nombre, rol, pin}
 
-const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','dashboard-ventas','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','recuperacion','sucursales','usuarios','importar','bitacora','publicaciones','analisis','histcambios','costos','finanzas'];
+const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','dashboard-ventas','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','recuperacion','sucursales','usuarios','importar','bitacora','publicaciones','analisis','histcambios','costos','finanzas','lavado','lavado-servicios','lavado-status'];
 const PERMISOS_ROL_DEFAULT = {
   admin:      [...TODOS_MODULOS],
   manager:    [...TODOS_MODULOS],
@@ -10755,9 +11270,14 @@ function renderUsuariosInternos(){
     return;
   }
   tbody.innerHTML = usuariosInternos.map(u=>{
-    const permsCount = u.permisos ? u.permisos.length : (PERMISOS_ROL_DEFAULT[u.rol]||[]).length;
+    const perms = u.permisos || PERMISOS_ROL_DEFAULT[u.rol] || [];
+    const permsCount = perms.length;
+    const tieneLavado = perms.includes('lavado') || perms.includes('lavado-servicios') || perms.includes('lavado-status');
+    const lavadoBadge = tieneLavado
+      ? `<span style="font-size:10px;background:rgba(8,145,178,.2);color:#22d3ee;border:1px solid rgba(8,145,178,.4);padding:1px 7px;border-radius:20px;font-weight:700">🧽 Lavado</span>`
+      : '';
     return `<tr>
-      <td style="font-weight:600;color:var(--cream)">${u.nombre}</td>
+      <td style="font-weight:600;color:var(--cream)">${u.nombre} ${lavadoBadge}</td>
       <td style="font-family:var(--mono);color:var(--muted);font-size:12px">${u.usuario||'—'}</td>
       <td><span class="badge ${rolColor[u.rol]||'b-gray'}">${rolLabel[u.rol]||u.rol}</span></td>
       <td style="color:var(--muted)">${u.activo!==false?'✅ Activo':'⏸️ Inactivo'}</td>
@@ -11646,9 +12166,59 @@ const MODULO_LABELS = {
   'catalogos-cfg':  '⚙️ Configuración',
   'sucursales':     '🏪 Sucursales',
   'usuarios':       '👥 Usuarios y Roles',
+  'lavado':         '🧽 Lavado de Tenis',
+  'lavado-servicios': '💰 Servicios y Costos',
+  'lavado-status':    '📋 Tablero de Status',
 };
 
 let _editPermisosId = null;
+
+// Agrupación de módulos por categoría para el editor de permisos
+const PERMISOS_GRUPOS = [
+  {
+    titulo: '🧽 Limpieza de Calzado',
+    color:  '#0891b2',
+    bg:     'rgba(8,145,178,.12)',
+    border: 'rgba(8,145,178,.4)',
+    badge:  'NUEVO',
+    mods:   ['lavado','lavado-servicios','lavado-status'],
+  },
+  {
+    titulo: '🛒 Ventas',
+    color:  'var(--accent2)',
+    bg:     'rgba(26,158,92,.08)',
+    border: 'rgba(26,158,92,.25)',
+    mods:   ['pos','historial','dashboard-ventas','cuentas','clientes','corte'],
+  },
+  {
+    titulo: '📦 Inventario',
+    color:  'var(--blue)',
+    bg:     'rgba(82,168,224,.08)',
+    border: 'rgba(82,168,224,.25)',
+    mods:   ['inventario','catalogo','entradas','salidas','transfer','etiquetas','recuperacion','analisis','costos'],
+  },
+  {
+    titulo: '💰 Finanzas',
+    color:  'var(--gold)',
+    bg:     'rgba(240,180,41,.08)',
+    border: 'rgba(240,180,41,.25)',
+    mods:   ['gastos','finanzas','reportes','resumen'],
+  },
+  {
+    titulo: '📣 Marketing',
+    color:  '#c084fc',
+    bg:     'rgba(192,132,252,.08)',
+    border: 'rgba(192,132,252,.25)',
+    mods:   ['publicaciones','promociones'],
+  },
+  {
+    titulo: '⚙️ Administración',
+    color:  'var(--muted)',
+    bg:     'var(--s2)',
+    border: 'var(--border)',
+    mods:   ['bitacora','histcambios','importar','catalogos-cfg','sucursales','usuarios'],
+  },
+];
 
 function abrirEditorPermisos(uid){
   _editPermisosId = uid;
@@ -11657,31 +12227,101 @@ function abrirEditorPermisos(uid){
   const permsActuales = u.permisos && u.permisos.length
     ? u.permisos
     : (PERMISOS_ROL_DEFAULT[u.rol] || PERMISOS_ROL_DEFAULT.vendedor);
+
   const tituloEl = document.getElementById('ep-titulo');
-  if(tituloEl) tituloEl.textContent = '🔐 Módulos de: ' + u.nombre;
+  if(tituloEl) tituloEl.textContent = '🔐 Permisos de: ' + u.nombre;
+  const subEl = document.getElementById('ep-subtitulo');
+  if(subEl) subEl.textContent = 'Rol: ' + (u.rol||'vendedor').toUpperCase() + ' · ' + permsActuales.length + ' módulos activos';
+
   const grid = document.getElementById('ep-modulos');
   if(!grid) return;
-  const allMods = Object.keys(MODULO_LABELS);
-  grid.innerHTML = allMods.map(m=>`
-    <label style="display:flex;align-items:center;gap:8px;padding:9px 12px;
-      background:${permsActuales.includes(m)?'rgba(26,158,92,.15)':'var(--s2)'};
-      border:1px solid ${permsActuales.includes(m)?'rgba(26,158,92,.4)':'var(--border)'};
+
+  const buildCheck = (m) => {
+    const checked = permsActuales.includes(m);
+    const label = MODULO_LABELS[m] || m;
+    return `<label id="ep-lbl-${m}" style="display:flex;align-items:center;gap:8px;padding:8px 11px;
+      background:${checked?'rgba(26,158,92,.15)':'var(--s2)'};
+      border:1px solid ${checked?'rgba(26,158,92,.4)':'var(--border)'};
       border-radius:8px;cursor:pointer;transition:all .15s"
-      onmouseover="this.style.background='var(--s3)'"
-      onmouseout="this.style.background=document.getElementById('ep-${m}')?.checked?'rgba(26,158,92,.15)':'var(--s2)'">
+      onmouseover="this.style.background=document.getElementById('ep-${m}')?.checked?'rgba(26,158,92,.2)':'var(--s3)'"
+      onmouseout="this.style.background=document.getElementById('ep-${m}')?.checked?'rgba(26,158,92,.15)':'var(--s2)'"
+      onclick="actualizarContadorPermisos()">
       <input type="checkbox" id="ep-${m}" value="${m}"
-        ${permsActuales.includes(m)?'checked':''}
-        style="width:16px;height:16px;accent-color:var(--accent)">
-      <span style="font-size:13px;color:var(--cream)">${MODULO_LABELS[m]||m}</span>
-    </label>`).join('');
+        ${checked?'checked':''}
+        style="width:16px;height:16px;accent-color:var(--accent);flex-shrink:0"
+        onchange="actualizarEstiloCheck('${m}')">
+      <span style="font-size:12px;color:var(--cream);line-height:1.3">${label}</span>
+    </label>`;
+  };
+
+  grid.innerHTML = PERMISOS_GRUPOS.map(g=>{
+    // Solo mostrar grupos que tienen módulos en MODULO_LABELS
+    const modsValidos = g.mods.filter(m=>MODULO_LABELS[m]);
+    if(!modsValidos.length) return '';
+
+    const esLavado = g.titulo.includes('Limpieza');
+
+    return `
+    <div style="margin-bottom:16px;border:1px solid ${g.border};border-radius:12px;overflow:hidden;
+      ${esLavado?'box-shadow:0 0 0 2px '+g.color+'44':''}">
+
+      <!-- Cabecera del grupo -->
+      <div style="background:${g.bg};border-bottom:1px solid ${g.border};
+        padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:13px;font-weight:800;color:${g.color}">${g.titulo}</span>
+          ${g.badge?`<span style="font-size:9px;font-weight:800;background:${g.color};color:#fff;padding:2px 7px;border-radius:20px;letter-spacing:.5px">${g.badge}</span>`:''}
+        </div>
+        <div style="display:flex;gap:6px">
+          <button type="button" onclick="selGrupoPermisos([${modsValidos.map(m=>`'${m}'`).join(',')}],true)"
+            style="font-size:10px;padding:2px 8px;background:rgba(26,158,92,.2);color:var(--accent2);
+              border:1px solid rgba(26,158,92,.4);border-radius:6px;cursor:pointer">✅ Todo</button>
+          <button type="button" onclick="selGrupoPermisos([${modsValidos.map(m=>`'${m}'`).join(',')}],false)"
+            style="font-size:10px;padding:2px 8px;background:var(--s2);color:var(--muted);
+              border:1px solid var(--border);border-radius:6px;cursor:pointer">☐ Ninguno</button>
+        </div>
+      </div>
+
+      <!-- Checkboxes del grupo -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px 10px">
+        ${modsValidos.map(buildCheck).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  actualizarContadorPermisos();
   openM('mo-permisos');
+}
+
+function actualizarEstiloCheck(m){
+  const cb  = document.getElementById('ep-'+m);
+  const lbl = document.getElementById('ep-lbl-'+m);
+  if(!cb || !lbl) return;
+  lbl.style.background = cb.checked ? 'rgba(26,158,92,.15)' : 'var(--s2)';
+  lbl.style.borderColor = cb.checked ? 'rgba(26,158,92,.4)' : 'var(--border)';
+  actualizarContadorPermisos();
+}
+
+function actualizarContadorPermisos(){
+  const total = Object.keys(MODULO_LABELS).length;
+  const activos = Object.keys(MODULO_LABELS).filter(m=>document.getElementById('ep-'+m)?.checked).length;
+  const el = document.getElementById('ep-contador');
+  if(el) el.textContent = activos + ' / ' + total + ' módulos seleccionados';
+}
+
+function selGrupoPermisos(mods, val){
+  mods.forEach(m=>{
+    const cb = document.getElementById('ep-'+m);
+    if(cb){ cb.checked = val; actualizarEstiloCheck(m); }
+  });
 }
 
 function seleccionarTodosPermisos(val){
   Object.keys(MODULO_LABELS).forEach(m=>{
     const cb = document.getElementById('ep-'+m);
-    if(cb) cb.checked = val;
+    if(cb){ cb.checked = val; actualizarEstiloCheck(m); }
   });
+  actualizarContadorPermisos();
 }
 
 async function guardarPermisos(){
@@ -11737,7 +12377,10 @@ const NAV_ID_MAP = {
   'publicaciones': 'nav-publicaciones',
   'analisis':      'nav-analisis',
   'histcambios':   'nav-histcambios',
-  'dashboard-ventas':'nav-dashboard-ventas'
+  'dashboard-ventas':'nav-dashboard-ventas',
+  'lavado':           'nav-lavado',
+  'lavado-servicios': 'nav-lavado-servicios',
+  'lavado-status':    'nav-lavado-status'
 };
 
 function go(page,el){
@@ -12142,6 +12785,22 @@ async function cambiarSucursalMovimiento(id){
 // ══════════ HELPER: apply stock to correct sucursal record ══════════
 async function aplicarStockEnSucursal(linea, sucursalId, delta){
   // +delta = entrada (add), -delta = salida (remove)
+  // ── Guard contra escrituras concurrentes al mismo producto/talla ──
+  const lockKey = `${linea.prodId||linea.sku||linea.barcode}_${linea.talla}`;
+  if(aplicarStockEnSucursal._locks?.has(lockKey)){
+    console.warn('aplicarStockEnSucursal: operación concurrente bloqueada para', lockKey);
+    await new Promise(r=>setTimeout(r, 300)); // pequeño delay y reintenta
+  }
+  if(!aplicarStockEnSucursal._locks) aplicarStockEnSucursal._locks = new Set();
+  aplicarStockEnSucursal._locks.add(lockKey);
+  try{
+    return await _aplicarStockInternal(linea, sucursalId, delta);
+  } finally {
+    aplicarStockEnSucursal._locks.delete(lockKey);
+  }
+}
+
+async function _aplicarStockInternal(linea, sucursalId, delta){
   const {getDoc: fbGetDoc} = window._fb;
   const estilo = (linea.sku || linea.barcode || '').trim();
 
@@ -13561,6 +14220,9 @@ function _navigateTo(page, el){
   if(page==='recuperacion'){initRecuperacion();}
   if(page==='analisis'){initAnalisis();}
   if(page==='histcambios'){loadHistorialCambios();}
+  if(page==='lavado'){initLavado();}
+  if(page==='lavado-servicios'){initServiciosLavadoPage();}
+  if(page==='lavado-status'){initLavadoStatus();}
   if(page==='dashboard-ventas'){
     const fechaEl=document.getElementById('dv-fecha');
     if(fechaEl&&!fechaEl.value)fechaEl.value=hoy();
@@ -13620,6 +14282,13 @@ const GM_CATS = {
       {icon:'👥', name:'Usuarios y Roles', page:'usuarios'},
       {icon:'🏪', name:'Sucursales',       page:'sucursales'},
       {icon:'📥', name:'Importar CSV',     page:'importar'},
+    ]
+  },
+  lavado: {
+    title: '🧽 Lavado de Tenis', mods: [
+      {icon:'🧽', name:'Órdenes de Lavado',   page:'lavado',           gold:true},
+      {icon:'💰', name:'Servicios y Costos',   page:'lavado-servicios'},
+      {icon:'📋', name:'Tablero de Status',    page:'lavado-status'},
     ]
   }
 };
@@ -13756,6 +14425,9 @@ function getModDef(page){
     importar:      ['linear-gradient(135deg,#0891b2,#0e7490)','M12 20l-4-4 4-4 M12 12v8 M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29'],
     bitacora:      ['linear-gradient(135deg,#f0b429,#d97706)','M22 11.08V12a10 10 0 1 1-5.93-9.14 M22 4L12 14.01l-3-3.01'],
     analisis:      ['linear-gradient(135deg,#7c3aed,#4f46e5)','M18 20V10 M12 20V4 M6 20v-6'],
+    lavado:        ['linear-gradient(135deg,#0891b2,#0e7490)', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16c0 0 2-2 7-2s8 2 8 2"/><path d="M3 16 L3 18 C3 19 4 20 5 20 L19 20 C20 20 21 19 21 18 L21 16"/><circle cx="8" cy="9" r="2.5"/><circle cx="14" cy="7" r="1.8"/><circle cx="6" cy="5" r="1.3"/><rect x="15" y="5" width="6" height="3" rx="1.5"/><line x1="16" y1="8" x2="16" y2="11"/><line x1="18" y1="8" x2="18" y2="11.5"/><line x1="20" y1="8" x2="20" y2="11"/></svg>`],
+    'lavado-servicios': ['linear-gradient(135deg,#d97706,#f59e0b)', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`],
+    'lavado-status':    ['linear-gradient(135deg,#6366f1,#8b5cf6)', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>`],
   };
   const def = M[page] || ['linear-gradient(135deg,#6366f1,#8b5cf6)','M3 3h18v18H3z'];
   const [grad, pathD] = def;
@@ -13809,7 +14481,10 @@ function goFromGrid(page){
     'recuperacion':'nav-recuperacion',
     'catalogos-cfg':'nav-catalogos-cfg','usuarios':'nav-usuarios',
     'sucursales':'nav-sucursales','importar':'nav-importar','bitacora':'nav-bitacora',
-    'finanzas':'nav-finanzas'
+    'finanzas':'nav-finanzas',
+    'lavado':'nav-lavado',
+    'lavado-servicios':'nav-lavado-servicios',
+    'lavado-status':   'nav-lavado-status'
   };
   const navEl = document.getElementById(navMap[page]||'');
   go(page, navEl);
@@ -15402,18 +16077,1116 @@ function limpiarClienteCelular(){
   input?.focus();
 }
 
+// ══════════════════ MÓDULO LAVADO DE TENIS ══════════════════
+let ordenesLavado = [];         // array local
+let serviciosLavado = [];       // catálogo de servicios
+let _lavEditId    = null;       // null = nueva orden, string = editar
+let _lavTicketOrd = null;       // orden activa en modal ticket
+let _lavFiltro    = '';         // filtro de estado activo
+let _lavSvcEditId = null;       // null = nuevo servicio, string = editar
+let _lavSvcColor  = 'accent';   // color seleccionado para servicio
+let lavFotoDataUrl = null;      // foto temporal de la orden activa
+
+// Servicios por defecto (se cargan si Firestore está vacío)
+const LAV_SERVICIOS_DEFAULT = [
+  {nombre:'Lavado Básico',      desc:'Limpieza exterior + agujetas',            precio:100, duracion:'24 hrs', color:'accent', activo:true},
+  {nombre:'Lavado Profundo',    desc:'Suela, interior, lengüeta + agujetas',    precio:180, duracion:'48 hrs', color:'blue',   activo:true},
+  {nombre:'Lavado + Imperm.',   desc:'Lavado profundo + impermeabilizado',      precio:250, duracion:'48 hrs', color:'blue',   activo:true},
+  {nombre:'Blanqueado Suela',   desc:'Blanqueador morado + exposición al sol',  precio:130, duracion:'mismo dia', color:'gold', activo:true},
+  {nombre:'Restauración Color', desc:'Pintura + reacabado del material',        precio:350, duracion:'5 dias', color:'orange', activo:true},
+  {nombre:'Express (mismo día)',desc:'Entrega en el día',                       precio:220, duracion:'mismo dia', color:'red',  activo:true},
+];
+
+// ── Colecciones Firestore ──
+const colLavado    = () => window._fb.collection(window._fb.db, `tiendas/${window._fb.auth.currentUser?.uid}/ordenesLavado`);
+const colSvcLavado = () => window._fb.collection(window._fb.db, `tiendas/${window._fb.auth.currentUser?.uid}/serviciosLavado`);
+
+async function initLavado(){
+  // Cargar órdenes
+  try{
+    const snap = await window._fb.getDocs(colLavado());
+    ordenesLavado = snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+  }catch(e){ ordenesLavado=[]; }
+
+  // Cargar servicios
+  try{
+    const snapS = await window._fb.getDocs(colSvcLavado());
+    serviciosLavado = snapS.docs.map(d=>({id:d.id,...d.data()}));
+    // Si no hay ninguno, insertar los defaults
+    if(!serviciosLavado.length){
+      for(const s of LAV_SERVICIOS_DEFAULT){
+        const ref = await window._fb.addDoc(colSvcLavado(),{...s,createdAt:new Date().toISOString()});
+        serviciosLavado.push({id:ref.id,...s});
+      }
+    }
+  }catch(e){ serviciosLavado=[...LAV_SERVICIOS_DEFAULT.map((s,i)=>({id:'def-'+i,...s}))]; }
+
+  renderOrdenesLavado();
+  // serviciosLavado se carga en initServiciosLavadoPage() al navegar a ese módulo
+}
+
+// ── Tab switcher (legacy — ya no se usa) ──
+function renderOrdenesLavado(){
+  const q = (document.getElementById('lav-q')?.value||'').toLowerCase();
+  const lista = ordenesLavado.filter(o=>{
+    const matchFiltro = !_lavFiltro || o.estado===_lavFiltro;
+    const matchQ = !q || (o.cliente||'').toLowerCase().includes(q)
+      || (o.folio||'').toLowerCase().includes(q)
+      || (o.marca||'').toLowerCase().includes(q);
+    return matchFiltro && matchQ;
+  });
+
+  // Stats
+  const total    = ordenesLavado.length;
+  const proceso  = ordenesLavado.filter(o=>o.estado==='proceso').length;
+  const listas   = ordenesLavado.filter(o=>o.estado==='listo').length;
+  const hoyStr   = hoy();
+  const entrHoy  = ordenesLavado.filter(o=>o.estado==='entregado'&&o.fechaEntrega===hoyStr).length;
+  const ss = (id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  ss('lav-stat-total',total);ss('lav-stat-proceso',proceso);ss('lav-stat-listas',listas);ss('lav-stat-hoy',entrHoy);
+
+  const estadoBadge = {
+    recibido:  '<span class="badge b-gold">🟡 Recibido</span>',
+    proceso:   '<span class="badge b-blue">🔵 En Proceso</span>',
+    listo:     '<span class="badge b-green">🟢 Listo</span>',
+    entregado: '<span class="badge b-gray">✅ Entregado</span>',
+  };
+
+  const tbody = document.getElementById('lav-tbody');
+  if(!tbody) return;
+  if(!lista.length){
+    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted)">${_lavFiltro||q?'Sin resultados con los filtros seleccionados':'Sin órdenes. Crea la primera con + Nueva Orden.'}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lista.map(o=>{
+    const pasoAnterior = {recibido:'—', proceso:'recibido', listo:'proceso', entregado:'listo'};
+    const pasoBadge = {recibido:'🟡 Recibir', proceso:'🔵 Iniciar', listo:'🟢 Listo', entregado:'✅ Entregar'};
+    const sigEstado = {recibido:'proceso', proceso:'listo', listo:'entregado', entregado:null};
+    const sig = sigEstado[o.estado];
+    const color = {recibido:'var(--gold)',proceso:'var(--blue)',listo:'var(--green)',entregado:'var(--muted)'}[o.estado]||'var(--muted)';
+    const fotoCell = o.foto
+      ? `<td style="padding:6px 8px"><img src="${o.foto}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;display:block;border:1px solid var(--border)" onclick="verFotoLavado('${o.id}')" title="Ver foto" class="thumb"></td>`
+      : `<td style="padding:6px 8px;text-align:center"><span style="font-size:20px;opacity:.3">📷</span></td>`;
+    return `<tr style="border-bottom:1px solid var(--border);${o.estado==='entregado'?'opacity:.55':''}">
+      <td style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--cream);white-space:nowrap">#${o.folio||o.id.slice(-5).toUpperCase()}</td>
+      ${fotoCell}
+      <td style="font-size:12px;color:var(--muted);white-space:nowrap">${(o.fecha||'').split('-').reverse().join('/')}</td>
+      <td>
+        <div style="font-weight:600;color:var(--cream)">${o.cliente||'—'}</div>
+        ${o.tel?`<div style="font-size:11px;color:var(--muted)">📱 ${o.tel}</div>`:''}
+      </td>
+      <td style="font-size:12px">
+        <div style="font-weight:500;color:var(--cream)">${o.marca||'—'}</div>
+        ${o.material?`<div style="font-size:10px;color:${color}">● Material ${o.material}</div>`:''}
+      </td>
+      <td style="font-size:12px;color:var(--muted)">${lavServicioLabel(o.servicio)}</td>
+      <td style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">${fmt(o.precio||0)}</td>
+      <td>${estadoBadge[o.estado]||o.estado}</td>
+      <td style="font-size:12px;color:var(--muted);white-space:nowrap">${(o.fechaEntrega||'—').split('-').reverse().join('/')}</td>
+      <td>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          ${sig?`<button class="btn btn-accent btn-xs" onclick="abrirAvanzarEstado('${o.id}')">${pasoBadge[sig]}</button>`:''}
+          <button class="btn btn-ghost btn-xs" onclick="verFlujoOrden('${o.id}')" title="Ver flujo y tiempos" style="background:rgba(99,102,241,.15);color:#a78bfa;border-color:rgba(99,102,241,.3)">📊</button>
+          <button class="btn btn-ghost btn-xs" onclick="abrirTicketLavado('${o.id}')">🎫</button>
+          <button class="btn btn-ghost btn-xs" onclick="editarOrdenLavado('${o.id}')">✏️</button>
+          <button class="btn btn-red btn-xs" onclick="eliminarOrdenLavado('${o.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function lavServicioLabel(servicioId){
+  if(!servicioId) return '—';
+  // Buscar por id en servicios dinámicos
+  const found = serviciosLavado.find(s=>s.id===servicioId);
+  if(found) return found.nombre;
+  // Fallback para órdenes antiguas con key textual
+  const map = {basico:'Lavado Básico',profundo:'Lavado Profundo',impermeabilizado:'Lavado+Imperm.',
+    blanqueado:'Blanqueado Suela',restauracion:'Restauración Color',express:'Express',personalizado:'Personalizado'};
+  return map[servicioId]||servicioId;
+}
+
+function filtrarLavado(estado){
+  _lavFiltro = estado;
+  // Update button styles
+  ['todas','recibido','proceso','listo','entregado'].forEach(f=>{
+    const btn=document.getElementById('lav-f-'+f);
+    if(!btn)return;
+    const isOn=(f===estado)||(f==='todas'&&!estado);
+    btn.style.borderColor=isOn?'var(--accent2)':'';
+    btn.style.color=isOn?'var(--accent2)':'';
+  });
+  renderOrdenesLavado();
+}
+
+function generarFolioLavado(){
+  const n=(ordenesLavado.length+1);
+  return 'LAV-'+String(n).padStart(4,'0');
+}
+
+function selMaterialLavado(mat){
+  document.getElementById('lav-material').value=mat;
+  const btns={verde:'lav-mat-verde',amarillo:'lav-mat-amarillo',rojo:'lav-mat-rojo'};
+  const colores={verde:{border:'#166534',bg:'rgba(21,128,61,.25)',color:'#4ade80'},
+    amarillo:{border:'#854d0e',bg:'rgba(133,77,14,.25)',color:'#fbbf24'},
+    rojo:{border:'#991b1b',bg:'rgba(153,27,27,.25)',color:'#f87171'}};
+  Object.entries(btns).forEach(([k,id])=>{
+    const btn=document.getElementById(id);if(!btn)return;
+    const c=colores[k];
+    if(k===mat){btn.style.borderColor=c.border;btn.style.background=c.bg;btn.style.color=c.color;}
+    else{btn.style.borderColor='var(--border)';btn.style.background='var(--s3)';btn.style.color='var(--muted)';}
+  });
+  const alert=document.getElementById('lav-mat-alerta');
+  const msgs={
+    verde:`<div style="color:#4ade80">✅ Material VERDE — Se puede usar el taladro a velocidad normal.</div>`,
+    amarillo:`<div style="color:#fbbf24">⚠️ Material AMARILLO — Usar taladro a <strong>baja velocidad</strong>. Aplicar espuma con moderación.</div>`,
+    rojo:`<div style="color:#f87171">🚫 Material ROJO — <strong>¡PROHIBIDO el taladro!</strong> Solo cepillo de madera manual y muy poca agua.</div>`
+  };
+  alert.style.display='block';
+  alert.style.background=mat==='rojo'?'rgba(153,27,27,.18)':mat==='amarillo'?'rgba(133,77,14,.18)':'rgba(21,128,61,.18)';
+  alert.style.border=`1px solid ${mat==='rojo'?'rgba(248,113,113,.4)':mat==='amarillo'?'rgba(251,191,36,.4)':'rgba(74,222,128,.4)'}`;
+  alert.style.borderRadius='8px';alert.style.padding='8px 12px';alert.style.fontSize='12px';
+  alert.innerHTML=msgs[mat]||'';
+}
+
+function actualizarPrecioLavado(){
+  const sel=document.getElementById('lav-servicio');
+  const opt=sel?.options[sel.selectedIndex];
+  const precio=parseFloat(opt?.dataset?.precio||0);
+  if(precio>0){
+    const pEl=document.getElementById('lav-precio');
+    if(pEl) pEl.value=precio;
+  }
+}
+
+function poblarSelectServicios(valorActual){
+  const sel = document.getElementById('lav-servicio');
+  if(!sel) return;
+  const activos = serviciosLavado.filter(s=>s.activo!==false);
+  if(activos.length){
+    sel.innerHTML = activos.map(s=>`<option value="${s.id}" data-precio="${s.precio||0}">${s.nombre} — $${(s.precio||0).toFixed(0)}</option>`).join('');
+    if(valorActual){
+      // Try to find by id or by name
+      const found = activos.find(s=>s.id===valorActual||s.nombre===valorActual);
+      if(found) sel.value = found.id;
+    }
+    actualizarPrecioLavado();
+  } else {
+    sel.innerHTML = '<option value="">Sin servicios activos — ve a Servicios y Costos</option>';
+    const pEl=document.getElementById('lav-precio'); if(pEl) pEl.value='';
+  }
+}
+
+function abrirNuevaOrdenLavado(){
+  _lavEditId=null;
+  document.getElementById('lav-mo-title').textContent='🧽 Nueva Orden de Lavado';
+  ['lav-cliente','lav-tel','lav-marca','lav-color','lav-notas'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.value='';
+  });
+  ['lav-cond-manchas','lav-cond-raspones','lav-cond-suela','lav-cond-despega','lav-cond-agujas','lav-cond-color'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.checked=false;
+  });
+  document.getElementById('lav-material').value='';
+  document.getElementById('lav-precio').value='';
+  document.getElementById('lav-fecha-entrega').value='';
+  document.getElementById('lav-mat-alerta').style.display='none';
+  ['verde','amarillo','rojo'].forEach(m=>{
+    const btn=document.getElementById('lav-mat-'+m);
+    if(btn){btn.style.borderColor='';btn.style.background='var(--s3)';btn.style.color='var(--muted)';}
+  });
+  poblarSelectServicios();
+  resetFotoLavado();
+  openM('mo-lavado-orden');
+}
+
+function editarOrdenLavado(id){
+  const o=ordenesLavado.find(x=>x.id===id);if(!o)return;
+  _lavEditId=id;
+  document.getElementById('lav-mo-title').textContent='✏️ Editar Orden #'+(o.folio||id.slice(-5).toUpperCase());
+  document.getElementById('lav-cliente').value=o.cliente||'';
+  document.getElementById('lav-tel').value=o.tel||'';
+  document.getElementById('lav-marca').value=o.marca||'';
+  document.getElementById('lav-color').value=o.color||'';
+  document.getElementById('lav-notas').value=o.notas||'';
+  document.getElementById('lav-precio').value=o.precio||'';
+  document.getElementById('lav-fecha-entrega').value=o.fechaEntrega||'';
+  poblarSelectServicios(o.servicio);
+  const conds=o.condicion||{};
+  ['manchas','raspones','suela','despega','agujas','color'].forEach(k=>{
+    const e=document.getElementById('lav-cond-'+k);if(e)e.checked=!!conds[k];
+  });
+  if(o.material) selMaterialLavado(o.material);
+  else{document.getElementById('lav-material').value='';document.getElementById('lav-mat-alerta').style.display='none';}
+  cargarFotoLavado(o.foto||null);
+  openM('mo-lavado-orden');
+}
+
+async function guardarOrdenLavado(){
+  const cliente=(document.getElementById('lav-cliente')?.value||'').trim();
+  const precio=parseFloat(document.getElementById('lav-precio')?.value||0);
+  if(!cliente){toast('Ingresa el nombre del cliente','err');return;}
+  if(!precio||precio<=0){toast('Ingresa el precio del servicio','err');return;}
+  const material=document.getElementById('lav-material')?.value||'';
+  if(!material){toast('Selecciona el material del calzado (semáforo)','err');return;}
+
+  const condicion={
+    manchas:!!document.getElementById('lav-cond-manchas')?.checked,
+    raspones:!!document.getElementById('lav-cond-raspones')?.checked,
+    suela:!!document.getElementById('lav-cond-suela')?.checked,
+    despega:!!document.getElementById('lav-cond-despega')?.checked,
+    agujas:!!document.getElementById('lav-cond-agujas')?.checked,
+    color:!!document.getElementById('lav-cond-color')?.checked,
+  };
+  const servicioId = document.getElementById('lav-servicio')?.value||'';
+  const servicioNombre = lavServicioLabel(servicioId);
+  const data={
+    cliente,
+    tel:document.getElementById('lav-tel')?.value.trim()||'',
+    marca:document.getElementById('lav-marca')?.value.trim()||'',
+    color:document.getElementById('lav-color')?.value.trim()||'',
+    servicio:servicioId,
+    servicioNombre,
+    precio,
+    material,
+    condicion,
+    notas:document.getElementById('lav-notas')?.value.trim()||'',
+    fechaEntrega:document.getElementById('lav-fecha-entrega')?.value||'',
+    foto: lavFotoDataUrl || null,
+  };
+
+  try{
+    if(_lavEditId){
+      await window._fb.updateDoc(window._fb.doc(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/ordenesLavado`,_lavEditId),data);
+      const idx=ordenesLavado.findIndex(x=>x.id===_lavEditId);
+      if(idx>=0) ordenesLavado[idx]={...ordenesLavado[idx],...data};
+      toast('Orden actualizada ✓');
+    }else{
+      const folio=generarFolioLavado();
+      const empleadaActiva = usuarioActivo?.nombre || '';
+      const empleadaId = usuarioActivo?.id || '';
+      const ahora = Date.now();
+      const historialInicial = [{
+        estado:'recibido', fecha:hoy(), hora:hora(), ts:ahora,
+        empleada:empleadaActiva, empleadaId, nota:''
+      }];
+      const newData={...data,folio,estado:'recibido',fecha:hoy(),hora:hora(),
+        createdAt:new Date().toISOString(), historial:historialInicial};
+      const ref=await window._fb.addDoc(colLavado(),newData);
+      ordenesLavado.unshift({id:ref.id,...newData});
+      toast('✓ Orden '+folio+' creada');
+    }
+    closeM('mo-lavado-orden');
+    renderOrdenesLavado();
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ══ FLUJO DE ORDEN — EMPLEADA Y TIEMPO ══
+
+const LAV_ESTADOS = {
+  recibido:  { label:'Recibido',    icon:'🟡', color:'var(--gold)',   bg:'rgba(240,180,41,.12)',  border:'rgba(240,180,41,.4)' },
+  proceso:   { label:'En Proceso',  icon:'🔵', color:'var(--blue)',   bg:'rgba(82,168,224,.12)',  border:'rgba(82,168,224,.4)' },
+  listo:     { label:'Listo',       icon:'🟢', color:'var(--green)',  bg:'rgba(82,201,122,.12)',  border:'rgba(82,201,122,.4)' },
+  entregado: { label:'Entregado',   icon:'✅', color:'var(--accent2)',bg:'rgba(26,158,92,.12)',   border:'rgba(26,158,92,.4)'  },
+};
+const LAV_ORDEN_ESTADOS = ['recibido','proceso','listo','entregado'];
+
+function abrirAvanzarEstado(id){
+  const o = ordenesLavado.find(x=>x.id===id); if(!o) return;
+  const siguiente = {recibido:'proceso', proceso:'listo', listo:'entregado'};
+  const sig = siguiente[o.estado]; if(!sig) return;
+
+  // Si es entregado, abrir ticket con sección de entrega
+  if(sig==='entregado'){ abrirTicketLavado(id); return; }
+
+  const eAct = LAV_ESTADOS[o.estado];
+  const eSig = LAV_ESTADOS[sig];
+
+  // Cambio visual
+  document.getElementById('lav-av-cambio').innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:22px">${eAct.icon}</div>
+      <div style="font-size:12px;font-weight:700;color:${eAct.color}">${eAct.label}</div>
+    </div>
+    <div style="font-size:24px;color:var(--muted)">→</div>
+    <div style="text-align:center">
+      <div style="font-size:22px">${eSig.icon}</div>
+      <div style="font-size:13px;font-weight:800;color:${eSig.color}">${eSig.label}</div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);text-align:center;width:100%;margin-top:4px">
+      Orden <strong style="color:var(--cream)">#${o.folio||o.id.slice(-5).toUpperCase()}</strong> — ${o.cliente||'—'}
+    </div>`;
+
+  document.getElementById('lav-av-title').textContent = 'Avanzar: '+eAct.label+' → '+eSig.label;
+  document.getElementById('lav-av-orden-id').value = id;
+  document.getElementById('lav-av-estado-sig').value = sig;
+  document.getElementById('lav-av-nota').value = '';
+
+  // Poblar empleadas
+  const sel = document.getElementById('lav-av-empleada');
+  const activos = usuariosInternos.filter(u=>u.activo!==false);
+  sel.innerHTML = '<option value="">— Sin especificar —</option>' +
+    activos.map(u=>`<option value="${u.id}" data-nombre="${u.nombre||u.usuario||u.id}">${u.nombre||u.usuario||'Usuario'}</option>`).join('');
+  // Pre-seleccionar usuario activo si existe
+  if(usuarioActivo) sel.value = usuarioActivo.id;
+
+  // Botón color según nuevo estado
+  const btn = document.getElementById('lav-av-confirmar-btn');
+  btn.style.background = eSig.color; btn.style.color = '#fff'; btn.style.borderColor = eSig.color;
+
+  openM('mo-lavado-avanzar');
+}
+
+async function confirmarAvanzarEstado(){
+  const id  = document.getElementById('lav-av-orden-id').value;
+  const sig = document.getElementById('lav-av-estado-sig').value;
+  const nota = document.getElementById('lav-av-nota').value.trim();
+  const sel  = document.getElementById('lav-av-empleada');
+  const empId = sel.value;
+  const empNombre = sel.options[sel.selectedIndex]?.dataset?.nombre || sel.options[sel.selectedIndex]?.text || '';
+
+  const o = ordenesLavado.find(x=>x.id===id); if(!o) return;
+  const ahora = Date.now();
+  const entrada = { estado:sig, fecha:hoy(), hora:hora(), ts:ahora,
+    empleada:empNombre, empleadaId:empId, nota };
+  const historialNuevo = [...(o.historial||[]), entrada];
+
+  try{
+    await window._fb.updateDoc(
+      window._fb.doc(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/ordenesLavado`,id),
+      { estado:sig, historial:historialNuevo }
+    );
+    const idx = ordenesLavado.findIndex(x=>x.id===id);
+    if(idx>=0){ ordenesLavado[idx].estado=sig; ordenesLavado[idx].historial=historialNuevo; }
+    closeM('mo-lavado-avanzar');
+    toast('✓ '+LAV_ESTADOS[sig].label+' — registrado por '+(empNombre||'sin especificar'));
+    renderOrdenesLavado();
+  }catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+// ── Vista de Flujo ──
+function verFlujoOrden(id){
+  const o = ordenesLavado.find(x=>x.id===id); if(!o) return;
+  document.getElementById('lav-flujo-title').textContent = '📊 Flujo — #'+(o.folio||o.id.slice(-5).toUpperCase());
+  document.getElementById('lav-flujo-subtitle').textContent =
+    (o.cliente||'—')+' · '+(o.marca||'')+' · '+lavServicioLabel(o.servicio)+' · $'+(o.precio||0).toFixed(0);
+  document.getElementById('lav-flujo-body').innerHTML = renderFlujoOrden(o);
+  openM('mo-lavado-flujo');
+}
+
+function renderFlujoOrden(o){
+  const hist = o.historial || [];
+  // Construir mapa de estado → entrada del historial
+  const mapH = {};
+  hist.forEach(h=>{ mapH[h.estado]=h; });
+
+  // Si no hay historial pero tiene estado, construir entrada básica
+  if(!mapH.recibido && o.estado){
+    mapH.recibido = { estado:'recibido', fecha:o.fecha||'', hora:o.hora||'', ts:0,
+      empleada:'', empleadaId:'', nota:'' };
+  }
+
+  const estadoActualIdx = LAV_ORDEN_ESTADOS.indexOf(o.estado);
+  let html = '';
+
+  // ── Resumen de tiempo total ──
+  const tsInicio = mapH.recibido?.ts || 0;
+  const tsFin    = mapH.entregado?.ts || 0;
+  if(tsInicio && tsFin){
+    const dur = calcDuracion(tsInicio, tsFin);
+    html += `<div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:24px">⏱</span>
+      <div><div style="font-size:13px;font-weight:700;color:var(--cream)">Tiempo total del servicio</div>
+      <div style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--accent2)">${dur}</div></div>
+    </div>`;
+  }
+
+  // ── Timeline vertical ──
+  html += `<div style="position:relative;padding-left:32px">`;
+
+  // Línea vertical de fondo
+  html += `<div style="position:absolute;left:11px;top:16px;bottom:16px;width:2px;background:var(--border);border-radius:1px"></div>`;
+
+  LAV_ORDEN_ESTADOS.forEach((estado, i)=>{
+    const e = LAV_ESTADOS[estado];
+    const h = mapH[estado];
+    const hecho = estadoActualIdx >= i;
+    const esCurrent = o.estado === estado && estado !== 'entregado';
+    const hSig = i < LAV_ORDEN_ESTADOS.length-1 ? mapH[LAV_ORDEN_ESTADOS[i+1]] : null;
+
+    // Duración en esta estación
+    let durEsta = '';
+    if(h?.ts && hSig?.ts){
+      durEsta = calcDuracion(h.ts, hSig.ts);
+    }
+
+    html += `
+    <div style="position:relative;margin-bottom:${i<LAV_ORDEN_ESTADOS.length-1?'28px':'0'}">
+      <!-- Punto en la línea -->
+      <div style="position:absolute;left:-32px;top:12px;width:22px;height:22px;border-radius:50%;
+        background:${hecho?e.bg:'var(--s2)'};
+        border:2px solid ${hecho?e.color:'var(--border)'};
+        display:flex;align-items:center;justify-content:center;font-size:11px;z-index:1;
+        ${esCurrent?'box-shadow:0 0 0 4px '+e.bg+',0 0 0 6px '+e.border:''}">
+        ${hecho ? (estado==='entregado'?'✓':'●') : '○'}
+      </div>
+
+      <!-- Contenido de la estación -->
+      <div style="background:${hecho?e.bg:'var(--s1)'};border:1px solid ${hecho?e.border:'var(--border)'};
+        border-radius:10px;padding:14px 16px;${!hecho?'opacity:.45':''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-size:14px;font-weight:800;color:${hecho?e.color:'var(--muted)'};display:flex;align-items:center;gap:7px">
+              ${e.icon} ${e.label}
+              ${esCurrent?'<span style="font-size:10px;background:'+e.bg+';border:1px solid '+e.border+';color:'+e.color+';padding:1px 8px;border-radius:20px;font-weight:700">ACTUAL</span>':''}
+            </div>
+            ${h ? `<div style="font-size:12px;color:var(--muted);margin-top:3px">📅 ${(h.fecha||'').split('-').reverse().join('/')} &nbsp;🕐 ${h.hora||'—'}</div>` : '<div style="font-size:12px;color:var(--faint);margin-top:3px">Pendiente</div>'}
+          </div>
+          ${h?.empleada ? `<div style="text-align:right;flex-shrink:0">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Empleada</div>
+            <div style="font-size:13px;font-weight:700;color:var(--cream)">👩‍💼 ${h.empleada}</div>
+          </div>` : (h?`<div style="font-size:11px;color:var(--faint);padding-top:4px">Sin empleada registrada</div>`:'') }
+        </div>
+        ${h?.nota ? `<div style="margin-top:8px;padding:6px 10px;background:var(--s3);border-radius:6px;font-size:12px;color:var(--muted)">📝 ${h.nota}</div>` : ''}
+        ${durEsta ? `<div style="margin-top:8px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)"><span style="font-size:16px">⏳</span> Tiempo en esta estación: <strong style="color:${e.color};font-family:var(--mono)">${durEsta}</strong></div>` : ''}
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  return html;
+}
+
+function calcDuracion(tsInicio, tsFin){
+  if(!tsInicio || !tsFin) return '—';
+  const diff = Math.abs(tsFin - tsInicio);
+  const mins = Math.floor(diff / 60000);
+  const hrs  = Math.floor(mins / 60);
+  const dias = Math.floor(hrs / 24);
+  if(dias > 0)  return dias+'d '+(hrs%24)+'h';
+  if(hrs > 0)   return hrs+'h '+(mins%60)+'m';
+  return mins+'m';
+}
+
+async function avanzarEstadoLavado(id){
+  // Ahora redirige al nuevo flujo con empleada
+  abrirAvanzarEstado(id);
+}
+
+async function eliminarOrdenLavado(id){
+  const o=ordenesLavado.find(x=>x.id===id);if(!o)return;
+  if(!confirm('¿Eliminar la orden #'+(o.folio||id.slice(-5).toUpperCase())+' de '+o.cliente+'?'))return;
+  try{
+    await window._fb.deleteDoc(window._fb.doc(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/ordenesLavado`,id));
+    ordenesLavado=ordenesLavado.filter(x=>x.id!==id);
+    toast('Orden eliminada');
+    renderOrdenesLavado();
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ── TICKET ──
+function construirTextoTicketLavado(o){
+  const conds=Object.entries(o.condicion||{}).filter(([,v])=>v).map(([k])=>({
+    manchas:'Manchas difíciles',raspones:'Raspones/Rayones',suela:'Suela desgastada',
+    despega:'Suela despegada',agujas:'Sin agujetas',color:'Decoloración'
+  }[k]||k)).join(', ');
+  const matLabel={verde:'Verde (Lona/Malla)',amarillo:'Amarillo (Piel/Cuero)',rojo:'Rojo (Gamuza/Suede)'}[o.material]||o.material||'—';
+  return [
+    `*Zapatería JABED — Lavado de Tenis*`,
+    `----------------------------------------`,
+    `Folio:    #${o.folio||o.id.slice(-5).toUpperCase()}`,
+    `Fecha:    ${(o.fecha||'').split('-').reverse().join('/')}`,
+    `Entrega:  ${(o.fechaEntrega||'—').split('-').reverse().join('/')}`,
+    `----------------------------------------`,
+    `Cliente:  ${o.cliente||'—'}`,
+    `Calzado:  ${o.marca||'—'} ${o.color?'('+o.color+')':''}`,
+    `Material: ${matLabel}`,
+    `Servicio: ${lavServicioLabel(o.servicio)}`,
+    `Precio:   $${(o.precio||0).toFixed(2)}`,
+    conds?`Condición previa: ${conds}`:'',
+    o.notas?`Notas: ${o.notas}`:'',
+    `----------------------------------------`,
+    `Estado: ${({recibido:'🟡 Recibido',proceso:'🔵 En Proceso',listo:'🟢 Listo',entregado:'✅ Entregado'}[o.estado]||o.estado)}`,
+    `----------------------------------------`,
+    `Bulevar Los Almendros, Reynosa Tamps.`,
+    `¡Gracias por tu preferencia!`,
+  ].filter(l=>l!=='').join('\n');
+}
+
+function abrirTicketLavado(id){
+  const o=ordenesLavado.find(x=>x.id===id);if(!o)return;
+  _lavTicketOrd=o;
+  const txt=construirTextoTicketLavado(o);
+  document.getElementById('lav-ticket-preview').textContent=txt;
+  document.getElementById('lav-ticket-tel').value=o.tel||'';
+  // Mostrar sección de entregar si está en estado 'listo'
+  const entSec=document.getElementById('lav-entregar-section');
+  if(entSec) entSec.style.display=o.estado==='listo'?'block':'none';
+  openM('mo-lavado-ticket');
+}
+
+function enviarTicketWALavado(){
+  if(!_lavTicketOrd)return;
+  const tel=(document.getElementById('lav-ticket-tel')?.value||'').replace(/\D/g,'');
+  const txt=construirTextoTicketLavado(_lavTicketOrd);
+  const url='https://wa.me/'+(tel?'52'+tel:'')+'?text='+encodeURIComponent(txt);
+  window.open(url,'_blank');
+}
+
+function imprimirTicketLavado(){
+  if(!_lavTicketOrd)return;
+  const o=_lavTicketOrd;
+  const conds=Object.entries(o.condicion||{}).filter(([,v])=>v).map(([k])=>({
+    manchas:'Manchas difíciles',raspones:'Raspones/Rayones',suela:'Suela desgastada',
+    despega:'Suela despegada',agujas:'Sin agujetas',color:'Decoloración'
+  }[k]||k));
+  const matLabel={verde:'🟢 Verde (Lona/Malla)',amarillo:'🟡 Amarillo (Piel/Cuero)',rojo:'🔴 Rojo (Gamuza/Suede)'}[o.material]||o.material||'—';
+  const win=window.open('','_blank','width=420,height:620');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Ticket Lavado</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;font-size:12px;padding:14px;max-width:300px;margin:0 auto;color:#111}
+    .no-print{margin-bottom:10px;display:flex;gap:6px}
+    .no-print button{padding:7px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:bold}
+    h2{font-size:14px;font-weight:900;text-align:center;margin-bottom:2px}
+    .sub{text-align:center;font-size:10px;color:#555;margin-bottom:8px}
+    .sep{border:none;border-top:1px dashed #999;margin:8px 0}
+    .row{display:flex;justify-content:space-between;margin-bottom:3px;gap:8px}
+    .lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0}
+    .val{font-size:12px;font-weight:600;text-align:right}
+    .precio{font-size:18px;font-weight:900;text-align:center;margin:8px 0}
+    .estado{text-align:center;padding:4px 12px;border-radius:20px;display:inline-block;font-size:11px;font-weight:700;margin:0 auto;display:block;width:fit-content}
+    .cond{font-size:10px;color:#888;margin-top:4px}
+    .footer{text-align:center;font-size:10px;color:#888;margin-top:10px}
+    @media print{.no-print{display:none!important}@page{margin:6mm;size:80mm auto}}
+  </style></head><body>
+  <div class="no-print">
+    <button onclick="window.print()" style="background:#111;color:#fff">🖨️ Imprimir</button>
+    <button onclick="window.close()" style="background:#eee">✕</button>
+  </div>
+  <h2>🧽 Zapatería JABED</h2>
+  <div class="sub">Servicio de Lavado de Tenis<br>Bulevar Los Almendros, Reynosa Tamps.</div>
+  <hr class="sep">
+  <div class="row"><span class="lbl">Folio</span><span class="val">#${o.folio||o.id.slice(-5).toUpperCase()}</span></div>
+  <div class="row"><span class="lbl">Fecha Recepción</span><span class="val">${(o.fecha||'').split('-').reverse().join('/')}</span></div>
+  <div class="row"><span class="lbl">Fecha Entrega</span><span class="val">${(o.fechaEntrega||'—').split('-').reverse().join('/')}</span></div>
+  <hr class="sep">
+  <div class="row"><span class="lbl">Cliente</span><span class="val">${o.cliente||'—'}</span></div>
+  ${o.tel?`<div class="row"><span class="lbl">Teléfono</span><span class="val">${o.tel}</span></div>`:''}
+  <hr class="sep">
+  <div class="row"><span class="lbl">Calzado</span><span class="val">${o.marca||'—'} ${o.color?'('+o.color+')':''}</span></div>
+  <div class="row"><span class="lbl">Material</span><span class="val">${matLabel}</span></div>
+  <div class="row"><span class="lbl">Servicio</span><span class="val">${lavServicioLabel(o.servicio)}</span></div>
+  ${conds.length?`<div class="cond">⚠️ Condición previa: ${conds.join(', ')}</div>`:''}
+  ${o.notas?`<div class="cond">📝 ${o.notas}</div>`:''}
+  <hr class="sep">
+  <div class="precio">$${(o.precio||0).toFixed(2)}</div>
+  ${o.foto?`<hr class="sep"><div style="text-align:center;margin:6px 0"><img src="${o.foto}" style="max-width:100%;max-height:120px;object-fit:contain;border-radius:4px;border:1px solid #ddd"><div style="font-size:9px;color:#888;margin-top:3px">📷 Foto de referencia al recibir</div></div>`:''}
+  <div class="footer">Conserve este ticket para recoger su calzado.<br>¡Gracias por su preferencia!</div>
+  </body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(),400);
+}
+
+async function entregarYCobrarLavado(){
+  if(!_lavTicketOrd)return;
+  const o=_lavTicketOrd;
+  const ahora = Date.now();
+  const empNombre = usuarioActivo?.nombre || '';
+  const empId = usuarioActivo?.id || '';
+  const entrada = { estado:'entregado', fecha:hoy(), hora:hora(), ts:ahora,
+    empleada:empNombre, empleadaId:empId, nota:'Entrega con cobro en POS' };
+  const historialNuevo = [...(o.historial||[]), entrada];
+  try{
+    await window._fb.updateDoc(window._fb.doc(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/ordenesLavado`,o.id),
+      {estado:'entregado',fechaEntrega:hoy(),historial:historialNuevo});
+    const idx=ordenesLavado.findIndex(x=>x.id===o.id);
+    if(idx>=0){ordenesLavado[idx].estado='entregado';ordenesLavado[idx].fechaEntrega=hoy();ordenesLavado[idx].historial=historialNuevo;}
+  }catch(e){}
+  closeM('mo-lavado-ticket');
+  renderOrdenesLavado();
+  const svcLabel='Lavado de Tenis – '+lavServicioLabel(o.servicio)+' ('+o.cliente+')';
+  carrito.push({
+    id:'LAV_'+o.id, desc:svcLabel.toUpperCase(), talla:'—',color:'',
+    price:o.precio||0,qty:1, sku:'LAVADO',sucursalId:'',foto:null, sinCodigo:true,cat:'Servicios'
+  });
+  toast('✓ Servicio cargado en el POS — cobrar al cliente');
+  go('pos',document.getElementById('nav-pos'));
+}
+
+async function entregarSinCobrarLavado(){
+  if(!_lavTicketOrd)return;
+  const o=_lavTicketOrd;
+  const ahora = Date.now();
+  const empNombre = usuarioActivo?.nombre || '';
+  const empId = usuarioActivo?.id || '';
+  const entrada = { estado:'entregado', fecha:hoy(), hora:hora(), ts:ahora,
+    empleada:empNombre, empleadaId:empId, nota:'Entrega sin cobro adicional' };
+  const historialNuevo = [...(o.historial||[]), entrada];
+  try{
+    await window._fb.updateDoc(window._fb.doc(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/ordenesLavado`,o.id),
+      {estado:'entregado',fechaEntrega:hoy(),historial:historialNuevo});
+    const idx=ordenesLavado.findIndex(x=>x.id===o.id);
+    if(idx>=0){ordenesLavado[idx].estado='entregado';ordenesLavado[idx].fechaEntrega=hoy();ordenesLavado[idx].historial=historialNuevo;}
+  }catch(e){toast('Error al actualizar: '+e.message,'err');return;}
+  closeM('mo-lavado-ticket');
+  renderOrdenesLavado();
+  toast('✅ Orden entregada ✓');
+}
+// ── Servicios page init (llamado desde _navigateTo) ──
+async function initServiciosLavadoPage(){
+  // Si los servicios aún no se han cargado (primer acceso directo a esta página)
+  if(!serviciosLavado.length){
+    try{
+      const snapS = await window._fb.getDocs(colSvcLavado());
+      serviciosLavado = snapS.docs.map(d=>({id:d.id,...d.data()}));
+      if(!serviciosLavado.length){
+        for(const s of LAV_SERVICIOS_DEFAULT){
+          const ref = await window._fb.addDoc(colSvcLavado(),{...s,createdAt:new Date().toISOString()});
+          serviciosLavado.push({id:ref.id,...s});
+        }
+      }
+    }catch(e){ serviciosLavado=[...LAV_SERVICIOS_DEFAULT.map((s,i)=>({id:'def-'+i,...s}))]; }
+  }
+  renderServiciosLavado();
+}
+
+// ── Foto de referencia ──
+function triggerLavadoFoto(){
+  document.getElementById('lav-foto-input').click();
+}
+function subirFotoLavado(){
+  document.getElementById('lav-foto-input-galeria').click();
+}
+
+function handleLavadoFoto(inp){
+  const f = inp.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = async e => {
+    const raw = e.target.result;
+    try{
+      // Comprimir: máx 400px, JPEG 0.6
+      const canvas = document.createElement('canvas');
+      const img = new Image();
+      await new Promise(resolve=>{ img.onload=resolve; img.src=raw; });
+      const MAX=400; let w=img.width, h=img.height;
+      if(w>h){ if(w>MAX){h=Math.round(h*MAX/w);w=MAX;} }
+      else    { if(h>MAX){w=Math.round(w*MAX/h);h=MAX;} }
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      let data = canvas.toDataURL('image/jpeg',0.6);
+      // Reducir más si pesa mucho (límite Firestore ~900KB)
+      if(data.length > 600000){
+        canvas.width=Math.round(w*.7); canvas.height=Math.round(h*.7);
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        data = canvas.toDataURL('image/jpeg',0.5);
+      }
+      lavFotoDataUrl = data;
+    }catch(err){ lavFotoDataUrl = raw; }
+    // Mostrar preview
+    const prev = document.getElementById('lav-foto-preview');
+    const ph   = document.getElementById('lav-foto-placeholder');
+    const btn  = document.getElementById('lav-foto-quitar');
+    const badge= document.getElementById('lav-foto-badge');
+    if(prev){ prev.src=lavFotoDataUrl; prev.style.display='block'; }
+    if(ph)   ph.style.display='none';
+    if(btn)  btn.style.display='flex';
+    if(badge)badge.style.display='block';
+    // Reset input para poder volver a seleccionar la misma foto
+    inp.value='';
+  };
+  r.readAsDataURL(f);
+}
+
+function quitarFotoLavado(){
+  lavFotoDataUrl = null;
+  const prev  = document.getElementById('lav-foto-preview');
+  const ph    = document.getElementById('lav-foto-placeholder');
+  const btn   = document.getElementById('lav-foto-quitar');
+  const badge = document.getElementById('lav-foto-badge');
+  if(prev){ prev.src=''; prev.style.display='none'; }
+  if(ph)  ph.style.display='flex';
+  if(btn) btn.style.display='none';
+  if(badge)badge.style.display='none';
+}
+
+function resetFotoLavado(){
+  lavFotoDataUrl = null;
+  quitarFotoLavado();
+}
+
+function cargarFotoLavado(url){
+  if(!url){ resetFotoLavado(); return; }
+  lavFotoDataUrl = url;
+  const prev  = document.getElementById('lav-foto-preview');
+  const ph    = document.getElementById('lav-foto-placeholder');
+  const btn   = document.getElementById('lav-foto-quitar');
+  const badge = document.getElementById('lav-foto-badge');
+  if(prev){ prev.src=url; prev.style.display='block'; }
+  if(ph)  ph.style.display='none';
+  if(btn) btn.style.display='flex';
+  if(badge)badge.style.display='block';
+}
+
+function verFotoLavado(id){
+  const o = ordenesLavado.find(x=>x.id===id);
+  if(!o?.foto) return;
+  // Abrir en lightbox simple
+  const win = window.open('','_blank','width=600,height=600');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Foto — ${o.folio||id}</title>
+  <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh}
+  img{max-width:100vw;max-height:100vh;object-fit:contain}
+  .info{position:fixed;top:10px;left:10px;background:rgba(0,0,0,.7);color:#fff;padding:8px 14px;border-radius:8px;font-family:Arial;font-size:13px}
+  </style></head><body>
+  <div class="info">📷 ${o.cliente||'—'} · ${o.marca||'—'} · Folio #${o.folio||id.slice(-5)}</div>
+  <img src="${o.foto}" alt="Foto de referencia">
+  </body></html>`);
+  win.document.close();
+}
+
+// ── SERVICIOS Y COSTOS ──
+const colorMapSvc = {
+  accent:{bg:'var(--accent-dim)',border:'rgba(26,158,92,.4)',text:'var(--accent2)'},
+  blue:  {bg:'#0e1e2a',          border:'rgba(82,168,224,.4)',text:'var(--blue)'},
+  gold:  {bg:'var(--gold-dim)',   border:'rgba(240,180,41,.4)',text:'var(--gold)'},
+  orange:{bg:'#2a1808',          border:'rgba(224,122,82,.4)',text:'var(--orange)'},
+  red:   {bg:'#2a1010',          border:'rgba(224,82,82,.4)', text:'var(--red)'},
+};
+
+function renderServiciosLavado(){
+  const grid = document.getElementById('lav-servicios-grid');
+  if(!grid) return;
+  if(!serviciosLavado.length){
+    grid.innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted);grid-column:1/-1">Sin servicios. Crea el primero con + Nuevo Servicio.</div>`;
+    return;
+  }
+  grid.innerHTML = serviciosLavado.map(s=>{
+    const c = colorMapSvc[s.color||'accent'] || colorMapSvc.accent;
+    const activo = s.activo !== false;
+    return `<div style="background:var(--s1);border:1px solid ${c.border};border-radius:12px;padding:18px;
+      position:relative;transition:box-shadow .15s;${!activo?'opacity:.5':''}">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;background:${c.text}"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">
+        <div style="font-size:15px;font-weight:800;color:var(--cream);line-height:1.3">${s.nombre}</div>
+        <div style="font-size:20px;font-weight:900;font-family:var(--mono);color:${c.text};white-space:nowrap">$${(s.precio||0).toFixed(0)}</div>
+      </div>
+      ${s.desc?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.4">${s.desc}</div>`:''}
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${s.duracion?`<span class="badge b-gray" style="font-size:10px">⏱ ${s.duracion}</span>`:''}
+          <span class="badge ${activo?'b-green':'b-gray'}" style="font-size:10px">${activo?'✅ Activo':'⏸ Inactivo'}</span>
+        </div>
+        <div style="display:flex;gap:5px">
+          <button class="btn btn-ghost btn-xs" onclick="editarServicioLavado('${s.id}')" title="Editar">✏️</button>
+          <button class="btn btn-ghost btn-xs" onclick="toggleActivoServicioLavado('${s.id}')" title="${activo?'Desactivar':'Activar'}">${activo?'⏸':'▶'}</button>
+          <button class="btn btn-red btn-xs" onclick="eliminarServicioLavado('${s.id}')" title="Eliminar">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selColorSvcLavado(color){
+  _lavSvcColor = color;
+  const colorDef = {
+    accent:{border:'var(--accent)',bg:'var(--accent-dim)'},
+    blue:{border:'var(--blue)',bg:'#0e1e2a'},
+    gold:{border:'var(--gold)',bg:'var(--gold-dim)'},
+    orange:{border:'var(--orange)',bg:'#2a1808'},
+    red:{border:'var(--red)',bg:'#2a1010'},
+  };
+  ['accent','blue','gold','orange','red'].forEach(c=>{
+    const btn=document.getElementById('lav-svc-col-'+c);
+    if(!btn)return;
+    const d=colorDef[c];
+    btn.style.borderColor = c===color ? d.border : 'var(--border)';
+    btn.style.background  = d.bg;
+    btn.style.transform   = c===color ? 'scale(1.2)' : 'scale(1)';
+  });
+  document.getElementById('lav-svc-color').value = color;
+}
+
+function abrirNuevoServicioLavado(){
+  _lavSvcEditId = null;
+  document.getElementById('lav-svc-mo-title').textContent = '＋ Nuevo Servicio';
+  document.getElementById('lav-svc-nombre').value   = '';
+  document.getElementById('lav-svc-desc').value     = '';
+  document.getElementById('lav-svc-precio').value   = '';
+  document.getElementById('lav-svc-duracion').value = '';
+  document.getElementById('lav-svc-activo').checked = true;
+  selColorSvcLavado('accent');
+  openM('mo-lavado-servicio');
+  setTimeout(()=>document.getElementById('lav-svc-nombre')?.focus(),100);
+}
+
+function editarServicioLavado(id){
+  const s = serviciosLavado.find(x=>x.id===id); if(!s)return;
+  _lavSvcEditId = id;
+  document.getElementById('lav-svc-mo-title').textContent = '✏️ Editar Servicio';
+  document.getElementById('lav-svc-nombre').value   = s.nombre||'';
+  document.getElementById('lav-svc-desc').value     = s.desc||'';
+  document.getElementById('lav-svc-precio').value   = s.precio||'';
+  document.getElementById('lav-svc-duracion').value = s.duracion||'';
+  document.getElementById('lav-svc-activo').checked = s.activo!==false;
+  selColorSvcLavado(s.color||'accent');
+  openM('mo-lavado-servicio');
+}
+
+async function guardarServicioLavado(){
+  const nombre = (document.getElementById('lav-svc-nombre')?.value||'').trim();
+  const precio = parseFloat(document.getElementById('lav-svc-precio')?.value||0);
+  if(!nombre){toast('Ingresa el nombre del servicio','err');return;}
+  if(!precio||precio<0){toast('Ingresa un precio válido','err');return;}
+  const data = {
+    nombre,
+    desc:     document.getElementById('lav-svc-desc')?.value.trim()||'',
+    precio,
+    duracion: document.getElementById('lav-svc-duracion')?.value||'',
+    color:    document.getElementById('lav-svc-color')?.value||'accent',
+    activo:   !!document.getElementById('lav-svc-activo')?.checked,
+  };
+  try{
+    if(_lavSvcEditId && !_lavSvcEditId.startsWith('def-')){
+      await window._fb.updateDoc(window._fb.doc(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/serviciosLavado`,_lavSvcEditId),data);
+      const idx = serviciosLavado.findIndex(x=>x.id===_lavSvcEditId);
+      if(idx>=0) serviciosLavado[idx]={...serviciosLavado[idx],...data};
+      toast('Servicio actualizado ✓');
+    } else {
+      if(_lavSvcEditId?.startsWith('def-')) serviciosLavado=serviciosLavado.filter(x=>x.id!==_lavSvcEditId);
+      const ref = await window._fb.addDoc(colSvcLavado(),{...data,createdAt:new Date().toISOString()});
+      serviciosLavado.push({id:ref.id,...data});
+      toast('✓ Servicio creado');
+    }
+    closeM('mo-lavado-servicio');
+    renderServiciosLavado();
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function toggleActivoServicioLavado(id){
+  const s = serviciosLavado.find(x=>x.id===id); if(!s)return;
+  const nuevoEstado = s.activo===false;
+  try{
+    if(!id.startsWith('def-')){
+      await window._fb.updateDoc(window._fb.doc(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/serviciosLavado`,id),{activo:nuevoEstado});
+    }
+    const idx = serviciosLavado.findIndex(x=>x.id===id);
+    if(idx>=0) serviciosLavado[idx].activo = nuevoEstado;
+    toast(nuevoEstado?'Servicio activado ✓':'Servicio desactivado');
+    renderServiciosLavado();
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function eliminarServicioLavado(id){
+  const s = serviciosLavado.find(x=>x.id===id); if(!s)return;
+  if(!confirm(`¿Eliminar el servicio "${s.nombre}"?`))return;
+  try{
+    if(!id.startsWith('def-')){
+      await window._fb.deleteDoc(window._fb.doc(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/serviciosLavado`,id));
+    }
+    serviciosLavado = serviciosLavado.filter(x=>x.id!==id);
+    toast('Servicio eliminado');
+    renderServiciosLavado();
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ══ TABLERO DE STATUS ══
+let _lavStatusInterval = null;
+
+async function initLavadoStatus(){
+  // Asegurar que las órdenes estén cargadas
+  if(!ordenesLavado.length){
+    try{
+      const snap = await window._fb.getDocs(colLavado());
+      ordenesLavado = snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+    }catch(e){}
+  }
+  renderLavadoStatus();
+  // Actualizar elapsed times cada 60s
+  clearInterval(_lavStatusInterval);
+  _lavStatusInterval = setInterval(()=>{
+    if(document.getElementById('page-lavado-status')?.classList.contains('on')){
+      renderLavadoStatus();
+    } else {
+      clearInterval(_lavStatusInterval);
+    }
+  }, 60000);
+}
+
+function renderLavadoStatus(){
+  const board   = document.getElementById('lav-status-board'); if(!board) return;
+  const showDone= document.getElementById('lav-status-show-done')?.checked || false;
+  const ahora   = Date.now();
+  const hoyStr  = hoy();
+
+  // Stats
+  const cnt = {recibido:0, proceso:0, listo:0, entregado:0};
+  ordenesLavado.forEach(o=>{ if(cnt[o.estado]!==undefined) cnt[o.estado]++; });
+  const s = (id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  s('ls-cnt-recibido', cnt.recibido);
+  s('ls-cnt-proceso',  cnt.proceso);
+  s('ls-cnt-listo',    cnt.listo);
+  s('ls-cnt-entregado', ordenesLavado.filter(o=>o.estado==='entregado'&&o.fechaEntrega===hoyStr).length);
+
+  const now = new Date();
+  s('lav-status-updated', `Actualizado: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`);
+
+  const estados = showDone
+    ? ['recibido','proceso','listo','entregado']
+    : ['recibido','proceso','listo'];
+
+  board.style.gridTemplateColumns = `repeat(${estados.length},1fr)`;
+
+  board.innerHTML = estados.map(estado=>{
+    const e = LAV_ESTADOS[estado];
+    const ordenes = ordenesLavado
+      .filter(o=> estado==='entregado'
+        ? o.estado==='entregado' && o.fechaEntrega===hoyStr
+        : o.estado===estado)
+      .sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
+
+    // Tiempo total acumulado en esta columna (solo proceso — el que importa)
+    let tiempoTotalCol = 0;
+    if(estado==='proceso'){
+      ordenes.forEach(o=>{
+        const h = (o.historial||[]).find(x=>x.estado==='proceso');
+        if(h?.ts) tiempoTotalCol += ahora - h.ts;
+      });
+    }
+
+    const cardsHtml = ordenes.length
+      ? ordenes.map(o => buildStatusCard(o, estado, ahora)).join('')
+      : `<div style="text-align:center;padding:28px 12px;color:var(--faint);font-size:12px;border:1px dashed var(--border);border-radius:10px">Sin órdenes</div>`;
+
+    return `
+    <div style="min-width:0">
+      <!-- Cabecera columna -->
+      <div style="background:${e.bg};border:1px solid ${e.border};border-radius:10px 10px 0 0;
+        padding:10px 14px;margin-bottom:2px;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:13px;font-weight:800;color:${e.color}">${e.icon} ${e.label}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${estado==='proceso' && tiempoTotalCol>0
+            ? `<span style="font-size:10px;background:rgba(82,168,224,.2);color:var(--blue);border:1px solid rgba(82,168,224,.35);padding:2px 8px;border-radius:20px;font-family:var(--mono)">⏱ ${calcDuracion(0,tiempoTotalCol)}</span>`
+            : ''}
+          <span style="background:${e.border};color:${e.color};font-size:11px;font-weight:900;
+            padding:2px 10px;border-radius:20px;font-family:var(--mono)">${ordenes.length}</span>
+        </div>
+      </div>
+      <!-- Cards -->
+      <div style="display:flex;flex-direction:column;gap:8px;padding:8px 0">
+        ${cardsHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildStatusCard(o, estado, ahora){
+  const e = LAV_ESTADOS[estado];
+  const hist = o.historial || [];
+
+  // Tiempo desde que entró en el estado actual
+  const entradaEstado = hist.find(h=>h.estado===estado);
+  let tiempoEnEstado = '';
+  if(entradaEstado?.ts){
+    tiempoEnEstado = calcDuracion(entradaEstado.ts, ahora);
+  }
+
+  // Tiempo total EN PROCESO (el más importante)
+  let tiempoEnProceso = '';
+  const entradaProceso = hist.find(h=>h.estado==='proceso');
+  const salidaProceso  = hist.find(h=>h.estado==='listo' || h.estado==='entregado');
+  if(entradaProceso?.ts){
+    const fin = salidaProceso?.ts || ahora;
+    tiempoEnProceso = calcDuracion(entradaProceso.ts, fin);
+  }
+
+  // Empleada del estado actual
+  const empActual = entradaEstado?.empleada || '';
+
+  // ¿Lleva más tiempo del esperado? (> 2 horas en proceso = alerta)
+  const enProceso = estado === 'proceso';
+  const tiempoMs  = entradaEstado?.ts ? (ahora - entradaEstado.ts) : 0;
+  const esLento   = enProceso && tiempoMs > 2*60*60*1000;
+  const esUrgente = enProceso && tiempoMs > 4*60*60*1000;
+
+  const foto = o.foto
+    ? `<img src="${o.foto}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid ${e.border}">`
+    : `<div style="width:44px;height:44px;border-radius:8px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:1px solid var(--border)">👟</div>`;
+
+  return `
+  <div style="background:var(--s1);border:1px solid ${esUrgente?'var(--red)':esLento?'var(--gold)':e.border};
+    border-radius:10px;padding:12px;cursor:pointer;transition:box-shadow .15s;
+    ${esUrgente?'box-shadow:0 0 0 2px rgba(224,82,82,.3)':esLento?'box-shadow:0 0 0 2px rgba(240,180,41,.2)':''}
+    border-left:3px solid ${e.color}"
+    onclick="verFlujoOrden('${o.id}')" title="Ver flujo completo">
+
+    <!-- Header: foto + folio + avanzar -->
+    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">
+      ${foto}
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:4px">
+          <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:${e.color}">#${o.folio||o.id.slice(-5).toUpperCase()}</span>
+          ${esUrgente?'<span style="font-size:9px;background:rgba(224,82,82,.2);color:var(--red);padding:1px 6px;border-radius:10px;border:1px solid rgba(224,82,82,.4)">🔴 LENTO</span>'
+            :esLento?'<span style="font-size:9px;background:rgba(240,180,41,.15);color:var(--gold);padding:1px 6px;border-radius:10px;border:1px solid rgba(240,180,41,.3)">⚠️ Demorado</span>':''}
+        </div>
+        <div style="font-size:13px;font-weight:700;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.cliente||'—'}</div>
+        <div style="font-size:11px;color:var(--muted)">${o.marca||''} ${o.color?'('+o.color+')':''}</div>
+      </div>
+    </div>
+
+    <!-- Servicio y precio -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:11px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${lavServicioLabel(o.servicio)}</span>
+      <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0;margin-left:6px">$${(o.precio||0).toFixed(0)}</span>
+    </div>
+
+    <!-- Empleada responsable -->
+    ${empActual?`<div style="font-size:11px;color:var(--muted);margin-bottom:8px">👩‍💼 <strong style="color:var(--cream)">${empActual}</strong></div>`:''}
+
+    <!-- Tiempo en estado actual -->
+    <div style="background:var(--s2);border-radius:7px;padding:7px 10px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:9px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px">Tiempo en ${e.label}</div>
+        <div style="font-size:14px;font-weight:900;font-family:var(--mono);color:${esUrgente?'var(--red)':esLento?'var(--gold)':e.color}">${tiempoEnEstado||'—'}</div>
+      </div>
+      ${tiempoEnProceso && estado!=='proceso'?`<div style="text-align:right">
+        <div style="font-size:9px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px">⚙️ En Proceso</div>
+        <div style="font-size:12px;font-weight:700;font-family:var(--mono);color:var(--blue)">${tiempoEnProceso}</div>
+      </div>`:''}
+    </div>
+
+    <!-- Entrega prometida si aplica -->
+    ${o.fechaEntrega?`<div style="margin-top:7px;font-size:11px;color:var(--muted)">📅 Entrega: ${o.fechaEntrega.split('-').reverse().join('/')}</div>`:''}
+
+    <!-- Botón avanzar rápido -->
+    ${o.estado!=='entregado'?`<button onclick="event.stopPropagation();abrirAvanzarEstado('${o.id}')"
+      style="width:100%;margin-top:8px;padding:6px;background:${e.bg};border:1px solid ${e.border};
+        color:${e.color};border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;transition:opacity .15s"
+      onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+      → Avanzar a ${LAV_ESTADOS[{recibido:'proceso',proceso:'listo',listo:'entregado'}[o.estado]]?.label||''}
+    </button>`:'<div style="margin-top:6px;text-align:center;font-size:11px;color:var(--accent2);font-weight:600">✅ Completado</div>'}
+  </div>`;
+}
+
+// ══════════════════ FIN MÓDULO LAVADO ══════════════════
+
 // ══════════════════ FIREBASE AUTH OBSERVER ══════════════════
 let fbInterval=setInterval(()=>{
   if(!window._fb)return;
   clearInterval(fbInterval);
   const{auth,onAuthStateChanged}=window._fb;
+  let _initAppRunning = false;
   onAuthStateChanged(auth,user=>{
     const loading=document.getElementById('loading');
     if(loading)loading.style.display='none';
     if(user){
+      if(_initAppRunning) return; // evitar doble init en token refresh rápido
+      _initAppRunning = true;
       document.getElementById('auth').style.display='none';
       document.getElementById('app').style.display='flex';
-      initApp(user);
+      initApp(user).finally(()=>{ _initAppRunning=false; });
     }else{
       document.getElementById('auth').style.display='flex';
       document.getElementById('app').style.display='none';
