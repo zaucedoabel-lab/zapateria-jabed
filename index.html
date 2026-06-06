@@ -10249,11 +10249,272 @@ function renderHist(){
   setEl('h-total-pendiente',fmt(totalPendiente));
 
   // ── Tabla semanal ──
+  // ─── Add daily summary section HTML if not yet in DOM ───
+  if(!document.getElementById('h-diario-wrap')){
+    const semWrap = document.getElementById('h-semana-tabla-wrap');
+    if(semWrap){
+      const div = document.createElement('div');
+      div.id = 'h-diario-wrap';
+      div.style.cssText = 'margin-bottom:12px;overflow-x:auto;max-width:100%;display:none';
+      div.innerHTML = `<table id="h-diario-tabla" style="border-collapse:collapse;table-layout:auto;border:2px solid #cbd5e1;border-radius:6px;overflow:hidden">
+        <thead><tr></tr></thead><tbody id="h-diario-tbody"></tbody></table>`;
+      semWrap.insertAdjacentElement('afterend', div);
+    }
+  }
+
   (function renderTablaSemanal(){
-    const tbody = document.getElementById('h-semana-tbody'); if(!tbody) return;
+    const tbody  = document.getElementById('h-semana-tbody'); if(!tbody) return;
     const hoyStr = hoy();
-    const desde = document.getElementById('h-desde')?.value||'';
+    const desde  = document.getElementById('h-desde')?.value||'';
     const hasta  = document.getElementById('h-hasta')?.value||hoyStr;
+    const pago   = document.getElementById('h-pago')?.value||'';
+    const suc    = document.getElementById('h-suc')?.value||'';
+    const tipo   = document.getElementById('h-tipo')?.value||'';
+
+    // ── ¿Filtro de un solo día? (botón "Hoy" o "Ayer") ──
+    const esSingleDay = desde && hasta && desde === hasta;
+
+    // ── Semanas que cubren el rango ──
+    const ancla = desde || hoyStr;
+    const anclaDt = new Date(ancla+'T12:00:00');
+    const dow = anclaDt.getDay();
+    const primerLunesDt = new Date(anclaDt.getTime() + (dow===0?-6:1-dow)*86400000);
+
+    const semanas = [];
+    let cur = new Date(primerLunesDt);
+    const hastaLimite = hasta || hoyStr;
+    let guard = 0;
+    while(guard++ < 60){
+      const ls = cur.toISOString().slice(0,10);
+      if(ls > hastaLimite) break;
+      semanas.push({lunes:ls, dias:Array.from({length:7},(_,i)=>new Date(cur.getTime()+i*86400000).toISOString().slice(0,10))});
+      cur = new Date(cur.getTime()+7*86400000);
+    }
+
+    // ── Función para acumular ventas en un mapa {fecha:{ef,tar,tot}} ──
+    const acumByFecha = (ventasArr) => {
+      const map = {};
+      ventasArr.forEach(v=>{
+        const f=v.fecha||''; if(!f)return;
+        if(!map[f]) map[f]={ef:0,tar:0,tot:0};
+        const tipoV=v.tipoVenta||'venta';
+        const isDev=tipoV==='devolucion';
+        const monto=isDev?(v.total||0):(tipoV==='apartado'||tipoV==='credito')?(v.anticipo||0):tipoV==='abono'?(v.monto||v.total||0):(v.total||0);
+        map[f].tot+=monto;
+        const pg=(v.pago||'').toLowerCase().trim();
+        if(pg==='mixto'){map[f].ef+=v.mixtoEfectivo||0;map[f].tar+=v.mixtoTarjeta||0;}
+        else if(pg==='bbva-efectivo'){map[f].ef+=v.bbvaEfectivo||0;map[f].tar+=v.bbvaTarjeta||0;}
+        else if(pg==='tarjeta-efectivo'){map[f].ef+=v.tarjetaEfEfectivo||0;map[f].tar+=v.tarjetaEfTarjeta||0;}
+        else if(pg==='efectivo'||pg==='monedero'||pg==='') map[f].ef+=monto;
+        else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) map[f].tar+=monto;
+        else map[f].ef+=monto;
+      });
+      return map;
+    };
+
+    // ── byFecha para stat-cards (usa "lista" ya filtrada por fecha exacta) ──
+    const byFecha = acumByFecha(lista);
+
+    // ── byFechaTabla: para single-day expande a la semana completa ──
+    // En modo "Hoy/Ayer" queremos ver la semana entera, no solo ese día.
+    // Para el mes/rango normal, es igual a byFecha.
+    let byFechaTabla = byFecha;
+    if(esSingleDay){
+      const semDias = new Set(semanas.flatMap(s=>s.dias));
+      const ventasSemana = ventas.filter(v=>{
+        const f=v.fecha||''; if(!semDias.has(f)) return false;
+        const tipoV=v.tipoVenta||'venta';
+        if(tipoV==='abono' && tipo!=='abono') return false;  // misma regla que lista
+        if(pago && v.pago!==pago && !(pago==='tarjeta'&&(v.pago||'').startsWith('tarjeta'))) return false;
+        if(suc && v.sucursalId!==suc) return false;
+        if(tipo && tipoV!==tipo) return false;
+        return true;
+      });
+      byFechaTabla = acumByFecha(ventasSemana);
+    }
+
+    const DIAS_LABEL=['LUN','MAR','MIERC.','JUEV','VIE','SAB','DOM'];
+    const p='padding:3px 6px', b='border:1px solid #d1d5db';
+
+    // ── Encabezado con indicador especial para single-day ──
+    const tabla=document.getElementById('h-semana-tabla');
+    const tituloSemana = esSingleDay
+      ? `SEMANA EN CURSO <span style="font-size:9px;background:#fef08a;color:#713f12;padding:1px 5px;border-radius:4px;font-weight:700">HOY: ${desde.split('-').reverse().join('/')}</span>`
+      : 'SEMANA';
+    if(tabla) tabla.querySelector('thead').innerHTML=`<tr>
+      <th style="${p};${b};background:#e5e7eb;font-size:10px;color:#6b7280;font-weight:700;width:92px">${tituloSemana}</th>
+      ${DIAS_LABEL.map(dl=>`<th style="${p};${b};background:#f3f4f6;color:#374151;font-size:10px;font-weight:700;text-align:right;width:60px">${dl}</th>`).join('')}
+      <th style="${p};${b};background:#1e293b;color:#fbbf24;font-size:10px;font-weight:800;text-align:right;width:72px">TOTAL</th>
+    </tr>`;
+
+    const fmtC=(n,estado)=>{
+      // estado: 'pasado'|'hoy'|'futuro'|'oculto'
+      if(estado==='futuro') return `<span style="color:#e5e7eb">—</span>`;
+      if(estado==='oculto') return `<span style="color:#d1d5db;font-size:9px">—</span>`;
+      if(n===0) return `<span style="color:#9ca3af">0</span>`;
+      return `<b style="color:#111">${fmt(n)}</b>`;
+    };
+
+    const totGlobal={ef:0,tar:0,tot:0};
+
+    const rowsHtml = semanas.map(sem=>{
+      const semSum={ef:0,tar:0,tot:0};
+
+      // Para acumular el total del PERÍODO (stat cards) usamos byFecha (solo días del filtro)
+      sem.dias.forEach(f=>{
+        const d=byFecha[f]||{ef:0,tar:0,tot:0};
+        const enRango = f>=(desde||'') && f<=hastaLimite && f<=hoyStr;
+        if(enRango){ semSum.ef+=d.ef; semSum.tar+=d.tar; semSum.tot+=d.tot; }
+      });
+      totGlobal.ef+=semSum.ef; totGlobal.tar+=semSum.tar; totGlobal.tot+=semSum.tot;
+
+      const numSem = getNumSemana(sem.lunes);
+      const diasVis = sem.dias.filter(f=>f>=(desde||'')&&f<=hastaLimite);
+      const rangoLabel = diasVis.length
+        ? diasVis[0].slice(8)+'–'+diasVis[diasVis.length-1].slice(8)+'/'+diasVis[0].slice(5,7)
+        : sem.lunes.slice(8)+'/'+sem.lunes.slice(5,7);
+
+      const buildRow=(label,bg,key)=>`<tr>
+        <td style="${p};${b};background:${bg};color:#fff;font-size:10px;font-weight:800;white-space:nowrap">${label}</td>
+        ${sem.dias.map(f=>{
+          const dt = byFechaTabla[f]||{ef:0,tar:0,tot:0};
+          const val = dt[key]||0;
+          const esHoy = f===hoyStr;
+          const esFuturo = f>hoyStr;
+          // En single-day: días fuera del filtro pero dentro de la semana se muestran en gris
+          const esFiltro = f>=(desde||'') && f<=hastaLimite;
+          const bg2 = esHoy?'#fef9c3':(!esFuturo&&val>0)?'#fff':!esFuturo?'#f8fafc':'#f9fafb';
+          const borde = esHoy?'border:2px solid #fbbf24':'';
+          let estado = esFuturo?'futuro':(esSingleDay&&!esFiltro&&val===0)?'oculto':'pasado';
+          return `<td style="${p};${b};${borde};background:${bg2};text-align:right;font-size:11px">${fmtC(val,estado)}</td>`;
+        }).join('')}
+        <td style="${p};${b};background:#1e293b;color:#fbbf24;font-weight:800;font-size:11px;text-align:right">${fmt(semSum[key])}</td>
+      </tr>`;
+
+      return `
+      <tr><td colspan="9" style="padding:2px 6px;background:#0f172a;color:#94a3b8;font-size:10px;font-weight:700;border:1px solid #d1d5db;letter-spacing:.5px">
+        Sem. #${numSem} &nbsp;·&nbsp; ${esSingleDay?'Semana en curso':rangoLabel}
+      </td></tr>
+      ${buildRow('EFECTIVO','#16a34a','ef')}
+      ${buildRow('TARJETA', '#1d4ed8','tar')}
+      ${buildRow('Total',   '#ca8a04','tot')}`;
+    }).join('');
+
+    const grandTotalRow=`<tr>
+      <td colspan="8" style="${p};${b};background:#0f172a;color:#fbbf24;font-size:11px;font-weight:800;text-align:right">TOTAL DEL PERÍODO</td>
+      <td style="${p};${b};background:#0f172a;color:#fbbf24;font-size:13px;font-weight:900;text-align:right">${fmt(totGlobal.tot)}</td>
+    </tr>`;
+
+    tbody.innerHTML = rowsHtml + grandTotalRow;
+  })();
+
+  // ── Resumen Diario del Período (solo cuando el rango > 7 días) ──
+  (function renderResumenDiario(){
+    const diarWrap  = document.getElementById('h-diario-wrap');
+    const diarTbody = document.getElementById('h-diario-tbody');
+    const diarTabla = document.getElementById('h-diario-tabla');
+    if(!diarWrap||!diarTbody||!diarTabla) return;
+
+    const hoyStr = hoy();
+    const desde  = document.getElementById('h-desde')?.value||'';
+    const hasta  = document.getElementById('h-hasta')?.value||hoyStr;
+
+    // Solo mostrar si el rango es > 7 días
+    const desdeDt = desde ? new Date(desde+'T12:00:00') : null;
+    const hastaDt = new Date(hasta+'T12:00:00');
+    const diffDias = desdeDt ? (hastaDt - desdeDt)/86400000 : 0;
+
+    if(diffDias <= 7){
+      diarWrap.style.display='none';
+      return;
+    }
+    diarWrap.style.display='';
+
+    const DIAS_SEMANA=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const p='padding:4px 8px', b='border:1px solid #e2e8f0';
+
+    // Encabezado
+    diarTabla.querySelector('thead').innerHTML=`<tr>
+      <th style="${p};${b};background:#1e293b;color:#94a3b8;font-size:10px;font-weight:700;text-align:left;width:80px">FECHA</th>
+      <th style="${p};${b};background:#1e293b;color:#94a3b8;font-size:10px;font-weight:700;width:36px">DÍA</th>
+      <th style="${p};${b};background:#16a34a;color:#fff;font-size:10px;font-weight:700;text-align:right;min-width:80px">EFECTIVO</th>
+      <th style="${p};${b};background:#1d4ed8;color:#fff;font-size:10px;font-weight:700;text-align:right;min-width:80px">TARJETA</th>
+      <th style="${p};${b};background:#ca8a04;color:#fff;font-size:10px;font-weight:700;text-align:right;min-width:80px">TOTAL DÍA</th>
+      <th style="${p};${b};background:#0f172a;color:#fbbf24;font-size:10px;font-weight:700;text-align:right;min-width:88px">ACUMULADO</th>
+    </tr>`;
+
+    // Construir lista de días en el rango
+    const dias = [];
+    let curDt = desdeDt ? new Date(desdeDt) : new Date(hoyStr+'T12:00:00');
+    while(true){
+      const f = curDt.toISOString().slice(0,10);
+      if(f > hasta) break;
+      dias.push(f);
+      curDt = new Date(curDt.getTime()+86400000);
+      if(dias.length > 400) break; // safety
+    }
+
+    // Acumular por día desde la lista filtrada
+    const byDia = {};
+    lista.forEach(v=>{
+      const f=v.fecha||''; if(!byDia[f]) byDia[f]={ef:0,tar:0,tot:0};
+      const tipoV=v.tipoVenta||'venta';
+      const isDev=tipoV==='devolucion';
+      const monto=isDev?(v.total||0):(tipoV==='apartado'||tipoV==='credito')?(v.anticipo||0):tipoV==='abono'?(v.monto||v.total||0):(v.total||0);
+      byDia[f].tot+=monto;
+      const pg=(v.pago||'').toLowerCase().trim();
+      if(pg==='mixto'){byDia[f].ef+=v.mixtoEfectivo||0;byDia[f].tar+=v.mixtoTarjeta||0;}
+      else if(pg==='bbva-efectivo'){byDia[f].ef+=v.bbvaEfectivo||0;byDia[f].tar+=v.bbvaTarjeta||0;}
+      else if(pg==='tarjeta-efectivo'){byDia[f].ef+=v.tarjetaEfEfectivo||0;byDia[f].tar+=v.tarjetaEfTarjeta||0;}
+      else if(pg==='efectivo'||pg==='monedero'||pg==='') byDia[f].ef+=monto;
+      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) byDia[f].tar+=monto;
+      else byDia[f].ef+=monto;
+    });
+
+    let acum=0;
+    let totalEf=0, totalTar=0, totalTot=0;
+    const filas = dias.map(f=>{
+      const d=byDia[f]||{ef:0,tar:0,tot:0};
+      acum+=d.tot; totalEf+=d.ef; totalTar+=d.tar; totalTot+=d.tot;
+      const esFuturo = f>hoyStr;
+      const esHoy = f===hoyStr;
+      const dow = new Date(f+'T12:00:00').getDay();
+      const esSab = dow===6; const esDom = dow===0;
+      const bg = esHoy?'#fef9c3':esSab||esDom?'#f1f5f9':'#fff';
+      const dLabel = DIAS_SEMANA[dow];
+      const dColor = esDom?'#ef4444':esSab?'#f97316':'#475569';
+      if(esFuturo && d.tot===0) return ''; // ocultar días futuros sin ventas
+      return `<tr style="border-bottom:1px solid #e2e8f0">
+        <td style="${p};${b};background:${bg};font-size:11px;font-family:var(--mono);font-weight:${esHoy?700:400};white-space:nowrap">${f.split('-').reverse().join('/')}${esHoy?' ★':''}</td>
+        <td style="${p};${b};background:${bg};font-size:10px;color:${dColor};font-weight:700;text-align:center">${dLabel}</td>
+        <td style="${p};${b};background:${bg};text-align:right;font-size:11px;color:${d.ef>0?'#166534':'#9ca3af'};font-family:var(--mono)">${d.ef>0?fmt(d.ef):'—'}</td>
+        <td style="${p};${b};background:${bg};text-align:right;font-size:11px;color:${d.tar>0?'#1e40af':'#9ca3af'};font-family:var(--mono)">${d.tar>0?fmt(d.tar):'—'}</td>
+        <td style="${p};${b};background:${bg};text-align:right;font-size:12px;font-weight:${d.tot>0?700:400};color:${d.tot>0?'#92400e':'#9ca3af'};font-family:var(--mono)">${d.tot>0?fmt(d.tot):'—'}</td>
+        <td style="${p};${b};background:#f8fafc;text-align:right;font-size:11px;color:#475569;font-family:var(--mono)">${fmt(acum)}</td>
+      </tr>`;
+    }).join('');
+
+    // Fila de totales
+    const totalRow=`<tr style="border-top:2px solid #1e293b">
+      <td colspan="2" style="${p};${b};background:#0f172a;color:#fbbf24;font-size:11px;font-weight:800;text-align:right">TOTAL</td>
+      <td style="${p};${b};background:#0f172a;color:#4ade80;font-size:12px;font-weight:900;text-align:right;font-family:var(--mono)">${fmt(totalEf)}</td>
+      <td style="${p};${b};background:#0f172a;color:#60a5fa;font-size:12px;font-weight:900;text-align:right;font-family:var(--mono)">${fmt(totalTar)}</td>
+      <td style="${p};${b};background:#0f172a;color:#fbbf24;font-size:13px;font-weight:900;text-align:right;font-family:var(--mono)">${fmt(totalTot)}</td>
+      <td style="${p};${b};background:#0f172a;color:#fbbf24;font-size:13px;font-weight:900;text-align:right;font-family:var(--mono)">${fmt(acum)}</td>
+    </tr>`;
+
+    // Encabezado separador visual
+    const encabezado = document.getElementById('h-diario-encabezado');
+    if(!encabezado){
+      const div=document.createElement('div');
+      div.id='h-diario-encabezado';
+      div.style.cssText='font-size:11px;font-weight:800;color:var(--cream);text-transform:uppercase;letter-spacing:.6px;margin:4px 0 6px;display:flex;align-items:center;gap:10px';
+      div.innerHTML=`<span>📅 Resumen Diario del Período</span><span style="font-size:10px;color:var(--muted);font-weight:400">· ${dias.filter(f=>f<=hoyStr).length} días con datos</span>`;
+      diarWrap.insertAdjacentElement('beforebegin',div);
+    }
+
+    diarTbody.innerHTML = filas + totalRow;
+  })();
 
     // ── Calcular todas las semanas (lunes) que caen dentro del rango ──
     // Siempre empezar en el lunes de la semana que contiene "desde"
@@ -10373,8 +10634,6 @@ function renderHist(){
       <td style="${p};${b};background:#0f172a;color:#fbbf24;font-size:13px;font-weight:900;text-align:right">${fmt(totGlobal.tot)}</td>
     </tr>`;
 
-    tbody.innerHTML = rowsHtml + grandTotalRow;
-  })();
   const legBadge=document.getElementById('h-total');
   if(legBadge)legBadge.textContent='Total cobrado: '+fmt(totalCobrado);
 
