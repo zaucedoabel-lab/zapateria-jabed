@@ -1910,6 +1910,7 @@ body{background:#071222!important}
             </div>
             <div class="flex-row" style="gap:8px">
               <span class="badge b-gold" id="cta-total-pend">Pendiente: $0</span>
+              <button class="btn btn-ghost btn-sm" onclick="abrirDiagnosticoAbonos()" style="border-color:rgba(240,180,41,.5);color:var(--gold)" title="Detectar y reparar abonos sin registro en historial">🔧 Diagnóstico</button>
               <button class="btn btn-ghost btn-sm" onclick="exportarCuentasExcel()">📊 Exportar Excel</button>
             </div>
           </div>
@@ -4740,6 +4741,32 @@ body{background:#071222!important}
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeM('mo-permisos')">Cancelar</button>
       <button class="btn btn-accent" onclick="guardarPermisos()">💾 Guardar Permisos</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Diagnóstico de Abonos ══ -->
+<div class="mo" id="mo-diag-abonos">
+  <div class="md wide" style="max-width:700px">
+    <div class="mh">
+      <div>
+        <div class="mt">🔧 Diagnóstico de Abonos</div>
+        <div id="diag-subtitulo" style="font-size:11px;color:var(--muted);margin-top:2px">Analizando todas las notas…</div>
+      </div>
+      <button class="xbtn" onclick="closeM('mo-diag-abonos')">✕</button>
+    </div>
+    <div class="mb" style="max-height:65vh;overflow-y:auto">
+      <!-- Resumen -->
+      <div id="diag-resumen" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px"></div>
+      <!-- Cuerpo del reporte -->
+      <div id="diag-body">
+        <div style="text-align:center;padding:30px;color:var(--muted)">Ejecuta el diagnóstico para ver resultados.</div>
+      </div>
+    </div>
+    <div class="mf" style="gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="closeM('mo-diag-abonos')">Cerrar</button>
+      <button class="btn btn-ghost btn-sm" id="diag-btn-escanear" onclick="ejecutarDiagnostico()">🔍 Escanear ahora</button>
+      <button class="btn btn-accent" id="diag-btn-reparar" style="display:none" onclick="repararTodosAbonos()">🔧 Reparar Todo</button>
     </div>
   </div>
 </div>
@@ -8021,64 +8048,91 @@ function abrirAbono(id){
 }
 
 async function guardarAbono(){
-  const v = ventas.find(x=>x.id===abonoVentaId); if(!v) return;
-  const monto = parseFloat(document.getElementById('ab-monto').value)||0;
-  const saldo = getSaldo(v);
-  if(monto<=0){toast('Ingresa un monto válido','err');return;}
-  if(monto>saldo+0.01){toast('El monto no puede ser mayor al saldo ('+fmt(saldo)+')','err');return;}
-  const pago = document.getElementById('ab-pago').value;
-  const notas = document.getElementById('ab-notas').value.trim();
-  const abono = {
-    monto, pago, notas,
-    fecha: hoy(), hora: hora(),
-    usuario: currentProfile?.nombre||'—',
-    createdAt: new Date().toISOString()
-  };
-  const nuevosAbonos = [...(v.abonos||[]), abono];
-  const nuevoSaldo = Math.max(0, saldo - monto);
-  const totalAbonado = getAbonado(v) + monto;
+  if(!abonoVentaId){ toast('Error: sin nota seleccionada','err'); return; }
+  // ── Guard contra doble clic ──
+  if(guardarAbono._busy){ toast('Procesando…','warn'); return; }
+  guardarAbono._busy = true;
+  const btnGuardar = document.querySelector('#mo-abono button[onclick="guardarAbono()"]');
+  if(btnGuardar){ btnGuardar.disabled=true; btnGuardar.style.opacity='.6'; }
+
   try{
-    // 1. Actualizar la venta original con el nuevo abono
-    await window._fb.updateDoc(docRef('ventas', abonoVentaId), {
+    const v = ventas.find(x=>x.id===abonoVentaId); if(!v){ toast('Nota no encontrada','err'); return; }
+    const monto = parseFloat(document.getElementById('ab-monto').value)||0;
+    const saldo = getSaldo(v);
+    if(monto<=0){ toast('Ingresa un monto válido','err'); return; }
+    if(monto>saldo+0.01){ toast('El monto no puede ser mayor al saldo ('+fmt(saldo)+')','err'); return; }
+
+    const pago  = document.getElementById('ab-pago').value;
+    const notas = document.getElementById('ab-notas').value.trim();
+    const ahora = new Date().toISOString();
+    const abono = {
+      monto, pago, notas,
+      fecha: hoy(), hora: hora(),
+      usuario: currentProfile?.nombre||'—',
+      createdAt: ahora
+    };
+    const nuevosAbonos = [...(v.abonos||[]), abono];
+    const nuevoSaldo   = Math.max(0, saldo - monto);
+    const totalAbonado = getAbonado(v) + monto;
+
+    // ── Escritura atómica con writeBatch ──
+    // Ambas escrituras (actualizar nota + crear registro en historial)
+    // o ninguna, evitando abonos "huérfanos" como el de la nota #939.
+    const batch = window._fb.writeBatch(window._fb.db);
+
+    // 1. Actualizar la nota original con el nuevo abono
+    const ventaDocRef = window._fb.doc(window._fb.db, `tiendas/${window._fb.auth.currentUser.uid}/ventas`, abonoVentaId);
+    batch.update(ventaDocRef, {
       abonos: nuevosAbonos,
       liquidado: nuevoSaldo<=0
     });
-    // 2. Registrar el abono como entrada en historial de ventas (tipo 'abono')
-    await window._fb.addDoc(col('ventas'),{
+
+    // 2. Registrar el abono en historial de ventas
+    const nuevoAbonoRef = window._fb.doc(window._fb.collection(window._fb.db, `tiendas/${window._fb.auth.currentUser.uid}/ventas`));
+    batch.set(nuevoAbonoRef, {
       fecha: hoy(),
       hora: hora(),
       tipoVenta: 'abono',
       ventaOriginalId: abonoVentaId,
+      notaFolio: v.notaFolio||'',          // folio de la nota original para búsqueda
       cliente: v.cliente,
       clienteId: v.clienteId||'',
       notaNombre: v.notaNombre||v.cliente,
       notaTel: v.notaTel||'',
       vendedor: currentProfile?.nombre||'—',
       sucursalId: v.sucursalId||'',
-      pago: pago,
-      items: v.items||[],  // mismos productos del apartado
+      pago,
+      monto,                                // campo explícito
       subtotal: monto,
       descuento: 0,
       total: monto,
       anticipo: 0,
-      notas: notas||('Abono a '+(v.tipoVenta==='credito'?'crédito':'apartado')+' original'),
+      items: [],                            // abono no lleva ítems, solo el monto
+      notas: notas||('Abono a '+(v.tipoVenta==='credito'?'crédito':'apartado')+' #'+(v.notaFolio||v.id.slice(-6))),
       saldoAntes: saldo,
       saldoDespues: nuevoSaldo,
-      createdAt: new Date().toISOString()
+      createdAt: ahora
     });
-    // 3. Acumular puntos monedero si liquida y tiene cliente registrado
+
+    await batch.commit();
+
+    // 3. Acumular puntos si liquida
     if(nuevoSaldo<=0 && v.clienteId){
       await acumularPuntosCliente(v.clienteId, v.total, 'venta');
     }
+
     closeM('mo-abono');
     abonoVentaId = null;
-    const msg = nuevoSaldo<=0
-      ? '✅ Cuenta liquidada — Abono registrado en historial'
-      : 'Abono de '+fmt(monto)+' registrado en historial ✓';
-    toast(msg);
+    toast(nuevoSaldo<=0
+      ? '✅ Cuenta liquidada — Abono de '+fmt(monto)+' registrado'
+      : 'Abono de '+fmt(monto)+' registrado ✓');
+
   }catch(e){
-    toast('Error: '+e.message,'err');
-    console.error(e);
+    toast('Error al guardar abono: '+e.message,'err');
+    console.error('guardarAbono error:',e);
+  }finally{
+    guardarAbono._busy = false;
+    if(btnGuardar){ btnGuardar.disabled=false; btnGuardar.style.opacity='1'; }
   }
 }
 
@@ -8091,9 +8145,16 @@ function verHistorialAbonos(id){
   const v = ventas.find(x=>x.id===id); if(!v) return;
   const saldo = getSaldo(v);
   const abonos = v.abonos||[];
+
+  // Detectar abonos huérfanos (existen en abonos[] pero no en col('ventas'))
+  const abonosEnHistorial = ventas.filter(x=>
+    x.tipoVenta==='abono' && x.ventaOriginalId===id
+  );
+  const hayHuerfanos = abonos.length > abonosEnHistorial.length;
+
   let html = `<div style="margin-bottom:12px">
     <div style="font-size:16px;font-weight:600;color:var(--cream)">${v.cliente}</div>
-    <div style="font-size:12px;color:var(--muted)">${v.tipoVenta==='credito'?'Crédito':'Apartado'} · ${v.fecha}</div>
+    <div style="font-size:12px;color:var(--muted)">${v.tipoVenta==='credito'?'Crédito':'Apartado'} · ${v.notaFolio?'#'+v.notaFolio+' · ':''}${v.fecha}</div>
   </div>
   <div style="background:var(--s2);border-radius:8px;padding:12px;margin-bottom:12px">
     <div class="flex-row" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
@@ -8103,16 +8164,35 @@ function verHistorialAbonos(id){
       <div><div style="font-size:10px;color:var(--muted)">SALDO PENDIENTE</div><div class="mono" style="color:${saldo<=0?'var(--green)':'var(--red)'};font-weight:700">${fmt(saldo)}</div></div>
     </div>
   </div>`;
+
+  // Alerta de abonos huérfanos (ahora se reparan desde el Diagnóstico global)
+  if(hayHuerfanos){
+    html += `<div style="background:rgba(240,180,41,.12);border:1px solid rgba(240,180,41,.4);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:20px">⚠️</span>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--gold)">Abonos sin registro en historial</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${abonos.length - abonosEnHistorial.length} abono(s) no aparecen en Historial de Ventas. Usa el botón <strong>🔧 Diagnóstico</strong> en Apartados/Créditos para reparar todas las notas afectadas.</div>
+      </div>
+    </div>`;
+  }
+
   if(abonos.length){
-    html += `<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Historial de abonos</div>`;
-    html += abonos.map((a,i)=>`
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--s2);border-radius:7px;margin-bottom:5px;border:1px solid var(--border)">
+    html += `<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Historial de abonos (${abonos.length})</div>`;
+    html += abonos.map((a,i)=>{
+      const tieneRegistro = abonosEnHistorial.some(x=>
+        x.fecha===a.fecha && Math.abs((x.monto||x.total||0)-a.monto)<0.01
+      );
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;
+        background:var(--s2);border-radius:7px;margin-bottom:5px;
+        border:1px solid ${tieneRegistro?'var(--border)':'rgba(240,180,41,.4)'}">
         <div>
           <div style="font-size:12px;color:var(--cream)">Abono #${i+1} — ${a.fecha} ${a.hora||''}</div>
-          <div style="font-size:11px;color:var(--muted)">${a.pago} · ${a.usuario||'—'} ${a.notas?'· '+a.notas:''}</div>
+          <div style="font-size:11px;color:var(--muted)">${a.pago||'—'} · ${a.usuario||'—'} ${a.notas?'· '+a.notas:''}</div>
+          ${!tieneRegistro?'<div style="font-size:10px;color:var(--gold);margin-top:2px">⚠️ Sin registro en historial de ventas</div>':''}
         </div>
         <div class="mono" style="color:var(--green);font-size:14px;font-weight:600">${fmt(a.monto)}</div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }else{
     html += `<div style="text-align:center;padding:20px;color:var(--muted)">Sin abonos registrados</div>`;
   }
@@ -8120,6 +8200,329 @@ function verHistorialAbonos(id){
   openM('mo-venta');
 }
 
+// Reparar abonos huérfanos — crea los registros faltantes en col('ventas')
+async function repararHistorialAbonos(ventaId){
+  const v = ventas.find(x=>x.id===ventaId); if(!v) return;
+  const abonos = v.abonos||[];
+  const abonosEnHistorial = ventas.filter(x=>
+    x.tipoVenta==='abono' && x.ventaOriginalId===ventaId
+  );
+
+  const faltantes = abonos.filter(a=>
+    !abonosEnHistorial.some(x=>
+      x.fecha===a.fecha && Math.abs((x.monto||x.total||0)-a.monto)<0.01
+    )
+  );
+
+  if(!faltantes.length){ toast('No se encontraron abonos faltantes'); return; }
+
+  try{
+    const batch = window._fb.writeBatch(window._fb.db);
+    let saldoRecalc = (v.total||0)-(v.anticipo||0);
+
+    // Recalcular saldos progresivos para los abonos faltantes
+    for(const a of abonos){
+      const esFaltante = faltantes.includes(a);
+      const saldoAntes = saldoRecalc;
+      saldoRecalc = Math.max(0, saldoRecalc - a.monto);
+      if(!esFaltante) continue;
+
+      const newRef = window._fb.doc(window._fb.collection(window._fb.db, `tiendas/${window._fb.auth.currentUser.uid}/ventas`));
+      batch.set(newRef,{
+        fecha: a.fecha||hoy(),
+        hora: a.hora||hora(),
+        tipoVenta: 'abono',
+        ventaOriginalId: ventaId,
+        notaFolio: v.notaFolio||'',
+        cliente: v.cliente,
+        clienteId: v.clienteId||'',
+        notaNombre: v.notaNombre||v.cliente,
+        sucursalId: v.sucursalId||'',
+        pago: a.pago||'efectivo',
+        monto: a.monto,
+        subtotal: a.monto,
+        total: a.monto,
+        anticipo: 0,
+        items: [],
+        notas: a.notas||('Abono reparado — nota #'+(v.notaFolio||ventaId.slice(-6))),
+        vendedor: a.usuario||'—',
+        saldoAntes, saldoDespues: saldoRecalc,
+        createdAt: a.createdAt||new Date().toISOString(),
+        _reparado: true
+      });
+    }
+
+    await batch.commit();
+    closeM('mo-venta');
+    toast('✅ '+faltantes.length+' abono(s) reparado(s) en historial de ventas');
+  }catch(e){
+    toast('Error al reparar: '+e.message,'err');
+    console.error(e);
+  }
+}
+
+
+// ══════════════════ DIAGNÓSTICO GLOBAL DE ABONOS ══════════════════
+let _diagResultados = [];   // resultados del último escaneo
+
+function abrirDiagnosticoAbonos(){
+  openM('mo-diag-abonos');
+  document.getElementById('diag-btn-reparar').style.display='none';
+  ejecutarDiagnostico();    // escanear automáticamente al abrir
+}
+
+async function ejecutarDiagnostico(){
+  const btnEsc  = document.getElementById('diag-btn-escanear');
+  const btnRep  = document.getElementById('diag-btn-reparar');
+  const bodyEl  = document.getElementById('diag-body');
+  const resEl   = document.getElementById('diag-resumen');
+  const subEl   = document.getElementById('diag-subtitulo');
+
+  btnEsc.disabled=true; btnEsc.textContent='⏳ Escaneando…';
+  bodyEl.innerHTML=`<div style="text-align:center;padding:30px;color:var(--muted)">Analizando ${ventas.length} registros…</div>`;
+  resEl.innerHTML='';
+
+  await new Promise(r=>setTimeout(r,50)); // pequeño yield para que el spinner se muestre
+
+  // ── Construir índice de abonos en historial por ventaOriginalId ──
+  const historialAbonos = {};   // { ventaOriginalId → [docs de abono] }
+  ventas.forEach(v=>{
+    if(v.tipoVenta!=='abono') return;
+    const oid = v.ventaOriginalId||'';
+    if(!historialAbonos[oid]) historialAbonos[oid]=[];
+    historialAbonos[oid].push(v);
+  });
+
+  // ── Notas (apartados + créditos) ──
+  const notas = ventas.filter(v=>v.tipoVenta==='apartado'||v.tipoVenta==='credito');
+
+  _diagResultados = [];
+  let totalHuerfanos=0, totalFantasmas=0, totalOk=0;
+
+  notas.forEach(v=>{
+    const abEmbebidos = v.abonos||[];            // abonos en el doc de la nota
+    const abHistorial = historialAbonos[v.id]||[]; // abonos en col(ventas)
+
+    // ── Bug A: Abono en nota.abonos[] pero SIN registro en historial ──
+    // (el saldo está bien, pero no aparece en historial de ventas)
+    const huerfanos = abEmbebidos.filter(ae=>
+      !abHistorial.some(ah=>
+        ah.fecha===ae.fecha &&
+        Math.abs((ah.monto||ah.total||0) - ae.monto) < 0.01
+      )
+    );
+
+    // ── Bug B: Registro en historial con ventaOriginalId de esta nota,
+    //    pero NO existe en nota.abonos[] (creación duplicada o datos corruptos)
+    const fantasmas = abHistorial.filter(ah=>
+      !abEmbebidos.some(ae=>
+        ae.fecha===ah.fecha &&
+        Math.abs(ae.monto - (ah.monto||ah.total||0)) < 0.01
+      )
+    );
+
+    if(huerfanos.length===0 && fantasmas.length===0){
+      totalOk++;
+      return;
+    }
+
+    if(huerfanos.length) totalHuerfanos += huerfanos.length;
+    if(fantasmas.length) totalFantasmas += fantasmas.length;
+
+    _diagResultados.push({
+      id: v.id,
+      nota: v.notaFolio||v.id.slice(-6).toUpperCase(),
+      cliente: v.cliente||'—',
+      fecha: v.fecha||'—',
+      tipo: v.tipoVenta,
+      total: v.total||0,
+      saldo: getSaldo(v),
+      abEmbebidos,
+      abHistorial,
+      huerfanos,
+      fantasmas,
+    });
+  });
+
+  // ── Bug C: Registros de abono en historial cuyo ventaOriginalId
+  //    NO corresponde a ninguna nota existente (nota eliminada) ──
+  const idsNotas = new Set(notas.map(v=>v.id));
+  const abonosHuerfanosCompletos = ventas.filter(v=>{
+    if(v.tipoVenta!=='abono') return false;
+    const oid=v.ventaOriginalId||'';
+    return oid && !idsNotas.has(oid);
+  });
+
+  // ── Actualizar UI ──
+  subEl.textContent = `${notas.length} notas analizadas · ${new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}`;
+
+  const totalAfectadas = _diagResultados.length;
+  const scard=(label,val,color)=>`<div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${label}</div>
+    <div style="font-size:22px;font-weight:900;color:${color};font-family:var(--mono)">${val}</div>
+  </div>`;
+
+  resEl.innerHTML =
+    scard('Notas OK',        totalOk,              'var(--accent2)') +
+    scard('Con problema',    totalAfectadas,        totalAfectadas?'var(--red)':'var(--accent2)') +
+    scard('Sin historial',   totalHuerfanos,        totalHuerfanos?'var(--gold)':'var(--muted)') +
+    scard('Registros extra', totalFantasmas + abonosHuerfanosCompletos.length, (totalFantasmas+abonosHuerfanosCompletos.length)?'var(--blue)':'var(--muted)');
+
+  if(!totalAfectadas && !abonosHuerfanosCompletos.length){
+    bodyEl.innerHTML=`<div style="text-align:center;padding:30px">
+      <div style="font-size:32px;margin-bottom:8px">✅</div>
+      <div style="font-size:14px;font-weight:700;color:var(--accent2)">Todo está en orden</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Todas las notas tienen sus abonos correctamente registrados en el historial de ventas.</div>
+    </div>`;
+    btnRep.style.display='none';
+  } else {
+    let html = '';
+
+    // ── Sección A: Notas con abonos sin historial ──
+    const conHuerfanos = _diagResultados.filter(r=>r.huerfanos.length);
+    if(conHuerfanos.length){
+      html += `<div style="font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">
+        ⚠️ Abonos sin registro en Historial de Ventas (${conHuerfanos.reduce((a,r)=>a+r.huerfanos.length,0)} movimiento(s) en ${conHuerfanos.length} nota(s))
+      </div>`;
+      html += conHuerfanos.map(r=>`
+        <div style="background:var(--s1);border:1px solid rgba(240,180,41,.35);border-radius:10px;padding:14px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+            <div>
+              <span style="font-family:var(--mono);font-size:15px;font-weight:900;color:var(--gold)">#${r.nota}</span>
+              <span style="margin-left:8px;font-size:13px;color:var(--cream);font-weight:600">${r.cliente}</span>
+              <span class="badge ${r.tipo==='credito'?'b-blue':'b-gold'}" style="font-size:10px;margin-left:6px">${r.tipo==='credito'?'💳 Crédito':'📦 Apartado'}</span>
+            </div>
+            <div style="text-align:right;font-size:11px;color:var(--muted)">${r.fecha} · Saldo: <span style="color:${r.saldo<=0?'var(--green)':'var(--red)'};">${fmt(r.saldo)}</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            ${r.huerfanos.map(a=>`
+              <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.25);border-radius:7px;padding:8px 12px">
+                <div>
+                  <span style="font-size:12px;color:var(--cream)">Abono del ${(a.fecha||'').split('-').reverse().join('/')} ${a.hora||''}</span>
+                  <span style="font-size:11px;color:var(--muted);margin-left:8px">${a.pago||'efectivo'} · ${a.usuario||'—'}</span>
+                  ${a.notas?`<span style="font-size:10px;color:var(--faint);margin-left:6px">${a.notas}</span>`:''}
+                </div>
+                <span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--gold)">${fmt(a.monto)}</span>
+              </div>`).join('')}
+          </div>
+        </div>`).join('');
+    }
+
+    // ── Sección B: Registros en historial sin correspondencia ──
+    const conFantasmas = _diagResultados.filter(r=>r.fantasmas.length);
+    if(conFantasmas.length || abonosHuerfanosCompletos.length){
+      html += `<div style="font-size:12px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px">
+        🔍 Registros en historial sin nota correspondiente (${conFantasmas.reduce((a,r)=>a+r.fantasmas.length,0) + abonosHuerfanosCompletos.length} registro(s))
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Estos registros existen en Historial de Ventas pero no tienen correspondencia en ninguna nota. Pueden ser registros duplicados o de notas eliminadas. <strong style="color:var(--cream)">No se borrarán automáticamente</strong> — revísalos manualmente.</div>`;
+
+      conFantasmas.forEach(r=>{
+        r.fantasmas.forEach(f=>{
+          html += `<div style="background:var(--s1);border:1px solid rgba(82,168,224,.3);border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <span style="font-size:12px;color:var(--cream)">Nota <strong>#${r.nota}</strong> · ${r.cliente}</span>
+              <span style="font-size:11px;color:var(--muted);margin-left:8px">${(f.fecha||'').split('-').reverse().join('/')} ${f.hora||''} · ${f.pago||'—'}</span>
+            </div>
+            <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--blue)">${fmt(f.monto||f.total||0)}</span>
+          </div>`;
+        });
+      });
+
+      abonosHuerfanosCompletos.forEach(f=>{
+        html += `<div style="background:var(--s1);border:1px solid rgba(82,168,224,.3);border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <span style="font-size:12px;color:var(--cream)">Nota eliminada · <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">${f.ventaOriginalId||'—'}</span></span>
+            <span style="font-size:11px;color:var(--muted);margin-left:8px">${f.cliente||'—'} · ${(f.fecha||'').split('-').reverse().join('/')} · ${f.pago||'—'}</span>
+          </div>
+          <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--blue)">${fmt(f.monto||f.total||0)}</span>
+        </div>`;
+      });
+    }
+
+    bodyEl.innerHTML = html;
+    if(conHuerfanos.length){
+      btnRep.style.display='flex';
+      btnRep.textContent=`🔧 Reparar ${conHuerfanos.reduce((a,r)=>a+r.huerfanos.length,0)} abono(s) en ${conHuerfanos.length} nota(s)`;
+    } else {
+      btnRep.style.display='none';
+    }
+  }
+
+  btnEsc.disabled=false; btnEsc.textContent='🔍 Escanear de nuevo';
+}
+
+async function repararTodosAbonos(){
+  const conHuerfanos = _diagResultados.filter(r=>r.huerfanos.length);
+  if(!conHuerfanos.length){ toast('Sin abonos que reparar'); return; }
+
+  const btnRep = document.getElementById('diag-btn-reparar');
+  btnRep.disabled=true; btnRep.textContent='⏳ Reparando…';
+
+  try{
+    // Firestore batch máx 500 ops; dividir si hay muchas
+    const BATCH_MAX = 400;
+    let opsPendientes = [];
+    let totalReparados = 0;
+
+    for(const r of conHuerfanos){
+      const v = ventas.find(x=>x.id===r.id); if(!v) continue;
+      let saldoRecalc = (v.total||0)-(v.anticipo||0);
+
+      // Recalcular saldos progresivos para toda la cadena de abonos
+      for(const ae of r.abEmbebidos){
+        const saldoAntes = saldoRecalc;
+        saldoRecalc = Math.max(0, saldoRecalc - ae.monto);
+        const esHuerfano = r.huerfanos.includes(ae);
+        if(!esHuerfano) continue;
+
+        opsPendientes.push({
+          fecha:     ae.fecha||hoy(),
+          hora:      ae.hora||hora(),
+          tipoVenta: 'abono',
+          ventaOriginalId: v.id,
+          notaFolio: v.notaFolio||'',
+          cliente:   v.cliente,
+          clienteId: v.clienteId||'',
+          notaNombre:v.notaNombre||v.cliente,
+          sucursalId:v.sucursalId||'',
+          pago:      ae.pago||'efectivo',
+          monto:     ae.monto,
+          subtotal:  ae.monto,
+          total:     ae.monto,
+          anticipo:  0,
+          items:     [],
+          notas:     ae.notas||('Abono reparado — nota #'+(v.notaFolio||v.id.slice(-6))),
+          vendedor:  ae.usuario||'—',
+          saldoAntes, saldoDespues: saldoRecalc,
+          createdAt: ae.createdAt||new Date().toISOString(),
+          _reparado: true
+        });
+        totalReparados++;
+      }
+    }
+
+    // Ejecutar en lotes de BATCH_MAX
+    while(opsPendientes.length > 0){
+      const lote = opsPendientes.splice(0, BATCH_MAX);
+      const batch = window._fb.writeBatch(window._fb.db);
+      lote.forEach(data=>{
+        const ref = window._fb.doc(window._fb.collection(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/ventas`));
+        batch.set(ref, data);
+      });
+      await batch.commit();
+    }
+
+    toast(`✅ ${totalReparados} abono(s) reparado(s) en historial de ventas`);
+    closeM('mo-diag-abonos');
+    _diagResultados = [];
+
+  }catch(e){
+    toast('Error al reparar: '+e.message,'err');
+    console.error('repararTodosAbonos:',e);
+  }finally{
+    btnRep.disabled=false; btnRep.textContent='🔧 Reparar Todo';
+  }
+}
 
 // ══════════════════ CLIENTES ══════════════════
 let clientes = [];
@@ -9762,15 +10165,13 @@ function renderHist(){
 
   let lista=ventas.filter(v=>{
     const tipoV=v.tipoVenta||'venta';
-    // ── FIX cobros dobles: excluir abonos del historial principal
-    // Los abonos son pagos parciales de apartados/créditos ya registrados.
-    // Solo se muestran si el filtro de tipo los selecciona explícitamente.
-    if(tipoV==='abono' && tipo!=='abono') return false;
     const matchDesde=!desde||v.fecha>=desde;
     const matchHasta=!hasta||v.fecha<=hasta;
     const matchPago=!pago||v.pago===pago||(pago==='tarjeta'&&(v.pago||'').startsWith('tarjeta'));
     const matchSuc=!suc||v.sucursalId===suc;
     const matchTipo=!tipo||tipoV===tipo;
+    // Los abonos SÍ aparecen en historial — son pagos reales recibidos.
+    // Antes se filtraban erróneamente; ahora se muestran con etiqueta "Abono".
     return matchDesde&&matchHasta&&matchPago&&matchSuc&&matchTipo;
   });
 
@@ -10025,12 +10426,39 @@ function renderHist(){
     const isAC=isAprt||isCredito;
     const mesStr=getNombreMes(v.fecha).slice(0,3);
     const semStr=getNumSemana(v.fecha);
-    const cobrado=isDev?(v.total||0):isAC?(v.anticipo||0):(v.total||0); // ← FIX: devolución resta
+    const cobrado=isDev?(v.total||0):isAC?(v.anticipo||0):isAbono?(v.monto||v.total||0):(v.total||0); // ← FIX: devolución resta
     const items=v.items||[];
     // ← FIX: fila roja para devoluciones, destacar visualmente
-    const rowBg=isDev?'background:rgba(224,82,82,.08);border-left:3px solid var(--red)':isAprt?'background:rgba(240,180,41,.05)':isAbono?'background:rgba(82,201,122,.04)':isCredito?'background:rgba(82,168,224,.04)':'';
+    const rowBg=isDev?'background:rgba(224,82,82,.08);border-left:3px solid var(--red)':isAprt?'background:rgba(240,180,41,.05)':isAbono?'background:rgba(82,201,122,.06);border-left:3px solid rgba(82,201,122,.5)':isCredito?'background:rgba(82,168,224,.04)':'';
 
-    // Generate folio from venta ID
+    // Abonos tienen su propia fila simplificada — no confundir con venta completa
+    if(isAbono){
+      const notaRef = v.notaFolio ? '#'+v.notaFolio : (v.ventaOriginalId||'').slice(-6).toUpperCase();
+      return`<tr style="${rowBg}">
+        <td class="mono" style="font-size:11px;color:var(--accent2);font-weight:700;white-space:nowrap">${v.folio?'#'+v.folio:'—'}</td>
+        <td class="mono">#${lista.length-idx}</td>
+        <td style="font-size:11px">${mesStr}</td>
+        <td class="mono" style="font-size:11px">${semStr}</td>
+        <td style="white-space:nowrap">${fmtFechaCorta(v.fecha)}</td>
+        <td style="color:var(--muted)">${v.hora||'—'}</td>
+        <td>
+          <div style="font-size:12px;font-weight:600">${v.cliente||'—'}</div>
+          <div style="font-size:10px;color:var(--muted)">Nota: <span style="color:var(--gold);font-weight:700">${notaRef}</span></div>
+        </td>
+        <td style="color:var(--muted)">${v.vendedor||'—'}</td>
+        <td colspan="5" style="font-size:11px;color:var(--muted);font-style:italic">${v.notas||'Abono a apartado/crédito'}</td>
+        <td><span class="badge b-green" style="font-size:10px">💰 Abono</span></td>
+        <td>${fmtPago(v.pago,v)}</td>
+        <td class="mono" style="color:var(--muted)">—</td>
+        <td class="mono" style="color:var(--muted)">—</td>
+        <td class="mono" style="color:var(--muted)">—</td>
+        <td class="mono" style="color:var(--green);font-weight:700;font-size:13px">${fmt(cobrado)}</td>
+        <td>
+          <button class="btn btn-ghost btn-xs" onclick="verHistorialAbonos('${v.ventaOriginalId||v.id}')">📋 Nota</button>
+        </td>
+      </tr>`;
+    }
+
     const folioV = v.folio||v.id.slice(-6).toUpperCase();
     // ── Fila sin artículos (venta sin items) ──
     if(!items.length)return`<tr style="${rowBg}">
@@ -10044,7 +10472,7 @@ function renderHist(){
       <td>${v.cliente}</td>
       <td style="color:var(--muted)">${v.vendedor||'—'}</td>
       <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
-      <td><span class="badge ${isDev?'b-red':isAbono?'b-blue':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isDev?'↩ Devolución':isAbono?'💰 Abono':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
+      <td><span class="badge ${isDev?'b-red':isAprt?'b-gold':isCredito?'b-blue':'b-green'}" style="font-size:10px">${isDev?'↩ Devolución':isAprt?'📦 Apart.':isCredito?'💳 Cred.':'💵 Venta'}</span></td>
       <td>${fmtPago(v.pago,v)}</td>
       <td class="mono" style="color:var(--muted)">—</td>
       <td class="mono" style="color:var(--red);font-size:11px">${v.descuento>0?'-'+fmt(v.descuento):'—'}</td>
