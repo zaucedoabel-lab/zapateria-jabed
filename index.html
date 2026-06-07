@@ -2204,7 +2204,10 @@ body{background:#071222!important}
             </div>
             <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="filtroHistRapido('mes')" id="fh-mes">Este mes</button>
             <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;color:var(--muted)" onclick="limpiarFiltrosHist()">✕</button>
-            <div style="margin-left:auto"><button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="exportarHistorialExcel()">📊 Excel</button></div>
+            <div style="margin-left:auto;display:flex;gap:6px">
+              <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;color:#ef4444;border-color:rgba(239,68,68,.4)" onclick="exportarTablaSemanalPDF()">🖨️ PDF Tabla</button>
+              <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="exportarHistorialExcel()">📊 Excel</button>
+            </div>
           </div>
 
           <!-- Filtros compactos en una línea -->
@@ -7611,6 +7614,52 @@ function imprimirEtiqueta(id){
 // toggleApartado moved to cuentas section
 
 // ══════════════════ EXPORTAR HISTORIAL ══════════════════
+function exportarTablaSemanalPDF(){
+  const tabla = document.getElementById('h-semana-tabla');
+  if(!tabla){ toast('Sin tabla para exportar','err'); return; }
+
+  const desde = document.getElementById('h-desde')?.value||'';
+  const hasta  = document.getElementById('h-hasta')?.value||hoy();
+  const periodoLabel = desde&&hasta ? desde.split('-').reverse().join('/')+ ' – ' +hasta.split('-').reverse().join('/') : 'Período actual';
+  const totalEl = document.getElementById('h-total');
+  const totalLabel = totalEl?.textContent||'';
+
+  // Clonar tabla con estilos inline para que el PDF respete los colores
+  const tablaClone = tabla.cloneNode(true);
+
+  const win = window.open('','_blank','width=900,height:700');
+  win.document.write(`<!DOCTYPE html><html><head>
+  <meta charset="UTF-8">
+  <title>Tabla Semanal · ${periodoLabel}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;background:#fff;padding:18px;color:#111}
+    .no-print{margin-bottom:12px;display:flex;gap:8px;align-items:center}
+    .no-print button{padding:8px 18px;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px}
+    h1{font-size:16px;font-weight:900;margin-bottom:2px}
+    .sub{font-size:12px;color:#6b7280;margin-bottom:10px}
+    table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:11px}
+    th,td{border:1px solid #d1d5db;padding:4px 6px;text-align:right}
+    th:first-child,td:first-child{text-align:left;width:92px}
+    @media print{
+      .no-print{display:none!important}
+      @page{margin:8mm;size:A4 landscape}
+      body{padding:0}
+    }
+  </style>
+  </head><body>
+  <div class="no-print">
+    <button onclick="window.print()" style="background:#111;color:#fff">🖨️ Imprimir / Guardar PDF</button>
+    <button onclick="window.close()" style="background:#eee">✕ Cerrar</button>
+  </div>
+  <h1>📊 Zapatería JABED — Resumen Semanal de Ventas</h1>
+  <div class="sub">Período: ${periodoLabel} &nbsp;·&nbsp; ${totalLabel}</div>
+  ${tablaClone.outerHTML}
+  </body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(),500);
+}
+
 function exportarHistorialExcel(){
   const fecha=document.getElementById('h-fecha')?.value||'';
   const pago=document.getElementById('h-pago')?.value||'';
@@ -10249,19 +10298,6 @@ function renderHist(){
   setEl('h-total-pendiente',fmt(totalPendiente));
 
   // ── Tabla semanal ──
-  // ─── Add daily summary section HTML if not yet in DOM ───
-  if(!document.getElementById('h-diario-wrap')){
-    const semWrap = document.getElementById('h-semana-tabla-wrap');
-    if(semWrap){
-      const div = document.createElement('div');
-      div.id = 'h-diario-wrap';
-      div.style.cssText = 'margin-bottom:12px;overflow-x:auto;max-width:100%;display:none';
-      div.innerHTML = `<table id="h-diario-tabla" style="border-collapse:collapse;table-layout:auto;border:2px solid #cbd5e1;border-radius:6px;overflow:hidden">
-        <thead><tr></tr></thead><tbody id="h-diario-tbody"></tbody></table>`;
-      semWrap.insertAdjacentElement('afterend', div);
-    }
-  }
-
   (function renderTablaSemanal(){
     const tbody  = document.getElementById('h-semana-tbody'); if(!tbody) return;
     const hoyStr = hoy();
@@ -10400,239 +10436,44 @@ function renderHist(){
       ${buildRow('Total',   '#ca8a04','tot')}`;
     }).join('');
 
+    // ── Autosuma por columna de día ──
+    // Acumular totales de cada posición de día (LUN=0 … DOM=6) a través de todas las semanas
+    const colEf  = [0,0,0,0,0,0,0];
+    const colTar = [0,0,0,0,0,0,0];
+    const colTot = [0,0,0,0,0,0,0];
+    semanas.forEach(sem=>{
+      sem.dias.forEach((f,i)=>{
+        const enRango = f>=(desde||'') && f<=hastaLimite && f<=hoyStr;
+        if(!enRango) return;
+        const d = byFechaTabla[f]||{ef:0,tar:0,tot:0};
+        colEf[i]  += d.ef;
+        colTar[i] += d.tar;
+        colTot[i] += d.tot;
+      });
+    });
+
+    const autosumaStyle = `${p};${b};text-align:right;font-size:11px;font-weight:800;font-family:var(--mono)`;
+    const buildAutosumaRow=(label,bg,cols)=>`<tr>
+      <td style="${p};${b};background:${bg};color:#fff;font-size:10px;font-weight:800;white-space:nowrap">${label}</td>
+      ${cols.map(v=>`<td style="${autosumaStyle};background:${v>0?'#f0fdf4':'#f8fafc'};color:${v>0?'#166534':'#9ca3af'}">${v>0?fmt(v):'—'}</td>`).join('')}
+      <td style="${p};${b};background:#0f172a;color:#fbbf24;font-weight:900;font-size:12px;text-align:right;font-family:var(--mono)">${fmt(cols.reduce((a,c)=>a+c,0))}</td>
+    </tr>`;
+
+    const autosumaRows = `
+      <tr><td colspan="9" style="padding:2px 6px;background:#334155;color:#e2e8f0;font-size:10px;font-weight:700;border:1px solid #d1d5db;letter-spacing:.5px">
+        ∑ TOTAL POR DÍA
+      </td></tr>
+      ${buildAutosumaRow('EFECTIVO','#15803d',colEf)}
+      ${buildAutosumaRow('TARJETA', '#1e40af',colTar)}
+      ${buildAutosumaRow('TOTAL',   '#92400e',colTot)}`;
+
     const grandTotalRow=`<tr>
       <td colspan="8" style="${p};${b};background:#0f172a;color:#fbbf24;font-size:11px;font-weight:800;text-align:right">TOTAL DEL PERÍODO</td>
-      <td style="${p};${b};background:#0f172a;color:#fbbf24;font-size:13px;font-weight:900;text-align:right">${fmt(totGlobal.tot)}</td>
+      <td style="${p};${b};background:#0f172a;color:#fbbf24;font-size:13px;font-weight:900;text-align:right;font-family:var(--mono)">${fmt(totGlobal.tot)}</td>
     </tr>`;
 
-    tbody.innerHTML = rowsHtml + grandTotalRow;
+    tbody.innerHTML = rowsHtml + autosumaRows + grandTotalRow;
   })();
-
-  // ── Resumen Diario del Período (solo cuando el rango > 7 días) ──
-  (function renderResumenDiario(){
-    const diarWrap  = document.getElementById('h-diario-wrap');
-    const diarTbody = document.getElementById('h-diario-tbody');
-    const diarTabla = document.getElementById('h-diario-tabla');
-    if(!diarWrap||!diarTbody||!diarTabla) return;
-
-    const hoyStr = hoy();
-    const desde  = document.getElementById('h-desde')?.value||'';
-    const hasta  = document.getElementById('h-hasta')?.value||hoyStr;
-
-    // Solo mostrar si el rango es > 7 días
-    const desdeDt = desde ? new Date(desde+'T12:00:00') : null;
-    const hastaDt = new Date(hasta+'T12:00:00');
-    const diffDias = desdeDt ? (hastaDt - desdeDt)/86400000 : 0;
-
-    if(diffDias <= 7){
-      diarWrap.style.display='none';
-      return;
-    }
-    diarWrap.style.display='';
-
-    const DIAS_SEMANA=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-    const p='padding:4px 8px', b='border:1px solid #e2e8f0';
-
-    // Encabezado
-    diarTabla.querySelector('thead').innerHTML=`<tr>
-      <th style="${p};${b};background:#1e293b;color:#94a3b8;font-size:10px;font-weight:700;text-align:left;width:80px">FECHA</th>
-      <th style="${p};${b};background:#1e293b;color:#94a3b8;font-size:10px;font-weight:700;width:36px">DÍA</th>
-      <th style="${p};${b};background:#16a34a;color:#fff;font-size:10px;font-weight:700;text-align:right;min-width:80px">EFECTIVO</th>
-      <th style="${p};${b};background:#1d4ed8;color:#fff;font-size:10px;font-weight:700;text-align:right;min-width:80px">TARJETA</th>
-      <th style="${p};${b};background:#ca8a04;color:#fff;font-size:10px;font-weight:700;text-align:right;min-width:80px">TOTAL DÍA</th>
-      <th style="${p};${b};background:#0f172a;color:#fbbf24;font-size:10px;font-weight:700;text-align:right;min-width:88px">ACUMULADO</th>
-    </tr>`;
-
-    // Construir lista de días en el rango
-    const dias = [];
-    let curDt = desdeDt ? new Date(desdeDt) : new Date(hoyStr+'T12:00:00');
-    while(true){
-      const f = curDt.toISOString().slice(0,10);
-      if(f > hasta) break;
-      dias.push(f);
-      curDt = new Date(curDt.getTime()+86400000);
-      if(dias.length > 400) break; // safety
-    }
-
-    // Acumular por día desde la lista filtrada
-    const byDia = {};
-    lista.forEach(v=>{
-      const f=v.fecha||''; if(!byDia[f]) byDia[f]={ef:0,tar:0,tot:0};
-      const tipoV=v.tipoVenta||'venta';
-      const isDev=tipoV==='devolucion';
-      const monto=isDev?(v.total||0):(tipoV==='apartado'||tipoV==='credito')?(v.anticipo||0):tipoV==='abono'?(v.monto||v.total||0):(v.total||0);
-      byDia[f].tot+=monto;
-      const pg=(v.pago||'').toLowerCase().trim();
-      if(pg==='mixto'){byDia[f].ef+=v.mixtoEfectivo||0;byDia[f].tar+=v.mixtoTarjeta||0;}
-      else if(pg==='bbva-efectivo'){byDia[f].ef+=v.bbvaEfectivo||0;byDia[f].tar+=v.bbvaTarjeta||0;}
-      else if(pg==='tarjeta-efectivo'){byDia[f].ef+=v.tarjetaEfEfectivo||0;byDia[f].tar+=v.tarjetaEfTarjeta||0;}
-      else if(pg==='efectivo'||pg==='monedero'||pg==='') byDia[f].ef+=monto;
-      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) byDia[f].tar+=monto;
-      else byDia[f].ef+=monto;
-    });
-
-    let acum=0;
-    let totalEf=0, totalTar=0, totalTot=0;
-    const filas = dias.map(f=>{
-      const d=byDia[f]||{ef:0,tar:0,tot:0};
-      acum+=d.tot; totalEf+=d.ef; totalTar+=d.tar; totalTot+=d.tot;
-      const esFuturo = f>hoyStr;
-      const esHoy = f===hoyStr;
-      const dow = new Date(f+'T12:00:00').getDay();
-      const esSab = dow===6; const esDom = dow===0;
-      const bg = esHoy?'#fef9c3':esSab||esDom?'#f1f5f9':'#fff';
-      const dLabel = DIAS_SEMANA[dow];
-      const dColor = esDom?'#ef4444':esSab?'#f97316':'#475569';
-      if(esFuturo && d.tot===0) return ''; // ocultar días futuros sin ventas
-      return `<tr style="border-bottom:1px solid #e2e8f0">
-        <td style="${p};${b};background:${bg};font-size:11px;font-family:var(--mono);font-weight:${esHoy?700:400};white-space:nowrap">${f.split('-').reverse().join('/')}${esHoy?' ★':''}</td>
-        <td style="${p};${b};background:${bg};font-size:10px;color:${dColor};font-weight:700;text-align:center">${dLabel}</td>
-        <td style="${p};${b};background:${bg};text-align:right;font-size:11px;color:${d.ef>0?'#166534':'#9ca3af'};font-family:var(--mono)">${d.ef>0?fmt(d.ef):'—'}</td>
-        <td style="${p};${b};background:${bg};text-align:right;font-size:11px;color:${d.tar>0?'#1e40af':'#9ca3af'};font-family:var(--mono)">${d.tar>0?fmt(d.tar):'—'}</td>
-        <td style="${p};${b};background:${bg};text-align:right;font-size:12px;font-weight:${d.tot>0?700:400};color:${d.tot>0?'#92400e':'#9ca3af'};font-family:var(--mono)">${d.tot>0?fmt(d.tot):'—'}</td>
-        <td style="${p};${b};background:#f8fafc;text-align:right;font-size:11px;color:#475569;font-family:var(--mono)">${fmt(acum)}</td>
-      </tr>`;
-    }).join('');
-
-    // Fila de totales
-    const totalRow=`<tr style="border-top:2px solid #1e293b">
-      <td colspan="2" style="${p};${b};background:#0f172a;color:#fbbf24;font-size:11px;font-weight:800;text-align:right">TOTAL</td>
-      <td style="${p};${b};background:#0f172a;color:#4ade80;font-size:12px;font-weight:900;text-align:right;font-family:var(--mono)">${fmt(totalEf)}</td>
-      <td style="${p};${b};background:#0f172a;color:#60a5fa;font-size:12px;font-weight:900;text-align:right;font-family:var(--mono)">${fmt(totalTar)}</td>
-      <td style="${p};${b};background:#0f172a;color:#fbbf24;font-size:13px;font-weight:900;text-align:right;font-family:var(--mono)">${fmt(totalTot)}</td>
-      <td style="${p};${b};background:#0f172a;color:#fbbf24;font-size:13px;font-weight:900;text-align:right;font-family:var(--mono)">${fmt(acum)}</td>
-    </tr>`;
-
-    // Encabezado separador visual
-    const encabezado = document.getElementById('h-diario-encabezado');
-    if(!encabezado){
-      const div=document.createElement('div');
-      div.id='h-diario-encabezado';
-      div.style.cssText='font-size:11px;font-weight:800;color:var(--cream);text-transform:uppercase;letter-spacing:.6px;margin:4px 0 6px;display:flex;align-items:center;gap:10px';
-      div.innerHTML=`<span>📅 Resumen Diario del Período</span><span style="font-size:10px;color:var(--muted);font-weight:400">· ${dias.filter(f=>f<=hoyStr).length} días con datos</span>`;
-      diarWrap.insertAdjacentElement('beforebegin',div);
-    }
-
-    diarTbody.innerHTML = filas + totalRow;
-  })();
-
-    // ── Calcular todas las semanas (lunes) que caen dentro del rango ──
-    // Siempre empezar en el lunes de la semana que contiene "desde"
-    const ancla = desde || hoyStr;
-    const anclaDt = new Date(ancla+'T12:00:00');
-    const dow = anclaDt.getDay();
-    const diffLunes = dow===0 ? -6 : 1-dow;
-    const primerLunesDt = new Date(anclaDt.getTime() + diffLunes*86400000);
-
-    // Construir lista de semanas hasta cubrir "hasta"
-    const semanas = [];           // [{lunes, dias:[7 fechas-str]}]
-    let curLunesDt = new Date(primerLunesDt);
-    const hastaLimite = hasta || hoyStr;
-    let guard = 0;
-    while(guard++ < 60){          // max 60 semanas (~1 año)
-      const lunesStr = curLunesDt.toISOString().slice(0,10);
-      if(lunesStr > hastaLimite) break;
-      const dias = Array.from({length:7},(_,i)=>{
-        const d = new Date(curLunesDt.getTime()+i*86400000);
-        return d.toISOString().slice(0,10);
-      });
-      semanas.push({lunes:lunesStr, dias});
-      curLunesDt = new Date(curLunesDt.getTime()+7*86400000);
-    }
-
-    // ── Acumular totales por fecha ──
-    const byFecha = {};           // {fecha: {ef,tar,tot}}
-    const ventasFiltradas = lista; // ya filtradas por el renderHist padre
-
-    // Usar TODAS las ventas del rango (incluidas las filtradas por pago/tipo/suc)
-    // pero mantener consistencia con los totales de las stat-cards
-    ventasFiltradas.forEach(v=>{
-      const f = v.fecha||'';
-      if(!byFecha[f]) byFecha[f]={ef:0,tar:0,tot:0};
-      const tipoV=v.tipoVenta||'venta';
-      const isDev=tipoV==='devolucion';
-      const monto=isDev?(v.total||0):(tipoV==='apartado'||tipoV==='credito')?(v.anticipo||0):tipoV==='abono'?(v.monto||v.total||0):(v.total||0);
-      byFecha[f].tot+=monto;
-      const pg=(v.pago||'').toLowerCase().trim();
-      if(pg==='mixto'){byFecha[f].ef+=v.mixtoEfectivo||0;byFecha[f].tar+=v.mixtoTarjeta||0;}
-      else if(pg==='bbva-efectivo'){byFecha[f].ef+=v.bbvaEfectivo||0;byFecha[f].tar+=v.bbvaTarjeta||0;}
-      else if(pg==='tarjeta-efectivo'){byFecha[f].ef+=v.tarjetaEfEfectivo||0;byFecha[f].tar+=v.tarjetaEfTarjeta||0;}
-      else if(pg==='efectivo'||pg==='monedero'||pg==='') byFecha[f].ef+=monto;
-      else if(pg.includes('tarjeta')||pg.includes('bbva')||pg.includes('mp')||pg==='transferencia'||pg.includes('transfer')) byFecha[f].tar+=monto;
-      else byFecha[f].ef+=monto;
-    });
-
-    const DIAS_LABEL=['LUN','MAR','MIERC.','JUEV','VIE','SAB','DOM'];
-    const p='padding:3px 6px';
-    const b='border:1px solid #d1d5db';
-
-    // ── Encabezado ──
-    const tabla=document.getElementById('h-semana-tabla');
-    if(tabla) tabla.querySelector('thead').innerHTML=`<tr>
-      <th style="${p};${b};background:#e5e7eb;font-size:10px;color:#6b7280;font-weight:700;width:78px">SEMANA</th>
-      ${DIAS_LABEL.map(dl=>`<th style="${p};${b};background:#f3f4f6;color:#374151;font-size:10px;font-weight:700;text-align:right;width:60px">${dl}</th>`).join('')}
-      <th style="${p};${b};background:#1e293b;color:#fbbf24;font-size:10px;font-weight:800;text-align:right;width:72px">TOTAL</th>
-    </tr>`;
-
-    const fmtC=(n,esPasado)=>{
-      if(!esPasado) return `<span style="color:#e5e7eb">—</span>`;
-      if(n===0) return `<span style="color:#9ca3af">0</span>`;
-      return `<b style="color:#111">${fmt(n)}</b>`;
-    };
-
-    // ── Acumuladores globales del período ──
-    const totGlobal={ef:0,tar:0,tot:0};
-
-    // ── Una fila por semana con subtotales ef/tar/tot ──
-    const rowsHtml = semanas.map(sem=>{
-      const semEf={}, semTar={}, semTot={};
-      const semSum={ef:0,tar:0,tot:0};
-
-      sem.dias.forEach(f=>{
-        const esDentroRango = f >= (desde||'') && f <= hastaLimite && f <= hoyStr;
-        const d = byFecha[f]||{ef:0,tar:0,tot:0};
-        semEf[f] = esDentroRango ? d.ef : null;
-        semTar[f]= esDentroRango ? d.tar : null;
-        semTot[f]= esDentroRango ? d.tot : null;
-        if(esDentroRango){ semSum.ef+=d.ef; semSum.tar+=d.tar; semSum.tot+=d.tot; }
-      });
-      totGlobal.ef+=semSum.ef; totGlobal.tar+=semSum.tar; totGlobal.tot+=semSum.tot;
-
-      // Número de semana del año
-      const numSem = getNumSemana(sem.lunes);
-      // Mostrar fechas inicio-fin visibles de la semana dentro del rango
-      const diasVis = sem.dias.filter(f=>f>=(desde||'')&&f<=hastaLimite);
-      const rangoLabel = diasVis.length
-        ? diasVis[0].slice(8)+'–'+diasVis[diasVis.length-1].slice(8)+'/'+diasVis[0].slice(5,7)
-        : sem.lunes.slice(8)+'/'+sem.lunes.slice(5,7);
-
-      const buildRow=(label,bg,mapFn,sumVal)=>`<tr>
-        <td style="${p};${b};background:${bg};color:#fff;font-size:10px;font-weight:800;white-space:nowrap">
-          ${label}
-        </td>
-        ${sem.dias.map(f=>{
-          const val = mapFn(f);
-          const esPasado = val !== null;
-          const bg2 = f===hoyStr?'#fefce8':esPasado?'#fff':'#f9fafb';
-          return `<td style="${p};${b};background:${bg2};text-align:right;font-size:11px">${fmtC(val||0,esPasado)}</td>`;
-        }).join('')}
-        <td style="${p};${b};background:#1e293b;color:#fbbf24;font-weight:800;font-size:11px;text-align:right">${fmt(sumVal)}</td>
-      </tr>`;
-
-      return `
-      <tr><td colspan="9" style="padding:2px 6px;background:#0f172a;color:#94a3b8;font-size:10px;font-weight:700;border:1px solid #d1d5db;letter-spacing:.5px">
-        Sem. #${numSem} &nbsp;·&nbsp; ${rangoLabel}
-      </td></tr>
-      ${buildRow('EFECTIVO','#16a34a',f=>semEf[f],semSum.ef)}
-      ${buildRow('TARJETA', '#1d4ed8',f=>semTar[f],semSum.tar)}
-      ${buildRow('Total',   '#ca8a04',f=>semTot[f],semSum.tot)}`;
-    }).join('');
-
-    // ── Fila de gran total ──
-    const grandTotalRow = `<tr>
-      <td colspan="8" style="${p};${b};background:#0f172a;color:#fbbf24;font-size:11px;font-weight:800;text-align:right">TOTAL DEL PERÍODO</td>
-      <td style="${p};${b};background:#0f172a;color:#fbbf24;font-size:13px;font-weight:900;text-align:right">${fmt(totGlobal.tot)}</td>
-    </tr>`;
 
   const legBadge=document.getElementById('h-total');
   if(legBadge)legBadge.textContent='Total cobrado: '+fmt(totalCobrado);
