@@ -831,6 +831,112 @@ body{background:#071222!important}
 .main{background:linear-gradient(175deg,#0d1b2e 0%,#0a2240 50%,#0d2d4a 100%)!important}
 .content{background:transparent!important;min-height:100%}
 .page{background:transparent}
+
+/* ══ TEMA CREMA — fondo cálido claro aplicado a todos los módulos ══ */
+body.tema-crema{
+  --bg:#faf6f0;--s1:#ffffff;--s2:#f5ede0;--s3:#ede0cc;
+  --cream:#1e293b;--muted:#64748b;--faint:#94a3b8;--border:#e0d0ba;
+  --gold-dim:rgba(217,119,6,.1);--accent-dim:rgba(22,163,74,.08);
+  background:#faf6f0;
+}
+body.tema-crema #app{background:#faf6f0!important}
+body.tema-crema .main{background:#faf6f0!important}
+body.tema-crema .content{background:transparent!important}
+body.tema-crema .page{background:transparent!important}   /* sobreescribe inline backgrounds */
+body.tema-crema #page-grid-menu{background:linear-gradient(160deg,#0d1b2e 0%,#0a2240 40%,#0d2d4a 100%)!important} /* menú principal siempre oscuro */
+body.tema-crema .gm-cat-name{color:#fff!important}
+body.tema-crema .gm-cat-count{color:rgba(255,255,255,.6)!important}
+body.tema-crema .topbar{background:#ffffff!important;border-bottom:1px solid #e0d0ba!important}
+body.tema-crema .topbar .t-logo,body.tema-crema .topbar .t-title{color:#1e293b!important}
+body.tema-crema .card{background:#ffffff!important;border-color:#e0d0ba!important}
+body.tema-crema .card-title{color:#1e293b!important}
+body.tema-crema .scard{background:#ffffff!important;border-color:#e0d0ba!important}
+body.tema-crema .sl{color:#64748b!important}
+body.tema-crema .sv{color:#1e293b!important}
+body.tema-crema .tw{background:#fff!important}
+body.tema-crema table{background:#fff!important}
+body.tema-crema table thead tr,body.tema-crema table thead th{background:#f5ede0!important;color:#374151!important;border-color:#e0d0ba!important}
+body.tema-crema table tbody tr{border-bottom-color:#f0e5d5!important}
+body.tema-crema table tbody td{color:#1e293b!important}
+body.tema-crema .md{background:#ffffff!important;border-color:#e0d0ba!important}
+body.tema-crema .mh{border-bottom-color:#e0d0ba!important;background:#faf6f0!important}
+body.tema-crema .mf{border-top-color:#e0d0ba!important;background:#faf6f0!important}
+body.tema-crema .mt{color:#1e293b!important}
+body.tema-crema input,body.tema-crema select,body.tema-crema textarea{background:#fff!important;border-color:#d4c5ae!important;color:#1e293b!important}
+body.tema-crema input::placeholder,body.tema-crema textarea::placeholder{color:#94a3b8!important}
+body.tema-crema .btn-ghost{border-color:#d4c5ae!important;color:#374151!important;background:transparent!important}
+body.tema-crema .btn-ghost:hover{background:rgba(0,0,0,.04)!important}
+body.tema-crema .btn-accent{background:var(--accent)!important;color:#fff!important}
+body.tema-crema .mod-nav-bar{background:rgba(250,246,240,.95)!important;border-bottom:1px solid #e0d0ba!important}
+body.tema-crema .mod-back-btn{background:#374151!important;color:#fff!important}
+body.tema-crema .mod-module-label{color:#1e293b!important}
+body.tema-crema .tab-row{border-bottom-color:#e0d0ba!important}
+body.tema-crema .tab-btn{color:#64748b!important;background:transparent!important}
+body.tema-crema .tab-btn.on{color:var(--accent)!important;border-bottom-color:var(--accent)!important}
+body.tema-crema .badge{background:rgba(0,0,0,.07)!important;color:#374151!important}
+body.tema-crema .b-green{background:#dcfce7!important;color:#16a34a!important}
+body.tema-crema .b-gold{background:#fef3c7!important;color:#d97706!important}
+body.tema-crema .b-blue{background:#dbeafe!important;color:#1d4ed8!important}
+body.tema-crema .b-red{background:#fee2e2!important;color:#dc2626!important}
+body.tema-crema .b-gray{background:#f1f5f9!important;color:#64748b!important}
+body.tema-crema .search-wrap{background:#fff!important;border-color:#d4c5ae!important}
+body.tema-crema .search-wrap input{border:none!important;background:transparent!important}
+body.tema-crema #cross-mod-bar{background:#1e293b!important}  /* barra nav siempre oscura = mejor contraste */
+body.tema-crema .fixed-back-btn{background:#374151!important;color:#fff!important}
+body.tema-crema ::-webkit-scrollbar-track{background:#f0e8da!important}
+body.tema-crema ::-webkit-scrollbar-thumb{background:#c8b89a!important}
+/* ══ TEMA LAVANDA — gris pastel suave para la vendedora ══ */
+body.tema-lavanda{
+  --bg:#ededf5;--s1:#f8f7fd;--s2:#e6e5f2;--s3:#dddce8;
+  --cream:#2d2b40;--muted:#6b6980;--faint:#9997b0;--border:#d4d2e8;
+  --gold-dim:rgba(217,119,6,.08);--accent-dim:rgba(99,102,241,.08);
+  background:#ededf5;
+}
+body.tema-lavanda #app{background:#ededf5!important}
+body.tema-lavanda .main{background:#ededf5!important}
+body.tema-lavanda .content{background:transparent!important}
+body.tema-lavanda .page{background:transparent!important}
+body.tema-lavanda #page-grid-menu{background:linear-gradient(160deg,#0d1b2e 0%,#0a2240 40%,#0d2d4a 100%)!important} /* menú principal siempre oscuro */
+body.tema-lavanda .gm-cat-name{color:#fff!important}
+body.tema-lavanda .gm-cat-count{color:rgba(255,255,255,.6)!important}
+body.tema-lavanda .topbar{background:#f8f7fd!important;border-bottom:1px solid #d4d2e8!important}
+body.tema-lavanda .card{background:#f8f7fd!important;border-color:#d4d2e8!important}
+body.tema-lavanda .card-title{color:#2d2b40!important}
+body.tema-lavanda .scard{background:#f8f7fd!important;border-color:#d4d2e8!important}
+body.tema-lavanda .sl{color:#6b6980!important}
+body.tema-lavanda .sv{color:#2d2b40!important}
+body.tema-lavanda .tw{background:#f8f7fd!important}
+body.tema-lavanda table{background:#f8f7fd!important}
+body.tema-lavanda table thead tr,body.tema-lavanda table thead th{background:#e6e5f2!important;color:#3d3b55!important;border-color:#d4d2e8!important}
+body.tema-lavanda table tbody tr{border-bottom-color:#ebe9f5!important}
+body.tema-lavanda table tbody td{color:#2d2b40!important}
+body.tema-lavanda .md{background:#f8f7fd!important;border-color:#d4d2e8!important}
+body.tema-lavanda .mh{border-bottom-color:#d4d2e8!important;background:#ededf5!important}
+body.tema-lavanda .mf{border-top-color:#d4d2e8!important;background:#ededf5!important}
+body.tema-lavanda .mt{color:#2d2b40!important}
+body.tema-lavanda input,body.tema-lavanda select,body.tema-lavanda textarea{background:#f8f7fd!important;border-color:#c8c6dc!important;color:#2d2b40!important}
+body.tema-lavanda input::placeholder,body.tema-lavanda textarea::placeholder{color:#9997b0!important}
+body.tema-lavanda .btn-ghost{border-color:#c8c6dc!important;color:#3d3b55!important;background:transparent!important}
+body.tema-lavanda .btn-ghost:hover{background:rgba(99,102,241,.06)!important}
+body.tema-lavanda .btn-accent{background:var(--accent)!important;color:#fff!important}
+body.tema-lavanda .mod-nav-bar{background:rgba(237,237,245,.95)!important;border-bottom:1px solid #d4d2e8!important}
+body.tema-lavanda .mod-back-btn{background:#3d3b55!important;color:#fff!important}
+body.tema-lavanda .mod-module-label{color:#2d2b40!important}
+body.tema-lavanda .tab-row{border-bottom-color:#d4d2e8!important}
+body.tema-lavanda .tab-btn{color:#6b6980!important;background:transparent!important}
+body.tema-lavanda .tab-btn.on{color:var(--accent)!important;border-bottom-color:var(--accent)!important}
+body.tema-lavanda .badge{background:rgba(99,102,241,.08)!important;color:#3d3b55!important}
+body.tema-lavanda .b-green{background:#d1fae5!important;color:#065f46!important}
+body.tema-lavanda .b-gold{background:#fef3c7!important;color:#92400e!important}
+body.tema-lavanda .b-blue{background:#e0e7ff!important;color:#3730a3!important}
+body.tema-lavanda .b-red{background:#fee2e2!important;color:#991b1b!important}
+body.tema-lavanda .b-gray{background:#ede9fe!important;color:#5b21b6!important}
+body.tema-lavanda .search-wrap{background:#f8f7fd!important;border-color:#c8c6dc!important}
+body.tema-lavanda .search-wrap input{border:none!important;background:transparent!important}
+body.tema-lavanda #cross-mod-bar{background:#2d2b40!important}
+body.tema-lavanda ::-webkit-scrollbar-track{background:#e6e5f2!important}
+body.tema-lavanda ::-webkit-scrollbar-thumb{background:#b8b5d4!important}
+/* ══ FIN TEMA LAVANDA ══ */
 #page-grid-menu{background:linear-gradient(160deg,#0d1b2e 0%,#0a2240 40%,#0d2d4a 100%)}
 .topbar{background:#071222!important;border-bottom:1px solid rgba(255,255,255,.06)!important}
 #nav-bar{background:#071222!important}
@@ -959,7 +1065,7 @@ body{background:#071222!important}
     <!-- Hidden nav items — required for JS permission system -->
     <div style="display:none">
       <div id="nav-inv"></div><div id="nav-prods"></div><div id="nav-entradas"></div>
-      <div id="nav-salidas"></div><div id="nav-pos"></div><div id="nav-hist"></div>
+      <div id="nav-salidas"></div><div id="nav-liquidaciones"></div><div id="nav-agotados"></div><div id="nav-pos"></div><div id="nav-hist"></div>
       <div id="nav-dashboard-ventas"></div><div id="nav-clientes"></div>
       <div id="nav-transfer"></div><div id="nav-cuentas"></div><div id="nav-gastos"></div>
       <div id="nav-corte"></div><div id="nav-reportes"></div><div id="nav-resumen"></div>
@@ -1262,6 +1368,7 @@ body{background:#071222!important}
                   <option value="con_stock">Solo con existencias</option>
                   <option value="sin_stock">Sin existencias</option>
                   <option value="bajo_stock">Stock bajo (≤3)</option>
+                  <option value="liquidacion">🏷️ En Liquidación</option>
                 </select>
               </div>
               <div>
@@ -2410,6 +2517,88 @@ body{background:#071222!important}
         </div>
 
         <!-- ══════════ TRANSFERENCIAS ══════════ -->
+        <!-- ══════════ LIQUIDACIONES ══════════ -->
+        <div id="page-liquidaciones" class="page" style="margin:-20px -24px;padding:24px;min-height:calc(100vh - 52px);box-sizing:border-box;background:var(--bg)">
+<div class="mod-nav-bar" style="background:transparent">
+  <button class="mod-back-btn" onclick="toggleGridMenu()"><span class="btn-arrow">⌂</span><span class="btn-label"><span class="btn-line1">← REGRESAR A</span><span class="btn-line2">MENÚ PRINCIPAL</span></span></button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
+  <div class="mod-tabs" id="tabs-liquidaciones"></div>
+</div>
+
+<!-- Header -->
+<div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+  <div style="width:48px;height:48px;background:linear-gradient(135deg,#dc2626,#9f1239);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 16px rgba(220,38,38,.25)">📉</div>
+  <div>
+    <div style="font-size:22px;font-weight:900;color:#1e293b;letter-spacing:-.3px">Liquidaciones</div>
+    <div style="font-size:12px;color:#64748b;margin-top:1px">Control de artículos en precio reducido · pérdidas y antigüedad</div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stat-grid sg4" style="margin-bottom:18px">
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+    <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">🏷️ En Liquidación</div>
+    <div style="font-size:28px;font-weight:900;color:#1e293b;font-family:var(--mono)" id="liq-cnt-activos">0</div>
+  </div>
+  <div style="background:#fff;border:1px solid #fecaca;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(220,38,38,.08)">
+    <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">💸 Pérdida Total</div>
+    <div style="font-size:24px;font-weight:900;color:#dc2626;font-family:var(--mono)" id="liq-perdida-total">$0</div>
+  </div>
+  <div style="background:#fff;border:1px solid #fde68a;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(251,191,36,.1)">
+    <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">⏱ Días Promedio</div>
+    <div style="font-size:28px;font-weight:900;color:#d97706;font-family:var(--mono)" id="liq-dias-prom">0</div>
+  </div>
+  <div style="background:#fff;border:1px solid #bbf7d0;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(22,163,74,.08)">
+    <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">✅ Vendidos/Agotados</div>
+    <div style="font-size:28px;font-weight:900;color:#16a34a;font-family:var(--mono)" id="liq-cnt-vendidos">0</div>
+  </div>
+</div>
+
+<!-- Toolbar -->
+<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <button class="btn btn-ghost btn-sm" id="liq-f-todos"   onclick="filtrarLiq('')"       style="border-color:#dc2626;color:#dc2626;background:#fef2f2">Todos</button>
+    <button class="btn btn-ghost btn-sm" id="liq-f-activo"  onclick="filtrarLiq('activo')" style="border-color:#cbd5e1;color:#475569">🏷️ En Liquidación</button>
+    <button class="btn btn-ghost btn-sm" id="liq-f-alerta"  onclick="filtrarLiq('alerta')" style="border-color:#cbd5e1;color:#475569">🔴 +60 días</button>
+    <button class="btn btn-ghost btn-sm" id="liq-f-vendido" onclick="filtrarLiq('vendido')" style="border-color:#cbd5e1;color:#475569">✅ Agotados</button>
+  </div>
+  <div style="flex:1"></div>
+  <select id="liq-suc" onchange="renderLiquidaciones()" style="padding:6px 10px;font-size:12px;width:170px;background:#fff;border:1px solid #cbd5e1;color:#1e293b;border-radius:8px">
+    <option value="">Todas las sucursales</option>
+  </select>
+  <div style="display:flex;gap:6px">
+    <button class="btn btn-ghost btn-sm" onclick="exportarLiqExcel()" style="color:#16a34a;border-color:rgba(22,163,74,.4)">📊 Excel</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportarLiqPDF()"   style="color:#dc2626;border-color:rgba(220,38,38,.4)">🖨️ PDF</button>
+    <button class="btn btn-ghost btn-sm" onclick="renderLiquidaciones()" style="color:#64748b">🔄</button>
+  </div>
+</div>
+
+<!-- Tabla -->
+<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+  <div class="tw" id="liq-tabla-wrap" style="overflow-x:auto">
+    <table id="liq-tabla" style="background:#fff">
+      <thead><tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+        <th style="width:60px;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.6px;padding:12px 8px">Foto</th>
+        <th style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.6px">Artículo</th>
+        <th style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.6px">Razón</th>
+        <th style="text-align:right;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.6px">P. Original</th>
+        <th style="text-align:right;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.6px">P. Liquidación</th>
+        <th style="text-align:right;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.6px">Pérdida/par</th>
+        <th style="text-align:center;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.6px">Uds.</th>
+        <th style="text-align:right;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.6px">Pérdida Total</th>
+        <th style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.6px">Responsable</th>
+        <th style="text-align:center;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap">📅 Fecha Liq.</th>
+        <th style="text-align:center;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.6px">Días</th>
+        <th style="text-align:center;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.6px">Estado</th>
+        <th style="text-align:center;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.6px" id="liq-th-acciones"></th>
+      </tr></thead>
+      <tbody id="liq-tbody">
+        <tr><td colspan="13" style="text-align:center;padding:40px;color:#94a3b8">Cargando…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+        </div><!-- /page-liquidaciones -->
         <div id="page-transferencias" class="page">
 <div class="mod-nav-bar">
   <button class="mod-back-btn" onclick="toggleGridMenu()">
@@ -3200,6 +3389,105 @@ body{background:#071222!important}
             </div>
           </div>
 
+          <!-- 🎨 TEMA GLOBAL DEL SISTEMA -->
+          <div class="card" style="margin-top:16px">
+            <div class="card-title">🎨 Tema Global del Sistema</div>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Elige el fondo que se aplica a <strong>todos los módulos</strong> del sistema. Se guarda en este dispositivo.</p>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:760px">
+
+              <!-- Oscuro -->
+              <div id="tema-global-oscuro" onclick="aplicarTemaGlobal('oscuro')"
+                style="cursor:pointer;border-radius:14px;border:2px solid var(--border);overflow:hidden;
+                  transition:all .2s;box-shadow:0 0 0 2px var(--accent)"
+                onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="background:#0a0f1e;padding:14px 12px;height:90px;position:relative;overflow:hidden">
+                  <div style="background:#111827;border-radius:6px;padding:6px 8px;margin-bottom:6px">
+                    <div style="height:4px;background:#1a9e5c;border-radius:2px;width:60%"></div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+                    <div style="background:#111827;border-radius:5px;padding:5px 6px">
+                      <div style="height:3px;background:#374151;border-radius:1px;margin-bottom:3px"></div>
+                      <div style="height:6px;background:#1a9e5c;border-radius:2px;width:70%"></div>
+                    </div>
+                    <div style="background:#111827;border-radius:5px;padding:5px 6px">
+                      <div style="height:3px;background:#374151;border-radius:1px;margin-bottom:3px"></div>
+                      <div style="height:6px;background:#f59e0b;border-radius:2px;width:80%"></div>
+                    </div>
+                  </div>
+                  <div style="position:absolute;bottom:8px;right:8px;font-size:18px">🌙</div>
+                </div>
+                <div style="background:#111;padding:8px 12px;display:flex;align-items:center;justify-content:space-between">
+                  <div>
+                    <div style="font-size:12px;font-weight:800;color:#e2e8f0">Modo Oscuro</div>
+                    <div style="font-size:10px;color:#64748b">Azul marino profundo</div>
+                  </div>
+                  <span id="tema-global-oscuro-check" style="font-size:18px">✅</span>
+                </div>
+              </div>
+
+              <!-- Crema -->
+              <div id="tema-global-crema" onclick="aplicarTemaGlobal('crema')"
+                style="cursor:pointer;border-radius:14px;border:2px solid var(--border);overflow:hidden;
+                  transition:all .2s"
+                onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="background:#faf6f0;padding:14px 12px;height:90px;position:relative;overflow:hidden">
+                  <div style="background:#fff;border-radius:6px;padding:6px 8px;margin-bottom:6px;border:1px solid #e0d0ba">
+                    <div style="height:4px;background:#1a9e5c;border-radius:2px;width:60%"></div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+                    <div style="background:#fff;border-radius:5px;padding:5px 6px;border:1px solid #e0d0ba">
+                      <div style="height:3px;background:#e0d0ba;border-radius:1px;margin-bottom:3px"></div>
+                      <div style="height:6px;background:#1a9e5c;border-radius:2px;width:70%"></div>
+                    </div>
+                    <div style="background:#fff;border-radius:5px;padding:5px 6px;border:1px solid #e0d0ba">
+                      <div style="height:3px;background:#e0d0ba;border-radius:1px;margin-bottom:3px"></div>
+                      <div style="height:6px;background:#d97706;border-radius:2px;width:80%"></div>
+                    </div>
+                  </div>
+                  <div style="position:absolute;bottom:8px;right:8px;font-size:18px">☀️</div>
+                </div>
+                <div style="background:#f5ede0;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #e0d0ba">
+                  <div>
+                    <div style="font-size:12px;font-weight:800;color:#1e293b">Modo Crema</div>
+                    <div style="font-size:10px;color:#64748b">Fondo cálido claro</div>
+                  </div>
+                  <span id="tema-global-crema-check" style="font-size:18px;opacity:.2">✅</span>
+                </div>
+              </div>
+
+              <!-- Lavanda — para la vendedora -->
+              <div id="tema-global-lavanda" onclick="aplicarTemaGlobal('lavanda')"
+                style="cursor:pointer;border-radius:14px;border:2px solid var(--border);overflow:hidden;
+                  transition:all .2s"
+                onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="background:#ededf5;padding:14px 12px;height:90px;position:relative;overflow:hidden">
+                  <div style="background:#f8f7fd;border-radius:6px;padding:6px 8px;margin-bottom:6px;border:1px solid #d4d2e8">
+                    <div style="height:4px;background:#6366f1;border-radius:2px;width:60%"></div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+                    <div style="background:#f8f7fd;border-radius:5px;padding:5px 6px;border:1px solid #d4d2e8">
+                      <div style="height:3px;background:#d4d2e8;border-radius:1px;margin-bottom:3px"></div>
+                      <div style="height:6px;background:#6366f1;border-radius:2px;width:70%"></div>
+                    </div>
+                    <div style="background:#f8f7fd;border-radius:5px;padding:5px 6px;border:1px solid #d4d2e8">
+                      <div style="height:3px;background:#d4d2e8;border-radius:1px;margin-bottom:3px"></div>
+                      <div style="height:6px;background:#f59e0b;border-radius:2px;width:80%"></div>
+                    </div>
+                  </div>
+                  <div style="position:absolute;bottom:8px;right:8px;font-size:18px">💜</div>
+                </div>
+                <div style="background:#e6e5f2;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #d4d2e8">
+                  <div>
+                    <div style="font-size:12px;font-weight:800;color:#2d2b40">Modo Lavanda</div>
+                    <div style="font-size:10px;color:#6b6980">Gris pastel suave</div>
+                  </div>
+                  <span id="tema-global-lavanda-check" style="font-size:18px;opacity:.2">✅</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
           <!-- 🎨 Selector de Tema — Módulo Cobrar Venta -->
           <div class="card" style="margin-top:16px">
             <div class="card-title">🎨 Tema Visual — Módulo Cobrar Venta</div>
@@ -3636,11 +3924,57 @@ body{background:#071222!important}
 </div>
         </div><!-- /page-lavado-status -->
 
-      </div><!-- /content -->
-    </div><!-- /main -->
-  </div><!-- /body-wrap -->
-</div><!-- /app -->
+        <!-- ══════════ ARTÍCULOS AGOTADOS ══════════ -->
+        <div id="page-agotados" class="page">
+<div class="mod-nav-bar">
+  <button class="mod-back-btn" onclick="toggleGridMenu()"><span class="btn-arrow">⌂</span><span class="btn-label"><span class="btn-line1">← REGRESAR A</span><span class="btn-line2">MENÚ PRINCIPAL</span></span></button>
+  <div class="mod-module-label" id="mod-cur-name">—</div>
+  <div class="mod-tabs" id="tabs-agotados"></div>
+</div>
 
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+  <div>
+    <div style="font-size:18px;font-weight:800;color:var(--cream)">📦 Artículos Agotados — Historial por Rondas</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px">Artículos cuyo stock llegó a cero · con historial de comportamiento por temporada</div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <select id="ago-suc" onchange="renderAgotados()" style="padding:5px 10px;font-size:12px;width:170px">
+      <option value="">Todas las sucursales</option>
+    </select>
+    <button class="btn btn-ghost btn-sm" onclick="exportarAgotadosExcel()" style="color:var(--accent2);border-color:rgba(26,158,92,.4)">📊 Excel</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportarAgotadosPDF()"   style="color:var(--red);border-color:rgba(224,82,82,.4)">🖨️ PDF</button>
+    <button class="btn btn-ghost btn-sm" onclick="initAgotados()">🔄</button>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stat-grid sg4" style="margin-bottom:16px">
+  <div class="scard b"><div class="sl">SKUs Agotados</div><div class="sv b" id="ago-cnt-skus">0</div></div>
+  <div class="scard gold"><div class="sl">Total Rondas</div><div class="sv gold" id="ago-cnt-rondas">0</div></div>
+  <div class="scard g"><div class="sl">Días Prom. por Ronda</div><div class="sv g" id="ago-dias-prom">0d</div></div>
+  <div class="scard"><div class="sl">Ingreso Histórico</div><div class="sv" style="color:var(--accent2)" id="ago-ingreso-total">$0</div></div>
+</div>
+
+<!-- Filtros -->
+<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+  <div class="search-wrap" style="flex:1;min-width:200px">
+    <span class="search-ico">🔍</span>
+    <input type="text" id="ago-q" placeholder="Buscar SKU, descripción…" oninput="renderAgotados()">
+  </div>
+  <select id="ago-badge" onchange="renderAgotados()" style="padding:5px 10px;font-size:12px;width:180px">
+    <option value="">Todos los badges</option>
+    <option value="original">✅ 100% precio original</option>
+    <option value="descuento">🏷️ Con descuentos</option>
+    <option value="liquidacion">💸 Parcial liquidación</option>
+    <option value="mixto">🔀 Mixto</option>
+  </select>
+</div>
+
+<!-- Lista de artículos agotados con rondas -->
+<div id="ago-lista">
+  <div style="text-align:center;padding:40px;color:var(--muted)">⏳ Cargando historial…</div>
+</div>
+        </div><!-- /page-agotados -->
 
         <!-- ══════════ HISTORIAL DE CAMBIOS ══════════ -->
         <div id="page-histcambios" class="page">
@@ -3655,7 +3989,6 @@ body{background:#071222!important}
   <div class="mod-module-label" id="mod-cur-name">—</div>
   <div class="mod-tabs" id="tabs-histcambios"></div>
 </div>
-          <!-- Cabecera con título y botón actualizar -->
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
             <div>
               <div style="font-size:18px;font-weight:800;color:var(--cream)">📝 Historial de Cambios</div>
@@ -3707,7 +4040,104 @@ body{background:#071222!important}
             <div style="font-size:16px;font-weight:700;color:var(--cream);margin-bottom:8px">Sin registros</div>
             <div style="font-size:13px;color:var(--muted)">Ajusta los filtros o da clic en Actualizar</div>
           </div>
+        </div><!-- /page-histcambios -->
+
+      </div><!-- /content -->
+    </div><!-- /main -->
+  </div><!-- /body-wrap -->
+</div><!-- /app -->
+
+
+<!-- ══ MODAL: Editar Liquidación ══ -->
+<div class="mo" id="mo-liq-editar">
+  <div class="md" style="max-width:500px;background:linear-gradient(145deg,#0f1829,#1a0a0f);border:1px solid rgba(220,38,38,.3)">
+    <div class="mh" style="border-bottom:1px solid rgba(255,255,255,.08)">
+      <div>
+        <div class="mt" style="color:#fff">✏️ Editar Liquidación</div>
+        <div id="liq-edit-subtitulo" style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px"></div>
+      </div>
+      <button class="xbtn" onclick="closeM('mo-liq-editar')" style="color:rgba(255,255,255,.5)">✕</button>
+    </div>
+    <div class="mb">
+      <input type="hidden" id="liq-edit-id">
+
+      <!-- Foto + datos básicos del producto -->
+      <div style="display:flex;gap:14px;align-items:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;margin-bottom:16px">
+        <img id="liq-edit-foto" src="" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.1);display:none">
+        <div id="liq-edit-foto-ph" style="width:64px;height:64px;background:rgba(255,255,255,.06);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px">👟</div>
+        <div>
+          <div id="liq-edit-sku" style="font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.5)"></div>
+          <div id="liq-edit-desc" style="font-size:14px;font-weight:700;color:#fff;margin-top:2px"></div>
+          <div id="liq-edit-cat" style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px"></div>
         </div>
+      </div>
+
+      <!-- Campos editables -->
+      <div class="fr fr2" style="margin-bottom:12px">
+        <div class="fg">
+          <label style="color:rgba(255,255,255,.6);font-size:11px">Precio Original ($)</label>
+          <input type="number" id="liq-edit-precio-orig" step="0.01" min="0" placeholder="0.00"
+            style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:8px;padding:9px 12px">
+          <div style="font-size:10px;color:rgba(251,191,36,.7);margin-top:4px">💡 Precio real antes de liquidar</div>
+        </div>
+        <div class="fg">
+          <label style="color:rgba(255,255,255,.6);font-size:11px">Precio Liquidación ($)</label>
+          <input type="number" id="liq-edit-precio-liq" step="0.01" min="0" placeholder="0.00"
+            style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:8px;padding:9px 12px">
+        </div>
+      </div>
+
+      <div class="fg" style="margin-bottom:12px">
+        <label style="color:rgba(255,255,255,.6);font-size:11px">Razón del daño / Liquidación</label>
+        <input type="text" id="liq-edit-razon" placeholder="Ej: Manchado, rayado, mucho tiempo en tienda…" maxlength="200"
+          style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:8px;padding:9px 12px">
+      </div>
+
+      <div class="fg" style="margin-bottom:4px">
+        <label style="color:rgba(255,255,255,.6);font-size:11px">Responsable</label>
+        <input type="text" id="liq-edit-responsable" placeholder="Nombre del responsable"
+          style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:8px;padding:9px 12px">
+      </div>
+
+      <!-- Preview de pérdida en tiempo real -->
+      <div id="liq-edit-preview" style="margin-top:14px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);border-radius:10px;padding:12px;display:none">
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Preview de pérdida</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div><div style="font-size:10px;color:rgba(255,255,255,.4)">Por par</div><div id="liq-edit-prev-par" style="font-size:16px;font-weight:900;color:#f87171;font-family:var(--mono)">$0</div></div>
+          <div><div style="font-size:10px;color:rgba(255,255,255,.4)">Total (<span id="liq-edit-prev-uds">0</span> uds)</div><div id="liq-edit-prev-total" style="font-size:16px;font-weight:900;color:#f87171;font-family:var(--mono)">$0</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="mf" style="border-top:1px solid rgba(255,255,255,.08)">
+      <button class="btn btn-ghost" onclick="closeM('mo-liq-editar')" style="color:rgba(255,255,255,.5)">Cancelar</button>
+      <button class="btn" onclick="guardarEdicionLiq()" style="background:linear-gradient(135deg,#dc2626,#9f1239);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-weight:700;cursor:pointer">💾 Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Nueva Ronda Detectada ══ -->
+<div class="mo" id="mo-nueva-ronda">
+  <div class="md" style="max-width:480px">
+    <div class="mh">
+      <div>
+        <div class="mt">🔄 Artículo con Historial Detectado</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Este artículo estuvo agotado previamente</div>
+      </div>
+      <button class="xbtn" onclick="cerrarModalNuevaRonda()">✕</button>
+    </div>
+    <div class="mb">
+      <div id="nr-info-prod" style="background:var(--s2);border-radius:10px;padding:14px;margin-bottom:14px"></div>
+      <div style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);border-radius:10px;padding:14px;margin-bottom:4px">
+        <div style="font-size:13px;font-weight:700;color:var(--cream);margin-bottom:8px">¿Iniciar nueva ronda de historial?</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6">Al confirmar, se registrará esta entrada como el inicio de una nueva ronda para el artículo. El sistema comenzará a rastrear cuánto tiempo tarda en venderse nuevamente.</div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="cerrarModalNuevaRonda()">No, solo registrar entrada</button>
+      <button class="btn btn-accent" onclick="confirmarNuevaRonda()" style="background:#6366f1;border-color:#6366f1">🔄 Sí, iniciar Ronda #<span id="nr-num">2</span></button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ MODAL: Nuevo/Editar Servicio de Lavado ══ -->
 <div class="mo" id="mo-lavado-servicio">
@@ -5678,7 +6108,8 @@ function renderInv(){
     const mstock = esGemeloEsperando || mostrar==='todos'
       || (mostrar==='con_stock' && tot>0)
       || (mostrar==='sin_stock' && tot===0)
-      || (mostrar==='bajo_stock' && tot>0 && tot<=3);
+      || (mostrar==='bajo_stock' && tot>0 && tot<=3)
+      || (mostrar==='liquidacion' && !!p.esLiquidacion);
     return mq&&mc&&ml&&mloc&&mt&&mm&&ms&&mstock;
   });
 
@@ -7793,6 +8224,8 @@ async function _cobrarInternal(){
       const linea = {prodId: item.id, talla: item.talla, sku: item.sku||item.barcode||'',
                      barcode: item.barcode||item.sku||'', desc: item.desc||''};
       await aplicarStockEnSucursal(linea, sucId, -(item.qty||1));
+      // Detectar agotado tras la venta (no-await para no bloquear el cobro)
+      _checkAgotadoPostVenta(linea.id||linea.prodId||item.id, sucId).catch(e=>console.warn('agotado check:',e));
     }
     const folioFisico=document.getElementById('c-nota-folio')?.value.trim()||'';
     const mixtoEf  = pago==='mixto'?parseFloat(document.getElementById('c-mixto-ef')?.value||'0')||0:0;
@@ -9901,6 +10334,8 @@ async function registrarEntrada(){
         await aplicarStockEnSucursal(linea, sucId, linea.cantidad);
       }
       toast(`Entrada en ${sucursales.find(s=>s.id===sucId)?.nombre||'sucursal'}: ${totalPiezas} piezas ✓`);
+      // Detectar si algún artículo de la entrada tiene rondas previas de agotado
+      _checkNuevaRondaEntrada(entLineas).catch(e=>console.warn('nuevaRonda check:',e));
     }else{
       toast(`✅ Entrada enviada para aprobación del administrador`);
     }
@@ -10480,6 +10915,11 @@ function renderHist(){
 
   document.getElementById('h-empty').style.display=lista.length?'none':'block';
 
+  // Limpiar div residual del resumen diario que pudo quedar en el DOM
+  ['h-diario-encabezado','h-diario-wrap'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.remove();
+  });
+
   // Build pago labels from catalog + hardcoded fallbacks
   const pagoEntries=getCatalogList('formaPago')||[];
   const pi={efectivo:'💵 Efectivo',tarjeta:'💳 Tarjeta','tarjeta-bbva':'💳 BBVA','tarjeta-mp':'💳 Mercado Pago',
@@ -10488,36 +10928,31 @@ function renderHist(){
   pagoEntries.forEach(e=>{const[lbl,val]=e.split('|');if(val&&lbl)pi[val]=lbl;});
   const fmtPago=(pago,venta)=>{
     if(pago==='mixto'&&venta&&(venta.mixtoEfectivo||venta.mixtoTarjeta)){
-      const ef=venta.mixtoEfectivo||0;
-      const tar=venta.mixtoTarjeta||0;
-      return'<div style="font-size:11px;line-height:1.5">'
-        +'<div>🔀 Mixto</div>'
-        +(ef>0?'<div style="color:var(--green)">💵 Ef: '+fmt(ef)+'</div>':'')
-        +(tar>0?'<div style="color:var(--blue)">💳 Tar: '+fmt(tar)+'</div>':'')
-        +'</div>';
+      const ef=venta.mixtoEfectivo||0; const tar=venta.mixtoTarjeta||0;
+      return'<div style="font-size:11px;line-height:1.5"><div>🔀 Mixto</div>'+(ef>0?'<div style="color:var(--green)">💵 Ef: '+fmt(ef)+'</div>':'')+(tar>0?'<div style="color:var(--blue)">💳 Tar: '+fmt(tar)+'</div>':'')+'</div>';
     }
     if(pago==='bbva-efectivo'&&venta&&(venta.bbvaEfectivo||venta.bbvaTarjeta)){
-      const ef=venta.bbvaEfectivo||0;
-      const tar=venta.bbvaTarjeta||0;
-      return'<div style="font-size:11px;line-height:1.5">'
-        +'<div style="color:#4fa3e0">💳+💵 BBVA+Ef</div>'
-        +(tar>0?'<div style="color:#4fa3e0">💳 BBVA: '+fmt(tar)+'</div>':'')
-        +(ef>0?'<div style="color:var(--green)">💵 Ef: '+fmt(ef)+'</div>':'')
-        +'</div>';
+      const ef=venta.bbvaEfectivo||0; const tar=venta.bbvaTarjeta||0;
+      return'<div style="font-size:11px;line-height:1.5"><div style="color:#4fa3e0">💳+💵 BBVA+Ef</div>'+(tar>0?'<div style="color:#4fa3e0">💳 BBVA: '+fmt(tar)+'</div>':'')+(ef>0?'<div style="color:var(--green)">💵 Ef: '+fmt(ef)+'</div>':'')+'</div>';
     }
     if(pago==='tarjeta-efectivo'&&venta&&(venta.tarjetaEfEfectivo||venta.tarjetaEfTarjeta)){
-      const ef=venta.tarjetaEfEfectivo||0;
-      const tar=venta.tarjetaEfTarjeta||0;
-      return'<div style="font-size:11px;line-height:1.5">'
-        +'<div style="color:#c084fc">💳+💵 Tarjeta+Ef</div>'
-        +(tar>0?'<div style="color:#c084fc">💳 Tarjeta: '+fmt(tar)+'</div>':'')
-        +(ef>0?'<div style="color:var(--green)">💵 Ef: '+fmt(ef)+'</div>':'')
-        +'</div>';
+      const ef=venta.tarjetaEfEfectivo||0; const tar=venta.tarjetaEfTarjeta||0;
+      return'<div style="font-size:11px;line-height:1.5"><div style="color:#c084fc">💳+💵 Tarjeta+Ef</div>'+(tar>0?'<div style="color:#c084fc">💳 Tarjeta: '+fmt(tar)+'</div>':'')+(ef>0?'<div style="color:var(--green)">💵 Ef: '+fmt(ef)+'</div>':'')+'</div>';
     }
     return pi[pago||'']||(pago?'💳 '+pago:'—');
   };
 
-  document.getElementById('h-tbody').innerHTML=lista.map((v,idx)=>{
+  // Render filas con try-catch por fila (un dato corrupto no borra toda la lista)
+  let rowsHtml='';
+  lista.forEach((v,idx)=>{
+    try{ rowsHtml += _renderHistFila(v,idx,lista,fmtPago); }
+    catch(e){ console.warn('renderHist row error',v?.id,e); }
+  });
+  document.getElementById('h-tbody').innerHTML = rowsHtml ||
+    `<tr><td colspan="19" style="text-align:center;padding:24px;color:var(--muted)">Sin resultados para los filtros seleccionados.</td></tr>`;
+}
+
+function _renderHistFila(v,idx,lista,fmtPago){
     const sucObj=sucursales.find(s=>s.id===v.sucursalId);
     const isDev=v.tipoVenta==='devolucion';           // ← FIX: faltaba esta variable
     const isAprt=(v.tipoVenta||'venta')==='apartado';
@@ -10625,7 +11060,6 @@ function renderHist(){
         `:''}
       </tr>`;
     }).join('');
-  }).join('');
 }
 // ══════════════════ PROMOCIONES ══════════════════
 let promociones = [];
@@ -11700,7 +12134,7 @@ function populateLocacionSelect(selectedVal){
 let usuariosInternos = []; // loaded from Firestore
 let usuarioActivo = null;  // {id, nombre, rol, pin}
 
-const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','pos','historial','dashboard-ventas','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','recuperacion','sucursales','usuarios','importar','bitacora','publicaciones','analisis','histcambios','costos','finanzas','lavado','lavado-servicios','lavado-status'];
+const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','liquidaciones','agotados','pos','historial','dashboard-ventas','clientes','transfer','cuentas','gastos','corte','reportes','resumen','promociones','catalogos-cfg','etiquetas','recuperacion','sucursales','usuarios','importar','bitacora','publicaciones','analisis','histcambios','costos','finanzas','lavado','lavado-servicios','lavado-status'];
 const PERMISOS_ROL_DEFAULT = {
   admin:      [...TODOS_MODULOS],
   manager:    [...TODOS_MODULOS],
@@ -12679,6 +13113,8 @@ const MODULO_LABELS = {
   'finanzas':       '📊 Finanzas Semanales',
   'entradas':       '📥 Entrada Mercancía',
   'salidas':        '📤 Salida Mercancía',
+  'liquidaciones':  '📉 Liquidaciones',
+  'agotados':       '📦 Artículos Agotados',
   'transfer':       '↔️ Transferencias',
   'etiquetas':      '🏷️ Etiquetas',
   'recuperacion':   '🔄 Recuperar Tallas',
@@ -12883,6 +13319,8 @@ const NAV_ID_MAP = {
   'catalogo':      'nav-prods',
   'entradas':      'nav-entradas',
   'salidas':       'nav-salidas',
+  'liquidaciones': 'nav-liquidaciones',
+  'agotados':      'nav-agotados',
   'pos':           'nav-pos',
   'historial':     'nav-hist',
   'clientes':      'nav-clientes',
@@ -14742,11 +15180,13 @@ function _navigateTo(page, el){
   if(page==='costos')renderCostos();
   if(page==='publicaciones'){renderPubLista();renderPubSeleccionados();}
   if(page==='usuarios'){loadUsuariosInternos();renderUsuariosInternos();}
-  if(page==='catalogos-cfg'){loadCatalogos();loadConfigGeneral();}
+  if(page==='catalogos-cfg'){loadCatalogos();loadConfigGeneral();_actualizarIndicadoresTema();}
   if(page==='promociones'){loadPromociones();}
   if(page==='etiquetas'){document.getElementById('etiq-desde').value=hoy();}
   if(page==='recuperacion'){initRecuperacion();}
   if(page==='analisis'){initAnalisis();}
+  if(page==='liquidaciones'){renderLiquidaciones();}
+  if(page==='agotados'){initAgotados();}
   if(page==='histcambios'){loadHistorialCambios();}
   if(page==='lavado'){initLavado();}
   if(page==='lavado-servicios'){initServiciosLavadoPage();}
@@ -14768,10 +15208,12 @@ let _gmCurrentCat = null;
 const GM_CATS = {
   inventario: {
     title: '📦 Inventario', mods: [
-      {icon:'📦', name:'Inventario',      page:'inventario', gold:true},
-      {icon:'🗂️', name:'Catálogo General',page:'catalogo'},
-      {icon:'📥', name:'Entrada Mercancía',page:'entradas'},
-      {icon:'📤', name:'Salida Mercancía', page:'salidas'},
+      {icon:'📦', name:'Inventario',        page:'inventario', gold:true},
+      {icon:'🗂️', name:'Catálogo General',  page:'catalogo'},
+      {icon:'📥', name:'Entrada Mercancía',  page:'entradas'},
+      {icon:'📤', name:'Salida Mercancía',   page:'salidas'},
+      {icon:'📉', name:'Liquidaciones',      page:'liquidaciones'},
+      {icon:'📦', name:'Artículos Agotados',  page:'agotados'},
       {icon:'↔️', name:'Transferencias',  page:'transferencias'},
       {icon:'🔎', name:'Análisis de Stock',page:'analisis'},
       {icon:'📝', name:'Historial Cambios', page:'histcambios'},
@@ -14931,6 +15373,8 @@ function getModDef(page){
     catalogo:      ['', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`],
     entradas:      ['', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>`],
     salidas:       ['', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 7 12 3 8 7"/><line x1="12" y1="3" x2="12" y2="12"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>`],
+    liquidaciones: ['linear-gradient(135deg,#dc2626,#9f1239)', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><line x1="4" y1="4" x2="20" y2="20" stroke-width="2" stroke="#fca5a5"/></svg>`],
+    agotados:      ['linear-gradient(135deg,#7c3aed,#4f46e5)', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><line x1="2" y1="8" x2="22" y2="8"/><line x1="2" y1="13" x2="22" y2="13"/></svg>`],
     transferencias:['', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`],
     analisis:      ['', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>`],
     pos:           ['', `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="16 2 12 6 8 2"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="6" y1="16" x2="6" y2="16"/><line x1="10" y1="16" x2="10" y2="16"/><line x1="6" y1="19" x2="10" y2="19"/></svg>`],
@@ -15000,7 +15444,7 @@ function goFromGrid(page){
   // Find matching nav item
   const navMap = {
     'transferencias':'nav-transfer','inventario':'nav-inv','catalogo':'nav-prods',
-    'entradas':'nav-entradas','salidas':'nav-salidas','pos':'nav-pos',
+    'entradas':'nav-entradas','salidas':'nav-salidas','liquidaciones':'nav-liquidaciones','agotados':'nav-agotados','pos':'nav-pos',
     'historial':'nav-hist','dashboard-ventas':'nav-dashboard-ventas',
     'cuentas':'nav-cuentas','clientes':'nav-clientes','gastos':'nav-gastos',
     'corte':'nav-corte','reportes':'nav-reportes','resumen':'nav-resumen',
@@ -17698,7 +18142,749 @@ function buildStatusCard(o, estado, ahora){
   </div>`;
 }
 
-// ══════════════════ FIN MÓDULO LAVADO ══════════════════
+// ══════════════════ MÓDULO LIQUIDACIONES ══════════════════
+let _liqFiltro = '';
+
+function filtrarLiq(estado){
+  _liqFiltro = estado;
+  ['todos','activo','alerta','vendido'].forEach(f=>{
+    const btn = document.getElementById('liq-f-'+f);
+    if(!btn) return;
+    const on = f===estado || (f==='todos'&&!estado);
+    btn.style.borderColor = on ? 'var(--accent2)' : '';
+    btn.style.color       = on ? 'var(--accent2)' : '';
+  });
+  renderLiquidaciones();
+}
+
+function renderLiquidaciones(){
+  const tbody  = document.getElementById('liq-tbody'); if(!tbody) return;
+  const hoyDt  = new Date(); hoyDt.setHours(0,0,0,0);
+  const sucFil = document.getElementById('liq-suc')?.value || '';
+
+  // Poblar sucursales en el select
+  const selSuc = document.getElementById('liq-suc');
+  if(selSuc && sucursales.length){
+    const current = selSuc.value;
+    selSuc.innerHTML = '<option value="">Todas las sucursales</option>' +
+      sucursales.map(s=>`<option value="${s.id}" ${s.id===current?'selected':''}>${s.nombre}</option>`).join('');
+  }
+
+  // Solo productos de liquidación
+  const liqs = productos.filter(p=>p.esLiquidacion && (!sucFil || p.sucursalId===sucFil));
+
+  if(!liqs.length){
+    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:32px;color:var(--muted)">Sin artículos en liquidación${sucFil?' en esta sucursal':''}.</td></tr>`;
+    liqActualizarStats([]);
+    return;
+  }
+
+  // Enriquecer con ventas históricas (para detectar agotados vendidos)
+  const ventasPorSKU = {};
+  ventas.forEach(v=>{
+    if(v.tipoVenta==='devolucion') return;
+    (v.items||[]).forEach(item=>{
+      const key=(item.sku||item.barcode||item.id||'').replace('_LIQ','');
+      if(!ventasPorSKU[key]) ventasPorSKU[key]=[];
+      ventasPorSKU[key].push({fecha:v.fecha, fecha_dt:new Date(v.fecha+'T12:00:00')});
+    });
+  });
+
+  // Calcular días y estado por cada artículo
+  const datos = liqs.map(p=>{
+    const stockTotal = Object.values(p.stock||{}).reduce((a,b)=>a+(Number(b)||0),0);
+    const liqDt = p.liquidadoEn ? new Date(p.liquidadoEn) : (p.createdAt ? new Date(p.createdAt) : null);
+    const dias = liqDt ? Math.floor((hoyDt - liqDt) / 86400000) : null;
+    const precioOrig = p.precioOriginal || p.precio || 0;
+    const precioLiq  = p.precio || 0;
+    const perdidaPar = Math.max(0, precioOrig - precioLiq);
+    const perdidaTot = perdidaPar * stockTotal;
+
+    // ¿Ya se agotó? Buscar en historial de ventas
+    const skuBase = (p.barcode||p.sku||p.id||'').replace('_LIQ','');
+    const ventasArt = ventasPorSKU[skuBase]||[];
+    const fechaVenta = stockTotal===0 && ventasArt.length
+      ? ventasArt.sort((a,b)=>b.fecha_dt-a.fecha_dt)[0].fecha
+      : null;
+
+    // Semáforo
+    const semaforo = stockTotal===0 ? 'vendido'
+      : (dias===null)     ? 'activo'
+      : (dias >= 60)      ? 'alerta'
+      : (dias >= 30)      ? 'medio'
+      : 'ok';
+
+    return {...p, stockTotal, dias, precioOrig, precioLiq, perdidaPar, perdidaTot,
+      semaforo, fechaVenta, liqFechaStr: liqDt ? liqDt.toISOString().slice(0,10) : ''};
+  });
+
+  // Aplicar filtro de semáforo
+  let lista = datos;
+  if(_liqFiltro==='activo')  lista = datos.filter(d=>d.semaforo!=='vendido');
+  if(_liqFiltro==='alerta')  lista = datos.filter(d=>d.semaforo==='alerta');
+  if(_liqFiltro==='vendido') lista = datos.filter(d=>d.semaforo==='vendido');
+
+  // Ordenar: alertas primero, luego por días desc
+  lista.sort((a,b)=>{
+    const ord={alerta:0,medio:1,ok:2,activo:3,vendido:4};
+    if((ord[a.semaforo]||3) !== (ord[b.semaforo]||3))
+      return (ord[a.semaforo]||3) - (ord[b.semaforo]||3);
+    return (b.dias||0) - (a.dias||0);
+  });
+
+  liqActualizarStats(datos);
+
+  // Mostrar columna de acciones solo para admin/manager
+  const rolActivo = usuarioActivo?.rol||currentProfile?.rol||'';
+  const puedeEditar = rolActivo==='admin'||rolActivo==='manager';
+  const thAcc = document.getElementById('liq-th-acciones');
+  if(thAcc) thAcc.textContent = puedeEditar ? 'Acciones' : '';
+
+  if(!lista.length){
+    tbody.innerHTML=`<tr><td colspan="${puedeEditar?13:12}" style="text-align:center;padding:24px;color:rgba(255,255,255,.3)">Sin resultados para el filtro seleccionado.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lista.map(d=>{
+    const semColor   = {alerta:'#dc2626',medio:'#d97706',ok:'#16a34a',activo:'#64748b',vendido:'#16a34a'}[d.semaforo]||'#64748b';
+    const semLabel   = {alerta:'🔴',medio:'🟡',ok:'🟢',activo:'⚪',vendido:'✅'}[d.semaforo]||'⚪';
+    const diasLabel  = d.dias!==null ? d.dias+'d' : '—';
+    const diaStyle   = `font-family:var(--mono);font-size:13px;font-weight:900;color:${semColor}`;
+    const suc        = sucursales.find(s=>s.id===d.sucursalId);
+    const rowBg      = d.semaforo==='alerta'?'background:#fff5f5':d.semaforo==='vendido'?'opacity:.65':'';
+
+    const estadoCell = d.semaforo==='vendido'
+      ? `<div style="text-align:center">
+           <span style="background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0;border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700">✅ AGOTADO</span>
+           ${d.fechaVenta?`<div style="font-size:10px;color:#94a3b8;margin-top:2px">${d.fechaVenta.split('-').reverse().join('/')}</div>`:''}
+         </div>`
+      : `<span style="background:${d.semaforo==='alerta'?'#fef2f2':d.semaforo==='medio'?'#fffbeb':'#f0fdf4'};color:${semColor};border:1px solid ${d.semaforo==='alerta'?'#fecaca':d.semaforo==='medio'?'#fde68a':'#bbf7d0'};border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700">${semLabel} ${d.semaforo==='alerta'?'URGENTE':d.semaforo==='medio'?'OFRECER':'EN LIQ.'}</span>`;
+
+    const fotoCell = d.foto
+      ? `<img src="${d.foto}" style="width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0">`
+      : `<div style="width:46px;height:46px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">👟</div>`;
+
+    const editBtn = puedeEditar
+      ? `<td style="text-align:center;padding:6px 8px">
+           <button onclick="abrirEdicionLiq('${d.id}')"
+             style="padding:5px 10px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap;transition:all .15s"
+             onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">✏️ Editar</button>
+         </td>`
+      : '<td></td>';
+
+    return `<tr style="border-bottom:1px solid #f1f5f9;${rowBg}">
+      <td style="padding:8px 10px">${fotoCell}</td>
+      <td>
+        <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:#2563eb">${d.sku||d.barcode||'—'}</div>
+        <div style="font-size:12px;color:#1e293b;font-weight:600">${(d.desc||'—').replace(' 🏷️ LIQ','')}</div>
+        <div style="font-size:11px;color:#94a3b8">${d.cat||''} ${d.marca?'· '+d.marca:''} ${suc?'· '+suc.nombre:''}</div>
+        ${d.locacion?`<div style="font-size:10px;color:#cbd5e1">📍 ${d.locacion}</div>`:''}
+      </td>
+      <td style="font-size:11px;color:#64748b;max-width:180px">${d.razonLiquidacion||'—'}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:12px;color:#94a3b8;text-decoration:line-through">${fmt(d.precioOrig)}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;color:#d97706">${fmt(d.precioLiq)}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:#dc2626">-${fmt(d.perdidaPar)}</td>
+      <td style="text-align:center;font-family:var(--mono);font-size:14px;font-weight:900;color:#1e293b">${d.stockTotal}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:13px;font-weight:900;color:#dc2626">-${fmt(d.perdidaTot)}</td>
+      <td style="font-size:11px;color:#64748b">${d.liquidadoPor||'—'}</td>
+      <td style="text-align:center">
+        ${d.liqFechaStr
+          ? `<div style="font-family:var(--mono);font-size:12px;font-weight:700;color:#1e293b">${d.liqFechaStr.split('-').reverse().join('/')}</div>
+             <div style="font-size:10px;color:#94a3b8">📅 liquidación</div>`
+          : `<span style="color:#cbd5e1">—</span>`}
+      </td>
+      <td style="text-align:center"><span style="${diaStyle}">${diasLabel}</span><br><span style="font-size:9px;color:${semColor}">${{alerta:'⚠️ URGENTE',medio:'Ofrecer',ok:'Reciente',activo:'—',vendido:'Vendido'}[d.semaforo]||''}</span></td>
+      <td style="text-align:center">${estadoCell}</td>
+      ${editBtn}
+    </tr>`;
+  }).join('');
+}
+
+function liqActualizarStats(datos){
+  const activos  = datos.filter(d=>d.semaforo!=='vendido');
+  const vendidos = datos.filter(d=>d.semaforo==='vendido');
+  const perdida  = datos.reduce((a,d)=>a+d.perdidaTot,0);
+  const diasProm = activos.length
+    ? Math.round(activos.filter(d=>d.dias!==null).reduce((a,d)=>a+(d.dias||0),0) / (activos.filter(d=>d.dias!==null).length||1))
+    : 0;
+  const ss=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  ss('liq-cnt-activos',  activos.length);
+  ss('liq-perdida-total',fmt(perdida));
+  ss('liq-dias-prom',    diasProm+'d');
+  ss('liq-cnt-vendidos', vendidos.length);
+}
+
+// ── Exportar Excel ──
+function exportarLiqExcel(){
+  const hoyDt = new Date(); hoyDt.setHours(0,0,0,0);
+  const sucFil = document.getElementById('liq-suc')?.value||'';
+  const datos  = productos.filter(p=>p.esLiquidacion&&(!sucFil||p.sucursalId===sucFil));
+  if(!datos.length){toast('Sin datos para exportar','err');return;}
+
+  const headers=['SKU','Descripcion','Categoria','Marca','Sucursal','Locacion','Razon_Liquidacion',
+    'Precio_Original','Precio_Liquidacion','Perdida_Par','Unidades','Perdida_Total',
+    'Responsable','Fecha_Liquidacion','Dias_En_Liquidacion','Estado'];
+
+  const rows = datos.map(p=>{
+    const stock = Object.values(p.stock||{}).reduce((a,b)=>a+(Number(b)||0),0);
+    const liqDt = p.liquidadoEn ? new Date(p.liquidadoEn) : null;
+    const dias  = liqDt ? Math.floor((hoyDt-liqDt)/86400000) : '';
+    const precioOrig = p.precioOriginal||p.precio||0;
+    const perdida = Math.max(0,(precioOrig-(p.precio||0))*stock);
+    const suc = sucursales.find(s=>s.id===p.sucursalId)?.nombre||'';
+    const estado = stock===0?'AGOTADO':'EN LIQUIDACIÓN';
+    return [p.sku||p.barcode||'',
+      (p.desc||'').replace(' 🏷️ LIQ',''),p.cat||'',p.marca||'',suc,p.locacion||'',
+      p.razonLiquidacion||'',precioOrig,p.precio||0,
+      Math.max(0,precioOrig-(p.precio||0)),stock,perdida,
+      p.liquidadoPor||'',liqDt?liqDt.toISOString().slice(0,10):'',dias,estado];
+  });
+
+  const esc=v=>`"${String(v).replace(/"/g,'""')}"`;
+  const nl='\n';
+  const csv='\uFEFF'+headers.map(esc).join(',')+nl+rows.map(r=>r.map(esc).join(',')).join(nl);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='liquidaciones_'+hoy()+'.csv';
+  a.click();
+  toast('📊 Excel exportado ✓');
+}
+
+// ── Exportar PDF ──
+function exportarLiqPDF(){
+  const tabla = document.getElementById('liq-tabla');
+  if(!tabla){toast('Sin tabla para exportar','err');return;}
+  const win = window.open('','_blank','width=1100,height=700');
+  const totalPerdida = document.getElementById('liq-perdida-total')?.textContent||'';
+  const totalActivos = document.getElementById('liq-cnt-activos')?.textContent||'';
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Reporte de Liquidaciones · ${hoy()}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;font-size:10px;padding:14px;color:#111}
+    .no-print{margin-bottom:10px;display:flex;gap:8px}
+    .no-print button{padding:7px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:700}
+    h1{font-size:14px;font-weight:900;margin-bottom:2px}
+    .sub{font-size:11px;color:#666;margin-bottom:10px}
+    .stats{display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap}
+    .stat{background:#f3f4f6;border-radius:8px;padding:8px 14px;text-align:center}
+    .stat-v{font-size:16px;font-weight:900;color:#dc2626}
+    .stat-l{font-size:9px;color:#6b7280;text-transform:uppercase}
+    table{border-collapse:collapse;width:100%;font-size:9px}
+    th{background:#1e293b;color:#fff;padding:4px 6px;text-align:left;white-space:nowrap}
+    td{border:1px solid #e2e8f0;padding:3px 6px;vertical-align:middle}
+    tr:nth-child(even){background:#f8fafc}
+    .red{color:#dc2626;font-weight:700} .gold{color:#d97706;font-weight:700}
+    .alerta{background:#fef2f2!important} .vendido{opacity:.7}
+    .badge{padding:1px 6px;border-radius:10px;font-size:8px;font-weight:700}
+    @media print{.no-print{display:none!important}@page{margin:6mm;size:A3 landscape}}
+  </style></head><body>
+  <div class="no-print">
+    <button onclick="window.print()" style="background:#111;color:#fff">🖨️ Imprimir / PDF</button>
+    <button onclick="window.close()" style="background:#eee">✕</button>
+  </div>
+  <h1>📉 Zapatería JABED — Reporte de Liquidaciones</h1>
+  <div class="sub">Fecha: ${hoy().split('-').reverse().join('/')} · En liquidación: ${totalActivos} · Pérdida total: ${totalPerdida}</div>
+  <div class="stats">
+    <div class="stat"><div class="stat-v">${document.getElementById('liq-cnt-activos')?.textContent||0}</div><div class="stat-l">En Liquidación</div></div>
+    <div class="stat"><div class="stat-v">${totalPerdida}</div><div class="stat-l">Pérdida Total</div></div>
+    <div class="stat"><div class="stat-v">${document.getElementById('liq-dias-prom')?.textContent||0}</div><div class="stat-l">Días Promedio</div></div>
+    <div class="stat"><div class="stat-v">${document.getElementById('liq-cnt-vendidos')?.textContent||0}</div><div class="stat-l">Agotados</div></div>
+  </div>
+  ${tabla.outerHTML}
+  </body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(),500);
+}
+// ── Edición de liquidación (solo admin/manager) ──
+function abrirEdicionLiq(id){
+  const rol = usuarioActivo?.rol||currentProfile?.rol||'';
+  if(rol!=='admin'&&rol!=='manager'){toast('Solo Admin o Manager pueden editar liquidaciones','err');return;}
+  const p = productos.find(x=>x.id===id);
+  if(!p){toast('Artículo no encontrado','err');return;}
+
+  document.getElementById('liq-edit-id').value = id;
+  document.getElementById('liq-edit-sku').textContent  = p.sku||p.barcode||'—';
+  document.getElementById('liq-edit-desc').textContent = (p.desc||'—').replace(' 🏷️ LIQ','');
+  document.getElementById('liq-edit-cat').textContent  = [p.cat,p.marca,p.linea].filter(Boolean).join(' · ');
+  document.getElementById('liq-edit-subtitulo').textContent = 'Sucursal: '+(sucursales.find(s=>s.id===p.sucursalId)?.nombre||'—');
+
+  // Foto
+  const fotoImg = document.getElementById('liq-edit-foto');
+  const fotoPh  = document.getElementById('liq-edit-foto-ph');
+  if(p.foto){ fotoImg.src=p.foto; fotoImg.style.display='block'; fotoPh.style.display='none'; }
+  else       { fotoImg.style.display='none'; fotoPh.style.display='flex'; }
+
+  document.getElementById('liq-edit-precio-orig').value   = p.precioOriginal||p.precio||'';
+  document.getElementById('liq-edit-precio-liq').value    = p.precio||'';
+  document.getElementById('liq-edit-razon').value         = p.razonLiquidacion||'';
+  document.getElementById('liq-edit-responsable').value   = p.liquidadoPor||'';
+
+  // Preview en tiempo real
+  const stockTotal = Object.values(p.stock||{}).reduce((a,b)=>a+(Number(b)||0),0);
+  document.getElementById('liq-edit-prev-uds').textContent = stockTotal;
+  const actualizarPreview = ()=>{
+    const orig = parseFloat(document.getElementById('liq-edit-precio-orig').value)||0;
+    const liq  = parseFloat(document.getElementById('liq-edit-precio-liq').value)||0;
+    const diff = Math.max(0, orig - liq);
+    const prevEl = document.getElementById('liq-edit-preview');
+    if(orig>0||liq>0){ prevEl.style.display='block'; } else { prevEl.style.display='none'; }
+    document.getElementById('liq-edit-prev-par').textContent   = fmt(diff);
+    document.getElementById('liq-edit-prev-total').textContent = fmt(diff*stockTotal);
+  };
+  document.getElementById('liq-edit-precio-orig').oninput = actualizarPreview;
+  document.getElementById('liq-edit-precio-liq').oninput  = actualizarPreview;
+  actualizarPreview();
+
+  openM('mo-liq-editar');
+}
+
+async function guardarEdicionLiq(){
+  const rol = usuarioActivo?.rol||currentProfile?.rol||'';
+  if(rol!=='admin'&&rol!=='manager'){toast('Sin permiso para editar','err');return;}
+
+  const id          = document.getElementById('liq-edit-id').value;
+  const precioOrig  = parseFloat(document.getElementById('liq-edit-precio-orig').value)||0;
+  const precioLiq   = parseFloat(document.getElementById('liq-edit-precio-liq').value)||0;
+  const razon       = document.getElementById('liq-edit-razon').value.trim();
+  const responsable = document.getElementById('liq-edit-responsable').value.trim();
+
+  if(!precioOrig||precioOrig<=0){toast('Ingresa el precio original','err');return;}
+  if(!precioLiq||precioLiq<=0) {toast('Ingresa el precio de liquidación','err');return;}
+  if(precioLiq>precioOrig){toast('El precio de liquidación no puede ser mayor al original','err');return;}
+
+  if(guardarEdicionLiq._busy){toast('Guardando…','warn');return;}
+  guardarEdicionLiq._busy=true;
+
+  try{
+    const data={
+      precioOriginal:  precioOrig,
+      precio:          precioLiq,
+      razonLiquidacion:razon||'Liquidación',
+      liquidadoPor:    responsable||(usuarioActivo?.nombre||currentProfile?.nombre||'—'),
+      updatedAt:       new Date().toISOString(),
+    };
+    await window._fb.updateDoc(
+      window._fb.doc(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/productos`,id), data);
+    // Actualizar caché local
+    const idx=productos.findIndex(x=>x.id===id);
+    if(idx>=0) productos[idx]={...productos[idx],...data};
+    closeM('mo-liq-editar');
+    toast('✅ Liquidación actualizada correctamente');
+    renderLiquidaciones();
+  }catch(e){
+    toast('Error al guardar: '+e.message,'err');
+    console.error(e);
+  }finally{ guardarEdicionLiq._busy=false; }
+}
+// ══════════════════ TEMA GLOBAL ══════════════════
+function aplicarTemaGlobal(tema){
+  document.body.classList.remove('tema-crema','tema-lavanda');
+  if(tema==='crema')   document.body.classList.add('tema-crema');
+  if(tema==='lavanda') document.body.classList.add('tema-lavanda');
+  try{ localStorage.setItem('jabed_tema_global', tema); }catch(e){}
+  _actualizarIndicadoresTema(tema);
+  const labels={oscuro:'🌙 Modo Oscuro activado',crema:'☀️ Modo Crema activado',lavanda:'💜 Modo Lavanda activado'};
+  toast(labels[tema]||'Tema aplicado');
+}
+
+function _actualizarIndicadoresTema(tema){
+  const temaActual = tema || (
+    document.body.classList.contains('tema-crema')   ? 'crema'   :
+    document.body.classList.contains('tema-lavanda') ? 'lavanda' : 'oscuro'
+  );
+  ['oscuro','crema','lavanda'].forEach(t=>{
+    const card  = document.getElementById('tema-global-'+t);
+    const check = document.getElementById('tema-global-'+t+'-check');
+    const on    = t === temaActual;
+    if(card)  card.style.borderColor  = on ? 'var(--accent)' : 'var(--border)';
+    if(card)  card.style.boxShadow    = on ? '0 0 0 2px var(--accent)' : '';
+    if(check) check.style.opacity     = on ? '1' : '.2';
+  });
+}
+
+// Cargar tema guardado al arrancar
+(function _cargarTemaGuardado(){
+  try{
+    const t = localStorage.getItem('jabed_tema_global')||'oscuro';
+    if(t==='crema')   document.body.classList.add('tema-crema');
+    if(t==='lavanda') document.body.classList.add('tema-lavanda');
+  }catch(e){}
+})();
+// ══════════════════ FIN TEMA GLOBAL ══════════════════
+let rondasAgotado = [];        // local cache from Firestore
+let _nrPendiente  = null;      // pending nueva ronda data {prodId,sku,desc,sucId,rondaNum,entradaFecha,cantidad,precio}
+
+// ── Detección automática: llamar tras cada venta o salida ──
+async function _checkAgotadoPostVenta(prodId, sucursalId){
+  try{
+    // Leer stock fresco del producto
+    const snap = await window._fb.getDoc(window._fb.doc(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/productos`,prodId));
+    if(!snap.exists()) return;
+    const p = {id:prodId,...snap.data()};
+    if(p.esLiquidacion) return; // no trackear LIQ
+    const stockTotal = Object.values(p.stock||{}).reduce((a,b)=>a+(Number(b)||0),0);
+    if(stockTotal > 0) return; // aún hay stock
+
+    // Verificar si ya existe una ronda abierta/reciente para este prod+suc (evitar duplicados)
+    const col = window._fb.collection(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/rondasAgotado`);
+    const {query,where,getDocs,orderBy,limit} = window._fb;
+    const q = query(col, where('prodId','==',prodId), where('sucursalId','==',sucursalId||''), orderBy('agotadoTs','desc'), limit(1));
+    const existing = await getDocs(q);
+    const hoyTs = Date.now();
+    if(!existing.empty){
+      const last = existing.docs[0].data();
+      // Si ya hay una ronda cerrada en las últimas 2 horas, no duplicar
+      if(Math.abs(hoyTs - (last.agotadoTs||0)) < 7200000) return;
+    }
+
+    // Calcular datos de la ronda
+    const sku = p.barcode||p.sku||prodId;
+    const desc = (p.desc||'—').replace(' 🏷️ LIQ','');
+    const rondaNum = existing.size + 1;
+
+    // Inferir fecha de entrada
+    const {fechaEntrada,cantidad:entCant,precio:entPrecio,fuente} = await _inferirFechaEntrada(sku, sucursalId||'', p);
+
+    // Calcular stats de ventas para esta ronda
+    const stats = await _calcularStatsRonda(sku, prodId, sucursalId||'', fechaEntrada, hoy());
+
+    // Detectar pares en liquidación
+    const liqProd = productos.find(x=>x.esLiquidacion&&(x.barcode===(sku+'_LIQ')||x.sku===(sku+'_LIQ'))&&x.sucursalId===sucursalId);
+    const unidadesLiquidadas = liqProd ? Object.values(liqProd.stock||{}).reduce((a,b)=>a+(Number(b)||0),0) : 0;
+    const perdidaLiquidacion = unidadesLiquidadas * Math.max(0,(p.precio||0)-(liqProd?.precio||0));
+
+    // Badge
+    let badge = 'original';
+    if(unidadesLiquidadas>0 && stats.conDescuento>0) badge='mixto';
+    else if(unidadesLiquidadas>0) badge='liquidacion';
+    else if(stats.conDescuento>0) badge='descuento';
+
+    const diasEnTienda = fechaEntrada ? Math.floor((hoyTs - new Date(fechaEntrada+'T12:00:00').getTime())/86400000) : null;
+
+    // Guardar ronda
+    await window._fb.addDoc(col,{
+      prodId, sku, desc,
+      sucursalId: sucursalId||'',
+      foto: p.foto||null,
+      cat: p.cat||'', marca: p.marca||'', linea: p.linea||'',
+      rondaNum,
+      entradaFecha: fechaEntrada||'',
+      entradaCantidad: entCant||0,
+      entradaPrecio: entPrecio||p.precio||0,
+      entradaFuente: fuente||'estimada',
+      agotadoFecha: hoy(),
+      agotadoHora: hora(),
+      agotadoTs: hoyTs,
+      diasEnTienda,
+      unidadesVendidas: stats.vendidas,
+      ingresoTotal: stats.ingreso,
+      unidadesConDescuento: stats.conDescuento,
+      montoDescuentos: stats.descuentos,
+      unidadesLiquidadas,
+      perdidaLiquidacion,
+      badge,
+      createdAt: new Date().toISOString()
+    });
+
+    console.log(`Agotado registrado: ${sku} Ronda #${rondaNum}`);
+  }catch(e){ console.warn('_checkAgotadoPostVenta error:',e); }
+}
+
+async function _inferirFechaEntrada(sku, sucId, prod){
+  // 1. Buscar en collection entradas
+  try{
+    const {collection,query,where,getDocs,orderBy,limit} = window._fb;
+    const entCol = collection(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/entradas`);
+    const snap = await getDocs(entCol);
+    let mejorFecha='', mejorCant=0, mejorPrecio=0;
+    snap.docs.forEach(d=>{
+      const ent=d.data();
+      (ent.lineas||[]).forEach(l=>{
+        if((l.sku||l.barcode||'')===sku&&(ent.sucursalId||l.sucursalId||'')===(sucId||'')){
+          if(!mejorFecha||ent.fecha<mejorFecha){
+            mejorFecha=ent.fecha||''; mejorCant=l.cantidad||0;
+            mejorPrecio=l.precio||l.precioVenta||prod?.precio||0;
+          }
+        }
+      });
+    });
+    if(mejorFecha) return {fechaEntrada:mejorFecha,cantidad:mejorCant,precio:mejorPrecio,fuente:'entradas'};
+  }catch(e){}
+  // 2. createdAt del producto
+  if(prod?.createdAt) return {fechaEntrada:prod.createdAt.slice(0,10),cantidad:0,precio:prod.precio||0,fuente:'catalogo'};
+  // 3. Venta más antigua con ese SKU
+  const ventaAntigua = [...ventas].filter(v=>(v.items||[]).some(i=>(i.sku||i.barcode||i.id||'')===sku))
+    .sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''))[0];
+  if(ventaAntigua) return {fechaEntrada:ventaAntigua.fecha,cantidad:0,precio:ventaAntigua.items.find(i=>(i.sku||i.barcode||i.id||'')===sku)?.price||0,fuente:'venta'};
+  return {fechaEntrada:'',cantidad:0,precio:prod?.precio||0,fuente:'parcial'};
+}
+
+async function _calcularStatsRonda(sku, prodId, sucId, desdeDate, hastaDate){
+  let vendidas=0,ingreso=0,conDescuento=0,descuentos=0;
+  ventas.filter(v=>v.tipoVenta!=='devolucion'&&(!desdeDate||v.fecha>=desdeDate)&&(!hastaDate||v.fecha<=hastaDate)&&(!sucId||v.sucursalId===sucId))
+    .forEach(v=>{
+      let match=false;
+      (v.items||[]).forEach(item=>{
+        const iSku=item.sku||item.barcode||item.id||'';
+        if(iSku===sku||iSku.replace('_LIQ','')===sku||item.id===prodId){
+          vendidas+=(item.qty||1); ingreso+=(item.price||0)*(item.qty||1); match=true;
+        }
+      });
+      if(match&&(v.descuento||0)>0){ conDescuento++; descuentos+=(v.descuento||0); }
+    });
+  return {vendidas,ingreso,conDescuento,descuentos};
+}
+
+// ── Detección en entrada de mercancía ──
+async function _checkNuevaRondaEntrada(lineas){
+  try{
+    const {collection,getDocs,query,where,orderBy,limit} = window._fb;
+    const col = collection(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/rondasAgotado`);
+    for(const l of lineas){
+      const sku = l.sku||l.barcode||'';
+      if(!sku) continue;
+      const q = query(col,where('sku','==',sku),orderBy('agotadoTs','desc'),limit(1));
+      const snap = await getDocs(q);
+      if(!snap.empty){
+        const lastRonda = snap.docs[0].data();
+        const rondaNum = (lastRonda.rondaNum||1)+1;
+        const prod = productos.find(p=>(p.barcode===sku||p.sku===sku)&&!p.esLiquidacion);
+        _nrPendiente = {
+          prodId:lastRonda.prodId, sku, desc:lastRonda.desc,
+          sucId:lastRonda.sucursalId, rondaNum,
+          entradaFecha:hoy(), cantidad:l.cantidad||0,
+          precio:l.precio||l.precioVenta||prod?.precio||0
+        };
+        document.getElementById('nr-num').textContent = rondaNum;
+        document.getElementById('nr-info-prod').innerHTML = `
+          <div style="font-family:var(--mono);font-size:12px;color:var(--accent2);margin-bottom:4px">${sku}</div>
+          <div style="font-size:14px;font-weight:700;color:var(--cream)">${lastRonda.desc||'—'}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">
+            📦 Última vez agotado: <strong>${lastRonda.agotadoFecha||'—'}</strong> · 
+            Rondas anteriores: <strong>${lastRonda.rondaNum||1}</strong>
+          </div>`;
+        openM('mo-nueva-ronda');
+        return; // mostrar para el primero encontrado
+      }
+    }
+  }catch(e){ console.warn('_checkNuevaRondaEntrada:',e); }
+}
+
+function cerrarModalNuevaRonda(){ _nrPendiente=null; closeM('mo-nueva-ronda'); }
+
+async function confirmarNuevaRonda(){
+  if(!_nrPendiente){ closeM('mo-nueva-ronda'); return; }
+  try{
+    const col = window._fb.collection(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/rondasAgotado`);
+    // Crear marcador de inicio de ronda (ronda "abierta" — sin agotadoFecha)
+    await window._fb.addDoc(col,{
+      ..._nrPendiente,
+      agotadoFecha:'', agotadoTs:0, diasEnTienda:null,
+      unidadesVendidas:0, ingresoTotal:0, unidadesConDescuento:0,
+      montoDescuentos:0, unidadesLiquidadas:0, perdidaLiquidacion:0,
+      badge:'pendiente', estado:'abierta',
+      createdAt: new Date().toISOString()
+    });
+    toast('🔄 Ronda #'+_nrPendiente.rondaNum+' iniciada para '+_nrPendiente.sku);
+  }catch(e){ toast('Error al iniciar ronda: '+e.message,'err'); }
+  _nrPendiente=null;
+  closeM('mo-nueva-ronda');
+}
+
+// ── Render del módulo ──
+async function initAgotados(){
+  const listaEl = document.getElementById('ago-lista');
+  if(listaEl) listaEl.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">⏳ Cargando historial…</div>';
+
+  try{
+    const col = window._fb.collection(window._fb.db,`tiendas/${window._fb.auth.currentUser.uid}/rondasAgotado`);
+    const snap = await window._fb.getDocs(col);
+    rondasAgotado = snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(b.agotadoTs||0)-(a.agotadoTs||0));
+  }catch(e){ rondasAgotado=[]; toast('Error cargando agotados: '+e.message,'err'); }
+
+  // Poblar sucursales
+  const selSuc = document.getElementById('ago-suc');
+  if(selSuc&&sucursales.length){
+    const cur=selSuc.value;
+    selSuc.innerHTML='<option value="">Todas las sucursales</option>'+
+      sucursales.map(s=>`<option value="${s.id}" ${s.id===cur?'selected':''}>${s.nombre}</option>`).join('');
+  }
+  renderAgotados();
+}
+
+function renderAgotados(){
+  const listaEl = document.getElementById('ago-lista'); if(!listaEl) return;
+  const q       = (document.getElementById('ago-q')?.value||'').toLowerCase();
+  const sucFil  = document.getElementById('ago-suc')?.value||'';
+  const badgeFil= document.getElementById('ago-badge')?.value||'';
+
+  // Agrupar por sku+sucId
+  const grupos = {};
+  rondasAgotado.forEach(r=>{
+    if(sucFil&&r.sucursalId!==sucFil) return;
+    if(q&&!(r.sku||'').toLowerCase().includes(q)&&!(r.desc||'').toLowerCase().includes(q)) return;
+    if(badgeFil&&r.badge!==badgeFil) return;
+    const key=(r.sku||r.prodId)+'_'+(r.sucursalId||'');
+    if(!grupos[key]) grupos[key]={sku:r.sku,desc:r.desc,sucursalId:r.sucursalId,foto:r.foto,cat:r.cat,marca:r.marca,rondas:[]};
+    grupos[key].rondas.push(r);
+  });
+
+  const gruposArr = Object.values(grupos).sort((a,b)=>{
+    const aLast=a.rondas[0]?.agotadoTs||0; const bLast=b.rondas[0]?.agotadoTs||0;
+    return bLast-aLast;
+  });
+
+  // Stats
+  const totalRondas = rondasAgotado.filter(r=>r.estado!=='abierta').length;
+  const ingresoTotal = rondasAgotado.reduce((a,r)=>a+(r.ingresoTotal||0),0);
+  const diasArr = rondasAgotado.filter(r=>r.diasEnTienda!=null).map(r=>r.diasEnTienda);
+  const diasProm = diasArr.length ? Math.round(diasArr.reduce((a,b)=>a+b,0)/diasArr.length) : 0;
+  const ss=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  ss('ago-cnt-skus', gruposArr.length);
+  ss('ago-cnt-rondas', totalRondas);
+  ss('ago-dias-prom', diasProm+'d');
+  ss('ago-ingreso-total', fmt(ingresoTotal));
+
+  if(!gruposArr.length){
+    listaEl.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Sin artículos agotados registrados aún.</div>';
+    return;
+  }
+
+  const badgeMap={
+    original:'<span style="background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700">✅ 100% precio original</span>',
+    descuento:'<span style="background:#fef3c7;color:#d97706;border:1px solid #fde68a;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700">🏷️ Con descuentos</span>',
+    liquidacion:'<span style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700">💸 Parcial liquidación</span>',
+    mixto:'<span style="background:#ede9fe;color:#7c3aed;border:1px solid #ddd6fe;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700">🔀 Mixto</span>',
+    pendiente:'<span style="background:var(--s2);color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700">⏳ En curso</span>',
+  };
+  const fuenteLabel={entradas:'Entrada registrada',catalogo:'Alta en catálogo',venta:'Primera venta detectada',parcial:'Dato estimado',estimada:'Estimada'};
+
+  listaEl.innerHTML = gruposArr.map(g=>{
+    const suc = sucursales.find(s=>s.id===g.sucursalId);
+    const rondas = [...g.rondas].sort((a,b)=>(a.rondaNum||0)-(b.rondaNum||0));
+    const fotoCell = g.foto
+      ? `<img src="${g.foto}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;border:1px solid var(--border);flex-shrink:0">`
+      : `<div style="width:52px;height:52px;background:var(--s3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">👟</div>`;
+
+    const rondasHtml = rondas.map(r=>{
+      const esAbierta = r.estado==='abierta';
+      const fuenteDesc = fuenteLabel[r.entradaFuente]||r.entradaFuente||'—';
+      const alertaFuente = r.entradaFuente==='parcial'||r.entradaFuente==='estimada';
+      return `
+      <div style="border-left:3px solid ${esAbierta?'var(--blue)':'var(--border)'};padding:12px 14px;margin-top:10px;background:${esAbierta?'rgba(82,168,224,.06)':'var(--s2)'};border-radius:0 8px 8px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-family:var(--mono);font-size:13px;font-weight:900;color:${esAbierta?'var(--blue)':'var(--cream)'}">Ronda #${r.rondaNum||'?'}</span>
+            ${badgeMap[r.badge]||''}
+            ${esAbierta?'<span style="background:rgba(82,168,224,.15);color:var(--blue);border:1px solid rgba(82,168,224,.3);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700">🔵 EN CURSO</span>':''}
+          </div>
+          <div style="font-size:11px;color:var(--muted)">
+            ${r.agotadoFecha?`Agotado: <strong style="color:var(--cream)">${r.agotadoFecha.split('-').reverse().join('/')}</strong>`:''}
+          </div>
+        </div>
+
+        <!-- Línea de tiempo -->
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+          <div style="text-align:center;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:6px 12px">
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">📥 Entrada</div>
+            <div style="font-size:12px;font-weight:700;color:var(--cream)">${r.entradaFecha?r.entradaFecha.split('-').reverse().join('/'):'—'}</div>
+            <div style="font-size:9px;color:var(--muted)">${r.entradaCantidad?r.entradaCantidad+' pares':''}</div>
+          </div>
+          <div style="font-size:18px;color:var(--border)">→</div>
+          <div style="text-align:center;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:6px 12px">
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${esAbierta?'🔵 Hoy':'📦 Agotado'}</div>
+            <div style="font-size:12px;font-weight:700;color:${esAbierta?'var(--blue)':'var(--cream)'}">${esAbierta?hoy().split('-').reverse().join('/'):(r.agotadoFecha?r.agotadoFecha.split('-').reverse().join('/'):'—')}</div>
+            <div style="font-size:9px;color:var(--muted)">${esAbierta?'en curso':''}</div>
+          </div>
+          ${r.diasEnTienda!=null?`
+          <div style="text-align:center;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:8px;padding:6px 14px">
+            <div style="font-size:9px;color:rgba(99,102,241,.8);text-transform:uppercase;letter-spacing:.5px">⏱ Duración</div>
+            <div style="font-size:16px;font-weight:900;color:#6366f1;font-family:var(--mono)">${r.diasEnTienda}d</div>
+          </div>`:''}
+          ${alertaFuente?`<span style="font-size:10px;color:var(--gold);background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.3);border-radius:6px;padding:3px 8px">⚠️ ${fuenteDesc}</span>`:''}
+        </div>
+
+        <!-- Stats de la ronda -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">
+          <div style="background:var(--s1);border:1px solid var(--border);border-radius:7px;padding:8px 10px">
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">💰 P. de esta ronda</div>
+            <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">${fmt(r.entradaPrecio||0)}</div>
+          </div>
+          <div style="background:var(--s1);border:1px solid var(--border);border-radius:7px;padding:8px 10px">
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">📊 Pares vendidos</div>
+            <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--cream)">${r.unidadesVendidas||0}</div>
+          </div>
+          <div style="background:var(--s1);border:1px solid var(--border);border-radius:7px;padding:8px 10px">
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">💵 Ingreso total</div>
+            <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent2)">${fmt(r.ingresoTotal||0)}</div>
+          </div>
+          ${(r.unidadesConDescuento||0)>0?`
+          <div style="background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.25);border-radius:7px;padding:8px 10px">
+            <div style="font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">🏷️ Con descuento</div>
+            <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">${r.unidadesConDescuento} · -${fmt(r.montoDescuentos||0)}</div>
+          </div>`:''}
+          ${(r.unidadesLiquidadas||0)>0?`
+          <div style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);border-radius:7px;padding:8px 10px">
+            <div style="font-size:9px;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">💸 A liquidación</div>
+            <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--red)">${r.unidadesLiquidadas} pares · -${fmt(r.perdidaLiquidacion||0)}</div>
+          </div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+      <!-- Header del artículo -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+        ${fotoCell}
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--mono);font-size:12px;color:var(--accent2);font-weight:700">${g.sku||'—'}</div>
+          <div style="font-size:15px;font-weight:800;color:var(--cream)">${g.desc||'—'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${g.cat||''} ${g.marca?'· '+g.marca:''} ${suc?'· '+suc.nombre:''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:11px;color:var(--muted)">Total rondas</div>
+          <div style="font-size:24px;font-weight:900;color:var(--cream);font-family:var(--mono)">${rondas.length}</div>
+        </div>
+      </div>
+      ${rondasHtml}
+    </div>`;
+  }).join('');
+}
+
+// ── Exportar Excel ──
+function exportarAgotadosExcel(){
+  if(!rondasAgotado.length){toast('Sin datos','err');return;}
+  const headers=['SKU','Descripcion','Categoria','Marca','Sucursal','Ronda','Entrada_Fecha','Entrada_Cantidad','Precio_Ronda','Agotado_Fecha','Dias_Tienda','Pares_Vendidos','Ingreso_Total','Con_Descuento','Monto_Descuentos','A_Liquidacion','Perdida_Liq','Badge'];
+  const rows=rondasAgotado.map(r=>{
+    const suc=sucursales.find(s=>s.id===r.sucursalId)?.nombre||'';
+    return[r.sku||'',r.desc||'',r.cat||'',r.marca||'',suc,r.rondaNum||'',r.entradaFecha||'',r.entradaCantidad||0,r.entradaPrecio||0,r.agotadoFecha||'',r.diasEnTienda??'',r.unidadesVendidas||0,r.ingresoTotal||0,r.unidadesConDescuento||0,r.montoDescuentos||0,r.unidadesLiquidadas||0,r.perdidaLiquidacion||0,r.badge||''];
+  });
+  const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const csv='\uFEFF'+headers.map(esc).join(',')+'\n'+rows.map(r=>r.map(esc).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='agotados_'+hoy()+'.csv';a.click();toast('📊 Excel exportado ✓');
+}
+
+// ── Exportar PDF ──
+function exportarAgotadosPDF(){
+  const el=document.getElementById('ago-lista');if(!el){toast('Sin datos','err');return;}
+  const win=window.open('','_blank','width=1000,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Artículos Agotados · ${hoy()}</title>
+  <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;padding:16px;color:#1e293b;background:#f8fafc}
+  .no-print{margin-bottom:10px;display:flex;gap:8px}.no-print button{padding:7px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:700}
+  h1{font-size:15px;font-weight:900;margin-bottom:4px}.sub{font-size:11px;color:#64748b;margin-bottom:12px}
+  @media print{.no-print{display:none!important}@page{margin:6mm;size:A4 portrait}}</style>
+  </head><body>
+  <div class="no-print"><button onclick="window.print()" style="background:#111;color:#fff">🖨️ Imprimir / PDF</button><button onclick="window.close()" style="background:#eee">✕</button></div>
+  <h1>📦 Zapatería JABED — Artículos Agotados</h1>
+  <div class="sub">Generado: ${hoy().split('-').reverse().join('/')} · ${rondasAgotado.length} rondas registradas</div>
+  ${el.innerHTML}
+  </body></html>`);
+  win.document.close();setTimeout(()=>win.print(),500);
+}
+// ══════════════════ FIN MÓDULO AGOTADOS ══════════════════
 
 // ══════════════════ FIREBASE AUTH OBSERVER ══════════════════
 let fbInterval=setInterval(()=>{
