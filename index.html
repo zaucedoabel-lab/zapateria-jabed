@@ -872,7 +872,7 @@ body.tema-crema .mod-back-btn{background:#374151!important;color:#fff!important}
 body.tema-crema .mod-module-label{color:#1e293b!important}
 body.tema-crema .tab-row{border-bottom-color:#e0d0ba!important}
 body.tema-crema .tab-btn{color:#64748b!important;background:transparent!important}
-body.tema-crema .tab-btn.on{color:var(--accent)!important;border-bottom-color:var(--accent)!important}
+body.tema-crema .tab-btn.on{color:#fff!important;background:var(--accent)!important;border-bottom-color:var(--accent)!important}
 body.tema-crema .badge{background:rgba(0,0,0,.07)!important;color:#374151!important}
 body.tema-crema .b-green{background:#dcfce7!important;color:#16a34a!important}
 body.tema-crema .b-gold{background:#fef3c7!important;color:#d97706!important}
@@ -924,7 +924,7 @@ body.tema-lavanda .mod-back-btn{background:#3d3b55!important;color:#fff!importan
 body.tema-lavanda .mod-module-label{color:#2d2b40!important}
 body.tema-lavanda .tab-row{border-bottom-color:#d4d2e8!important}
 body.tema-lavanda .tab-btn{color:#6b6980!important;background:transparent!important}
-body.tema-lavanda .tab-btn.on{color:var(--accent)!important;border-bottom-color:var(--accent)!important}
+body.tema-lavanda .tab-btn.on{color:#fff!important;background:var(--accent)!important;border-bottom-color:var(--accent)!important}
 body.tema-lavanda .badge{background:rgba(99,102,241,.08)!important;color:#3d3b55!important}
 body.tema-lavanda .b-green{background:#d1fae5!important;color:#065f46!important}
 body.tema-lavanda .b-gold{background:#fef3c7!important;color:#92400e!important}
@@ -3156,8 +3156,14 @@ body.tema-lavanda ::-webkit-scrollbar-thumb{background:#b8b5d4!important}
   </span>
 </button>
   <div class="mod-module-label" id="mod-cur-name">—</div>
-  <div class="mod-tabs" id="tabs-bitacora"></div>
+  <div class="mod-tabs" id="tabs-bitacora">
+    <button class="tab-btn on" id="bit-tab-mov" onclick="setBitacoraTab('movimientos')">📋 Movimientos</button>
+    <button class="tab-btn" id="bit-tab-analisis" onclick="setBitacoraTab('analisis')">📊 Análisis</button>
+  </div>
 </div>
+
+          <!-- VISTA: Movimientos -->
+          <div id="bit-vista-mov">
 
           <div class="stat-grid sg3" style="margin-bottom:14px">
             <div class="scard gold"><div class="sl">Pendientes de Aprobar</div><div class="sv gold" id="bitacora-pend">0</div></div>
@@ -3183,6 +3189,73 @@ body.tema-lavanda ::-webkit-scrollbar-thumb{background:#b8b5d4!important}
             </tr></thead>
             <tbody id="bitacora-tbody"></tbody></table>
           </div>
+
+          </div><!-- fin bit-vista-mov -->
+
+          <!-- VISTA: Análisis de Discrepancias -->
+          <div id="bit-vista-analisis" style="display:none">
+
+            <!-- Filtros análisis -->
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:5px 12px">
+                <label style="font-size:10px;color:var(--muted);font-weight:600">PERÍODO</label>
+                <select id="an-periodo" onchange="renderBitacoraAnalisis()" style="background:transparent;border:none;color:var(--cream);font-size:12px;font-weight:600">
+                  <option value="7">Últimos 7 días</option>
+                  <option value="30" selected>Últimos 30 días</option>
+                  <option value="90">Últimos 90 días</option>
+                  <option value="365">Este año</option>
+                </select>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:5px 12px">
+                <label style="font-size:10px;color:var(--muted);font-weight:600">USUARIO</label>
+                <select id="an-usuario" onchange="renderBitacoraAnalisis()" style="background:transparent;border:none;color:var(--cream);font-size:12px;font-weight:600">
+                  <option value="">Todos</option>
+                </select>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="renderBitacoraAnalisis()">🔄</button>
+            </div>
+
+            <!-- KPIs -->
+            <div class="stat-grid sg4" style="margin-bottom:14px">
+              <div class="scard g"><div class="sl">📥 Entradas</div><div class="sv g" id="an-entradas">—</div></div>
+              <div class="scard b"><div class="sl">📤 Salidas/Ajustes</div><div class="sv b" id="an-salidas">—</div></div>
+              <div class="scard" style="border-color:var(--red)"><div class="sl">⚠️ Discrepancias</div><div class="sv" id="an-disc" style="color:var(--red)">—</div></div>
+              <div class="scard" style="border-color:var(--red)"><div class="sl">💸 Pérdida Estimada</div><div class="sv" id="an-perdida" style="color:var(--red)">—</div></div>
+            </div>
+
+            <!-- Gráficas split -->
+            <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px">
+              <!-- Por Categoría -->
+              <div class="card" style="flex:1;min-width:280px">
+                <div class="card-title">📦 Por Categoría</div>
+                <div id="an-por-cat"></div>
+              </div>
+              <!-- Por Línea -->
+              <div class="card" style="flex:1;min-width:280px">
+                <div class="card-title">👥 Por Línea</div>
+                <div id="an-por-lin"></div>
+              </div>
+            </div>
+
+            <!-- Por usuario + Top estilos -->
+            <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px">
+              <div class="card" style="flex:1;min-width:280px">
+                <div class="card-title">👤 Actividad por Usuario</div>
+                <div id="an-por-usuario"></div>
+              </div>
+              <div class="card" style="flex:1;min-width:280px">
+                <div class="card-title">🚨 Estilos con Más Discrepancias</div>
+                <div id="an-top-disc"></div>
+              </div>
+            </div>
+
+            <!-- Tendencia semanal -->
+            <div class="card">
+              <div class="card-title">📈 Tendencia Semanal (Entradas vs Salidas)</div>
+              <div id="an-tendencia" style="overflow-x:auto"></div>
+            </div>
+
+          </div><!-- fin bit-vista-analisis -->
 
           <!-- ══ MIGRACIÓN TALLAS ══ -->
           <div class="card" style="margin-top:20px;border:1px solid var(--gold-dim)">
@@ -5471,6 +5544,10 @@ function startListeners(){
   push(onSnapshot(col('productos'),snap=>{
     productos=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderInv();renderPOS();renderCatalogo();renderDashboard();
+    // Refrescar liquidaciones si el módulo está visible
+    if(document.getElementById('page-liquidaciones')?.classList.contains('active')){
+      renderLiquidaciones();
+    }
     // Auto-migrar tallas decimales → fracciones en silencio (solo una vez por sesión)
     if(!_migracionEjecutada){
       _migracionEjecutada = true;
@@ -13421,6 +13498,190 @@ function getPermisosUsuario(u){
 
 
 // ══════════════════ BITÁCORA ══════════════════
+// ══════════════════ BITÁCORA ANÁLISIS ══════════════════
+function setBitacoraTab(tab){
+  document.getElementById('bit-vista-mov').style.display      = tab==='movimientos'?'':'none';
+  document.getElementById('bit-vista-analisis').style.display = tab==='analisis'?'':'none';
+  document.getElementById('bit-tab-mov').classList.toggle('on', tab==='movimientos');
+  document.getElementById('bit-tab-analisis').classList.toggle('on', tab==='analisis');
+  if(tab==='analisis') renderBitacoraAnalisis();
+}
+
+function esDiscrepancia(m){
+  const desc=(m.descripcion||m.comentario||'').toLowerCase();
+  return m.tipo==='salida'&&(
+    desc.includes('discrepan')||desc.includes('ajuste')||desc.includes('no est')||
+    desc.includes('faltante')||desc.includes('manchad')||desc.includes('oferta')||
+    desc.includes('dañ')||desc.includes('dao')||desc.includes('perdid')
+  );
+}
+
+function renderBitacoraAnalisis(){
+  const dias = parseInt(document.getElementById('an-periodo')?.value||'30');
+  const usuFiltro = document.getElementById('an-usuario')?.value||'';
+  const hoyDt = new Date(); hoyDt.setHours(23,59,59);
+  const desdeDt = new Date(); desdeDt.setDate(desdeDt.getDate()-dias); desdeDt.setHours(0,0,0);
+  const fmtFecha=f=>f?new Date(f+'T12:00:00'):null;
+
+  const bitacoraArr = window._bitacoraMovs||[];
+
+  // Poblar select de usuarios
+  const usuSel = document.getElementById('an-usuario');
+  if(usuSel && usuSel.options.length<=1){
+    const uNames=[...new Set(bitacoraArr.map(m=>m.usuario).filter(Boolean))];
+    uNames.forEach(u=>{ const o=document.createElement('option');o.value=u;o.textContent=u;usuSel.appendChild(o);});
+  }
+
+  const filtrados = bitacoraArr.filter(m=>{
+    const f=fmtFecha(m.fecha);
+    if(!f||f<desdeDt||f>hoyDt) return false;
+    if(usuFiltro && m.usuario!==usuFiltro) return false;
+    return true;
+  });
+
+  const entradas=filtrados.filter(m=>m.tipo==='entrada');
+  const salidas =filtrados.filter(m=>m.tipo==='salida');
+  const discs   =filtrados.filter(m=>esDiscrepancia(m));
+
+  const totEnt=entradas.reduce((a,m)=>{const l=m.datos?.lineas||[];return a+l.reduce((b,li)=>b+(li.qty||1),0);},0);
+  const totSal=salidas.reduce((a,m)=>{const l=m.datos?.lineas||[];return a+l.reduce((b,li)=>b+(li.qty||1),0);},0);
+  const totDisc=discs.reduce((a,m)=>{const l=m.datos?.lineas||[];return a+l.reduce((b,li)=>b+(li.qty||1),0);},0);
+
+  let perdidaEst=0;
+  discs.forEach(m=>(m.datos?.lineas||[]).forEach(l=>{
+    const prod=productos.find(p=>p.sku===l.sku||p.barcode===l.sku||p.barcode===l.barcode);
+    perdidaEst+=parseFloat(prod?.precio||l.precio||0)*(l.qty||1);
+  }));
+
+  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setEl('an-entradas',totEnt+' pzas');
+  setEl('an-salidas', totSal+' pzas');
+  setEl('an-disc',    totDisc+' pzas ('+discs.length+' mov.)');
+  setEl('an-perdida', '$'+perdidaEst.toFixed(2));
+
+  // ── Por Categoría ──
+  const byCat={};
+  filtrados.forEach(m=>(m.datos?.lineas||[]).forEach(l=>{
+    const prod=productos.find(p=>p.sku===l.sku||p.barcode===l.sku||p.barcode===l.barcode);
+    const cat=prod?.cat||l.cat||'Sin cat.';
+    if(!byCat[cat]) byCat[cat]={ent:0,sal:0};
+    if(m.tipo==='entrada') byCat[cat].ent+=(l.qty||1);
+    if(m.tipo==='salida')  byCat[cat].sal+=(l.qty||1);
+  }));
+  const catEl=document.getElementById('an-por-cat');
+  if(catEl) catEl.innerHTML=Object.entries(byCat).sort((a,b)=>b[1].ent-a[1].ent).map(([cat,v])=>`
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--cream);margin-bottom:4px">
+        <span>${cat}</span><span><span style="color:var(--green)">↑${v.ent}</span> · <span style="color:var(--red)">↓${v.sal}</span></span>
+      </div>
+      <div style="background:var(--s3);border-radius:6px;height:8px;overflow:hidden">
+        <div style="height:100%;width:${Math.min(100,(v.ent/Math.max(1,totEnt))*100)}%;background:var(--green);float:left"></div>
+        <div style="height:100%;width:${Math.min(100,(v.sal/Math.max(1,totSal))*100)}%;background:var(--red);float:left;opacity:.7"></div>
+      </div>
+    </div>`).join('')||'<div style="color:var(--muted);font-size:12px">Sin datos</div>';
+
+  // ── Por Línea ──
+  const byLin={};
+  filtrados.forEach(m=>(m.datos?.lineas||[]).forEach(l=>{
+    const prod=productos.find(p=>p.sku===l.sku||p.barcode===l.sku||p.barcode===l.barcode);
+    const lin=prod?.cat||l.cat||'Sin línea';
+    if(!byLin[lin]) byLin[lin]={ent:0,sal:0};
+    if(m.tipo==='entrada') byLin[lin].ent+=(l.qty||1);
+    if(m.tipo==='salida')  byLin[lin].sal+=(l.qty||1);
+  }));
+  const linEl=document.getElementById('an-por-lin');
+  if(linEl) linEl.innerHTML=Object.entries(byLin).map(([lin,v])=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px;font-weight:600;color:var(--cream)">${lin}</span>
+      <div style="display:flex;gap:8px">
+        <span style="font-size:11px;color:var(--green);font-weight:700">↑ ${v.ent} pzas</span>
+        <span style="font-size:11px;color:var(--red);font-weight:700">↓ ${v.sal} pzas</span>
+      </div>
+    </div>`).join('')||'<div style="color:var(--muted);font-size:12px">Sin datos</div>';
+
+  // ── Por Usuario ──
+  const byUsu={};
+  filtrados.forEach(m=>{
+    const u=m.usuario||'—';
+    if(!byUsu[u]) byUsu[u]={ent:0,sal:0,disc:0};
+    if(m.tipo==='entrada') byUsu[u].ent++;
+    if(m.tipo==='salida')  byUsu[u].sal++;
+    if(esDiscrepancia(m))  byUsu[u].disc++;
+  });
+  const usuEl=document.getElementById('an-por-usuario');
+  if(usuEl) usuEl.innerHTML=`<table style="width:100%;font-size:12px;border-collapse:collapse">
+    <thead><tr style="background:var(--s2)">
+      <th style="padding:6px 8px;text-align:left;color:var(--muted)">Usuario</th>
+      <th style="padding:6px 8px;text-align:center;color:var(--green)">Entradas</th>
+      <th style="padding:6px 8px;text-align:center;color:var(--red)">Salidas</th>
+      <th style="padding:6px 8px;text-align:center;color:var(--red)">⚠️ Disc.</th>
+    </tr></thead>
+    <tbody>${Object.entries(byUsu).sort((a,b)=>b[1].disc-a[1].disc).map(([u,v])=>`
+      <tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:6px 8px;color:var(--cream);font-weight:600">${u}</td>
+        <td style="padding:6px 8px;text-align:center;color:var(--green);font-weight:700">${v.ent}</td>
+        <td style="padding:6px 8px;text-align:center;color:var(--muted)">${v.sal}</td>
+        <td style="padding:6px 8px;text-align:center;font-weight:800;color:${v.disc>0?'var(--red)':'var(--muted)'}">${v.disc||'—'}</td>
+      </tr>`).join('')}
+    </tbody></table>`||'<div style="color:var(--muted);font-size:12px">Sin datos</div>';
+
+  // ── Top estilos con discrepancias ──
+  const byEstilo={};
+  discs.forEach(m=>(m.datos?.lineas||[]).forEach(l=>{
+    const k=l.sku||l.barcode||l.prodId||'—';
+    if(!byEstilo[k]) byEstilo[k]={qty:0,movs:0};
+    byEstilo[k].qty+=(l.qty||1); byEstilo[k].movs++;
+  }));
+  const topEl=document.getElementById('an-top-disc');
+  const topArr=Object.entries(byEstilo).sort((a,b)=>b[1].qty-a[1].qty).slice(0,8);
+  if(topEl) topEl.innerHTML=topArr.length
+    ? topArr.map(([estilo,v])=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+        <span style="font-family:var(--mono);font-size:13px;font-weight:800;color:var(--gold)">${estilo}</span>
+        <div style="text-align:right">
+          <div style="font-size:13px;font-weight:700;color:var(--red)">-${v.qty} pzas</div>
+          <div style="font-size:10px;color:var(--muted)">${v.movs} movimiento${v.movs!==1?'s':''}</div>
+        </div>
+      </div>`).join('')
+    : '<div style="color:var(--muted);font-size:12px">Sin discrepancias en el período</div>';
+
+  // ── Tendencia semanal ──
+  const semanas={};
+  filtrados.forEach(m=>{
+    const sem=getNumSemana(m.fecha)||'?';
+    if(!semanas[sem]) semanas[sem]={sem,ent:0,sal:0,disc:0};
+    if(m.tipo==='entrada') semanas[sem].ent++;
+    if(m.tipo==='salida')  semanas[sem].sal++;
+    if(esDiscrepancia(m))  semanas[sem].disc++;
+  });
+  const maxV=Math.max(...Object.values(semanas).map(s=>Math.max(s.ent,s.sal)),1);
+  const tendEl=document.getElementById('an-tendencia');
+  if(tendEl) tendEl.innerHTML=`<table style="border-collapse:collapse;font-size:11px;min-width:500px;width:100%">
+    <thead><tr style="background:var(--s2)">
+      <th style="padding:6px 10px;text-align:center;color:var(--muted)">SEM.</th>
+      <th style="padding:6px 10px;color:var(--green)">📥 Entradas</th>
+      <th style="padding:6px 10px;color:var(--red)">📤 Salidas</th>
+      <th style="padding:6px 10px;text-align:center;color:var(--red)">⚠️</th>
+    </tr></thead>
+    <tbody>${Object.values(semanas).sort((a,b)=>parseInt(b.sem)-parseInt(a.sem)).map(s=>`
+      <tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:6px 10px;text-align:center;font-family:var(--mono);font-weight:800;color:var(--cream)">Sem. ${s.sem}</td>
+        <td style="padding:6px 10px">
+          <div style="background:var(--green);height:14px;width:${(s.ent/maxV*100).toFixed(0)}%;min-width:2px;border-radius:3px;display:inline-block"></div>
+          <span style="color:var(--green);font-weight:700;margin-left:6px">${s.ent}</span>
+        </td>
+        <td style="padding:6px 10px">
+          <div style="background:var(--red);height:14px;width:${(s.sal/maxV*100).toFixed(0)}%;min-width:2px;border-radius:3px;display:inline-block;opacity:.8"></div>
+          <span style="color:var(--red);font-weight:700;margin-left:6px">${s.sal}</span>
+        </td>
+        <td style="padding:6px 10px;text-align:center;font-weight:800;color:${s.disc>0?'var(--red)':'var(--faint)'}">
+          ${s.disc>0?'⚠️ '+s.disc:'—'}
+        </td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+// ══════════════════ END BITÁCORA ANÁLISIS ══════════════════
+
 async function loadBitacora(){
   const tbody = document.getElementById('bitacora-tbody');
   if(tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">Cargando…</td></tr>';
@@ -13428,6 +13689,7 @@ async function loadBitacora(){
     const snap = await window._fb.getDocs(col('bitacora'));
     const movimientos = snap.docs.map(d=>({id:d.id,...d.data()}))
       .sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+    window._bitacoraMovs = movimientos; // para análisis
     // Update stats
     const pendientes = movimientos.filter(m=>m.estado==='pendiente').length;
     const el=document.getElementById('bitacora-pend'); if(el) el.textContent=pendientes;
@@ -18170,8 +18432,8 @@ function renderLiquidaciones(){
       sucursales.map(s=>`<option value="${s.id}" ${s.id===current?'selected':''}>${s.nombre}</option>`).join('');
   }
 
-  // Solo productos de liquidación
-  const liqs = productos.filter(p=>p.esLiquidacion && (!sucFil || p.sucursalId===sucFil));
+  // Solo productos de liquidación (acepta boolean true o string "true")
+  const liqs = productos.filter(p=>(p.esLiquidacion===true||p.esLiquidacion==='true') && (!sucFil || p.sucursalId===sucFil));
 
   if(!liqs.length){
     tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:32px;color:var(--muted)">Sin artículos en liquidación${sucFil?' en esta sucursal':''}.</td></tr>`;
