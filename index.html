@@ -2303,11 +2303,13 @@ body.tema-lavanda ::-webkit-scrollbar-thumb{background:#b8b5d4!important}
             <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="filtroHistRapido('semana')" id="fh-semana">
               Sem. actual <span id="fh-semana-num" style="font-family:monospace;font-weight:900;color:var(--gold);margin-left:3px"></span>
             </button>
-            <div style="display:flex;align-items:center;gap:3px;background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:2px 6px">
-              <span style="font-size:10px;color:var(--muted)">Sem.#</span>
+            <div style="display:flex;align-items:center;gap:0;background:var(--s2);border:1px solid var(--border);border-radius:6px;overflow:hidden">
+              <span style="font-size:10px;color:var(--muted);padding:0 5px;white-space:nowrap">Sem.#</span>
+              <button onclick="navSemana(-1)" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:2px 5px;font-size:12px;line-height:1" title="Semana anterior">▼</button>
               <input type="number" id="fh-num-semana" min="1" max="53" placeholder="N°"
-                style="width:40px;padding:2px 4px;font-size:11px;background:transparent;border:none;color:var(--cream)"
-                onchange="filtroHistRapido('nSemana')">
+                style="width:34px;padding:2px 2px;font-size:11px;background:transparent;border:none;color:var(--cream);text-align:center"
+                onchange="navSemana(0)">
+              <button onclick="navSemana(1)" id="fh-sem-up" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:2px 5px;font-size:12px;line-height:1" title="Semana siguiente">▲</button>
             </div>
             <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="filtroHistRapido('mes')" id="fh-mes">Este mes</button>
             <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;color:var(--muted)" onclick="limpiarFiltrosHist()">✕</button>
@@ -2338,12 +2340,13 @@ body.tema-lavanda ::-webkit-scrollbar-thumb{background:#b8b5d4!important}
                 <option value="monedero">Monedero</option>
                 <option value="mixto">Mixto</option>
               </select>
-              <select id="h-tipo" onchange="renderHist()" style="padding:4px 6px;font-size:11px;width:110px">
+              <select id="h-tipo" onchange="renderHist()" style="padding:4px 6px;font-size:11px;width:130px">
                 <option value="">Todos</option>
                 <option value="venta">Venta</option>
                 <option value="apartado">Apartado</option>
                 <option value="credito">Crédito</option>
                 <option value="abono">Abono</option>
+                <option value="devolucion">↩ Devoluciones</option>
               </select>
               <select id="h-suc" onchange="renderHist()" style="padding:4px 6px;font-size:11px;width:130px"><option value="">Todas sucursales</option></select>
             </div>
@@ -14756,6 +14759,38 @@ async function cancelarLiquidacion(id){
 
 // ══════════════════ T1: POS Tipo/Pago from catalogos ══════════════════
 // ══════════════════ T2: Historial quick filters ══════════════════
+function navSemana(delta){
+  const input = document.getElementById('fh-num-semana');
+  if(!input) return;
+
+  // Semana actual y límite según rol
+  const semActual = parseInt(getNumSemana(hoy()));
+  const rolActivo = (usuarioActivo?.rol || currentProfile?.rol || 'admin').toLowerCase();
+  const esCajera  = rolActivo==='vendedor' || rolActivo==='supervisor';
+  const maxSem    = esCajera ? semActual : 53; // cajeras: solo hasta sem actual
+
+  let val = parseInt(input.value) || semActual;
+  val += delta; // 0 = solo validar sin cambiar
+
+  // Clamp
+  if(val < 1)      val = 1;
+  if(val > maxSem) val = maxSem;
+
+  // Bloquear flecha ▲ si se alcanza el límite
+  const upBtn = document.getElementById('fh-sem-up');
+  if(upBtn){
+    upBtn.disabled  = val >= maxSem;
+    upBtn.style.opacity = val >= maxSem ? '.3' : '1';
+    upBtn.style.cursor  = val >= maxSem ? 'not-allowed' : 'pointer';
+    upBtn.title = val >= maxSem && esCajera
+      ? `Límite: semana ${semActual} (semana actual)`
+      : 'Semana siguiente';
+  }
+
+  input.value = val;
+  filtroHistRapido('nSemana');
+}
+
 function filtroHistRapido(tipo){
   const hoyStr = hoy();
   const d = new Date();
@@ -14764,6 +14799,9 @@ function filtroHistRapido(tipo){
     const b=document.getElementById('fh-'+t);
     if(b){b.className='btn btn-ghost btn-sm';}
   });
+  // ── Siempre limpiar tipo y pago al usar filtro rápido de fecha ──
+  const tipoEl=document.getElementById('h-tipo'); if(tipoEl) tipoEl.value='';
+  const pagoEl=document.getElementById('h-pago'); if(pagoEl) pagoEl.value='';
   let desde='', hasta='';
   if(tipo==='hoy'){
     desde=hasta=hoyStr;
@@ -14783,7 +14821,17 @@ function filtroHistRapido(tipo){
     const b=document.getElementById('fh-semana'); if(b)b.className='btn btn-accent btn-sm';
   } else if(tipo==='nSemana'){
     // Specific week number
-    const nSem=parseInt(document.getElementById('fh-num-semana')?.value)||1;
+    const rolActivo = (usuarioActivo?.rol || currentProfile?.rol || 'admin').toLowerCase();
+    const esCajera  = rolActivo==='vendedor' || rolActivo==='supervisor';
+    const semActual = parseInt(getNumSemana(hoy()));
+    let nSem = parseInt(document.getElementById('fh-num-semana')?.value)||1;
+    // Aplicar límite por rol
+    if(esCajera && nSem > semActual){
+      nSem = semActual;
+      const input = document.getElementById('fh-num-semana');
+      if(input) input.value = nSem;
+      toast(`Solo puedes ver hasta la semana actual (#${semActual})`, 'info');
+    }
     const year=d.getFullYear();
     // Get Monday of week nSem
     const jan1=new Date(year,0,1);
