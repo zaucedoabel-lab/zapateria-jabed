@@ -12215,10 +12215,11 @@ const TODOS_MODULOS = ['inventario','catalogo','entradas','salidas','liquidacion
 const PERMISOS_ROL_DEFAULT = {
   admin:      [...TODOS_MODULOS],
   manager:    [...TODOS_MODULOS],
-  supervisor: [],
+  supervisor: ['pos','historial','dashboard-ventas','cuentas','clientes','inventario','catalogo',
+               'entradas','salidas','liquidaciones','agotados','transfer','bitacora'],
   vendedor:   ['pos','historial','clientes','cuentas','inventario','catalogo'],
-  bodeguero:  ['inventario','catalogo','entradas','salidas','transfer','etiquetas','recuperacion'],
-  lectura:    ['inventario','catalogo','historial','reportes','resumen','analisis']
+  bodeguero:  ['inventario','catalogo','entradas','salidas','liquidaciones','agotados','transfer','etiquetas','recuperacion'],
+  lectura:    ['inventario','catalogo','historial','reportes','resumen','analisis','liquidaciones','agotados']
 };
 // Roles that DON'T need to re-identify on every module change
 const ROLES_SIN_REAUTH = ['supervisor','vendedor','bodeguero','lectura','manager'];
@@ -13236,7 +13237,7 @@ const PERMISOS_GRUPOS = [
     color:  'var(--blue)',
     bg:     'rgba(82,168,224,.08)',
     border: 'rgba(82,168,224,.25)',
-    mods:   ['inventario','catalogo','entradas','salidas','transfer','etiquetas','recuperacion','analisis','costos'],
+    mods:   ['inventario','catalogo','entradas','salidas','liquidaciones','agotados','transfer','etiquetas','recuperacion','analisis','costos'],
   },
   {
     titulo: '💰 Finanzas',
