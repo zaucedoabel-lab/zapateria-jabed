@@ -6811,7 +6811,9 @@ function searchTransferProd(){
   // pero deduplicar para que el usuario elija el producto, no la sucursal
   const seen = new Map();
   productos.forEach(p=>{
-    const mq=(p.desc||'').toLowerCase().includes(q)||(p.sku||'').includes(q)||(p.barcode||'').includes(q);
+    const mq=(p.desc||'').toLowerCase().includes(q)
+      ||(p.sku||'').toLowerCase().includes(q)
+      ||(p.barcode||'').toLowerCase().includes(q);
     if(!mq) return;
     const key = (p.barcode||p.sku||p.desc||p.id).trim().toLowerCase();
     const prev = seen.get(key);
@@ -12807,7 +12809,7 @@ function renderCatalogo(){
   const lista = productos.filter(p=>{
     const mq = !q ||
       (p.desc||'').toLowerCase().includes(q) ||
-      (p.barcode||'').includes(q) ||
+      (p.barcode||'').toLowerCase().includes(q) ||
       (p.sku||'').toLowerCase().includes(q) ||
       (p.marca||'').toLowerCase().includes(q) ||
       (p.cat||'').toLowerCase().includes(q) ||
