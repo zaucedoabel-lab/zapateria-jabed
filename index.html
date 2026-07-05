@@ -6154,7 +6154,7 @@ function renderInv(){
   const mostrar=document.getElementById('inv-mostrar')?.value||'todos';
 
   let lista=productos.filter(p=>{
-    const mq=!q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.color||'').toLowerCase().includes(q)||(p.marca||'').toLowerCase().includes(q);
+    const mq=!q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').toLowerCase().includes(q)||(p.color||'').toLowerCase().includes(q)||(p.marca||'').toLowerCase().includes(q);
     const mc=!cat||p.cat===cat;
     const ml=!linea||p.linea===linea;
     const mloc = !loc
@@ -6639,8 +6639,8 @@ function renderPOS(){
     // Excluir artículos de bodega
     const sucP=sucursales.find(s=>s.id===p.sucursalId);
     if(sucP?.tipo==='bodega')return false;
-    const bcTallaMatch=!q||Object.values(p.barcodeTallas||{}).some(bc=>(bc||'').includes(q));
-    const mq=!q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||bcTallaMatch;
+    const bcTallaMatch=!q||Object.values(p.barcodeTallas||{}).some(bc=>(bc||'').toLowerCase().includes(q));
+    const mq=!q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').toLowerCase().includes(q)||bcTallaMatch;
     const ms=!sid||p.sucursalId===sid;
     return mq&&ms;
   });
@@ -6804,31 +6804,54 @@ function calcCart(){
 // ══════════════════ TRANSFERENCIAS ══════════════════
 let trProdSel=null;
 function searchTransferProd(){
-  const q=(document.getElementById('tr-prod-q')?.value||'').toLowerCase();
+  const q=(document.getElementById('tr-prod-q')?.value||'').toLowerCase().trim();
   const res=document.getElementById('tr-prod-res');
-  if(!q){res.innerHTML='';return;}
-  // ── BUG FIX 1: excluir duplicados por código; mostrar todas las sucursales (tienda y bodega)
-  // pero deduplicar para que el usuario elija el producto, no la sucursal
-  const seen = new Map();
+  if(!res) return;
+  if(q.length<1){res.innerHTML='';return;}
+
+  // Buscar en TODOS los productos sin importar sucursal
+  // Agrupar por código para mostrar una sola entrada por artículo
+  const grupos = new Map(); // key → { totalStock, prods[] }
   productos.forEach(p=>{
-    const mq=(p.desc||'').toLowerCase().includes(q)
-      ||(p.sku||'').toLowerCase().includes(q)
-      ||(p.barcode||'').toLowerCase().includes(q);
+    const mq = (p.desc||'').toLowerCase().includes(q)
+      || (p.sku||'').toLowerCase().includes(q)
+      || (p.barcode||'').toLowerCase().includes(q);
     if(!mq) return;
-    const key = (p.barcode||p.sku||p.desc||p.id).trim().toLowerCase();
-    const prev = seen.get(key);
+    if(p.esLiquidacion) return;
+    const codigoKey = (p.barcode||p.sku||'').trim();
+    const key = codigoKey ? codigoKey.toLowerCase() : (p.desc||'').toLowerCase().substring(0,30);
     const stockP = Object.values(p.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
-    const stockPrev = prev ? Object.values(prev.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0) : -1;
-    // Preferir el que tenga más stock (normalmentela tienda)
-    if(!prev || stockP > stockPrev) seen.set(key, p);
+    if(!grupos.has(key)){
+      grupos.set(key, { totalStock: stockP, prods: [{ p, s: stockP }] });
+    } else {
+      const g = grupos.get(key);
+      g.prods.push({ p, s: stockP });
+      g.totalStock += stockP;
+    }
   });
-  const lista = [...seen.values()].slice(0,5);
-  res.innerHTML=lista.map(p=>{
-    const suc=sucursales.find(s=>s.id===p.sucursalId);
-    const tot=Object.values(p.stock||{}).reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0);
-    return`<div onclick="selTransferProd('${p.id}')" style="padding:8px 10px;background:var(--s2);border:1px solid var(--border);border-radius:7px;cursor:pointer;margin-bottom:4px;font-size:13px;transition:background .15s" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
-      <b>${p.desc}</b> <span style="color:var(--muted)">${p.sku||p.barcode||''} · ${p.cat}</span>
-      <span class="badge ${tot>0?'b-green':'b-red'}" style="float:right">${tot} pzas · ${suc?.nombre||'—'}</span>
+
+  const lista = [...grupos.values()].sort((a,b)=>b.totalStock-a.totalStock).slice(0,8);
+  if(!lista.length){
+    res.innerHTML='<div style="padding:8px 10px;color:var(--muted);font-size:12px">Sin resultados — verifica el código o nombre del artículo</div>';
+    return;
+  }
+  res.innerHTML = lista.map(g=>{
+    const p = g.prods.find(x=>x.s>0)?.p || g.prods[0].p; // preferir el que tenga stock
+    const suc = sucursales.find(s=>s.id===p.sucursalId);
+    const codigo = p.barcode||p.sku||'—';
+    const sucInfos = g.prods.map(({p:pr,s})=>{
+      const sn=sucursales.find(x=>x.id===pr.sucursalId)?.nombre||'—';
+      return `<span style="color:${s>0?'var(--green)':'var(--muted)'};font-size:10px">${sn}: ${s}pz</span>`;
+    }).join('  ');
+    return`<div onclick="selTransferProd('${p.id}')"
+      style="padding:9px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:4px;transition:background .15s"
+      onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <b style="color:var(--cream)">${p.desc}</b>
+        <span class="badge ${g.totalStock>0?'b-green':'b-red'}">${g.totalStock} pzas</span>
+      </div>
+      <div style="font-size:11px;color:var(--gold);font-weight:700;margin-top:2px">${codigo}</div>
+      <div style="margin-top:4px;display:flex;gap:10px">${sucInfos}</div>
     </div>`;
   }).join('');
 }
@@ -7801,7 +7824,7 @@ function buscarEtiq(){
   // Solo productos de tienda (excluir bodega)
   const tiendasIds = new Set(sucursales.filter(s=>s.tipo!=='bodega').map(s=>s.id));
   const lista=productos.filter(p=>{
-    const matchQ=(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q);
+    const matchQ=(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q);
     if(!matchQ) return false;
     // Excluir productos de bodega
     const suc=sucursales.find(s=>s.id===p.sucursalId);
@@ -10495,7 +10518,7 @@ function buscarProdSalida(){
   if(!q){res.innerHTML='';return;}
   // Filtrar por sucursal seleccionada y que tengan stock > 0
   let lista=productos.filter(p=>{
-    const matchQ=(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q);
+    const matchQ=(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q);
     const matchSuc=!sucId||p.sucursalId===sucId;
     const tieneStock=Object.values(p.stock||{}).some(v=>(v||0)>0);
     return matchQ&&matchSuc&&tieneStock;
@@ -10503,7 +10526,7 @@ function buscarProdSalida(){
   // Si no hay resultados con stock, mostrar igual pero indicándolo
   if(!lista.length){
     lista=productos.filter(p=>{
-      const matchQ=(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').toLowerCase().includes(q);
+      const matchQ=(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q);
       const matchSuc=!sucId||p.sucursalId===sucId;
       return matchQ&&matchSuc;
     }).slice(0,8);
@@ -11532,7 +11555,7 @@ function buscarProdPromo(){
   const q=(document.getElementById('pr-prod-q')?.value||'').toLowerCase();
   const res=document.getElementById('pr-prod-res');
   if(!res||!q){if(res)res.innerHTML='';return;}
-  const lista=productos.filter(p=>(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)).slice(0,6);
+  const lista=productos.filter(p=>(p.desc||'').toLowerCase().includes(q)||(p.barcode||'').toLowerCase().includes(q)).slice(0,6);
   res.innerHTML=lista.map(p=>
     '<div onclick="agregarProdPromo(\''+p.id+'\',\''+p.desc.replace(/'/g,"\\'")+'\',' +'\''+( p.barcode||p.sku||'')+'\') "'
     +' style="padding:6px 10px;background:var(--s2);border:1px solid var(--border);border-radius:7px;cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--cream)"'
@@ -12168,8 +12191,8 @@ function renderPOS(){
     // Excluir artículos de bodega — POS solo muestra lo que está en tienda
     const suc = sucursales.find(s=>s.id===p.sucursalId);
     if(suc?.tipo==='bodega') return false;
-    const bcTallaMatch = !q || Object.values(p.barcodeTallas||{}).some(bc=>(bc||'').includes(q));
-    const mq = !q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||bcTallaMatch;
+    const bcTallaMatch = !q || Object.values(p.barcodeTallas||{}).some(bc=>(bc||'').toLowerCase().includes(q));
+    const mq = !q||(p.desc||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.barcode||'').toLowerCase().includes(q)||bcTallaMatch;
     const ms = !sid || p.sucursalId===sid;
     const mc = !cat || p.cat===cat;
     const ml = !lin || p.linea===lin;
@@ -16860,7 +16883,7 @@ function buscarNuevoArticuloDev(){
     if(suc?.tipo==='bodega')return false;
     const tot=Object.values(p.stock||{}).reduce((a,b)=>a+Number(b),0);
     if(tot<=0)return false;
-    return (p.desc||'').toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.sku||'').includes(q);
+    return (p.desc||'').toLowerCase().includes(q)||(p.barcode||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q);
   }).slice(0,8);
   res.innerHTML=lista.map(p=>{
     const tot=Object.values(p.stock||{}).reduce((a,b)=>a+Number(b),0);
