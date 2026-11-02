@@ -16,7 +16,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, getDocs, onSnapshot, query, orderBy, where, getDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 // Storage removido - fotos se guardan en base64
 
 // ══════════════════════════════════════
@@ -39,6 +39,7 @@ const storage = null;
 window._fb = { db, auth, storage:null, collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
   getDocs, onSnapshot, query, orderBy, where, getDoc, writeBatch, serverTimestamp,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged,
+  reauthenticateWithCredential, EmailAuthProvider,
   ref:null, uploadString:null, getDownloadURL:null, deleteObject:null };
 </script>
 
@@ -5219,11 +5220,44 @@ body.tema-lavanda ::-webkit-scrollbar-thumb{background:#b8b5d4!important}
         <input type="password" id="usr-pin-input" placeholder="••••••" style="width:180px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--cream);font-size:14px" onkeydown="if(event.key==='Enter')confirmarPin()">
         <button class="btn btn-accent" onclick="confirmarPin()">→ Entrar</button>
       </div>
+      <div style="margin-top:10px"><button onclick="abrirResetPin()" style="background:none;border:none;color:#a78bfa;font-size:11px;cursor:pointer;text-decoration:underline">¿Olvidaste el PIN de ADMIN?</button></div>
     </div>
     <div style="margin-top:16px">
       <button id="usr-cancelar-btn" onclick="cancelarSeleccionUsuario()" style="padding:7px 20px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--muted);font-size:12px;cursor:pointer">
         ✕ Cancelar
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Recuperar PIN de ADMIN -->
+<div class="mo" id="mo-reset-pin">
+  <div class="md" style="max-width:420px">
+    <div class="mh">
+      <div class="mt">🔑 Recuperar PIN de ADMIN</div>
+      <button class="xbtn" onclick="closeM('mo-reset-pin')">✕</button>
+    </div>
+    <div class="mb" style="display:flex;flex-direction:column;gap:14px">
+      <div style="background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:12px;font-size:12px;color:#c4b5fd;line-height:1.5">
+        Para verificar tu identidad, ingresa la contraseña de tu cuenta Firebase (el correo principal de la app). Luego podrás establecer un nuevo PIN para ADMIN.
+      </div>
+      <div class="fg">
+        <label style="font-size:12px;color:var(--muted)">Contraseña Firebase (cuenta principal)</label>
+        <input type="password" id="reset-firebase-pass" placeholder="Contraseña de tu cuenta" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--cream);font-size:14px;box-sizing:border-box">
+      </div>
+      <div class="fg">
+        <label style="font-size:12px;color:var(--muted)">Nuevo PIN para ADMIN</label>
+        <input type="password" id="reset-nuevo-pin" placeholder="Mínimo 4 caracteres" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--cream);font-size:14px;box-sizing:border-box">
+      </div>
+      <div class="fg">
+        <label style="font-size:12px;color:var(--muted)">Confirmar nuevo PIN</label>
+        <input type="password" id="reset-confirmar-pin" placeholder="Repite el PIN" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--cream);font-size:14px;box-sizing:border-box" onkeydown="if(event.key==='Enter')confirmarResetPin()">
+      </div>
+      <div id="reset-pin-status" style="font-size:12px;min-height:18px;color:#f87171;display:none"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeM('mo-reset-pin')">Cancelar</button>
+      <button class="btn btn-accent" onclick="confirmarResetPin()">🔑 Resetear PIN</button>
     </div>
   </div>
 </div>
@@ -12292,7 +12326,7 @@ async function saveUsuarioInterno(){
   // New user requires password
   if(!_editUsrInternoId && !pinRaw){toast('La contraseña es obligatoria para nuevo usuario','err');return;}
   const data = {nombre, usuario, rol, activo};
-  if(pinRaw) data.pin = btoa(pinRaw); // encode
+  if(pinRaw) data.pin = await hashPin(pinRaw); // hash SHA-256
   try{
     if(_editUsrInternoId){
       await window._fb.setDoc(docRef('usuariosInternos',_editUsrInternoId), data, {merge:true});
@@ -12630,18 +12664,79 @@ function seleccionarUsuario(id){
   if(pinSec) pinSec.style.display='block';
 }
 
-function confirmarPin(){
+// ══════════════════ HASH DE PIN (SHA-256 + migración desde btoa) ══════════════════
+async function hashPin(pin){
+  try{
+    if(window.crypto && crypto.subtle){
+      const data = new TextEncoder().encode('jabed::'+pin);
+      const buf = await crypto.subtle.digest('SHA-256', data);
+      return 'h256:'+Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+  }catch(e){ console.warn('hashPin fallback:',e); }
+  return 'b64:'+btoa(pin); // fallback si no hay crypto.subtle (contexto no seguro)
+}
+async function verifyPin(pin, stored){
+  if(!stored) return {ok:false};
+  const h = await hashPin(pin);
+  if(h === stored) return {ok:true, legacy:false};
+  // Compatibilidad con PINs viejos guardados con btoa()
+  if(stored === btoa(pin))        return {ok:true, legacy:true};
+  if(stored === 'b64:'+btoa(pin)) return {ok:true, legacy:true};
+  return {ok:false};
+}
+// ══════════════════ RESET DE PIN DE ADMIN (reautenticación Firebase) ══════════════════
+function abrirResetPin(){
+  ['reset-firebase-pass','reset-nuevo-pin','reset-confirmar-pin'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const st=document.getElementById('reset-pin-status'); if(st){ st.style.display='none'; st.textContent=''; }
+  openM('mo-reset-pin');
+}
+async function confirmarResetPin(){
+  const fbPass   = (document.getElementById('reset-firebase-pass')?.value||'').trim();
+  const nuevoPin = (document.getElementById('reset-nuevo-pin')?.value||'').trim();
+  const confirmP = (document.getElementById('reset-confirmar-pin')?.value||'').trim();
+  const st = document.getElementById('reset-pin-status');
+  const showErr = (m)=>{ if(st){ st.textContent=m; st.style.display='block'; } };
+  if(st) st.style.display='none';
+  if(!fbPass){ showErr('Ingresa la contraseña de tu cuenta Firebase.'); return; }
+  if(!nuevoPin || nuevoPin.length < 4){ showErr('El nuevo PIN debe tener al menos 4 caracteres.'); return; }
+  if(nuevoPin !== confirmP){ showErr('Los PINs no coinciden.'); return; }
+  const auth = window._fb.auth;
+  const user = auth.currentUser;
+  if(!user){ showErr('No hay sesión activa. Recarga la página e intenta de nuevo.'); return; }
+  try{
+    const credential = window._fb.EmailAuthProvider.credential(user.email, fbPass);
+    await window._fb.reauthenticateWithCredential(user, credential);
+  }catch(e){
+    if(e.code==='auth/wrong-password' || e.code==='auth/invalid-credential'){ showErr('Contraseña Firebase incorrecta. Intenta de nuevo.'); }
+    else { showErr('Error: '+(e.message||e.code)); }
+    return;
+  }
+  const adminUser = usuariosInternos.find(u => u.id==='ADMIN' || u.rol==='admin');
+  if(!adminUser){ showErr('No se encontró el usuario ADMIN en Firestore.'); return; }
+  try{
+    const nh = await hashPin(nuevoPin);
+    await window._fb.updateDoc(docRef('usuariosInternos', adminUser.id), { pin: nh });
+    adminUser.pin = nh;
+    closeM('mo-reset-pin');
+    toast('✅ PIN de ADMIN actualizado correctamente');
+  }catch(e){ showErr('Error al guardar: '+(e.message||e.code)); }
+}
+async function confirmarPin(){
   const id = window._usrSelId;
   if(!id){ toast('Selecciona un usuario primero','err'); return; }
   const u = usuariosInternos.find(x=>x.id===id);
   if(!u){ toast('Usuario no encontrado','err'); return; }
   const pin = document.getElementById('usr-pin-input')?.value.trim()||'';
-  if(!u.pin || btoa(pin) !== u.pin){
+  const _chk = await verifyPin(pin, u.pin);
+  if(!_chk.ok){
     toast('Contraseña incorrecta ❌','err');
     document.getElementById('usr-pin-input').value='';
     document.getElementById('usr-pin-input').focus();
     return;
   }
+  if(_chk.legacy){ try{ const _nh=await hashPin(pin); await window._fb.setDoc(docRef('usuariosInternos',u.id),{pin:_nh},{merge:true}); u.pin=_nh; }catch(e){ console.warn('No se pudo migrar PIN:',e); } }
   // Login success
   usuarioActivo = u;
   document.getElementById('usr-overlay').style.display = 'none';
